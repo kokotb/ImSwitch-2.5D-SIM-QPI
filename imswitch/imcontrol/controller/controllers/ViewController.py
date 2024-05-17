@@ -20,17 +20,20 @@ class ViewController(ImConWidgetController):
 
     def liveview(self, enabled):
         """ Start liveview and activate detector acquisition. """
-        
+        # print(enabled)
+        # print(self)
         if enabled and self._acqHandle is None:
             self._acqHandle = self._master.detectorsManager.startAcquisition(liveView=True)
             self._widget.setViewToolsEnabled(True)
         elif not enabled and self._acqHandle is not None:
             self._master.detectorsManager.stopAcquisition(self._acqHandle, liveView=True)
             self._acqHandle = None
+        print("liveview")
             
-    def acquireSet(self):
+    def acquireSet(self, enabled):
         """ Start liveview and activate detector acquisition. """
-        self._master.detectorsManager.runAcquireSet()
+        print("acquireSet")
+        self._master.detectorsManager.runAcquireSet(enabled)
 
     def gridToggle(self, enabled):
         """ Connect with grid toggle from Image Widget through communication channel. """
@@ -46,8 +49,11 @@ class ViewController(ImConWidgetController):
 
     def get_image(self, detectorName):
         if detectorName is None:
+            print("if detector name is none")
             return self._master.detectorsManager.execOnCurrent(lambda c: c.getLatestFrame())
+            
         else:
+            print("else if detector name")
             return self._master.detectorsManager[detectorName].getLatestFrame()
 
     @APIExport(runOnUIThread=True)
@@ -67,7 +73,7 @@ class ViewController(ImConWidgetController):
 
     @APIExport(runOnUIThread=True)
     def setLiveViewAcquireSet(self, visible: bool) -> None:
-        """ Sets whether the acquireSet is visible. """
+        """ Sets whether the LiveView crosshair is visible. """
         self._widget.setLiveViewAcquireSet(visible)
 
 

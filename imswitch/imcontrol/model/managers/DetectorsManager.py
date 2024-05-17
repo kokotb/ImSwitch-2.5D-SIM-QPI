@@ -12,10 +12,6 @@ class DetectorsManager(MultiManager, SignalInterface):
 
     sigAcquisitionStarted = Signal()
     sigAcquisitionStopped = Signal()
-    
-    sigRunAcquireSetStarted = Signal()
-    sigRunAcquireSetStopped = Signal()
-    
     sigDetectorSwitched = Signal(str, str)  # (newDetectorName, oldDetectorName)
     sigImageUpdated = Signal(
         str, np.ndarray, bool, list, bool
@@ -157,10 +153,9 @@ class DetectorsManager(MultiManager, SignalInterface):
             self.execOnAll(lambda c: c.stopAcquisition(), condition=lambda c: c.forAcquisition)
             self.sigAcquisitionStopped.emit()
 
-    def runAcquireSet(self):
-        self.sigRunAcquireSetStarted.emit()
-        self.execOnAll(lambda c: c.acquireSetNow(), condition=lambda c: c.forAcquisition)
-        self.sigRunAcquireSetStopped.emit()
+    def runAcquireSet(self, enable=False):
+        if enable:
+            print("Here")
     
     def setUpdatePeriod(self, updatePeriod):
         self._lvWorker.setUpdatePeriod(updatePeriod)

@@ -27,16 +27,15 @@ class LUCIDManager_test(DetectorManager):
         for propertyName, propertyValue in detectorInfo.managerProperties['lucid'].items():
             self._camera.setPropertyValue(propertyName, propertyValue)
 
-        fullShape = (self._camera.getPropertyValue('image_width'),
-                     self._camera.getPropertyValue('image_height'))
+        fullShape = (self._camera.getPropertyValue('image_height'),self._camera.getPropertyValue('image_width'))
 
-        self.crop(hpos=0, vpos=0, hsize=fullShape[0], vsize=fullShape[1])
+        self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
 
-        # Prepare parameters
+## Cannot tell where these values are used
         parameters = {
-            'exposure': DetectorNumberParameter(group='Misc', value=100, valueUnits='ms',
+            'exposure': DetectorNumberParameter(group='Misc', value=1000, valueUnits='us',
                                                 editable=True),
-            'gain': DetectorNumberParameter(group='Misc', value=1, valueUnits='arb.u.',
+            'gain': DetectorNumberParameter(group='Misc', value=0, valueUnits='arb.u.',
                                             editable=True),
             'brightness': DetectorNumberParameter(group='Misc', value=1, valueUnits='arb.u.',
                                                   editable=True),
@@ -50,14 +49,17 @@ class LUCIDManager_test(DetectorManager):
 
         super().__init__(detectorInfo, name, fullShape=fullShape, supportedBinnings=[1],
                          model=self._camera.model, parameters=parameters, actions=actions, croppable=True)
-
+ 
     @property
     def scale(self):
         return [1,1]
 
     def getLatestFrame(self):
+        print(self._camera)
         if not self._adjustingParameters:
             self.__image = self._camera.grabFrame()
+            # print(self.__image)
+            
         return self.__image
 
     def setParameter(self, name, value):
@@ -98,15 +100,13 @@ class LUCIDManager_test(DetectorManager):
     def startAcquisition(self):
         if not self._running:
             self._camera.start_live()
+            # print(self._camera)
             self._running = True
 
     def stopAcquisition(self):
         if self._running:
             self._running = False
             self._camera.suspend_live()
-    
-    def acquireSetNow(self):
-        print("acquireSetNow")
 
     def stopAcquisitionForROIChange(self):
         self._running = False
@@ -125,7 +125,7 @@ class LUCIDManager_test(DetectorManager):
         # This should be the only place where self.frameStart is changed
         self._frameStart = (hpos, vpos)
         # Only place self.shapes is changed
-        self._shape = (hsize, vsize)
+        self._shape = (vsize,hsize)
 
     def _performSafeCameraAction(self, function):
         """ This method is used to change those camera properties that need
@@ -145,8 +145,9 @@ class LUCIDManager_test(DetectorManager):
     def _getTISObj(self, cameraId):
         try:
             from imswitch.imcontrol.model.interfaces.lucidcamera_test import CameraTIS
+
             camera = CameraTIS(cameraId)
-            print(camera)
+            # print(camera)
         except Exception:
             self.__logger.warning(f'Failed to initialize TIS camera {cameraId}, loading mocker')
             from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS

@@ -51,6 +51,7 @@ class MultiManager(ABC):
         results. """
         if condition is None:
             def condition(_): return True
+
         return {managedDeviceName: func(subManager)
                 for managedDeviceName, subManager in self._subManagers.items()
                 if condition(subManager)}

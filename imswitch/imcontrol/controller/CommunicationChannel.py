@@ -15,14 +15,10 @@ class CommunicationChannel(SignalInterface):
     sigUpdateImage = Signal(
         str, np.ndarray, bool, list, bool
     )  # (detectorName, image, init, scale, isCurrentDetector)
-    
+
     sigAcquisitionStarted = Signal()
-    
+
     sigAcquisitionStopped = Signal()
-    
-    sigRunAcquireSetStarted = Signal()
-    
-    sigRunAcquireSetStopped = Signal()
 
     sigScriptExecutionFinished = Signal()
 
