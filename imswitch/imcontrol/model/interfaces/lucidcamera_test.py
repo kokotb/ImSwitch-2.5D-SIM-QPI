@@ -20,7 +20,7 @@ class CameraTIS:
         self.__logger = initLogger(self, tryInheritParent=True)
         
         device = []
-        system.destroy_device()
+        # system.destroy_device()
         
         # cameraNo is a two digit number unique to our cams (LUCID)
         cameraNo_string = "{}".format(cameraNo)
@@ -123,14 +123,19 @@ class CameraTIS:
 
         if camera_found == True:
             device = system.create_device(device_infos=device_infos[selected_index])[0]
+            # print(device)
         else:
             raise Exception(f"Serial number {serial_number} cannot be found")
 
         return device
     
     def start_live(self):
-        print("start_live")
-        num_buffers = 25
+        # print("start_live1")
+        # print(self.device)
+        # print("start_live2")
+        
+        # print("startedlive")
+        num_buffers = 500
         # with self.device.start_stream(num_buffers):
             
         #     """ 'device.get_buffer(arg)' returns arg number of buffers
@@ -150,20 +155,25 @@ class CameraTIS:
                     
         #     self.device.requeue_buffer(buffers)
         #     print(f'Requeued {num_buffers} buffers')
+        ##CTTEST##
         self.device.start_stream(num_buffers)
         # print(self.device)
+
         
         # self.device.stop_stream()
 
     def stop_live(self):
-        print("stop_live")
+        print("stop_live1")
+        # print(self.device)
         self.device.stop_stream()
-        print(self.device)  
+        print(self)
+        print("stop_live2")
+        # print(self.device)  
         # self.cam.stop_live()  # stop imaging
 
     def suspend_live(self):
         print("suspend_live")
-        print(self.device)
+        # print(self.device)
         self.device.stop_stream()
         
         # self.cam.suspend_live()  # suspend imaging into prepared state
@@ -174,13 +184,11 @@ class CameraTIS:
         # self.cam.prepare_live()  # prepare prepared state for live imaging
 
     def grabFrame(self):
-        # self.cam.wait_til_frame_ready(20)  # wait for frame ready
-        # self.device.stop_stream()
-        # self.device.start_stream()
-        # print("grabFrame")
+        # print("grab frame")
         # print(self.device)
         buffer = self.device.get_buffer()
         # print(self.device)
+        # print(buffer)
         """
         Copy buffer and requeue to avoid running out of buffers
         """

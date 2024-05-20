@@ -107,6 +107,7 @@ class DetectorsManager(MultiManager, SignalInterface):
                 enableLV = False
             else:
                 self._activeAcqLVHandles.append(handle)
+                # print(self._activeAcqLVHandles)
                 enableLV = len(self._activeAcqLVHandles) == 1
             enableAcq = len(self._activeAcqHandles) + len(self._activeAcqLVHandles) == 1
         finally:

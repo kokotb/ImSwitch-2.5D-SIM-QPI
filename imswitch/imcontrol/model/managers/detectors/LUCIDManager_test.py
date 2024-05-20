@@ -55,7 +55,7 @@ class LUCIDManager_test(DetectorManager):
         return [1,1]
 
     def getLatestFrame(self):
-        print(self._camera)
+        # print(self._camera)
         if not self._adjustingParameters:
             self.__image = self._camera.grabFrame()
             # print(self.__image)

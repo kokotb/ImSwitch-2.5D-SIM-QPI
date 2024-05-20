@@ -1,23 +1,5 @@
 {
   "detectors": {
-    "65Camera": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "LUCIDManager_test",
-      "managerProperties": {
-        "cameraListIndex": 65,
-        "lucid": {
-          "exposure": 10000.0,
-          "gain": 0.0, 
-          "brightness": 1.0,
-          "pixel_format": "Mono8",
-          "ADC_bit_depth": "Bits8",
-          "image_width": 1024,
-          "image_height": 1024
-        }
-      },
-      "forAcquisition": true
-    },
     "66Camera": {
       "analogChannel": null,
       "digitalLine": null,
@@ -27,6 +9,24 @@
         "lucid": {
           "exposure": 10000.0,
           "gain": 0.0, 
+          "brightness": 1.0,
+          "pixel_format": "Mono8",
+          "ADC_bit_depth": "Bits8",
+          "image_width": 2048,
+          "image_height": 2048
+        }
+      },
+      "forAcquisition": true
+    },
+    "65Camera": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "LUCIDManager_test",
+      "managerProperties": {
+        "cameraListIndex": 65,
+        "lucid": {
+          "exposure": 10000.0,
+          "gain": 0.0,
           "brightness": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",

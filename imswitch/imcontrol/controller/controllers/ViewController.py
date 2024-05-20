@@ -23,12 +23,14 @@ class ViewController(ImConWidgetController):
         # print(enabled)
         # print(self)
         if enabled and self._acqHandle is None:
+        
             self._acqHandle = self._master.detectorsManager.startAcquisition(liveView=True)
+         
             self._widget.setViewToolsEnabled(True)
         elif not enabled and self._acqHandle is not None:
             self._master.detectorsManager.stopAcquisition(self._acqHandle, liveView=True)
             self._acqHandle = None
-        print("liveview")
+        # print("liveview")
             
     def acquireSet(self, enabled):
         """ Start liveview and activate detector acquisition. """
