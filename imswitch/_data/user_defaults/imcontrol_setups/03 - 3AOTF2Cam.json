@@ -1,11 +1,11 @@
 {
   "detectors": {
-    "66Camera": {
+    "65Camera": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 66,
+        "cameraListIndex": 65,
         "lucid": {
           "exposure": 2000.0,
           "gain": 0.0, 
@@ -18,12 +18,12 @@
       },
       "forAcquisition": true
     },
-    "65Camera": {
+    "66Camera": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 65,
+        "cameraListIndex": 66,
         "lucid": {
           "exposure": 2000.0,
           "gain": 0.0,
@@ -103,6 +103,7 @@
       "Laser",
       "View",
       "Image",
-      "Recording"
+      "Recording",
+      "Settings"
     ]
 }
