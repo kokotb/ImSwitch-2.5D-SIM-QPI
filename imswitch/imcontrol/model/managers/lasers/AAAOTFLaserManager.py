@@ -45,6 +45,7 @@ class AAAOTFLaserManager(LaserManager):
         """Switch on the blanking of all the channels"""
         # cmd = 'L0' + 'I1' + 'O1'
         cmd = 'L1'
+        
         self._rs232manager.query(cmd)
 
     def internalControl(self):

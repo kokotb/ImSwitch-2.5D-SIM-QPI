@@ -36,9 +36,6 @@ class MockCameraTIS:
 
     def prepare_live(self):
         pass
-    
-    def acquireSetNow(self):
-        print("acquireSetNow")
 
     def setROI(self, hpos, vpos, hsize, vsize):
         pass
