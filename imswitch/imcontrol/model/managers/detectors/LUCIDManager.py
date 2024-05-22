@@ -4,7 +4,7 @@ from imswitch.imcommon.model import initLogger
 from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter
 
 
-class LUCIDManager_test(DetectorManager):
+class LUCIDManager(DetectorManager):
     """ DetectorManager that deals with TheImagingSource cameras and the
     parameters for frame extraction from them.
 
@@ -144,7 +144,7 @@ class LUCIDManager_test(DetectorManager):
 
     def _getTISObj(self, cameraId):
         try:
-            from imswitch.imcontrol.model.interfaces.lucidcamera_test import CameraTIS
+            from imswitch.imcontrol.model.interfaces.lucidcamera import CameraTIS
 
             camera = CameraTIS(cameraId)
             # print(camera)
@@ -154,7 +154,7 @@ class LUCIDManager_test(DetectorManager):
             camera = MockCameraTIS()
             print(camera)
 
-        self.__logger.info(f'Initialized camera, model: {camera.model}')
+        self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}')
         return camera
     
     def close(self):

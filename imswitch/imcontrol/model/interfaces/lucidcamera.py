@@ -20,7 +20,6 @@ class CameraTIS:
         self.__logger = initLogger(self, tryInheritParent=True)
         
         device = []
-        # system.destroy_device()
         
         # cameraNo is a two digit number unique to our cams (LUCID)
         cameraNo_string = "{}".format(cameraNo)
@@ -61,8 +60,8 @@ class CameraTIS:
         self.model = device_info['serial']
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
         self.nodes['ExposureAuto'].value = 'Off'
-        self.nodes['AcquisitionFrameRateEnable'].value = True
-        self.nodes['AcquisitionFrameRate'].value = 25.0
+        self.nodes['AcquisitionFrameRateEnable'].value = False
+        # self.nodes['AcquisitionFrameRate'].value = 25.0
 
 
         
@@ -133,43 +132,16 @@ class CameraTIS:
         # print("start_live1")
         # print(self.device)
         # print("start_live2")
-        
-        # print("startedlive")
         num_buffers = 500
-        # with self.device.start_stream(num_buffers):
-            
-        #     """ 'device.get_buffer(arg)' returns arg number of buffers
-        #     the buffer is in the rgb layout """
-            
-        #     print('\tGet 500 buffers')
 
-        #     # Grab images --------------------------------------------------------
-        #     buffers = self.device.get_buffer(num_buffers)
-
-        #     # Print image buffer info
-        #     for count, buffer in enumerate(buffers):
-        #         print(f'\t\tbuffer{count:{2}} received | '
-        #             f'Width = {buffer.width} pxl, '
-        #             f'Height = {buffer.height} pxl, '
-        #             f'Pixel Format = {buffer.pixel_format.name}')
-                    
-        #     self.device.requeue_buffer(buffers)
-        #     print(f'Requeued {num_buffers} buffers')
-        ##CTTEST##
         self.device.start_stream(num_buffers)
-        # print(self.device)
-
-        
-        # self.device.stop_stream()
 
     def stop_live(self):
-        print("stop_live1")
-        # print(self.device)
+        # print("stop_live1")
+        print(self.device)
         self.device.stop_stream()
-        print(self)
-        print("stop_live2")
-        # print(self.device)  
-        # self.cam.stop_live()  # stop imaging
+        # print(self)
+        # print("stop_live2")
 
     def suspend_live(self):
         print("suspend_live")

@@ -1,24 +1,4 @@
 {
-  "detectors": {
-    "66Camera": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "LUCIDManager_test",
-      "managerProperties": {
-        "cameraListIndex": 66,
-        "lucid": {
-          "exposure": 10000.0,
-          "gain": 0.0, 
-          "brightness": 1.0,
-          "pixel_format": "Mono8",
-          "ADC_bit_depth": "Bits8",
-          "image_width": 1024,
-          "image_height": 1024
-        }
-      },
-      "forAcquisition": true
-    }
-}, 
   "lasers": {
       "488AOTF": {
           "analogChannel": null,
@@ -32,7 +12,33 @@
           "valueRangeMin": 0,
           "valueRangeMax": 1023,
           "valueRangeStep": 10
-          }
+          },
+      "561AOTF": {
+        "analogChannel": null,
+        "digitalLine": null,
+        "managerName": "AAAOTFLaserManager",
+        "managerProperties": {
+          "rs232device": "aaaotf",
+          "channel": 3
+        },
+        "wavelength": 561,
+        "valueRangeMin": 0,
+        "valueRangeMax": 1023,
+        "valueRangeStep": 10
+        },
+      "640AOTF": {
+        "analogChannel": null,
+        "digitalLine": null,
+        "managerName": "AAAOTFLaserManager",
+        "managerProperties": {
+          "rs232device": "aaaotf",
+          "channel": 4
+        },
+        "wavelength": 640,
+        "valueRangeMin": 0,
+        "valueRangeMax": 1023,
+        "valueRangeStep": 10
+        }
         
     },
 
@@ -40,7 +46,7 @@
     "aaaotf": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM9",
+        "port": "ASRLCOM4",
         "encoding": "ascii",
         "recv_termination": "\n\r",
         "send_termination": "\r",
@@ -55,9 +61,6 @@
     }
     },
   "availableWidgets": [
-    "Laser",
-    "View",
-    "Image",
-    "Recording"
+      "Laser"
     ]
 }
