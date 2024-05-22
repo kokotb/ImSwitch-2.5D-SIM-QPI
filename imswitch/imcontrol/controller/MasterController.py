@@ -67,6 +67,9 @@ class MasterController:
         self.detectorsManager.sigDetectorSwitched.connect(cc.sigDetectorSwitched)
         self.detectorsManager.sigImageUpdated.connect(cc.sigUpdateImage)
         self.detectorsManager.sigNewFrame.connect(cc.sigNewFrame)
+        self.detectorsManager.sigRunAcquireSetStarted.connect(cc.sigRunAcquireSetStarted)
+        self.detectorsManager.sigRunAcquireSetStopped.connect(cc.sigRunAcquireSetStopped)
+        
 
         self.recordingManager.sigRecordingStarted.connect(cc.sigRecordingStarted)
         self.recordingManager.sigRecordingEnded.connect(cc.sigRecordingEnded)
