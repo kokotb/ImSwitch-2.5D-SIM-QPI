@@ -32,9 +32,9 @@ class ViewController(ImConWidgetController):
             self._acqHandle = None
         # print("liveview")
             
-    def acquireSet(self):
-        """ Start liveview and activate detector acquisition. """
-        print("acquireSet")
+
+    def acquireSet(self, enabled):
+        """ Start acquire set - send signal to start the acquisition. """
         self._master.detectorsManager.runAcquireSet()
 
     def gridToggle(self, enabled):
