@@ -193,6 +193,7 @@ class CameraTIS:
         #       3D array and taking the first plane of that
         # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
         frame = np.transpose(frame)
+        frame = np.moveaxis(frame, 1 , 2)
         # self.device.stop_stream()
         """
             Destroy the copied item toa prevent memory leaks
