@@ -192,6 +192,8 @@ class CameraTIS:
         # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
         #       3D array and taking the first plane of that
         # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
+        # After transpose the xy axes need to be reordered back 
+        # into correct shape. 
         frame = np.transpose(frame)
         frame = np.moveaxis(frame, 1 , 2)
         # self.device.stop_stream()
