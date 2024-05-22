@@ -55,7 +55,7 @@ class ViewWidget(Widget):
         self.gridButton.toggled.connect(self.sigGridToggled)
         self.crosshairButton.toggled.connect(self.sigCrosshairToggled)
         self.liveviewButton.toggled.connect(self.sigLiveviewToggled)
-        self.acquireSetButton.toggled.connect(self.sigAcquireSetToggled)
+        self.acquireSetButton.clicked.connect(self.sigAcquireSetToggled)
 
     def getLiveViewActive(self):
         return self.liveviewButton.isChecked()

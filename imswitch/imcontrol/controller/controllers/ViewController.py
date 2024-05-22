@@ -33,9 +33,8 @@ class ViewController(ImConWidgetController):
         # print("liveview")
             
     def acquireSet(self, enabled):
-        """ Start liveview and activate detector acquisition. """
-        print("acquireSet")
-        self._master.detectorsManager.runAcquireSet(enabled)
+        """ Start acquire set - send signal to start the acquisition. """
+        self._master.detectorsManager.runAcquireSet()
 
     def gridToggle(self, enabled):
         """ Connect with grid toggle from Image Widget through communication channel. """
