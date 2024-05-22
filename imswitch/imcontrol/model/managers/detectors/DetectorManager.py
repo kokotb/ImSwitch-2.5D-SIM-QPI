@@ -115,7 +115,6 @@ class DetectorManager(SignalInterface):
         """ :meta private: """
         try:
             self.__image = self.getLatestFrame()
-            # print(self.__image)
         except Exception:
             self.__logger.error(traceback.format_exc())
         else:
