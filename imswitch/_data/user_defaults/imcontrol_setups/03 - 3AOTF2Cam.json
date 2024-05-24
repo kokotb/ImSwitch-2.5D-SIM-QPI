@@ -8,12 +8,13 @@
         "cameraListIndex": 65,
         "lucid": {
           "exposure": 2000.0,
+          "exposureauto": "Off",
           "gain": 0.0, 
-          "brightness": 1.0,
+          "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
-          "image_width": 2048,
-          "image_height": 2048
+          "image_width": 5320,
+          "image_height": 4600
         }
       },
       "forAcquisition": true
@@ -26,12 +27,13 @@
         "cameraListIndex": 66,
         "lucid": {
           "exposure": 2000.0,
+          "exposureauto": "Off",
           "gain": 0.0,
-          "brightness": 1.0,
+          "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
-          "image_width": 2048,
-          "image_height": 2048
+          "image_width": 5320,
+          "image_height": 4600
         }
       },
       "forAcquisition": true
@@ -85,7 +87,7 @@
     "aaaotf": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM4",
+        "port": "ASRLCOM10",
         "encoding": "ascii",
         "recv_termination": "\n\r",
         "send_termination": "\r",

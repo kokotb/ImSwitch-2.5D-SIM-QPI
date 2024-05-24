@@ -31,7 +31,7 @@
         "tis": {
           "exposure": 0,
           "gain": 0,
-          "brightness": 0,
+          "gamma": 0,
           "image_width": 2448,
           "image_height": 2048
         }
@@ -47,7 +47,7 @@
         "tis": {
           "exposure": 0,
           "gain": 0,
-          "brightness": 0,
+          "gamma": 0,
           "image_width": 1280,
           "image_height": 1024
         }

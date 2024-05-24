@@ -60,14 +60,14 @@ class CameraTIS:
         self.model = device_info['serial']
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
         self.nodes['ExposureAuto'].value = 'Off'
-        self.nodes['AcquisitionFrameRateEnable'].value = False
-        # self.nodes['AcquisitionFrameRate'].value = 25.0
+        self.nodes['AcquisitionFrameRateEnable'].value = True
+        self.nodes['AcquisitionFrameRate'].value = 25.0
 
 
         
         # self.exposure = 100.1negotbuffer
         # self.gain = 0.0
-        # self.brightness = 1
+        # self.gamma = 1
         self.SensorHeight = 4600
         self.SensorWidth = 5320
         self.shape = (self.SensorHeight,self.SensorWidth)
@@ -88,22 +88,6 @@ class CameraTIS:
 
         # return device
         
-        # ic_ic = IC_ImagingControl.IC_ImagingControl()
-        # ic_ic.init_library()
-        # cam_names = ic_ic.get_unique_device_names()
-        # self.model = cam_names[cameraNo]
-        # self.cam = ic_ic.get_device(cam_names[cameraNo])
-
-        # self.cam.open()
-
-        # self.shape = (0, 0)
-        # self.cam.colorenable = 0
-
-        # self.cam.enable_continuous_mode(True)  # image in continuous mode
-        # self.cam.enable_trigger(False)  # camera will wait for trigger
-
-        # self.roi_filter = self.cam.create_frame_filter('ROI')
-        # self.cam.add_frame_filter_to_device(self.roi_filter)
 
     def create_device_from_serial_number(self, serial_number):
         
@@ -137,11 +121,10 @@ class CameraTIS:
         self.device.start_stream(num_buffers)
 
     def stop_live(self):
-        # print("stop_live1")
-        print(self.device)
+        print("stop_live")
+        # print(self.device)
         self.device.stop_stream()
-        # print(self)
-        # print("stop_live2")
+
 
     def suspend_live(self):
         print("suspend_live")
@@ -206,6 +189,7 @@ class CameraTIS:
     def setROI(self, hpos, vpos, hsize, vsize):
         hsize = max(hsize, 32)  # minimum ROI size (32 for Lucid cam)
         vsize = max(vsize, 32)  # minimum ROI size (32 for Lucid cam)
+        print('setROI1')
         self.__logger.debug(
             f'{self.model}: setROI started with {hsize}x{vsize} at {hpos},{vpos}.'
         )
@@ -239,12 +223,14 @@ class CameraTIS:
         # Check if the property exists.
         if property_name == "gain": # min=0, max=48
             self.nodes['Gain'].value = property_value
-        elif property_name == "brightness": # min=0.2, max=2.0
+        elif property_name == "gamma": # min=0.2, max=2.0
             self.nodes['Gamma'].value = property_value
         elif property_name == "pixel_format": 
             self.nodes['PixelFormat'].value = property_value
         elif property_name == "ADC_bit_depth": 
             self.nodes['ADCBitDepth'].value = property_value
+        elif property_name == "exposureauto":
+            self.nodes['ExposureAuto'].value = property_value
         elif property_name == "exposure": #min and max can change depending on other settings
             self.nodes['ExposureTime'].value = property_value 
         elif property_name == 'image_height':
@@ -263,7 +249,7 @@ class CameraTIS:
         # Check if the property exists.
         if property_name == "gain":
             property_value = self.nodes['Gain'].value
-        elif property_name == "brightness":
+        elif property_name == "gamma":
             property_value = self.nodes['Gamma'].value
         elif property_name == "exposure":
             property_value = self.nodes['ExposureTime'].value
@@ -271,6 +257,8 @@ class CameraTIS:
             property_value = self.nodes['PixelFormat'].value
         elif property_name == "ADC_bit_depth":
             property_value = self.nodes['ADCBitDepth'].value
+        elif property_name == "exposureauto":
+            property_value = self.nodes['ExposureAuto'].value
         elif property_name == "image_width":
             property_value = self.shape[1]
         elif property_name == "image_height":
