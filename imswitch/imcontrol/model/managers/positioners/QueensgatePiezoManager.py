@@ -1,7 +1,7 @@
 from .PositionerManager import PositionerManager
 
 
-class PiezoconceptZManager(PositionerManager):
+class QueensgatePiezoManager(PositionerManager):
     """ PositionerManager for control of a Piezoconcept Z-piezo through RS232
     communication.
 
@@ -23,22 +23,43 @@ class PiezoconceptZManager(PositionerManager):
             positionerInfo.managerProperties['rs232device']
         ]
 
+    
     def move(self, value, _):
+        
         if value == 0:
             return
         elif float(value) > 0:
-            cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
+            cmd = 'U {}'.format(value)
+            # print(value)
         elif float(value) < 0:
-            cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
+            absvalue = abs(float(value))
+            cmd = 'D {}'.format(absvalue)
+            # print(value)
         self._rs232Manager.query(cmd)
 
         self._position[self.axes[0]] = self._position[self.axes[0]] + value
 
+    # def move(self, value, _):
+    #     if value == 0:
+    #         return
+    #     elif float(value) > 0:
+    #         cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
+    #     elif float(value) < 0:
+    #         cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
+    #     self._rs232Manager.query(cmd)
+
+    #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
+
+    def move_to_position(value, instrument):
+        # return instrument.query("V " + str(number))
+        return instrument.query('V {}'.format(value))
+
     def setPosition(self, value, _):
-        cmd = 'MOVEX ' + str(round(float(value), 3)) + 'u'
+        cmd = 'V {}'.format(value)
         self._rs232Manager.query(cmd)
 
         self._position[self.axes[0]] = value
+        print('Piezo set to: {}'.format(value))
 
     @property
     def position(self):
@@ -46,13 +67,14 @@ class PiezoconceptZManager(PositionerManager):
         return self._position
 
     def get_abs(self):
-        cmd = 'GET_X'
+        cmd = 'PZ'
         reply = self._rs232Manager.query(cmd)
         if reply is None:
             reply = self._position[self.axes[0]]
         else:
-            reply = float(reply.split(' ')[0])
+            reply = float(reply)
         self._position[self.axes[0]] = reply
+        print(reply)
         return reply
 
 
