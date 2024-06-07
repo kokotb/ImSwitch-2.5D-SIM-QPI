@@ -21,7 +21,7 @@ class PositionerController(ImConWidgetController):
                 continue
 
             speed = hasattr(pManager, 'speed')
-            self._widget.addPositioner(pName, pManager.axes, speed)
+            self._widget.addPositioner(pName, pManager.axes, speed)###
             for axis in pManager.axes:
                 self.setSharedAttr(pName, axis, _positionAttr, pManager.position[axis])
                 if speed:
@@ -29,12 +29,12 @@ class PositionerController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
-        self._commChannel.sigSetSpeed.connect(lambda speed: self.setSpeedGUI(speed))
+        # self._commChannel.sigSetSpeed.connect(lambda absPos: self.setAbsPosGUI(speed)) #commented when changing speed function to AbsPos
 
         # Connect PositionerWidget signals
         self._widget.sigStepUpClicked.connect(self.stepUp)
         self._widget.sigStepDownClicked.connect(self.stepDown)
-        self._widget.sigsetSpeedClicked.connect(self.setSpeedGUI)
+        self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(
@@ -64,13 +64,16 @@ class PositionerController(ImConWidgetController):
     def stepDown(self, positionerName, axis):
         self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
 
-    def setSpeedGUI(self):
-        positionerName = self.getPositionerNames()[0]
-        speed = self._widget.getSpeed()
-        self.setSpeed(positionerName=positionerName, speed=speed)
+    def setAbsPosGUI(self):
+        positionerName = self.getPositionerNames()[0] #probably stays the same
+        absPos = self._widget.getAbsPos()#pulls value from text box
+        self.setAbsPos(positionerName=positionerName, absPos=absPos)
+        self.updatePosition(positionerName, axis='Z')
 
-    def setSpeed(self, positionerName, speed=(1000,1000,1000)):
-        self._master.positionersManager[positionerName].setSpeed(speed)
+    def setAbsPos(self, positionerName, absPos):
+
+        self._master.positionersManager[positionerName].move_to_position(absPos)
+        
         
     def updatePosition(self, positionerName, axis):
         newPos = self._master.positionersManager[positionerName].position[axis]

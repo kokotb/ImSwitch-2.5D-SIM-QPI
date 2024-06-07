@@ -1,7 +1,7 @@
 import numpy as np
 
 from imswitch.imcommon.model import initLogger
-from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter
+from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter, DetectorListParameter
 
 
 class LUCIDManager(DetectorManager):
@@ -31,14 +31,16 @@ class LUCIDManager(DetectorManager):
 
         self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
 
-## Cannot tell where these values are used
+## These parameters are used to populate the detector settings panel.
         parameters = {
-            'exposure': DetectorNumberParameter(group='Misc', value=1000, valueUnits='us',
+            'exposure': DetectorNumberParameter(group='Acq. Control', value=1000, valueUnits='us',
                                                 editable=True),
-            'gain': DetectorNumberParameter(group='Misc', value=0, valueUnits='arb.u.',
+            'gain': DetectorNumberParameter(group='Analog Control', value=0, valueUnits='arb.u.',
                                             editable=True),
-            'brightness': DetectorNumberParameter(group='Misc', value=1, valueUnits='arb.u.',
+            'gamma': DetectorNumberParameter(group='Analog Control', value=1, valueUnits='arb.u.',
                                                   editable=True),
+            'exposureauto': DetectorListParameter(group='Acq. Control', value='Off', options=['Off','Once','Continuous'],
+                                                editable=True),                        
         }
 
         # Prepare actions
@@ -157,7 +159,7 @@ class LUCIDManager(DetectorManager):
             camera = MockCameraTIS()
             print(camera)
 
-        self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}')
+        self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}')  #Prints "Initialized camera. serial ending...."
         return camera
     
     def close(self):

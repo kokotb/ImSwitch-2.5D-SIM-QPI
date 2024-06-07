@@ -9,7 +9,7 @@
         "lucid": {
           "exposure": 2000.0,
           "gain": 0.0, 
-          "brightness": 1.0,
+          "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
           "image_width": 1024,

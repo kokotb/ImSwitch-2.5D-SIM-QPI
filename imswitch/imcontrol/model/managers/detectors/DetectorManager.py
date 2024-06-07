@@ -27,7 +27,7 @@ class DetectorParameter(ABC):
     the user to view/edit. """
 
     group: str
-    """ The group to place the parameter in (does not need to be
+    """ The group to place the parameter in (does not need to be 
     pre-defined). """
 
     value: Any

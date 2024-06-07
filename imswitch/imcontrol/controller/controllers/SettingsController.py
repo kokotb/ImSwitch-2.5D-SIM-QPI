@@ -330,10 +330,10 @@ class SettingsController(ImConWidgetController):
         fullShape = detector.fullShape
         params.x0.setValue(frameStart[0])
         params.y0.setValue(frameStart[1])
-        params.width.setValue(shape[0])
-        params.width.setLimits((1, fullShape[0]))
-        params.height.setValue(shape[1])
-        params.height.setLimits((1, fullShape[1]))
+        params.width.setValue(shape[1])#CTEDIT
+        params.width.setLimits((1, fullShape[1]))#CTEDIT
+        params.height.setValue(shape[0])#CTEDIT swapped indices
+        params.height.setLimits((1, fullShape[0]))#CTEDIT
 
         # Model
         params.model.setValue(detector.model)
@@ -374,8 +374,8 @@ class SettingsController(ImConWidgetController):
                 fullChipShape = detector.fullShape
                 params.x0.setValue(0)
                 params.y0.setValue(0)
-                params.width.setValue(fullChipShape[0])
-                params.height.setValue(fullChipShape[1])
+                params.width.setValue(fullChipShape[1])#CTEDIT swapped indices
+                params.height.setValue(fullChipShape[0])#CTEDIT
             else:
                 roiInfo = self._setupInfo.rois[frameMode]
                 params.x0.setValue(roiInfo.x)
