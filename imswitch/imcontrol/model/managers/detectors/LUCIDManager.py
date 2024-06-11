@@ -5,7 +5,7 @@ from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberPara
 
 
 class LUCIDManager(DetectorManager):
-    """ DetectorManager that deals with TheImagingSource cameras and the
+    """ DetectorManager that deals with LUCID cameras and the
     parameters for frame extraction from them.
 
     Manager properties:

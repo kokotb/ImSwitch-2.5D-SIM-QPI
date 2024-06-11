@@ -19,9 +19,11 @@ class MasterController:
 
         # Init managers
         self.nidaqManager = NidaqManager(self.__setupInfo)
+        
         #self.pulseStreamerManager = PulseStreamerManager(self.__setupInfo)
         self.rs232sManager = RS232sManager(self.__setupInfo.rs232devices)
-
+        
+        
         lowLevelManagers = {
             'nidaqManager': self.nidaqManager,
             #'pulseStreamerManager' : self.pulseStreamerManager,
