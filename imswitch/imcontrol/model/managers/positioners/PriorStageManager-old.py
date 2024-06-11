@@ -6,6 +6,8 @@ from imswitch.imcommon.model import initLogger
 from .PositionerManager import PositionerManager
 
 # Load SDK library - this is hardcoded - need to generalize that
+# path = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\PriorSDK\\x64\\PriorScientificSDK.dll"
+# path = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\ImSwitch-2.5D-SIM-QPI\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
 imswitch_parent = "C:\\VSCode"
 path = imswitch_parent+"\\ImSwitch-2.5D-SIM-QPI\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
 if os.path.exists(path):
@@ -13,16 +15,8 @@ if os.path.exists(path):
 else:
     raise RuntimeError("DLL could not be loaded.")
 
-
 class PriorStageManager(PositionerManager):
-    """ PositionerManager for control of a Piezoconcept Z-piezo through RS232
-    communication.
-
-    Manager properties:
-
-    - ``rs232device`` -- name of the defined rs232 communication channel
-      through which the communication should take place
-    """
+    """ Direct communication with Prior Stage using Prior SDK. """
 
     def __init__(self, positionerInfo, name, *args, **lowLevelManagers):
         if len(positionerInfo.axes) != 1:
@@ -35,17 +29,14 @@ class PriorStageManager(PositionerManager):
         self.__logger = initLogger(self)
 
         self.positionerInfo = positionerInfo
-        self.port = positionerInfo.managerProperties['port']
         self.rx = create_string_buffer(1000)
-        self.api = self.initialize_API()
-        self.sessionID = self.open_session()
-        self.check_connection_to_api()
-        self.intialize_stage()
-
-
-
+        self.stage = self.initialize_stage()
+        self.sessionID = self.connect_to_stage()
+        self.check_connection()
+        print(positionerInfo)
+        
     # Functions to initialize stage
-    def initialize_API(self):
+    def initialize_stage(self):
         stage = SDKPrior.PriorScientificSDK_Initialise()
         if stage:
             self.__logger.warning(f'Failed to initialize {stage}, loading mocker')
@@ -53,33 +44,23 @@ class PriorStageManager(PositionerManager):
         else:
             print(f"Ok initialising {stage}")
             return stage
-
-
-    def open_session(self):
+    
+    def connect_to_stage(self):
         sessionID = SDKPrior.PriorScientificSDK_OpenNewSession()
         if sessionID < 0:
-            print(f"Error getting sessionID {self.api}")
+            print(f"Error getting sessionID {self.stage}")
         else:
             print(f"SessionID = {sessionID}")
             return sessionID
-
-
-    def check_connection_to_api(self):
+        
+    def check_connection(self):
         ret = SDKPrior.PriorScientificSDK_cmd(
         self.sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
         print(f"api response {ret}, rx = {self.rx.value.decode()}")
         ret = SDKPrior.PriorScientificSDK_cmd(
         self.sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
         print(f"api response {ret}, rx = {self.rx.value.decode()}")
-
-
-    def intialize_stage(self):
-        # Extracts the port number used for device initialization
-        port = ''.join(filter(lambda i: i.isdigit(), self.port))
-        msg = "controller.connect " + port
-        self.query(msg)
-
-
+    
     # Send messages to stage
     def query(self, msg):
         print(msg)
@@ -94,79 +75,70 @@ class PriorStageManager(PositionerManager):
         # input("Press ENTER to continue...")
         return ret, self.rx.value.decode()
     
-    def get_position(self):
-        response = self.query("controller.stage.position.get")
-        position = response[1].split(",", 1)
-        return position
-    
-    def move(self, dist, axis):
+    # Re-do for Prior SDK that is connected to ImSwitch in PriorStageManager
+    def move(self, value, _):
         self.setPosition(self._position[self.axes[0]] + dist, axis)
+        pass
 
-    def setPosition(self, position, axis):
-        current_position = self.get_position()
-        new_position = current_position
-        new_position [axis] = str(position)
-        msg_set_position = "controller.stage.position.set "+new_position[0]+" "+new_position[1]
-        self.query(msg_set_position)
-        self._position[self.axes[0]] = position
+        # if value == 0:
+        #     return
+        # elif float(value) > 0:
+        #     cmd = 'U {}'.format(value)
+        #     # print(value)
+        # elif float(value) < 0:
+        #     absvalue = abs(float(value))
+        #     cmd = 'D {}'.format(absvalue)
+        #     # print(value)
+        # self.query(cmd)
 
-    
+        # self._position[self.axes[0]] = self._position[self.axes[0]] + value
+
     # def move(self, value, _):
-        
     #     if value == 0:
     #         return
     #     elif float(value) > 0:
-    #         cmd = 'U {}'.format(value)
-    #         # print(value)
+    #         cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
     #     elif float(value) < 0:
-    #         absvalue = abs(float(value))
-    #         cmd = 'D {}'.format(absvalue)
-    #         # print(value)
+    #         cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
     #     self._rs232Manager.query(cmd)
 
     #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
 
-    # # def move(self, value, _):
-    # #     if value == 0:
-    # #         return
-    # #     elif float(value) > 0:
-    # #         cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
-    # #     elif float(value) < 0:
-    # #         cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
-    # #     self._rs232Manager.query(cmd)
-
-    # #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
-
-    # def move_to_position(self, value):
-    #     cmd = 'V {}'.format(value)
-    #     self._rs232Manager.query(cmd)
-    #     self._position[self.axes[0]] = value
-    #     print(value)
+    def move_to_position(self, value):
+        pass
+        # cmd = 'V {}'.format(value)
+        # self.query(cmd)
+        # self._position[self.axes[0]] = value
+        # print(value)
 
     
-    # def setPosition(self, value, _):
-    #     cmd = 'V {}'.format(value)
-    #     self._rs232Manager.query(cmd)
+    def setPosition(self, value, _):
+        self._position[self.axes[0]] = value
+        pass
+        # cmd = 'V {}'.format(value)
+        # self.query(cmd)
 
-    #     self._position[self.axes[0]] = value
+        # self._position[self.axes[0]] = value
         
 
-    # @property
-    # def position(self):
-    #     _ = self.get_abs()
-    #     return self._position
+    @property
+    def position(self):
+        pass
+        # _ = self.get_abs()
+        # return self._position
 
-    # def get_abs(self):
-    #     cmd = 'PZ'
-    #     reply = self._rs232Manager.query(cmd)
-    #     if reply is None:
-    #         reply = self._position[self.axes[0]]
-    #     else:
-    #         # reply = float(reply.split(' ')[0])
-    #         reply = float(reply)
-    #     self._position[self.axes[0]] = reply
-    #     # print(reply)
-    #     return reply
+    def get_abs(self):
+        pass
+        # cmd = 'PZ'
+        # reply = self.query(cmd)
+        # if reply is None:
+        #     reply = self._position[self.axes[0]]
+        # else:
+        #     # reply = float(reply.split(' ')[0])
+        #     reply = reply
+        # self._position[self.axes[0]] = reply
+        # # print(reply)
+        # return reply
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

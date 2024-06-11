@@ -115,9 +115,9 @@
     "X": {
       "analogChannel": null,
       "digitalLine": null,
-      "managerName": "PriorStageManager",
+      "managerName": "MockPositionerManager",
       "managerProperties": {
-        "rs232device": "None"
+        "rs232device": "device"
       },
       "axes": ["X"],
       "forPositioning": true
