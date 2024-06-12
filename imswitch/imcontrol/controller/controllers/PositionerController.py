@@ -158,12 +158,6 @@ class PositionerController(ImConWidgetController):
         """ Moves the specified positioner axis in negative direction by its
         set step size. """
         self.stepDown(positionerName, axis)
-    
-    # ## Not configured correctly.
-    # @APIExport(runOnUIThread=True)
-    # def getAbsPos(self, positionerName: str, axis: str) -> None:
-    #     """ Sets the value of the positioner. """
-    #     self.setAbsPos(positionerName, axis)
 
 
 
