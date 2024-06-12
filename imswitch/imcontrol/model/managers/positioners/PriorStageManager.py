@@ -44,8 +44,8 @@ class PriorStageManager(PositionerManager):
         self.intialize_stage()
         self.check_axes()
         # Set intial values to match the widget
-        # for axis in self.axes: 
-        #     self.setPosition(self._position[axis])
+        for axis in self.axes: 
+            self.setPosition(self._position[axis], axis)
         print("PriorStageManager intialized.")
 
 
@@ -114,9 +114,9 @@ class PriorStageManager(PositionerManager):
         return position
     
     def move(self, dist, axis):
-        self.setPosition(self._position[self.axes[0]] + dist)
+        self.setPosition(self._position[self.axes[0]] + dist, axis)
 
-    def setPosition(self, position):
+    def setPosition(self, position, axis):
         axis = self.axes[0]
         if axis == 'X':
             axis_order = 0
@@ -142,13 +142,13 @@ class PriorStageManager(PositionerManager):
         else:
             axis_order = 'None'
             print(f"{axis} is invalid input for Priro XY stage!")
-        print("Move to set position.")
-        # current_position = self.get_position()
-        # new_position = current_position
-        # new_position[axis_order] = str(position)
-        # msg_set_position = "controller.stage.position.set "+new_position[0]+" "+new_position[1]
-        # self.query(msg_set_position)
-        # self._position[axis] = position
+        # print("Move to set position.")
+        current_position = self.get_position()
+        new_position = current_position
+        new_position[axis_order] = str(position)
+        msg_set_position = "controller.stage.position.set "+new_position[0]+" "+new_position[1]
+        self.query(msg_set_position)
+        self._position[axis] = position
 
     
     # def move(self, value, _):
