@@ -122,22 +122,8 @@
         "rs232device": "zpiezo"
       },
       "axes": ["Z"],
-<<<<<<< HEAD
-      "forPositioning": true
-    },
-    "X": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "PriorStageManager",
-      "managerProperties": {
-        "port": "ASRLCOM14"
-      },
-      "axes": ["X"],
-      "forPositioning": true
-=======
       "forPositioning": true,
       "forScanning": true
->>>>>>> d81397a255512f558b83390ccdeecb388c759d5d
     }
 },
 
