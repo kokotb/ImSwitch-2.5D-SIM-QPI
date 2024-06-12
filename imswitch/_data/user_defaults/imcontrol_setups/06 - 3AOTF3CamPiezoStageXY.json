@@ -107,7 +107,8 @@
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-        "port": "ASRLCOM14"
+        "port": "ASRLCOM14",
+        "zeroOnStartup": false
       },
       "axes": ["X", "Y"],
       "forPositioning": true,

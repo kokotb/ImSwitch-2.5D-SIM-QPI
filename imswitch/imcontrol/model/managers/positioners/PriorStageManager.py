@@ -43,8 +43,10 @@ class PriorStageManager(PositionerManager):
         self.intialize_stage()
         self.check_axes()
         # Set intial values to match the widget
-        # for axis in self.axes: 
-        #     self.setPosition(self._position[axis], axis)
+        self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
+        if self.zeroOnStartup:
+            for axis in self.axes: 
+                self.setPosition(self._position[axis], axis)
         print("PriorStageManager intialized.")
 
 
