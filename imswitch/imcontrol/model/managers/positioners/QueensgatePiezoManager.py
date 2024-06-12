@@ -50,10 +50,10 @@ class QueensgatePiezoManager(PositionerManager):
 
     #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
 
-    def move_to_position(self, value):
+    def move_to_position(self, value, axis):
         cmd = 'V {}'.format(value)
         self._rs232Manager.query(cmd)
-        self._position[self.axes[0]] = value
+        self._position[axis] = value
         print(value)
 
     

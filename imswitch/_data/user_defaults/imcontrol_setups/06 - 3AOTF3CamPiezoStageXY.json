@@ -102,6 +102,17 @@
     
 },
   "positioners": {
+    "XY": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM14"
+      },
+      "axes": ["X", "Y"],
+      "forPositioning": true,
+      "forScanning": true
+    },
     "Z": {
       "analogChannel": null,
       "digitalLine": null,
@@ -110,17 +121,8 @@
         "rs232device": "zpiezo"
       },
       "axes": ["Z"],
-      "forPositioning": true
-    },
-    "X": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "PriorStageManager",
-      "managerProperties": {
-        "port": "ASRLCOM14"
-      },
-      "axes": ["X"],
-      "forPositioning": true
+      "forPositioning": true,
+      "forScanning": true
     }
 },
 

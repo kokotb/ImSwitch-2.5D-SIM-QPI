@@ -65,15 +65,13 @@ class PositionerController(ImConWidgetController):
         self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
 
     def setAbsPosGUI(self, positionerName, axis):
-        # positionerName = self.getPositionerNames()[0] #probably stays the same
-        # axis = self._master.positionersManager[positionerName].axes[0]
         absPos = self._widget.getAbsPos(positionerName, axis)#pulls value from text box
-        self.setAbsPos(positionerName=positionerName, absPos=absPos)
+        self.setAbsPos(positionerName=positionerName, absPos=absPos, axis=axis)
         self.updatePosition(positionerName, axis=axis)
 
-    def setAbsPos(self, positionerName, absPos):
+    def setAbsPos(self, positionerName, absPos, axis):
 
-        self._master.positionersManager[positionerName].move_to_position(absPos)
+        self._master.positionersManager[positionerName].move_to_position(absPos, axis)
         
         
     def updatePosition(self, positionerName, axis):
@@ -160,10 +158,11 @@ class PositionerController(ImConWidgetController):
         set step size. """
         self.stepDown(positionerName, axis)
     
-    @APIExport(runOnUIThread=True)
-    def getAbsPos(self, positionerName: str, axis: str) -> None:
-        """ Sets the value of the positioner. """
-        self.setAbsPos(positionerName, axis)
+    # ## Not configured correctly.
+    # @APIExport(runOnUIThread=True)
+    # def getAbsPos(self, positionerName: str, axis: str) -> None:
+    #     """ Sets the value of the positioner. """
+    #     self.setAbsPos(positionerName, axis)
 
 
 
