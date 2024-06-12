@@ -63,7 +63,7 @@ class PositionerWidget(Widget):
 
 
             self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
-                lambda *args: self.sigsetAbsPosClicked.emit(positionerName, axis)
+                lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
             )
             self.numPositioners += 1
 

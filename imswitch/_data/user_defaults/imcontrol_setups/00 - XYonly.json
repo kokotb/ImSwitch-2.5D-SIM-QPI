@@ -1,24 +1,16 @@
 {
   "positioners": {
-    "Z": {
-        "analogChannel": null,
-        "digitalLine": null,
-        "managerName": "QueensgatePiezoManager",
-        "managerProperties": {
-          "rs232device": "zpiezo"
-        },
-        "axes": ["Z"],
-        "forPositioning": true
-      },
-      "X": {
+    "XY": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-        "port": "ASRLCOM14"
+        "port": "ASRLCOM14",
+        "zeroOnStartup": false
       },
-      "axes": ["X"],
-      "forPositioning": true
+      "axes": ["X", "Y"],
+      "forPositioning": true,
+      "forScanning": true
     }
 },
 

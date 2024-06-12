@@ -26,8 +26,8 @@ class PriorStageManager(PositionerManager):
     """
 
     def __init__(self, positionerInfo, name, *args, **lowLevelManagers):
-        if len(positionerInfo.axes) != 1:
-            raise RuntimeError(f'{self.__class__.__name__} only supports one axis,'
+        if len(positionerInfo.axes) > 2:
+            raise RuntimeError(f'{self.__class__.__name__} only supports two axes,'
                                f' {len(positionerInfo.axes)} provided.')
 
         super().__init__(positionerInfo, name, initialPosition={
@@ -44,8 +44,10 @@ class PriorStageManager(PositionerManager):
         self.intialize_stage()
         self.check_axes()
         # Set intial values to match the widget
-        # for axis in self.axes: 
-        #     self.setPosition(self._position[axis], axis)
+        self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
+        if self.zeroOnStartup:
+            for axis in self.axes: 
+                self.setPosition(self._position[axis], axis)
         print("PriorStageManager intialized.")
 
 
@@ -114,10 +116,9 @@ class PriorStageManager(PositionerManager):
         return position
     
     def move(self, dist, axis):
-        self.setPosition(self._position[self.axes[0]] + dist, axis)
+        self.setPosition(self._position[axis] + dist, axis)
 
     def setPosition(self, position, axis):
-        axis = self.axes[0]
         if axis == 'X':
             axis_order = 0
         elif axis =='Y':
@@ -133,20 +134,19 @@ class PriorStageManager(PositionerManager):
         self.query(msg_set_position)
         self._position[axis] = position
 
-    def move_to_position(self, position):
-        axis = self.axes[0]
+    def move_to_position(self, position, axis):
         if axis == 'X':
             axis_order = 0
         elif axis =='Y':
             axis_order = 1
         else:
             axis_order = 'None'
-            print(f"{axis} is invalid input for Priro XY stage!")
+            print(f"{axis} is invalid input for Prior XY stage!")
         # print("Move to set position.")
         current_position = self.get_position()
         new_position = current_position
         new_position[axis_order] = str(position)
-        msg_set_position = "controller.stage.position.set "+new_position[0]+" "+new_position[1]
+        msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
 
