@@ -10,7 +10,7 @@
         "axes": ["Z"],
         "forPositioning": true
       },
-      "X": {
+    "X": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "PriorStageManager",

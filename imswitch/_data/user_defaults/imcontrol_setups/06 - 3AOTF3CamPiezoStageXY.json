@@ -111,6 +111,16 @@
       },
       "axes": ["Z"],
       "forPositioning": true
+    },
+    "X": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM14"
+      },
+      "axes": ["X"],
+      "forPositioning": true
     }
 },
 
