@@ -6,7 +6,8 @@ from imswitch.imcommon.model import initLogger
 from .PositionerManager import PositionerManager
 
 # Load SDK library - this is hardcoded - need to generalize that
-imswitch_parent = "C:\\VSCode"
+# imswitch_parent = "C:\\VSCode"
+imswitch_parent = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM"
 path = imswitch_parent+"\\ImSwitch-2.5D-SIM-QPI\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
 if os.path.exists(path):
     SDKPrior = WinDLL(path)
