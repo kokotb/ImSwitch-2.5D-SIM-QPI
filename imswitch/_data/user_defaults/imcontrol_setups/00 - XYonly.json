@@ -1,13 +1,13 @@
 {
   "positioners": {
-    "Z": {
+    "X": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
         "port": "ASRLCOM14"
       },
-      "axes": ["Z"],
+      "axes": ["X"],
       "forPositioning": true
     }
 },
