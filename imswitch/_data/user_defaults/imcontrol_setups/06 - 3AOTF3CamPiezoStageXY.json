@@ -111,16 +111,6 @@
       },
       "axes": ["Z"],
       "forPositioning": true
-    },
-    "X": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "MockPositionerManager",
-      "managerProperties": {
-        "rs232device": "device"
-      },
-      "axes": ["X"],
-      "forPositioning": true
     }
 },
 

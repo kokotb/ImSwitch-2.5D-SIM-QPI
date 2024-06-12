@@ -64,11 +64,12 @@ class PositionerController(ImConWidgetController):
     def stepDown(self, positionerName, axis):
         self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
 
-    def setAbsPosGUI(self):
-        positionerName = self.getPositionerNames()[0] #probably stays the same
-        absPos = self._widget.getAbsPos()#pulls value from text box
+    def setAbsPosGUI(self, positionerName, axis):
+        # positionerName = self.getPositionerNames()[0] #probably stays the same
+        # axis = self._master.positionersManager[positionerName].axes[0]
+        absPos = self._widget.getAbsPos(positionerName, axis)#pulls value from text box
         self.setAbsPos(positionerName=positionerName, absPos=absPos)
-        self.updatePosition(positionerName, axis='Z')
+        self.updatePosition(positionerName, axis=axis)
 
     def setAbsPos(self, positionerName, absPos):
 
@@ -158,7 +159,11 @@ class PositionerController(ImConWidgetController):
         """ Moves the specified positioner axis in negative direction by its
         set step size. """
         self.stepDown(positionerName, axis)
-
+    
+    @APIExport(runOnUIThread=True)
+    def getAbsPos(self, positionerName: str, axis: str) -> None:
+        """ Sets the value of the positioner. """
+        self.setAbsPos(positionerName, axis)
 
 
 

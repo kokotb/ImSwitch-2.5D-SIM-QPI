@@ -9,7 +9,7 @@ class PositionerWidget(Widget):
 
     sigStepUpClicked = QtCore.Signal(str, str)  # (positionerName, axis)
     sigStepDownClicked = QtCore.Signal(str, str)  # (positionerName, axis)
-    sigsetAbsPosClicked = QtCore.Signal()  # (speed)
+    sigsetAbsPosClicked = QtCore.Signal(str, str)  # (positionerName, axis)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,19 +51,19 @@ class PositionerWidget(Widget):
             )
             
    
-            self.pars['AbsPos'] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
-            self.pars['AbsPos'].setTextFormat(QtCore.Qt.RichText)
-            self.pars['ButtonAbsPosEnter'] = guitools.BetterPushButton('Enter')
-            self.pars['AbsPosEdit'] = QtWidgets.QLineEdit('0')
-            self.pars['AbsPosUnit'] = QtWidgets.QLabel(' µm')
-            self.grid.addWidget(self.pars['AbsPosEdit'], self.numPositioners, 10)
-            self.grid.addWidget(self.pars['AbsPosUnit'], self.numPositioners, 11)
-            self.grid.addWidget(self.pars['ButtonAbsPosEnter'], self.numPositioners, 12)
-            self.grid.addWidget(self.pars['AbsPos'], self.numPositioners, 8)
+            self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
+            self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+            self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
+            self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+            self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+            self.grid.addWidget(self.pars['AbsPosEdit' + parNameSuffix], self.numPositioners, 10)
+            self.grid.addWidget(self.pars['AbsPosUnit' + parNameSuffix], self.numPositioners, 11)
+            self.grid.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix], self.numPositioners, 12)
+            self.grid.addWidget(self.pars['AbsPos' + parNameSuffix], self.numPositioners, 8)
 
 
-            self.pars['ButtonAbsPosEnter'].clicked.connect(
-                lambda *args: self.sigsetAbsPosClicked.emit()
+            self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
+                lambda *args: self.sigsetAbsPosClicked.emit(positionerName, axis)
             )
             self.numPositioners += 1
 
@@ -79,10 +79,11 @@ class PositionerWidget(Widget):
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         self.pars['StepEdit' + parNameSuffix].setText(stepSize)
 
-    def getAbsPos(self):
+    def getAbsPos(self, positionerName, axis):
         """ Returns the step size of the specified positioner axis in
         micrometers. """
-        return float(self.pars['AbsPosEdit'].text())
+        parNameSuffix = self._getParNameSuffix(positionerName, axis)
+        return float(self.pars['AbsPosEdit'+parNameSuffix].text())
 
     def setSpeedSize(self, positionerName, axis, speedSize):
         """ Sets the step size of the specified positioner axis to the

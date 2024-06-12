@@ -1,6 +1,16 @@
 {
   "positioners": {
-    "X": {
+    "Z": {
+        "analogChannel": null,
+        "digitalLine": null,
+        "managerName": "QueensgatePiezoManager",
+        "managerProperties": {
+          "rs232device": "zpiezo"
+        },
+        "axes": ["Z"],
+        "forPositioning": true
+      },
+      "X": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "PriorStageManager",
