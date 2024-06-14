@@ -158,7 +158,28 @@ class PriorStageManager(PositionerManager):
         self.query(msg_set_position)
         self._position[axis] = position
         print(self._position) #calcuated, not queries from get_abs
-        
+
+
+
+    def getSpeedLow(self):
+        msg_get_speed = "controller.stage.speed.get"
+        response = self.query(msg_get_speed)
+        speed = response[1]
+        return speed
+
+    def setSpeedLow(self, speed):
+        if speed <= 0:
+            print(f"Invalid speed setting at {speed} um/s!")
+            speed = 6000 # Default on the device at the moment 28550
+            print(f"Setting speed to default {speed} um/s!")
+        elif speed > 15000:
+            print(f"Max speed limit exceed at {speed} um/s! Max is 15000 um/s.")
+            speed = 6000 # Default on the device at the moment
+            print(f"Setting speed to default {speed} um/s!")
+        msg_set_speed = "controller.stage.speed.set "+str(speed)
+        self.query(msg_set_speed)
+        speed_set = self.getSpeedLow()
+        print(f"{speed_set} um/s") #calculated, not queries from get_abs     
 
     @property
     def position(self):

@@ -35,6 +35,7 @@ class PositionerController(ImConWidgetController):
         self._widget.sigStepUpClicked.connect(self.stepUp)
         self._widget.sigStepDownClicked.connect(self.stepDown)
         self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
+        self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(
@@ -65,8 +66,8 @@ class PositionerController(ImConWidgetController):
         self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
 
     def setAbsPosGUI(self, positionerName, axis):
-        # positionerName = self.getPositionerNames()[0] #probably stays the same
-        absPos = self._widget.getAbsPos(positionerName, axis)#pulls value from text box
+        # positionerName = self.getPositionerNames()[0] # probably stays the same
+        absPos = self._widget.getAbsPos(positionerName, axis) # pulls value from text box
         self.setAbsPos(positionerName=positionerName, absPos=absPos, axis=axis)
         # Updates all positioners with current value in memory
         for axis1 in self._master.positionersManager[positionerName].axes: 
@@ -83,12 +84,34 @@ class PositionerController(ImConWidgetController):
             self._master.positionersManager[positionerName].setPositionXY(x, y)
         else:
             self._master.positionersManager[positionerName].setPosition(absPos, axis)
+
+    
+    def setSpeed(self, positionerName):
+        axes = self._master.positionersManager[positionerName].axes
+        speed = self._widget.getSpeedSize(positionerName, axes[0]) # pulls value from text box
         
-        
+        if positionerName == 'XY' and len(axes)==2:
+            axis_x = axes[0]
+            axis_y = axes[1]
+            speed_x = self._widget.getSpeedSize(positionerName, axis_x)
+            speed_y = self._widget.getSpeedSize(positionerName, axis_y)
+            speed = max([speed_x, speed_y])
+            self._master.positionersManager[positionerName].setSpeedLow(speed)
+
+            speed_set = self._master.positionersManager[positionerName].getSpeedLow()
+            # self._widget.updateSpeedSize(positionerName, axis_x, speed_set)
+            # self._widget.updateSpeedSize(positionerName, axis_y, speed_set)
+        else:
+            self._master.positionersManager[positionerName].setSpeedLow(speed)
+            speed_set = self._master.positionersManager[positionerName].getSpeedLow()
+            # self._widget.updateSpeedSize(positionerName, axes[0], speed_set)
+            
+    
     def updatePosition(self, positionerName, axis):
         newPos = self._master.positionersManager[positionerName].position[axis]
         self._widget.updatePosition(positionerName, axis, newPos)
         self.setSharedAttr(positionerName, axis, _positionAttr, newPos)
+
 
     def attrChanged(self, key, value):
         if self.settingAttr or len(key) != 4 or key[0] != _attrCategory:

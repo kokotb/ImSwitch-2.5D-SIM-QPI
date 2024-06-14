@@ -23,6 +23,7 @@ class QueensgatePiezoManager(PositionerManager):
             positionerInfo.managerProperties['rs232device']
         ]
 
+        self.positionerInfo = positionerInfo
     
     def move(self, value, _):
         
@@ -62,6 +63,16 @@ class QueensgatePiezoManager(PositionerManager):
         self._rs232Manager.query(cmd)
         self._position[_] = value
         print(value)
+
+
+    def getSpeedLow(self):
+        print("getSpeed not implemented yet!")
+        pass
+
+
+    def setSpeedLow(self, speed):
+        print(f"setSpeed not implemented yet for {self.positionerInfo.managerName}")
+        pass
         
 
     @property
