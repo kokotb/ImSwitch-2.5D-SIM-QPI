@@ -24,21 +24,16 @@ class PriorStageManager(PositionerManager):
         
         self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all()
         
-        # self.api = self.initialize_API()
-        # self.sessionID = self.open_session()
-        # self.check_connection_to_api()
-        # self.initialize_stage()
         self.check_axes()
         # Set intial values to match the widget
         self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
         if self.zeroOnStartup:
             for axis in self.axes: 
                 self.setPosition(self._position[axis], axis)
-        # print("PriorStageManager intialized.")
 
     def initialize_all(self):
-        # Load SDK library - this is hardcoded - need to generalize that
-        # imswitch_parent = "C:\\VSCode"
+        """Initialize the stage and go to mock if not present."""
+        # Load SDK library
         imswitch_parent = str(Path.cwd())
         path = imswitch_parent+"\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
         if os.path.exists(path):
@@ -85,57 +80,10 @@ class PriorStageManager(PositionerManager):
             SDKPriorMock = True       
         
         return SDKPrior, SDKPriorMock, stage, sessionID
-
-    # # Functions to initialize stage
-    # def initialize_API(self, SDKPrior):
-    #     stage = SDKPrior.PriorScientificSDK_Initialise()
-    #     if stage:
-    #         self.__logger.warning(f'Failed to initialize {stage}, loading mocker')
-    #         sys.exit()
-    #     else:
-    #         print(f"Ok initialising {stage}")
-    #         return stage
-
-
-    # def open_session(self):
-    #     sessionID = SDKPrior.PriorScientificSDK_OpenNewSession()
-    #     if sessionID < 0:
-    #         print(f"Error getting sessionID {self.api}")
-    #     else:
-    #         print(f"SessionID = {sessionID}")
-    #         return sessionID
-
-
-    # def check_connection_to_api(self):
-    #     ret = SDKPrior.PriorScientificSDK_cmd(
-    #     self.sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
-    #     print(f"api response {ret}, rx = {self.rx.value.decode()}")
-    #     ret = SDKPrior.PriorScientificSDK_cmd(
-    #     self.sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
-    #     print(f"api response {ret}, rx = {self.rx.value.decode()}")
-
-    def check_axes(self):
-        for axis in self.axes:
-            if axis == 'X':
-                pass
-            elif axis == 'Y':
-                pass
-            else:
-                print(f'{axis} is not an XY axis!')
-
-    # def initialize_stage(self):
-    #     # Extracts the port number used for device initialization
-    #     port = ''.join(filter(lambda i: i.isdigit(), self.port))
-    #     msg = "controller.connect " + port
-    #     if self.query(msg)[0]==0:
-    #         print("Stage initialized")
-    #     else:
-    #         # Could not connect, load mock SDK library
-    #         from . import MockSDKPriorDLL
-    #         SDKPrior = MockSDKPriorDLL
-
-    # Query at initialize
+    
+    
     def query_initial(self, msg, SDKPrior, sessionID,):
+        """Queries on intialization when SDKPrior is not yet present."""
         # print(msg)
         ret = SDKPrior.PriorScientificSDK_cmd(
             sessionID, create_string_buffer(msg.encode()), self.rx
@@ -145,10 +93,21 @@ class PriorStageManager(PositionerManager):
         # else:
         #     print(f"OK {self.rx.value.decode()}")
 
-        return ret, self.rx.value.decode()
+        return ret, self.rx.value.decode()   
 
-    # Send messages to stage
+    def check_axes(self):
+        """Check axes if set-up correctly."""
+        for axis in self.axes:
+            if axis == 'X':
+                pass
+            elif axis == 'Y':
+                pass
+            else:
+                print(f'{axis} is not an XY axis!')
+
+
     def query(self, msg):
+        """Sends commands to stage using PriorSDK."""
         # print(msg)
         if self.SDKPriorMock:
             ret, value_out = self.SDKPrior.PriorScientificSDK_cmd(self, 
@@ -165,16 +124,17 @@ class PriorStageManager(PositionerManager):
             value_out = self.rx.value.decode()
 
         return ret, value_out
+
+
+    # def get_position(self):
+    #     response = self.query("controller.stage.position.get")
+    #     position = response[1].split(",", 1)
+    #     return position
     
-    
-    
-    def get_position(self):
-        response = self.query("controller.stage.position.get")
-        position = response[1].split(",", 1)
-        return position
-    
+
     def move(self, dist, axis):
         self.setPosition(self._position[axis] + dist, axis)
+
 
     def setPosition(self, position, axis):
         if axis == 'X':
@@ -185,78 +145,24 @@ class PriorStageManager(PositionerManager):
             axis_order = 'None'
             print(f"{axis} is invalid input for Prior XY stage!")
 
-        current_position = self.get_position()
+        current_position = self.get_abs()
         new_position = current_position
         new_position[axis_order] = str(position)
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
         print(self._position) #calcuated, not queries from positionGet
-
-    # def move_to_position(self, position, axis):
-    #     if axis == 'X':
-    #         axis_order = 0
-    #     elif axis =='Y':
-    #         axis_order = 1
-    #     else:
-    #         axis_order = 'None'
-    #         print(f"{axis} is invalid input for Prior XY stage!")
-    #     # print("Move to set position.")
-    #     current_position = self.get_position()
-    #     new_position = current_position
-    #     new_position[axis_order] = str(position)
-    #     msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
-    #     self.query(msg_set_position)
-    #     self._position[axis] = position
-    #     print(self._position)
-
-
-    
-    # def move(self, value, _):
-        
-    #     if value == 0:
-    #         return
-    #     elif float(value) > 0:
-    #         cmd = 'U {}'.format(value)
-    #         # print(value)
-    #     elif float(value) < 0:
-    #         absvalue = abs(float(value))
-    #         cmd = 'D {}'.format(absvalue)
-    #         # print(value)
-    #     self._rs232Manager.query(cmd)
-
-    #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
-
-    # # def move(self, value, _):
-    # #     if value == 0:
-    # #         return
-    # #     elif float(value) > 0:
-    # #         cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
-    # #     elif float(value) < 0:
-    # #         cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
-    # #     self._rs232Manager.query(cmd)
-
-    # #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
-
-    # def move_to_position(self, value):
-    #     cmd = 'V {}'.format(value)
-    #     self._rs232Manager.query(cmd)
-    #     self._position[self.axes[0]] = value
-    #     print(value)
-
-    
-    # def setPosition(self, value, _):
-    #     cmd = 'V {}'.format(value)
-    #     self._rs232Manager.query(cmd)
-
-    #     self._position[self.axes[0]] = value
         
 
-    # @property
-    # def position(self):
-    #     _ = self.get_abs()
-    #     return self._position
+    @property
+    def position(self):
+        _ = self.get_abs()
+        return self._position
 
+    def get_abs(self):
+        response = self.query("controller.stage.position.get")
+        position = response[1].split(",", 1)
+        return position
     # def get_abs(self):
     #     cmd = 'PZ'
     #     reply = self._rs232Manager.query(cmd)
