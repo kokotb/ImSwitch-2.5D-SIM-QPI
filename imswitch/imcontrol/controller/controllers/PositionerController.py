@@ -68,11 +68,20 @@ class PositionerController(ImConWidgetController):
         # positionerName = self.getPositionerNames()[0] #probably stays the same
         absPos = self._widget.getAbsPos(positionerName, axis)#pulls value from text box
         self.setAbsPos(positionerName=positionerName, absPos=absPos, axis=axis)
-        self.updatePosition(positionerName, axis=axis)
+        # Updates all positioners with current value in memory
+        for axis1 in self._master.positionersManager[positionerName].axes: 
+            self.updatePosition(positionerName, axis=axis1)
+        # self.updatePosition(positionerName, axis=axis)
 
     def setAbsPos(self, positionerName, absPos, axis):
-
-        self._master.positionersManager[positionerName].setPosition(absPos, axis)
+        if positionerName == 'XY':
+            axis_x = self._master.positionersManager[positionerName].axes[0]
+            axis_y = self._master.positionersManager[positionerName].axes[1]
+            x = self._widget.getAbsPos(positionerName, axis_x)
+            y = self._widget.getAbsPos(positionerName, axis_y)
+            self._master.positionersManager[positionerName].setPositionXY(x, y)
+        else:
+            self._master.positionersManager[positionerName].setPosition(absPos, axis)
         
         
     def updatePosition(self, positionerName, axis):
@@ -96,11 +105,16 @@ class PositionerController(ImConWidgetController):
         finally:
             self.settingAttr = False
 
-    def setXYPosition(self, x, y):
-        positionerX = self.getPositionerNames()[0]
-        positionerY = self.getPositionerNames()[1]
-        self.__logger.debug(f"Move {positionerX}, axis X, dist {str(x)}")
-        self.__logger.debug(f"Move {positionerY}, axis Y, dist {str(y)}")
+    def setXYPosition(self, positionerName, x, y):
+        # positionerX = self.getPositionerNames()[0]
+        # positionerY = self.getPositionerNames()[1]
+        # self.__logger.debug(f"Move {positionerX}, axis X, dist {str(x)}")
+        # self.__logger.debug(f"Move {positionerY}, axis Y, dist {str(y)}")
+        if positionerName == 'XY':
+            self.__logger.debug(f"Move {positionerName}, axis X, dist {str(x)}, axis Y, dist {str(y)}")
+            self._master.positionersManager[positionerName].setPositionXY(x, y)
+        else:
+            print(f"{positionerName} cannot perform this operation!")
         #self.move(positionerX, 'X', x)
         #self.move(positionerY, 'Y', y)
 
@@ -108,6 +122,7 @@ class PositionerController(ImConWidgetController):
         positionerZ = self.getPositionerNames()[2]
         self.__logger.debug(f"Move {positionerZ}, axis Z, dist {str(z)}")
         #self.move(self.getPositionerNames[2], 'Z', z)
+
 
     @APIExport()
     def getPositionerNames(self) -> List[str]:
@@ -131,6 +146,11 @@ class PositionerController(ImConWidgetController):
         """ Moves the specified positioner axis by the specified number of
         micrometers. """
         self.move(positionerName, axis, dist)
+
+    @APIExport(runOnUIThread=True)
+    def movePositionerXY(self, positionerName: str, position_x: float, position_y:float):
+        """ Moves the specified positioner on both axes in XY at the same time. """
+        self.setXYPosition(positionerName, position_x, position_y)
 
     @APIExport(runOnUIThread=True)
     def setPositioner(self, positionerName: str, axis: str, position: float) -> None:

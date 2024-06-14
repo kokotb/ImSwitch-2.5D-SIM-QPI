@@ -84,10 +84,16 @@ class PositionerWidget(Widget):
         self.pars['StepEdit' + parNameSuffix].setText(stepSize)
 
     def getAbsPos(self, positionerName, axis):
-        """ Returns the step size of the specified positioner axis in
+        """ Sets the absolute position of the specified positioner axis in
         micrometers. """
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         return float(self.pars['AbsPosEdit'+parNameSuffix].text())
+    
+    def updateAbsPos(self, positionerName, axis, position):
+        """ Updates the absolute position widget of the specified positioner 
+        axis in micrometers. """
+        parNameSuffix = self._getParNameSuffix(positionerName, axis)
+        self.pars['AbsPosEdit'+parNameSuffix].setText(str(position))
 
     def setSpeedSize(self, positionerName, axis, speedSize):
         """ Sets the step size of the specified positioner axis to the
@@ -98,6 +104,9 @@ class PositionerWidget(Widget):
 
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         self.pars['Position' + parNameSuffix].setText(f'<strong>{position:.2f} µm</strong>')
+        # Updates entry window for absolute position
+        self.updateAbsPos(positionerName, axis, position)
+
 
     def _getParNameSuffix(self, positionerName, axis):
         return f'{positionerName}--{axis}'

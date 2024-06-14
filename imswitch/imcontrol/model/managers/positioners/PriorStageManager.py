@@ -31,6 +31,7 @@ class PriorStageManager(PositionerManager):
             for axis in self.axes: 
                 self.setPosition(self._position[axis], axis)
 
+
     def initialize_all(self):
         """Initialize the stage and go to mock if not present."""
         # Load SDK library
@@ -95,6 +96,7 @@ class PriorStageManager(PositionerManager):
 
         return ret, self.rx.value.decode()   
 
+
     def check_axes(self):
         """Check axes if set-up correctly."""
         for axis in self.axes:
@@ -128,6 +130,15 @@ class PriorStageManager(PositionerManager):
 
     def move(self, dist, axis):
         self.setPosition(self._position[axis] + dist, axis)
+    
+
+    def setPositionXY(self, position_x, position_y):
+        new_position = [str(position_x), str(position_y)]
+        msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
+        self.query(msg_set_position)
+        self._position['X'] = position_x
+        self._position['Y'] = position_y
+        print(self._position) #calculated, not queries from get_abs
 
 
     def setPosition(self, position, axis):
@@ -140,12 +151,13 @@ class PriorStageManager(PositionerManager):
             print(f"{axis} is invalid input for Prior XY stage!")
 
         current_position = self.get_abs()
+        # Each xy position setting 
         new_position = current_position
         new_position[axis_order] = str(position)
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
-        print(self._position) #calcuated, not queries from positionGet
+        print(self._position) #calcuated, not queries from get_abs
         
 
     @property

@@ -107,7 +107,7 @@
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-        "port": "ASRLCOM4",
+        "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
       "axes": ["X", "Y"],
@@ -147,7 +147,7 @@
     "zpiezo": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM16",
+        "port": "ASRLCOM6",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",
