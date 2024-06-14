@@ -1,5 +1,6 @@
 from .PositionerManager import PositionerManager
 
+from ctypes import WinDLL, create_string_buffer
 
 class MockSDKPriorDLL(PositionerManager):
     """ PositionerManager for mock positioner used for repeating measurements and/or timelapses.
@@ -11,23 +12,33 @@ class MockSDKPriorDLL(PositionerManager):
 
     def __init__(self, positionerInfo, name, **lowLevelManagers):
 
-        if len(positionerInfo.axes) != 1:
-            raise RuntimeError(f'{self.__class__.__name__} only supports one axis,'
+        if len(positionerInfo.axes) != 2:
+            raise RuntimeError(f'{self.__class__.__name__} only supports both XY axes,'
                                f' {len(positionerInfo.axes)} provided.')
                                
         super().__init__(positionerInfo, name, initialPosition={
             axis: 0 for axis in positionerInfo.axes
         })
+        
+        self.positionerInfo = positionerInfo
 
     def PriorScientificSDK_Initialise(self):
         return 0
 
-    def PriorScientificSDK_OpenNewSession(self, position, axis):
+    def PriorScientificSDK_OpenNewSession(self, position):
         return 0
 
-    def PriorScientificSDK_cmd():
-        ret = "Mock driver."
-        return ret
+    def PriorScientificSDK_cmd(self, sessionID, msg_encoded_in_buffer, rx):
+        msg = msg_encoded_in_buffer.value.decode()
+        if msg == "controller.stage.position.get":
+            value_x = self._position['X']
+            value_y = self._position['Y']
+            value_out = str(value_x)+","+str(value_y)
+            ret = 0
+        if "controller.stage.goto-position" in msg:
+            ret = 0
+            value_out = "0,0"
+        return ret, value_out 
         
 
 

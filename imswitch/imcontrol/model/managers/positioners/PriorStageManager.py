@@ -6,16 +6,6 @@ from imswitch.imcommon.model import initLogger
 
 from .PositionerManager import PositionerManager
 
-# Load SDK library - this is hardcoded - need to generalize that
-# imswitch_parent = "C:\\VSCode"
-imswitch_parent = str(Path.cwd())
-path = imswitch_parent+"\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
-if os.path.exists(path):
-    SDKPrior = WinDLL(path)
-else:
-    raise RuntimeError("DLL could not be loaded.")
-
-
 class PriorStageManager(PositionerManager):
 
     def __init__(self, positionerInfo, name, *args, **lowLevelManagers):
@@ -31,10 +21,13 @@ class PriorStageManager(PositionerManager):
         self.positionerInfo = positionerInfo
         self.port = positionerInfo.managerProperties['port']
         self.rx = create_string_buffer(1000)
-        self.api = self.initialize_API()
-        self.sessionID = self.open_session()
-        self.check_connection_to_api()
-        self.intialize_stage()
+        
+        self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all()
+        
+        # self.api = self.initialize_API()
+        # self.sessionID = self.open_session()
+        # self.check_connection_to_api()
+        # self.initialize_stage()
         self.check_axes()
         # Set intial values to match the widget
         self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
@@ -43,35 +36,83 @@ class PriorStageManager(PositionerManager):
                 self.setPosition(self._position[axis], axis)
         # print("PriorStageManager intialized.")
 
-
-
-    # Functions to initialize stage
-    def initialize_API(self):
+    def initialize_all(self):
+        # Load SDK library - this is hardcoded - need to generalize that
+        # imswitch_parent = "C:\\VSCode"
+        imswitch_parent = str(Path.cwd())
+        path = imswitch_parent+"\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
+        if os.path.exists(path):
+            SDKPrior = WinDLL(path)
+        else:
+            raise RuntimeError("DLL could not be loaded.")
+        
+        # Initialize API
         stage = SDKPrior.PriorScientificSDK_Initialise()
         if stage:
             self.__logger.warning(f'Failed to initialize {stage}, loading mocker')
-            sys.exit()
+            # sys.exit()
         else:
             print(f"Ok initialising {stage}")
-            return stage
-
-
-    def open_session(self):
+        
+        #Initialize communication sessionID
         sessionID = SDKPrior.PriorScientificSDK_OpenNewSession()
         if sessionID < 0:
-            print(f"Error getting sessionID {self.api}")
+            print(f"Error getting sessionID {stage}")
+            # sys.exit()
         else:
             print(f"SessionID = {sessionID}")
-            return sessionID
-
-
-    def check_connection_to_api(self):
+        
+        # Check if connection works
         ret = SDKPrior.PriorScientificSDK_cmd(
-        self.sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
+        sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
         print(f"api response {ret}, rx = {self.rx.value.decode()}")
         ret = SDKPrior.PriorScientificSDK_cmd(
-        self.sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
+        sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
         print(f"api response {ret}, rx = {self.rx.value.decode()}")
+        
+        # Try to initialize stage
+        
+        # Extracts the port number used for device initialization
+        port = ''.join(filter(lambda i: i.isdigit(), self.port))
+        msg = "controller.connect " + port
+        if self.query_initial(msg, SDKPrior, sessionID)[0]==0:
+            SDKPriorMock = False
+            print("Stage initialized")
+        else:
+            # Could not connect, load mock PriorSDK DLL
+            from . import MockSDKPriorDLL
+            SDKPrior = MockSDKPriorDLL.MockSDKPriorDLL
+            SDKPriorMock = True       
+        
+        return SDKPrior, SDKPriorMock, stage, sessionID
+
+    # # Functions to initialize stage
+    # def initialize_API(self, SDKPrior):
+    #     stage = SDKPrior.PriorScientificSDK_Initialise()
+    #     if stage:
+    #         self.__logger.warning(f'Failed to initialize {stage}, loading mocker')
+    #         sys.exit()
+    #     else:
+    #         print(f"Ok initialising {stage}")
+    #         return stage
+
+
+    # def open_session(self):
+    #     sessionID = SDKPrior.PriorScientificSDK_OpenNewSession()
+    #     if sessionID < 0:
+    #         print(f"Error getting sessionID {self.api}")
+    #     else:
+    #         print(f"SessionID = {sessionID}")
+    #         return sessionID
+
+
+    # def check_connection_to_api(self):
+    #     ret = SDKPrior.PriorScientificSDK_cmd(
+    #     self.sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
+    #     print(f"api response {ret}, rx = {self.rx.value.decode()}")
+    #     ret = SDKPrior.PriorScientificSDK_cmd(
+    #     self.sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
+    #     print(f"api response {ret}, rx = {self.rx.value.decode()}")
 
     def check_axes(self):
         for axis in self.axes:
@@ -82,23 +123,22 @@ class PriorStageManager(PositionerManager):
             else:
                 print(f'{axis} is not an XY axis!')
 
-    def intialize_stage(self):
-        # Extracts the port number used for device initialization
-        port = ''.join(filter(lambda i: i.isdigit(), self.port))
-        msg = "controller.connect " + port
-        if self.query(msg)[0]==0:
-            print("Stage initialized")
-        else:
-            # Could not connect, load mock SDK library
-            from . import MockSDKPriorDLL
-            SDKPrior = MockSDKPriorDLL
+    # def initialize_stage(self):
+    #     # Extracts the port number used for device initialization
+    #     port = ''.join(filter(lambda i: i.isdigit(), self.port))
+    #     msg = "controller.connect " + port
+    #     if self.query(msg)[0]==0:
+    #         print("Stage initialized")
+    #     else:
+    #         # Could not connect, load mock SDK library
+    #         from . import MockSDKPriorDLL
+    #         SDKPrior = MockSDKPriorDLL
 
-
-    # Send messages to stage
-    def query(self, msg):
+    # Query at initialize
+    def query_initial(self, msg, SDKPrior, sessionID,):
         # print(msg)
         ret = SDKPrior.PriorScientificSDK_cmd(
-            self.sessionID, create_string_buffer(msg.encode()), self.rx
+            sessionID, create_string_buffer(msg.encode()), self.rx
         )
         if ret:
             print(f"Api error {ret}")
@@ -106,6 +146,27 @@ class PriorStageManager(PositionerManager):
         #     print(f"OK {self.rx.value.decode()}")
 
         return ret, self.rx.value.decode()
+
+    # Send messages to stage
+    def query(self, msg):
+        # print(msg)
+        if self.SDKPriorMock:
+            ret, value_out = self.SDKPrior.PriorScientificSDK_cmd(self, 
+                self.sessionID, create_string_buffer(msg.encode()), self.rx
+            )
+        else:    
+            ret = self.SDKPrior.PriorScientificSDK_cmd(
+                self.sessionID, create_string_buffer(msg.encode()), self.rx
+            )
+            if ret:
+                print(f"Api error {ret}")
+            # else:
+            #     print(f"OK {self.rx.value.decode()}")
+            value_out = self.rx.value.decode()
+
+        return ret, value_out
+    
+    
     
     def get_position(self):
         response = self.query("controller.stage.position.get")

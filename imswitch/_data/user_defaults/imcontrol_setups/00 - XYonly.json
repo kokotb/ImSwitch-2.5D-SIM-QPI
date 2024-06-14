@@ -1,23 +1,16 @@
 {
   "positioners": {
-    "X": {
+    "XY": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-<<<<<<< HEAD
-        "port": "ASRLCOM14"
-      },
-      "axes": ["X"],
-      "forPositioning": true
-=======
         "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
       "axes": ["X","Y"],
       "forPositioning": true,
       "forScanning": true
->>>>>>> stageAndScripting
     }
 },
 
