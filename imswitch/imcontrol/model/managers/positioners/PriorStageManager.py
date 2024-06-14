@@ -93,7 +93,11 @@ class PriorStageManager(PositionerManager):
         # Extracts the port number used for device initialization
         port = ''.join(filter(lambda i: i.isdigit(), self.port))
         msg = "controller.connect " + port
-        self.query(msg)
+        ret, value = self.query(msg)
+        if ret == "-10002":
+            # Could not connect, load mock SDK library
+            from . import MockSDKPriorDLL
+            SDKPrior = MockSDKPriorDLL
 
 
     # Send messages to stage
