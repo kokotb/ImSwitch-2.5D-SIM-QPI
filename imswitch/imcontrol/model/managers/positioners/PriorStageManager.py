@@ -1,14 +1,15 @@
 from ctypes import WinDLL, create_string_buffer
 import os
 import sys
+from pathlib import Path
 from imswitch.imcommon.model import initLogger
 
 from .PositionerManager import PositionerManager
 
 # Load SDK library - this is hardcoded - need to generalize that
 # imswitch_parent = "C:\\VSCode"
-imswitch_parent = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM"
-path = imswitch_parent+"\\ImSwitch-2.5D-SIM-QPI\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
+imswitch_parent = str(Path.cwd())
+path = imswitch_parent+"\\dlls\\PriorSDK\\x64\\PriorScientificSDK.dll"
 if os.path.exists(path):
     SDKPrior = WinDLL(path)
 else:
@@ -16,14 +17,6 @@ else:
 
 
 class PriorStageManager(PositionerManager):
-    """ PositionerManager for control of a Piezoconcept Z-piezo through RS232
-    communication.
-
-    Manager properties:
-
-    - ``rs232device`` -- name of the defined rs232 communication channel
-      through which the communication should take place
-    """
 
     def __init__(self, positionerInfo, name, *args, **lowLevelManagers):
         if len(positionerInfo.axes) > 2:
@@ -48,7 +41,7 @@ class PriorStageManager(PositionerManager):
         if self.zeroOnStartup:
             for axis in self.axes: 
                 self.setPosition(self._position[axis], axis)
-        print("PriorStageManager intialized.")
+        # print("PriorStageManager intialized.")
 
 
 
@@ -93,8 +86,9 @@ class PriorStageManager(PositionerManager):
         # Extracts the port number used for device initialization
         port = ''.join(filter(lambda i: i.isdigit(), self.port))
         msg = "controller.connect " + port
-        ret, value = self.query(msg)
-        if ret == "-10002":
+        if self.query(msg)[0]==0:
+            print("Stage initialized")
+        else:
             # Could not connect, load mock SDK library
             from . import MockSDKPriorDLL
             SDKPrior = MockSDKPriorDLL
@@ -102,16 +96,15 @@ class PriorStageManager(PositionerManager):
 
     # Send messages to stage
     def query(self, msg):
-        print(msg)
+        # print(msg)
         ret = SDKPrior.PriorScientificSDK_cmd(
             self.sessionID, create_string_buffer(msg.encode()), self.rx
         )
         if ret:
             print(f"Api error {ret}")
-        else:
-            print(f"OK {self.rx.value.decode()}")
+        # else:
+        #     print(f"OK {self.rx.value.decode()}")
 
-        # input("Press ENTER to continue...")
         return ret, self.rx.value.decode()
     
     def get_position(self):
@@ -129,14 +122,15 @@ class PriorStageManager(PositionerManager):
             axis_order = 1
         else:
             axis_order = 'None'
-            print(f"{axis} is invalid input for Priro XY stage!")
+            print(f"{axis} is invalid input for Prior XY stage!")
 
         current_position = self.get_position()
         new_position = current_position
         new_position[axis_order] = str(position)
-        msg_set_position = "controller.stage.position.set "+new_position[0]+" "+new_position[1]
+        msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
+        print(self._position) #calcuated, not queries from positionGet
 
     def move_to_position(self, position, axis):
         if axis == 'X':
@@ -153,6 +147,8 @@ class PriorStageManager(PositionerManager):
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
+        print(self._position)
+
 
     
     # def move(self, value, _):
