@@ -5,49 +5,15 @@
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-        "port": "ASRLCOM14",
+        "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
-      "axes": ["X", "Y"],
+      "axes": ["X","Y"],
       "forPositioning": true,
       "forScanning": true
     }
 },
 
-  "rs232devices": {
-    "aaaotf": {
-      "managerName": "RS232Manager",
-      "managerProperties": {
-        "port": "ASRLCOM10",
-        "encoding": "ascii",
-        "recv_termination": "\n\r",
-        "send_termination": "\r",
-        "baudrate": 19200,
-        "bytesize": 8,
-        "parity": "none",
-        "stopbits": 1,
-        "rtscts": "false",
-        "dsrdtr": "false",
-        "xonxoff": "false"
-        }
-    },
-    "zpiezo": {
-      "managerName": "RS232Manager",
-      "managerProperties": {
-        "port": "ASRLCOM5",
-        "encoding": "ascii",
-        "recv_termination": "\r",
-        "send_termination": "\r",
-        "baudrate": 9600,
-        "bytesize": 8,
-        "parity": "none",
-        "stopbits": 1,
-        "rtscts": "false",
-        "dsrdtr": "false",
-        "xonxoff": "false"
-      }
-    }
-    },
   "availableWidgets": [
       "Positioner"
     ]

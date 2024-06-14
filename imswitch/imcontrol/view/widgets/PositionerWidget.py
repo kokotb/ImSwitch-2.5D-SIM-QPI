@@ -19,8 +19,11 @@ class PositionerWidget(Widget):
         self.setLayout(self.grid)
 
     def addPositioner(self, positionerName, axes, speed):
+        axisInitialValues = {  "X": "1",  "Y": "1",  "Z": "0.2"}
         for i in range(len(axes)):
             axis = axes[i]
+            initialValue = axisInitialValues[axis]
+
             parNameSuffix = self._getParNameSuffix(positionerName, axis)
             label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
 
@@ -30,7 +33,8 @@ class PositionerWidget(Widget):
             self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
             self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
             self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
-            self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.05')
+
+            self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialValue)
             # self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLineEdit()
             self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
 

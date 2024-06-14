@@ -1,0 +1,49 @@
+{
+  "positioners": {
+    "XY": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM5",
+        "zeroOnStartup": false
+      },
+      "axes": ["X","Y"],
+      "forPositioning": true,
+      "forScanning": true
+    },
+    "Z": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "QueensgatePiezoManager",
+      "managerProperties": {
+        "rs232device": "zpiezo"
+      },
+      "axes": ["Z"],
+      "forPositioning": true
+    }
+},
+"rs232devices": {
+
+  "zpiezo": {
+    "managerName": "RS232Manager",
+    "managerProperties": {
+      "port": "ASRLCOM10",
+      "encoding": "ascii",
+      "recv_termination": "\r",
+      "send_termination": "\r",
+      "baudrate": 9600,
+      "bytesize": 8,
+      "parity": "none",
+      "stopbits": 1,
+      "rtscts": "false",
+      "dsrdtr": "false",
+      "xonxoff": "false"
+    }
+  }
+},
+
+  "availableWidgets": [
+      "Positioner"
+    ]
+}
