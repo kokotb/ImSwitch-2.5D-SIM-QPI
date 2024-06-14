@@ -193,22 +193,22 @@ class PriorStageManager(PositionerManager):
         self._position[axis] = position
         print(self._position) #calcuated, not queries from positionGet
 
-    def move_to_position(self, position, axis):
-        if axis == 'X':
-            axis_order = 0
-        elif axis =='Y':
-            axis_order = 1
-        else:
-            axis_order = 'None'
-            print(f"{axis} is invalid input for Prior XY stage!")
-        # print("Move to set position.")
-        current_position = self.get_position()
-        new_position = current_position
-        new_position[axis_order] = str(position)
-        msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
-        self.query(msg_set_position)
-        self._position[axis] = position
-        print(self._position)
+    # def move_to_position(self, position, axis):
+    #     if axis == 'X':
+    #         axis_order = 0
+    #     elif axis =='Y':
+    #         axis_order = 1
+    #     else:
+    #         axis_order = 'None'
+    #         print(f"{axis} is invalid input for Prior XY stage!")
+    #     # print("Move to set position.")
+    #     current_position = self.get_position()
+    #     new_position = current_position
+    #     new_position[axis_order] = str(position)
+    #     msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
+    #     self.query(msg_set_position)
+    #     self._position[axis] = position
+    #     print(self._position)
 
 
     

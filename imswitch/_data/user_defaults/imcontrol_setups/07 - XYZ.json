@@ -28,7 +28,7 @@
   "zpiezo": {
     "managerName": "RS232Manager",
     "managerProperties": {
-      "port": "ASRLCOM10",
+      "port": "ASRLCOM6",
       "encoding": "ascii",
       "recv_termination": "\r",
       "send_termination": "\r",
