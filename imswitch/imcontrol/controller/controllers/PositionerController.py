@@ -74,9 +74,10 @@ class PositionerController(ImConWidgetController):
         # self.updatePosition(positionerName, axis=axis)
 
     def setAbsPos(self, positionerName, absPos, axis):
-        if positionerName == 'XY':
-            axis_x = self._master.positionersManager[positionerName].axes[0]
-            axis_y = self._master.positionersManager[positionerName].axes[1]
+        axes = self._master.positionersManager[positionerName].axes
+        if positionerName == 'XY' and len(axes)==2:
+            axis_x = axes[0]
+            axis_y = axes[1]
             x = self._widget.getAbsPos(positionerName, axis_x)
             y = self._widget.getAbsPos(positionerName, axis_y)
             self._master.positionersManager[positionerName].setPositionXY(x, y)
