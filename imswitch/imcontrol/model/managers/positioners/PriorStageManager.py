@@ -124,13 +124,7 @@ class PriorStageManager(PositionerManager):
             value_out = self.rx.value.decode()
 
         return ret, value_out
-
-
-    # def get_position(self):
-    #     response = self.query("controller.stage.position.get")
-    #     position = response[1].split(",", 1)
-    #     return position
-    
+        
 
     def move(self, dist, axis):
         self.setPosition(self._position[axis] + dist, axis)
