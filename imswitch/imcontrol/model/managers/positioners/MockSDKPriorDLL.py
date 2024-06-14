@@ -38,6 +38,12 @@ class MockSDKPriorDLL(PositionerManager):
         if "controller.stage.goto-position" in msg:
             ret = 0
             value_out = "0,0"
+        if "controller.stage.speed.get" in msg:
+            ret = 0
+            value_out = "1"
+        if "controller.stage.speed.set" in msg:
+            ret = 0
+            value_out = int(float(msg.split(" ")[1]))
         return ret, value_out 
         
 
