@@ -130,6 +130,36 @@ class PriorStageManager(PositionerManager):
 
     def move(self, dist, axis):
         self.setPosition(self._position[axis] + dist, axis)
+
+    
+    def moveRelative(self, dist, axis):
+        """Moves the stage for a relative given step. """
+        if axis == 'X':
+            axis_order = 0
+        elif axis =='Y':
+            axis_order = 1
+        else:
+            axis_order = 'None'
+            print(f"{axis} is invalid input for Prior XY stage!")
+        
+        distance = ['0','0']
+        distance[axis_order] = str(dist)
+        
+        msg_move_relative = "controller.stage.move-relative "+distance[0]+" "+distance[1]
+        self.query(msg_move_relative)
+        # self.checkBusy()
+        current_position = self.get_abs()
+        self._position[axis] = float(current_position[axis_order])
+        print(self._position) #queries from get_abs
+
+
+    def checkBusy(self):
+        """Loops until stage becomes available."""
+        busy = self.query("controller.stage.busy.get")[1]
+        while busy != '0':
+            # Query until stop moving
+            busy = self.query("controller.stage.busy.get")
+        # print('Not busy.')
     
 
     def setPositionXY(self, position_x, position_y):
