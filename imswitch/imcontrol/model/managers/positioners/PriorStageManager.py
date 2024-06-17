@@ -129,8 +129,8 @@ class PriorStageManager(PositionerManager):
         
 
     def move(self, dist, axis):
-        self.setPosition(self._position[axis] + dist, axis)
-        # self.moveRelative(dist, axis) # don't wokr, probably some signal issue
+        # self.setPosition(self._position[axis] + dist, axis)
+        self.moveRelative(dist, axis) 
     
 
     def setPositionXY(self, position_x, position_y):
@@ -156,7 +156,7 @@ class PriorStageManager(PositionerManager):
         
         msg_move_relative = "controller.stage.move-relative "+distance[0]+" "+distance[1]
         self.query(msg_move_relative)
-        # self.checkBusy()
+        self.checkBusy()
         current_position = self.get_abs()
         self._position[axis] = float(current_position[axis_order])
         print(self._position) #queries from get_abs
@@ -167,7 +167,7 @@ class PriorStageManager(PositionerManager):
         busy = self.query("controller.stage.busy.get")[1]
         while busy != '0':
             # Query until stop moving
-            busy = self.query("controller.stage.busy.get")
+            busy = self.query("controller.stage.busy.get")[1]
         # print('Not busy.')
 
 
@@ -201,7 +201,7 @@ class PriorStageManager(PositionerManager):
             print(f"Invalid speed setting at {speed} um/s!")
             speed = 6000 # Default on the device at the moment 28550
             print(f"Setting speed to default {speed} um/s!")
-        elif speed > 15000:
+        elif speed > 15
             print(f"Max speed limit exceed at {speed} um/s! Max is 15000 um/s.")
             speed = 6000 # Default on the device at the moment
             print(f"Setting speed to default {speed} um/s!")
