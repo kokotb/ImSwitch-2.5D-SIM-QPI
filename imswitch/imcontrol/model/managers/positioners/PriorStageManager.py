@@ -201,7 +201,7 @@ class PriorStageManager(PositionerManager):
             print(f"Invalid speed setting at {speed} um/s!")
             speed = 6000 # Default on the device at the moment 28550
             print(f"Setting speed to default {speed} um/s!")
-        elif speed > 15
+        elif speed > 15000:
             print(f"Max speed limit exceed at {speed} um/s! Max is 15000 um/s.")
             speed = 6000 # Default on the device at the moment
             print(f"Setting speed to default {speed} um/s!")
