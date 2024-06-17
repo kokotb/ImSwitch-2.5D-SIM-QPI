@@ -54,6 +54,11 @@ class PositionerController(ImConWidgetController):
         self._master.positionersManager[positionerName].move(dist, axis)
         self.updatePosition(positionerName, axis)
 
+    def moveRelative(self, positionerName, axis, dist):
+        """ Moves positioner by dist micrometers in the specified axis. """
+        self._master.positionersManager[positionerName].moveRelative(dist, axis)
+        self.updatePosition(positionerName, axis)
+
     def setPos(self, positionerName, axis, position):
         """ Moves the positioner to the specified position in the specified axis. """
         self._master.positionersManager[positionerName].setPosition(position, axis)
@@ -170,6 +175,12 @@ class PositionerController(ImConWidgetController):
         """ Moves the specified positioner axis by the specified number of
         micrometers. """
         self.move(positionerName, axis, dist)
+
+    @APIExport(runOnUIThread=True)
+    def movePositionerRelative(self, positionerName: str, axis: str, dist: float) -> None:
+        """ Moves the specified positioner axis by the specified number of
+        micrometers. """
+        self.moveRelative(positionerName, axis, dist)
 
     @APIExport(runOnUIThread=True)
     def movePositionerXY(self, positionerName: str, position_x: float, position_y:float):

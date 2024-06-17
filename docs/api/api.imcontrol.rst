@@ -34,6 +34,11 @@ api.imcontrol
       Moves the specified positioner axis by the specified number of
       micrometers. 
 
+   .. method:: movePositionerRelative(positionerName: str, axis: str, dist: float) -> None
+
+      Moves the specified positioner axis by the specified number of
+      micrometers using move-relative function of the stage. 
+
    .. method:: movePositionerXY(positionerName: str, position_x: float, position_y:float) -> None
 
       Moves the specified positioner on both axes in XY at the same 
