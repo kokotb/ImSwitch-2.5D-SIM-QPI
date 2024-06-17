@@ -140,6 +140,33 @@ class PriorStageManager(PositionerManager):
         self._position['Y'] = position_y
         print(self._position) #calculated, not queries from get_abs
 
+    def moveRelative (self, dist, axis):
+        """Moves the stage for a relative given step"""
+        if axis == 'X':
+            axis_order = 0
+        elif axis =='Y':
+            axis_order = 1
+        else:
+            axis_order = 'None'
+            print(f"{axis} is invalid input for Prior XY stage!")
+        
+        distance = [0,0]
+        distance[axis_order] = dist
+        
+        msg_move_relative = "controller.stage.move-relative "+distance[0]+" "+distance[1]
+        self.query(msg_move_relative)
+        # self.checkBusy()
+        # current_position = self.get_abs()
+        # self._position[axis] = current_position[axis]
+        # print(self._position) #queries from get_abs
+
+
+    def checkBusy(self):
+        busy = self.query("controller.stage.busy.get")
+        while busy != 0:
+            # Query until stop moving
+            busy = self.query("controller.stage.busy.get")
+
 
     def setPosition(self, position, axis):
         if axis == 'X':
@@ -158,7 +185,6 @@ class PriorStageManager(PositionerManager):
         self.query(msg_set_position)
         self._position[axis] = position
         print(self._position) #calcuated, not queries from get_abs
-
 
 
     def getSpeedLow(self):
