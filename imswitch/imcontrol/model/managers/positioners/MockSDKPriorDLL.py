@@ -51,6 +51,10 @@ class MockSDKPriorDLL(PositionerManager):
             value_out = '0'
         if "controller.stage.move-relative " in msg:
             ret = 0
+            dist_x = float(msg.split(" ")[1])
+            dist_y = float(msg.split(" ")[2])
+            self._position['X'] = self._position['X']+dist_x
+            self._position['Y'] = self._position['Y']+dist_y
             value_out = '1'
         return ret, value_out 
         
