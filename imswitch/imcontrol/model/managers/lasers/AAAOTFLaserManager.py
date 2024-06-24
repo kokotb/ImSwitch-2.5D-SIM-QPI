@@ -21,6 +21,7 @@ class AAAOTFLaserManager(LaserManager):
 
         self.blankingOn()
         self.internalControl()
+        self.power = 0
 
         super().__init__(laserInfo, name, isBinary=False, valueUnits='arb', valueDecimals=0)
 
@@ -37,6 +38,7 @@ class AAAOTFLaserManager(LaserManager):
         """Handles output power.
         Sends a RS232 command to the laser specifying the new intensity.
         """
+        self.power = power
         valueaotf = round(power)  # assuming input value is [0,1023]
         cmd = 'L' + str(self._channel) + 'P' + str(valueaotf)
         self._rs232manager.query(cmd)

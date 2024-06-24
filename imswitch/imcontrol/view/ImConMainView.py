@@ -79,7 +79,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             'View': _DockInfo(name='Image Controls', yPosition=1),
             'Recording': _DockInfo(name='Recording', yPosition=2),
-            'Console': _DockInfo(name='Console', yPosition=3)
+            'SIM': _DockInfo(name = 'SIM', yPosition = 3),
+            'Console': _DockInfo(name='Console', yPosition=4)
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys

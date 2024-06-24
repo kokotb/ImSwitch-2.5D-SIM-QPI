@@ -1,7 +1,7 @@
 from imswitch.imcommon.model import VFileItem, initLogger
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, NidaqManager, PositionersManager, RecordingManager, RS232sManager, 
-    ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager
+    ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SIMslmManager
 )
 
 
@@ -44,6 +44,10 @@ class MasterController:
 
         if self.__setupInfo.microscopeStand:
             self.standManager = StandManager(self.__setupInfo.microscopeStand,
+                                             **lowLevelManagers)
+            
+        self.simManager = SIMManager(self.__setupInfo.sim)
+        self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm,
                                              **lowLevelManagers)
 
         # Generate scanManager type according to setupInfo

@@ -1,0 +1,218 @@
+{ "simSLM":{
+  "width":1080,
+  "height":1920,
+  "pixelSize":13.62,
+  "managerName": "SIMslmManager",
+  "managerProperties": {
+    "rs232device": "simslm"
+  }
+},
+  "sim": {
+  "monitorIdx": 2,
+  "width": 1080,
+  "height": 1920,
+  "wavelength": 0,
+  "pixelSize": 0,
+  "angleMount": 0,
+  "patternsDirWin": "C:\\Users\\Bostjan Kokot\\Documents\\ImSwitchConfig\\imcontrol_slm\\488\\",
+  "patternsDir": "/Users/Bostjan Kokot/Documents/ImSwitchConfig/imcontrol_sim/488",
+  "isSimulation": 0,
+  "nRotations": 3,
+  "nPhases": 3,
+  "isFastAPISIM": 1,
+  "simPixelsize": 1,
+  "simNA": 0,
+  "simN": 0,
+  "simETA": 0,
+  "fastAPISIM_host": "192.168.0.1",
+  "fastAPISIM_port": 0,
+  "tWaitSequence": 0
+},
+"detectors": {
+    "65Camera": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 65,
+        "lucid": {
+          "exposure": 2000.0,
+          "exposureauto": "Off",
+          "gain": 0.0, 
+          "gamma": 1.0,
+          "pixel_format": "Mono8",
+          "ADC_bit_depth": "Bits8",
+          "image_width": 5320,
+          "image_height": 4600
+        }
+      },
+      "forAcquisition": true
+    },
+    "66Camera": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 66,
+        "lucid": {
+          "exposure": 2000.0,
+          "exposureauto": "Off",
+          "gain": 0.0,
+          "gamma": 1.0,
+          "pixel_format": "Mono8",
+          "ADC_bit_depth": "Bits8",
+          "image_width": 5320,
+          "image_height": 4600
+        }
+      },
+      "forAcquisition": true
+    },
+    "55Camera": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 55,
+        "lucid": {
+          "exposure": 2000.0,
+          "exposureauto": "Off",
+          "gain": 0.0,
+          "gamma": 1.0,
+          "pixel_format": "Mono8",
+          "ADC_bit_depth": "Bits8",
+          "image_width": 5320,
+          "image_height": 4600
+        }
+      },
+      "forAcquisition": true
+    }
+}, 
+
+"lasers": {
+  "488AOTF": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "AAAOTFLaserManager",
+      "managerProperties": {
+        "rs232device": "aaaotf",
+        "channel": 2
+      },
+      "wavelength": 488,
+      "valueRangeMin": 0,
+      "valueRangeMax": 1023,
+      "valueRangeStep": 10
+      },
+  "561AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 3
+    },
+    "wavelength": 561,
+    "valueRangeMin": 0,
+    "valueRangeMax": 1023,
+    "valueRangeStep": 10
+    },
+  "640AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 4
+    },
+    "wavelength": 640,
+    "valueRangeMin": 0,
+    "valueRangeMax": 1023,
+    "valueRangeStep": 10
+    }
+    
+},
+  "positioners": {
+    "Z": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "QueensgatePiezoManager",
+      "managerProperties": {
+        "rs232device": "zpiezo"
+      },
+      "axes": ["Z"],
+      "forPositioning": true,
+      "forScanning": true
+    },
+    "XY": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM5",
+        "zeroOnStartup": false
+      },
+      "axes": ["X", "Y"],
+      "forPositioning": true,
+      "forScanning": true
+    }
+},
+
+  "rs232devices": {
+    "aaaotf": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM15",
+        "encoding": "ascii",
+        "recv_termination": "\n\r",
+        "send_termination": "\r",
+        "baudrate": 19200,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+        }
+    },
+    "zpiezo": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM6",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 9600,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    },
+    "simslm": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM6",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 9600,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    }
+    },
+  "availableWidgets": [
+    "SIM",
+    "Laser",
+    "View",
+    "Image",
+    "Recording",
+    "Settings",
+    "Positioner"
+  ]  
+}

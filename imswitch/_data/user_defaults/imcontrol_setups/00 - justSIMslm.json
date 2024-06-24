@@ -1,0 +1,36 @@
+{ "SIMslm":{
+  "width":1080,
+  "height":1920,
+  "pixelSize":13.62,
+  "managerName": "SIMslmManager",
+  "managerProperties": {
+    "rs232device": "simslm"
+  }
+},
+  "rs232devices": {
+    "simslm": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM6",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 9600,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    }
+    },
+  "availableWidgets": [
+    "Laser",
+    "View",
+    "Image",
+    "Recording",
+    "Settings",
+    "Positioner"
+  ]  
+}

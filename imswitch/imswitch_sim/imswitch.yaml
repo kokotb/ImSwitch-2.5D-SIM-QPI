@@ -1,0 +1,50 @@
+name: imswitch-sim
+display_name: ImSwitch SIM
+# use 'hidden' to remove plugin from imswitch hub search results
+visibility: public
+# see https://imswitch.org/stable/plugins/manifest.html for valid categories
+categories: ["Annotation", "Segmentation", "Acquisition"]
+contributions:
+  commands:
+    - id: imswitch-sim.get_controller
+      python_name: imswitch_sim._controller:imswitch_get_controller
+      title: Open data with ImSwitch SIM
+    - id: imswitch-sim.write_multiple
+      python_name: imswitch_sim._manager:write_multiple
+      title: Save multi-layer data with ImSwitch SIM
+    - id: imswitch-sim.make_sample_data
+      python_name: imswitch_sim._sample_data:make_sample_data
+      title: Load sample data from ImSwitch SIM
+    - id: imswitch-sim.make_container_widget
+      python_name: imswitch_sim:ImageThreshold
+      title: Make threshold Container widget
+    - id: imswitch-sim.make_magic_widget
+      python_name: imswitch_sim:threshold_magic_widget
+      title: Make threshold magic widget
+    - id: imswitch-sim.make_function_widget
+      python_name: imswitch_sim:threshold_autogenerate_widget
+      title: Make threshold function widget
+    - id: imswitch-sim.make_qwidget
+      python_name: imswitch_sim:ExampleQWidget
+      title: Make example QWidget
+  controllers:
+    - command: imswitch-sim.get_controller
+      accepts_directories: false
+      filename_patterns: ['*.npy']
+  managers:
+    - command: imswitch-sim.write_multiple
+      layer_types: ['image*','labels*']
+      filename_extensions: []
+    - command: imswitch-sim.write_single_image
+      layer_types: ['image']
+      key: unique_id.1
+  widgets:
+    - command: imswitch-sim.make_container_widget
+      display_name: Container Threshold
+    - command: imswitch-sim.make_magic_widget
+      display_name: Magic Threshold
+    - command: imswitch-sim.make_function_widget
+      autogenerate: true
+      display_name: Autogenerate Threshold
+    - command: imswitch-sim.make_qwidget
+      display_name: Example QWidget

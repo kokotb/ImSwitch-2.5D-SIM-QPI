@@ -25,7 +25,7 @@ class QueensgatePiezoManager(PositionerManager):
 
         self.positionerInfo = positionerInfo
     
-    def move(self, value, _):
+    def move(self, value, _, acceleration = False, speed = False):
         
         if value == 0:
             return
