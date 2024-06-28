@@ -19,7 +19,7 @@
   "isSimulation": 0,
   "nRotations": 3,
   "nPhases": 3,
-  "isFastAPISIM": 1,
+  "isFastAPISIM": 0,
   "simPixelsize": 1,
   "simNA": 0,
   "simN": 0,

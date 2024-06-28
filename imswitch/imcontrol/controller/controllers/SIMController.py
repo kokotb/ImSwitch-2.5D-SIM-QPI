@@ -16,6 +16,8 @@ from datetime import datetime
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
+# from imswitch.imcontrol.model import SIMslmManager as SIMclient
+
 import imswitch
 
 
@@ -234,7 +236,7 @@ class SIMController(ImConWidgetController):
             laserTag = 1
         else:
             laserTag = 0
-            self._logger.error("The laser wavelenth is not implemented")
+            self._logger.error("The laser wavelength is not implemented")
         self.simPatternByID(patternID,laserTag)
 
     def getpatternWavelength(self):
@@ -489,8 +491,11 @@ class SIMController(ImConWidgetController):
                         if self.SIMStack is None:
                             self._logger.error("No image received")
                             continue
-
+                    
+                    # Simulate the stack
+                    self.SIMstack = processor.simSimulator()
                     self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength))
+                    
                     processor.setSIMStack(self.SIMStack)
                     processor.getWF(self.SIMStack)
 
@@ -521,7 +526,7 @@ class SIMController(ImConWidgetController):
                     time.sleep(tDebounce)
 
 
-            # wait for the next rund
+            # wait for the next round
             time.sleep(timePeriod)
 
 
@@ -1061,7 +1066,7 @@ class SIMClient:
             return -1
 
     def start_viewer(self):
-        url = self.base_url + self.commands["start_viewer"]
+        url = self.base_url + self.commands["start"]
         return self.get_request(url)
 
     def start_viewer_single_loop(self, number_of_runs, timeout=2):

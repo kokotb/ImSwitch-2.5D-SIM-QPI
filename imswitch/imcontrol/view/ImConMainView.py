@@ -59,7 +59,6 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Autofocus': _DockInfo(name='Autofocus', yPosition=0),
             'FocusLock': _DockInfo(name='Focus Lock', yPosition=0),
             'Laser': _DockInfo(name='Laser Control', yPosition=0),
-            'SIM': _DockInfo(name = 'SIM', yPosition = 0),
             'EtSTED': _DockInfo(name='EtSTED', yPosition=0),
             'Positioner': _DockInfo(name='Positioner', yPosition=1),
             'Rotator': _DockInfo(name='Rotator', yPosition=1),
@@ -80,6 +79,7 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             'View': _DockInfo(name='Image Controls', yPosition=1),
             'Recording': _DockInfo(name='Recording', yPosition=2),
+            'SIM': _DockInfo(name = 'SIM', yPosition = 2),
             'Console': _DockInfo(name='Console', yPosition=4)
         }
         otherDockKeys = ['Image']

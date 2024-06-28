@@ -56,13 +56,17 @@ class LUCIDManager(DetectorManager):
     def scale(self):
         return [1,1]
 
-    def getLatestFrame(self):
+    def getLatestFrame(self, returnFrameNumber = False):
         # print(self._camera)
         if not self._adjustingParameters:
             self.__image = self._camera.grabFrame()
             # print(self.__image)
-            
-        return self.__image
+        
+        if returnFrameNumber:
+            frameNumber = 4 # Arbitrary number set for testing.
+            return self.__image, frameNumber
+        else:    
+            return self.__image
 
     def setParameter(self, name, value):
         """Sets a parameter value and returns the value.
