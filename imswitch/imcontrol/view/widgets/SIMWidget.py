@@ -123,11 +123,18 @@ class SIMWidget(NapariHybridWidget):
         layout = QVBoxLayout()
 
         # Label/textedit pairs
+        # params = [
+        #     ("Wavelength 1", "0.57"), ("Wavelength 2", "0.65"), ("NA", "0.8"),
+        #     ("n", "1"),
+        #     ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
+        #     ("w", "1"), ("eta", "0.6"), ("Magnification", "22.5")
+        # ]
+        
         params = [
-            ("Wavelength 1", "0.57"), ("Wavelength 2", "0.65"), ("NA", "0.8"),
-            ("n", "1"),
-            ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
-            ("w", "1"), ("eta", "0.6"), ("Magnification", "106.7")
+            ("Wavelength 1", "0.57"), ("Wavelength 2", "0.65"), ("NA", "1.4"),
+            ("n", "1.33"),
+            ("Pixelsize", "6.5"), ("Alpha", "0.5"), ("Beta", "0.98"),
+            ("w", "0.2"), ("eta", "0.6"), ("Magnification", "60")
         ]
         
         # create widget per label
