@@ -12,6 +12,10 @@ import time
 import numpy as np
 from datetime import datetime
 
+import math
+import logging
+import sys
+
 
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
@@ -88,7 +92,9 @@ class SIMController(ImConWidgetController):
 
         # Choose which laser will be recorded
         self.is488 = True
-        self.is635 = True
+        self.is561 = True
+        self.is640 = True
+        
 
         # we can switch between mcSIM and napari
         self.reconstructionMethod = "napari" # or "mcSIM"
@@ -140,6 +146,8 @@ class SIMController(ImConWidgetController):
         # select positioner
         self.positionerName = self._master.positionersManager.getAllDeviceNames()[0]
         self.positioner = self._master.positionersManager[self.positionerName]
+        self.positionerNameXY = self._master.positionersManager.getAllDeviceNames()[1]
+        self.positionerXY = self._master.positionersManager[self.positionerNameXY]
 
         # setup the SIM processors
         sim_parameters = SIMParameters()
@@ -161,7 +169,8 @@ class SIMController(ImConWidgetController):
         self._widget.stop_button.clicked.connect(self.stopSIM)
 
         #self._widget.is488LaserButton.clicked.connect(self.toggle488Laser)
-        #self._widget.is635LaserButton.clicked.connect(self.toggle635Laser)
+        #self._widget.is561LaserButton.clicked.connect(self.toggle561Laser)
+        #self._widget.is640LaserButton.clicked.connect(self.toggle640Laser)
         self._widget.checkbox_record_raw.stateChanged.connect(self.toggleRecording)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         #self._widget.sigPatternID.connect(self.patternIDChanged)
@@ -233,8 +242,10 @@ class SIMController(ImConWidgetController):
         wl = self.getpatternWavelength()
         if wl == 'Laser 488nm':
             laserTag = 0
-        elif wl == 'Laser 635nm':
+        elif wl == 'Laser 561nm':
             laserTag = 1
+        elif wl == 'Laser 640nm':
+            laserTag = 2
         else:
             laserTag = 0
             self._logger.error("The laser wavelength is not implemented")
@@ -371,12 +382,19 @@ class SIMController(ImConWidgetController):
         else:
             self._widget.is488LaserButton.setText("488 off")
 
-    def toggle635Laser(self):
-        self.is635 = not self.is635
-        if self.is635:
-            self._widget.is635LaserButton.setText("635 on")
+    def toggle561Laser(self):
+        self.is561 = not self.is561
+        if self.is561:
+            self._widget.is561LaserButton.setText("561 on")
         else:
-            self._widget.is635LaserButton.setText("635 off")
+            self._widget.is561LaserButton.setText("561 off")
+            
+    def toggle640Laser(self):
+        self.is640 = not self.is640
+        if self.is640:
+            self._widget.is640LaserButton.setText("640 on")
+        else:
+            self._widget.is640LaserButton.setText("640 off")
 
     def updateDisplayImage(self, image):
         image = np.fliplr(image.transpose())
@@ -403,8 +421,8 @@ class SIMController(ImConWidgetController):
     #     """
     #     self.patternID = 0
     #     self.isReconstructing = False
-    #     nColour = 2 #[488, 635]
-    #     dic_wl = [488, 635]
+    #     nColour = 2 #[488, 640]
+    #     dic_wl = [488, 640]
 
     #     # retreive Z-stack parameters
     #     zStackParameters = self._widget.getZStackParameters()
@@ -444,7 +462,7 @@ class SIMController(ImConWidgetController):
     #                 processor.setParameters(sim_parameters)
     #                 self.LaserWL = processor.wavelength
     #                 # set the pattern-path for laser wl 1
-    #             elif iColour == 1 and self.is635 and self.lasers[iColour].power>0.0:
+    #             elif iColour == 1 and self.is640 and self.lasers[iColour].power>0.0:
     #                 # enable laser 2
     #                 self.lasers[0].setEnabled(False)
     #                 self.lasers[1].setEnabled(True)
@@ -555,20 +573,33 @@ class SIMController(ImConWidgetController):
 
     def performSIMExperimentThread(self, sim_parameters):
         """
-        Iterate over all SIM patterns, display them and acquire images
+        Select a sequence on the SLM that will choose laser combination.
+        Run the sequence by sending the trigger to the SLM.
+        Run continuous on a single frame. 
+        Run snake scan for larger FOVs.
         """
+        time_whole_start = time.time()
         # Newly added, prep for SLM integration
         mock = True
         laser_wl = 488
         exposure_ms = 1
-        dic_wl_dev = {488:'1', 561:'2', 640:'3'}
-        dic_exposure_dev = {0.5:'1' , 1:'2'} # 0.5 ms, 1 ms
-        dic_patternID = {'11':1,'12':3, '13':3, '12':4, '22':5, '32':6}
+        dic_wl_dev = {488:0, 561:1, 640:2}
+        dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
+        dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
         # self.patternID = 0
-        self.patternID = dic_patternID[dic_wl_dev[laser_wl]+dic_exposure_dev[exposure_ms]]
+        self.patternID = dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
         self.isReconstructing = False
-        nColour = 1 #[488, 635]
-        dic_wl = [488]
+        nColour = 1 #[488, 640]
+        dic_wl = [488, 561, 640]
+        dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
+        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
+        
+        # Set processors for selected lasers
+        processors = []
+        isLaser = []
+        for wl in dic_wl:
+            processors.append(processors_dic[wl])
+            isLaser.append(dic_laser_present[wl])
 
         # retreive Z-stack parameters
         zStackParameters = self._widget.getZStackParameters()
@@ -602,32 +633,57 @@ class SIMController(ImConWidgetController):
             # TODO: Our triggering schema is different, number of colors is 
             # determined by the SLM program - SLM directly controls the lasers
             # I suggest removal of this for loop
+            
+            # Change from openUC2 concept - all colors are taken at once
+            # Might be a bad idea, but we need to try our options - one trigger
+            # will trigger the 3 color sequence, we don't have a trigger 
+            # for each sequence
+            
+            # SLM enables lasers - we do not need activation of the lasers
+            # self.lasers[0].setEnabled(True)
+            # self.lasers[1].setEnabled(True)
+            # self.lasers[2].setEnabled(True)
+            
+            
+            
             for iColour in range(nColour):
-                # toggle laser
+                # Move piezo to initial position
                 if not self.active:
                     if len(allZPositions)!=1:
                         self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
                         time.sleep(tDebounce)
                     break
-
+                # toggle laser
                 if iColour == 0 and self.is488 and self.lasers[iColour].power>0.0:
                     # enable laser 1
                     self.lasers[0].setEnabled(True)
                     self.lasers[1].setEnabled(False)
+                    self.lasers[2].setEnabled(False)
                     self._logger.debug("Switching to pattern"+self.lasers[0].name)
                     processor = self.SimProcessorLaser1
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
                     # set the pattern-path for laser wl 1
-                elif iColour == 1 and self.is635 and self.lasers[iColour].power>0.0:
+                elif iColour == 1 and self.is561 and self.lasers[iColour].power>0.0:
                     # enable laser 2
                     self.lasers[0].setEnabled(False)
                     self.lasers[1].setEnabled(True)
+                    self.lasers[2].setEnabled(False)
                     self._logger.debug("Switching to pattern"+self.lasers[1].name)
                     processor = self.SimProcessorLaser2
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 1
+                    # set the pattern-path for laser wl 2
+                elif iColour == 2 and self.is640 and self.lasers[iColour].power>0.0:
+                    # enable laser 2
+                    self.lasers[0].setEnabled(False)
+                    self.lasers[1].setEnabled(False)
+                    self.lasers[2].setEnabled(True)
+                    self._logger.debug("Switching to pattern"+self.lasers[2].name)
+                    processor = self.SimProcessorLaser2
+                    processor.setParameters(sim_parameters)
+                    self.LaserWL = processor.wavelength
+                    # set the pattern-path for laser wl 3
                 else:
                     time.sleep(.1) # reduce CPU load
                     continue
@@ -648,6 +704,7 @@ class SIMController(ImConWidgetController):
                         # ensure lasers are off to avoid photo damage
                         self.lasers[0].setEnabled(False)
                         self.lasers[1].setEnabled(False)
+                        self.lasers[2].setEnabled(False)
 
                         # download images from the camera
                         self.SIMStack = self.detector.getChunk(); self.detector.flushBuffers()
@@ -690,6 +747,7 @@ class SIMController(ImConWidgetController):
                         if self.SIMStack is None:
                             self._logger.error("No image received")
                             continue
+                    
                     
                     # Simulate the stack
                     self.SIMstack = processor.simSimulator()
@@ -746,144 +804,224 @@ class SIMController(ImConWidgetController):
                 # allZPositions = np.arange(zMin, zMax, zStep)
                 allZPositions = [0]
             else:
-                allZPositions = [0]
+                allZPositions = [0]          
+            
+            # iColour = 0
+            # if iColour == 0 and self.is488 and self.lasers[iColour].power>0.0:
+            # Check if lasers have power
+            # Generate empty array to populate with widefield images for each color
+            wfImages = []
+            stackSIM = []
+            positions = []
+            
+            # ----------scanning over more FOVs------------
+            # Generate positions - can be done anywhere in this function
+            # Copied over from grid_xy script
+            
+            # Set positioner info axis_y is set to 'X' for testing purposes
+            positioner_xy = 'XY' # Must match positioner name in config file
+            axis_x = 'X'
+            axis_y = 'Y'  # Change to 'Y' when testing for real
+            dic_axis = {'X':0, 'Y':1}
+            
+            # Image size - I need to grab that from GUI but is hardcoded at the moment
+            image_pix_x = 512 # TODO: read from widget 
+            image_pix_y = 512 # TODO: read from widge
+            pix_size = 0.123 # um # TODO: read from widge
+            
+            # For help with development
+            # self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
+            
+            # Grab starting position that we can return to
+            positions_start = self.positionerXY.get_abs()
+            start_position_x = float(positions_start[dic_axis[axis_x]])
+            start_position_y = float(positions_start[dic_axis[axis_y]])
+            xy_start = [start_position_x, start_position_y]
+            
+            # Set experiment info
+            grid_x_num = 3
+            grid_y_num = 3
+            overlap_xy = 0
+            xy_scan_type = 'square' # or 'quad', not sure what that does yet...
+            count_limit = 9999
+            
+            # Determine stage travel range, stage accepts values in microns
+            frame_size_x = image_pix_x*pix_size
+            frame_size_y = image_pix_y*pix_size
+            
+            x_step = (1 - overlap_xy) * frame_size_x
+            y_step = (1 - overlap_xy) * frame_size_y
+            xy_step = [x_step, y_step]
 
-            # TODO: Our triggering schema is different, number of colors is 
-            # determined by the SLM program - SLM directly controls the lasers
-            # I suggest removal of this for loop
-            for iColour in range(nColour):
-                # toggle laser
-                if not self.active:
-                    if len(allZPositions)!=1:
-                        self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                        time.sleep(tDebounce)
-                    break
+            assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, ot that frame_size is > 0'
 
-                if iColour == 0 and self.is488 and self.lasers[iColour].power>0.0:
+            if grid_x_num > 0 and grid_y_num > 0:
+                x_range = grid_x_num * x_step
+                y_range = grid_y_num * y_step
+                xy_range = [x_range, y_range]
+            else:
+                print("Grid parameters are not set correct!")
+
+            # Generate list of coordinates
+            positions = []
+
+            y_start = xy_start[1]
+
+            y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
+
+            # Generate positions for each row
+            for y in y_list:
+                # Where to start this row
+                x_start = xy_start[0]
+                if xy_scan_type == 'square':
+                    x_stop = x_start - x_range
+                    # Generate x coordinates
+                    x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
+                elif xy_scan_type == 'quad':
+                    x_stop = x_start - math.sqrt(x_range**2 - (y-y_start)**2)
+                    # Generate x coordinates
+                    x_list = list(np.arange(x_start, x_stop, -x_step))
+                    
+                # Run every other row backwards to minimize stage movement
+                if y_list.index(y) % 2 == 1:
+                    x_list.reverse()
+                
+                # Populate the final list
+                for x in x_list:
+                    # print(np.round(x, 2))
+                    # positions.append([np.round(x, 2),np.round(y, 2)])
+                    positions.append([x,y])
+                    
+                # Truncate the list if the length/the number of created positions
+                # exceeds the specified limit
+                if len(positions) > count_limit:
+                    positions = positions[:count_limit]
+                    self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
+
+            
+            for k in range(0, len(processors)):
+                wfImages.append([])
+                stackSIM.append([])
+                
+            
+            for j, pos in enumerate(positions):
+                x_set = pos[0]
+                y_set = pos[1]
+                tDebounceXY = 0
+                
+                self.positionerXY.setPositionXY(x_set, y_set)
+                # time.sleep(tDebounceXY)
+                print(f"Move to x = {x_set}, y = {y_set}")
+                
+                # ----sub loop start----
+                for k, processor in enumerate(processors):
+                    # -----loop start-----
+                    # processor.setPositionNum(k)
+                    # If power of laser below 0 and laser not used in measurement
+                    # Skip laser
+                    if not isLaser[k] or self.lasers[dic_wl_dev[dic_wl[k]]].power <= 0.0:
+                        time.sleep(.1) # reduce CPU load
+                        continue
+                    time_color_start = time.time()
+                    # Move piezo to initial position
+                    if not self.active:
+                        if len(allZPositions)!=1:
+                            self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
+                            time.sleep(tDebounce)
+                        break
+                    # Toggle laser
                     # enable laser 1
-                    self.lasers[0].setEnabled(True)
-                    self.lasers[1].setEnabled(False)
-                    self._logger.debug("Switching to pattern"+self.lasers[0].name)
-                    processor = self.SimProcessorLaser1
+                    # self.lasers[0].setEnabled(True)
+                    # self.lasers[1].setEnabled(False)
+                    # self.lasers[2].setEnabled(False)
+                    # self._logger.debug("Switching to pattern"+self.lasers[0].name)
+                    # processor = self.SimProcessorLaser1
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
                     # set the pattern-path for laser wl 1
-                elif iColour == 1 and self.is635 and self.lasers[iColour].power>0.0:
-                    # enable laser 2
-                    self.lasers[0].setEnabled(False)
-                    self.lasers[1].setEnabled(True)
-                    self._logger.debug("Switching to pattern"+self.lasers[1].name)
-                    processor = self.SimProcessorLaser2
-                    processor.setParameters(sim_parameters)
-                    self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 1
-                else:
-                    time.sleep(.1) # reduce CPU load
-                    continue
-
-                # select the pattern for the current colour
-                self.SIMClient.set_wavelength(dic_wl[iColour])
-
-                for zPos in allZPositions:
-                    # move to the next z-position
-                    if len(allZPositions)!=1:
-                        self.positioner.move(value=zPos+zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                        time.sleep(tDebounce)
-
-                    if self.isPCO:
-                        # display one round of SIM patterns for the right colour
-                        self.SIMClient.start_viewer_single_loop(1)
-
-                        # ensure lasers are off to avoid photo damage
-                        self.lasers[0].setEnabled(False)
-                        self.lasers[1].setEnabled(False)
-
-                        # download images from the camera
-                        self.SIMStack = self.detector.getChunk(); self.detector.flushBuffers()
-                        if self.SIMStack is None:
-                            self._logger.error("No image received")
-                            continue
-                    elif not mock:
-                        # we need to capture images and display patterns one-by-one
-                        # TODO: Remove this when doing actual acquisition
-                        # Force it to go to simulated stack.
-                        self.SIMStack = []
-                        # self.SIMStack = None
-                        try:
-                            mExposureTime = self.detector.getParameter("exposure")/1e6 # s^-1
-                        except:
-                            mExposureTime = 0.1
-                        for iPattern in range(9):
-                            self.SIMClient.display_pattern(iPattern)
-                            time.sleep(mExposureTime) # make sure we take the next newest frame to avoid motion blur from the pattern change
-
-                            # Todo: Need to ensure thatwe have the right pattern displayed and the buffer is free - this heavily depends on the exposure time..
-                            mFrame = None
-                            lastFrameNumber = -1
-                            timeoutFrameRequest = 3 # seconds
-                            cTime = time.time()
-                            frameRequestNumber = 0
-                            while(1):
-                                # something went wrong while capturing the frame
-                                if time.time()-cTime> timeoutFrameRequest:
-                                    break
-                                mFrame, currentFrameNumber = self.detector.getLatestFrame(returnFrameNumber=True)
-                                if currentFrameNumber <= lastFrameNumber:
-                                    time.sleep(0.05)
-                                    continue  
-                                frameRequestNumber += 1
-                                if frameRequestNumber > self.nsimFrameSyncVal:
-                                    print(f"Frame number used for stack: {currentFrameNumber}") 
-                                    break
-                                lastFrameNumber = currentFrameNumber
-                                
-                                #mFrame = self.detector.getLatestFrame() # get the next frame after the pattern has been updated
-                            self.SIMStack.append(mFrame)
-                            
-                        if self.SIMStack is None:
-                            self._logger.error("No image received")
-                            continue
+                    
+                    for zPos in allZPositions:
+                        # move to the next z-position
+                        if len(allZPositions)!=1:
+                            self.positioner.move(value=zPos+zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
+                            time.sleep(tDebounce)        
                     
                     # Simulate the stack
-                    # self.SIMStack = []
-                    self.SIMStack = processor.simSimulator()
-                    self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength))
                     
-                    processor.setSIMStack(self.SIMStack)
-                    processor.getWF(self.SIMStack)
+                    # TODO: Implement filling in z stack
+                    # self.SIMStack.append(mFrame)
+                    # self.SIMStack = []
+                        self.SIMStack = processor.simSimulator()
+                        
+                        # Push all colors into one array
+                        stackSIM[k].append(self.SIMStack)
+                        
+                        self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength)[2:])
+                        
+                        processor.setSIMStack(self.SIMStack)
+                        
+                        # Push all wide fields into one array
+                        wfImages[k].append(processor.getWFlbf(self.SIMStack))
 
-                    # activate recording in processor
-                    processor.setRecordingMode(self.isRecording)
-                    processor.setReconstructionMode(self.isReconstruction)
-                    processor.setWavelength(self.LaserWL,sim_parameters)
+                        # activate recording in processor
+                        processor.setRecordingMode(self.isRecording)
+                        processor.setReconstructionMode(self.isReconstruction)
+                        processor.setWavelength(self.LaserWL,sim_parameters)
 
 
-                    # store the raw SIM stack
-                    if self.isRecording and self.lasers[iColour].power>0.0:
-                        date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
-                        processor.setDate(date)
-                        mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{zPos+zPosInitially}mum.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
-                    # self.detector.stopAcquisition()
-                    # We will collect N*M images and process them with the SIM processor
+                        # store the raw SIM stack
+                        # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                        # processor.setDate(date)
+                        if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
+                            # TODO: Revert date back to one
+                            # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                            frame_num = 0
+                            date = f"frame_{frame_num:004}" # prepped for timelapse
+                            processor.setDate(date)
+                            # processor.setFrameNum(frame_num)
+                            mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{self.LaserWL}um_{zPos+zPosInitially}mum.tif"
+                            threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+                            if k == len(processors)-1:
+                                # Save WF three color
+                                mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_{zPos+zPosInitially}mum_wf.tif"
+                                threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
+                                
+                                # TODO: Delete this, just for development purposes
+                                # mFilenameStack2 = f"{date}_SIM_Stack_pos_{j:03}_{'_'.join(map(str,dic_wl))}_{zPos+zPosInitially}mum_stack.tif"
+                                # threading.Thread(target=self.saveImageInBackground, args=(stackSIM, mFilenameStack2,), daemon=True).start()
+                        # -----loop end-----
+                        # self.detector.stopAcquisition()
+                        # We will collect N*M images and process them with the SIM processor
 
-                    # process the frames and display
-                    processor.reconstructSIMStack()
+                        # process the frames and display
+                        processor.reconstructSIMStackLBF(frame_num, j)
 
-                    # reset the per-colour stack to add new frames in the next imaging series
-                    processor.clearStack()
+                        # reset the per-colour stack to add new frames in the next imaging series
+                        processor.clearStack()
+                        # ----sub loop end----
+                    
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
 
-                # move back to initial position
-                if len(allZPositions)!=1:
-                    self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                    time.sleep(tDebounce)
+            # move back to initial position
+            if len(allZPositions)!=1:
+                self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
+                time.sleep(tDebounce)
 
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
             self.active = False
             print(count)
+            # TODO: Remove this (left from openUC2 implementation)
             # wait for the next round
-            time.sleep(timePeriod)
+            # time.sleep(timePeriod)
+            time_whole_end = time.time()
+            time_whole_total = time_whole_end-time_whole_start
+            
+            self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+            
 
     def performSIMTimelapseThread(self, sim_parameters):
         """
@@ -891,8 +1029,8 @@ class SIMController(ImConWidgetController):
         Q: should it have a separate thread?
         """
         self.isReconstructing = False
-        nColour = 2 #[488, 635]
-        dic_wl = [488, 635]
+        nColour = 2 #[488, 640]
+        dic_wl = [488, 640]
         for iColour in range(nColour):
             # toggle laser
             if not self.active:
@@ -907,7 +1045,7 @@ class SIMController(ImConWidgetController):
                 processor.setParameters(sim_parameters)
                 self.LaserWL = processor.wavelength
                 # set the pattern-path for laser wl 1
-            elif iColour == 1 and self.is635 and self.lasers[iColour].power>0.0:
+            elif iColour == 1 and self.is640 and self.lasers[iColour].power>0.0:
                 # enable laser 2
                 self.lasers[0].setEnabled(False)
                 self.lasers[1].setEnabled(True)
@@ -1035,9 +1173,9 @@ class SIMParameters(object):
     # alpha = 0.5
     # beta = 0.98#
     # path = 'D:\\Documents\\4 - software\python-scripting\\2p5D-SIM\\test_export\\'
-    wavelength_1 = 0.57
-    wavelength_2 = 0.66
-    wavelength_3 = 0.75
+    wavelength_1 = 0.488
+    wavelength_2 = 0.561
+    wavelength_3 = 0.640
     NA = 1.4
     n = 1.33
     magnification = 60
@@ -1169,8 +1307,14 @@ class SIMProcessor(object):
     def getWF(self, mStack):
         # display the BF image
         bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, "Widefield SUM")
-
+        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, "Widefield SUM"+f"{self.wavelength}"[2:])
+        
+    def getWFlbf(self, mStack):
+        # display the BF image
+        bfFrame = np.sum(np.array(mStack[-3:]), 0)
+        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, "Widefield SUM"+f"{self.wavelength}"[2:])
+        return bfFrame
+        
     def setSIMStack(self, stack):
         self.stack = stack
 
@@ -1281,6 +1425,18 @@ class SIMProcessor(object):
             mStackCopy = np.array(self.stack.copy())
             self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackground, args=(mStackCopy,), daemon=True)
             self.mReconstructionThread.start()
+    
+    def reconstructSIMStackLBF(self, frame_num, pos_num):
+        '''
+        reconstruct the image stack asychronously
+        '''
+        # TODO: Perhaps we should work with quees?
+        # reconstruct and save the stack in background to not block the main thread
+        if not self.isReconstructing:  # not
+            self.isReconstructing=True
+            mStackCopy = np.array(self.stack.copy())
+            self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, frame_num, pos_num), args=(mStackCopy, ), daemon=True)
+            self.mReconstructionThread.start()
 
     def setRecordingMode(self, isRecording):
         self.isRecording = isRecording
@@ -1290,6 +1446,12 @@ class SIMProcessor(object):
 
     def setDate(self, date):
         self.date = date
+        
+    def setFrameNum(self, frame_num):
+        self.frame_num = frame_num
+        
+    def setPositionNum(self, pos_num):
+        self.pos_num = pos_num
 
     def setWavelength(self, wavelength, sim_parameters):
         self.LaserWL = wavelength
@@ -1327,7 +1489,42 @@ class SIMProcessor(object):
             mFilenameRecon = f"{self.date}_SIM_Reconstruction_{self.LaserWL}nm.tif"
             threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction")
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
+        
+        self.isReconstructing = False
+        
+    def reconstructSIMStackBackgroundLBF(self, mStack, frame_num, pos_num):
+        '''
+        reconstruct the image stack asychronously
+        the stack is a list of 9 images (3 angles, 3 phases)
+        '''
+        # compute image
+        # initialize the model
+        self._logger.debug("Processing frames")
+        if not self.getIsCalibrated():
+            self.setReconstructor()
+            self.calibrate(mStack)
+        SIMReconstruction = self.reconstruct(mStack)
+
+        # save images eventually
+        if self.isRecording:
+            def saveImageInBackground(image, filename = None):
+                try:
+                    self.folder = SIMParameters.path
+                    self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
+                    tif.imwrite(self.filename, image)
+                    self._logger.debug("Saving file: "+self.filename)
+                except  Exception as e:
+                    self._logger.error(e)
+            # TODO: Revert back to date
+            # date = self.date
+            # date = f"frame_{self.frame_num:004}"
+            date = f"frame_{frame_num:004}"
+            # pos_num = self.pos_num # don't really work, not unique, changes to quick
+            mFilenameRecon = f"{date}_pos_{pos_num:03}_SIM_Reconstruction_{self.LaserWL}um.tif"
+            threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
+
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
         
         self.isReconstructing = False
 
