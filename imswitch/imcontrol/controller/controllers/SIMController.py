@@ -144,6 +144,7 @@ class SIMController(ImConWidgetController):
             self.isPCO = False
 
         # select positioner
+        # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
         self.positionerName = self._master.positionersManager.getAllDeviceNames()[0]
         self.positioner = self._master.positionersManager[self.positionerName]
         self.positionerNameXY = self._master.positionersManager.getAllDeviceNames()[1]
@@ -795,48 +796,36 @@ class SIMController(ImConWidgetController):
         while self.active and mock:
         # run only once
         # while count == 0:
-            count += 1
-
-            # TODO: We don't need that remove?
-            # iterate over all z-positions
-            if zStep > 0:
-                # TODO: Disabling this option although accessible through GUI
-                # allZPositions = np.arange(zMin, zMax, zStep)
-                allZPositions = [0]
-            else:
-                allZPositions = [0]          
+            count += 1 
             
-            # iColour = 0
-            # if iColour == 0 and self.is488 and self.lasers[iColour].power>0.0:
-            # Check if lasers have power
-            # Generate empty array to populate with widefield images for each color
+            # Generate empty array to populate with wide-field images for 
+            # each color
             wfImages = []
             stackSIM = []
             positions = []
             
             # ----------scanning over more FOVs------------
+            # TODO: Copy to top of the function - this is common to all 
+            # mock and actual scan
+            ##################################################
+            # ----------------Grid scan info---------------- #
+            # ----Copy over to top once fully implemented--- #
+            ##################################################
             # Generate positions - can be done anywhere in this function
             # Copied over from grid_xy script
             
             # Set positioner info axis_y is set to 'X' for testing purposes
+            # Positioner info for ImSwitch to recognize the stage
             positioner_xy = 'XY' # Must match positioner name in config file
             axis_x = 'X'
             axis_y = 'Y'  # Change to 'Y' when testing for real
             dic_axis = {'X':0, 'Y':1}
             
-            # Image size - I need to grab that from GUI but is hardcoded at the moment
+            # Image size - I need to grab that from GUI but is hardcoded 
+            # at the moment
             image_pix_x = 512 # TODO: read from widget 
             image_pix_y = 512 # TODO: read from widge
             pix_size = 0.123 # um # TODO: read from widge
-            
-            # For help with development
-            # self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-            
-            # Grab starting position that we can return to
-            positions_start = self.positionerXY.get_abs()
-            start_position_x = float(positions_start[dic_axis[axis_x]])
-            start_position_y = float(positions_start[dic_axis[axis_y]])
-            xy_start = [start_position_x, start_position_y]
             
             # Set experiment info
             grid_x_num = 3
@@ -845,30 +834,42 @@ class SIMController(ImConWidgetController):
             xy_scan_type = 'square' # or 'quad', not sure what that does yet...
             count_limit = 9999
             
+            ##################################################
+            # ----------------Grid scan info---------------- #
+            # ----Copy over to top once fully implemented--- #
+            ##################################################
+            
+            # Grab starting position that we can return to
+            positions_start = self.positionerXY.get_abs()
+            start_position_x = float(positions_start[dic_axis[axis_x]])
+            start_position_y = float(positions_start[dic_axis[axis_y]])
+            xy_start = [start_position_x, start_position_y]
+            
             # Determine stage travel range, stage accepts values in microns
             frame_size_x = image_pix_x*pix_size
             frame_size_y = image_pix_y*pix_size
             
+            # Step-size based on overlap info
             x_step = (1 - overlap_xy) * frame_size_x
             y_step = (1 - overlap_xy) * frame_size_y
             xy_step = [x_step, y_step]
-
-            assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, ot that frame_size is > 0'
-
+            
+            # Confirm parameters are set correctly
+            assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
+            
             if grid_x_num > 0 and grid_y_num > 0:
                 x_range = grid_x_num * x_step
                 y_range = grid_y_num * y_step
                 xy_range = [x_range, y_range]
             else:
                 print("Grid parameters are not set correct!")
-
+            
             # Generate list of coordinates
             positions = []
-
             y_start = xy_start[1]
-
             y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
-
+            
+            # ------------Grid scan------------
             # Generate positions for each row
             for y in y_list:
                 # Where to start this row
@@ -892,131 +893,158 @@ class SIMController(ImConWidgetController):
                     # positions.append([np.round(x, 2),np.round(y, 2)])
                     positions.append([x,y])
                     
-                # Truncate the list if the length/the number of created positions
-                # exceeds the specified limit
+                # Truncate the list if the length/the number of created
+                # positions exceeds the specified limit
                 if len(positions) > count_limit:
                     positions = positions[:count_limit]
                     self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-
+            # ------------Grid scan------------
             
+            # -----------SIM acquire-----------
+            # Generate empty vectors to save data
+            # Will also be maybe used for processing
             for k in range(0, len(processors)):
                 wfImages.append([])
                 stackSIM.append([])
-                
             
+            # Generate one image for each color to make testing code faster
+            # Simulation takes 0.33 s for 512x512 image - the default of 
+            # simSimulator (hardcoded in the simulator)
+            color_stacks_simulated = []
+            for processor in processors:
+                stack_simulated = processor.simSimulator()
+                color_stacks_simulated.append(stack_simulated)
+            # -----------SIM acquire-----------
+            
+            # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
+                
+                # Move stage
                 x_set = pos[0]
                 y_set = pos[1]
-                tDebounceXY = 0
-                
+                # tDebounceXY = 0 # prepared in case we need it
                 self.positionerXY.setPositionXY(x_set, y_set)
-                # time.sleep(tDebounceXY)
-                print(f"Move to x = {x_set}, y = {y_set}")
+                # time.sleep(tDebounceXY) # prepared in case we need it
+                # For development purposes
+                # print(f"Move to x = {x_set}, y = {y_set}")
                 
+                # Acquire SIM set for all present lasers
                 # ----sub loop start----
                 for k, processor in enumerate(processors):
                     # -----loop start-----
-                    # processor.setPositionNum(k)
-                    # If power of laser below 0 and laser not used in measurement
-                    # Skip laser
+                    # If power of laser set to  0 or laser set not be used in
+                    # measurement skip laser
                     if not isLaser[k] or self.lasers[dic_wl_dev[dic_wl[k]]].power <= 0.0:
                         time.sleep(.1) # reduce CPU load
                         continue
                     time_color_start = time.time()
-                    # Move piezo to initial position
-                    if not self.active:
-                        if len(allZPositions)!=1:
-                            self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                            time.sleep(tDebounce)
-                        break
+                    
+                    # TODO: see if lasers need to be enabled to take an image
+                    # using our SLM. The reasons the comment below is kept here
                     # Toggle laser
-                    # enable laser 1
+                    # Enable lasers
                     # self.lasers[0].setEnabled(True)
-                    # self.lasers[1].setEnabled(False)
-                    # self.lasers[2].setEnabled(False)
-                    # self._logger.debug("Switching to pattern"+self.lasers[0].name)
-                    # processor = self.SimProcessorLaser1
+                    # self.lasers[1].setEnabled(True)
+                    # self.lasers[2].setEnabled(True)
+                    # self._logger.debug(f"Enabling all lasers {self.lasers[0].name}, {self.lasers[1].name}, {self.lasers[2].name}"+)
+                    
+                    # Setting a reconstruction processor for current laser
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 1
-                    
-                    for zPos in allZPositions:
-                        # move to the next z-position
-                        if len(allZPositions)!=1:
-                            self.positioner.move(value=zPos+zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                            time.sleep(tDebounce)        
                     
                     # Simulate the stack
+                    # Simulation takes 0.38 sec, so I decided to pre-generate
+                    # three images and go with that.
+                    # time_simu_start = time.time()
+                    # self.SIMStack = processor.simSimulator()
+                    # time_simu_end = time.time()
+                    # time_simu_total  = time_simu_end - time_simu_start
+                    # self._logger.debug('--Simulation took: {:.2f} sec\n--'.format(time_simu_total))
                     
-                    # TODO: Implement filling in z stack
-                    # self.SIMStack.append(mFrame)
-                    # self.SIMStack = []
-                        self.SIMStack = processor.simSimulator()
-                        
-                        # Push all colors into one array
-                        stackSIM[k].append(self.SIMStack)
-                        
-                        self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength)[2:])
-                        
-                        processor.setSIMStack(self.SIMStack)
-                        
-                        # Push all wide fields into one array
-                        wfImages[k].append(processor.getWFlbf(self.SIMStack))
-
-                        # activate recording in processor
-                        processor.setRecordingMode(self.isRecording)
-                        processor.setReconstructionMode(self.isReconstruction)
-                        processor.setWavelength(self.LaserWL,sim_parameters)
-
-
-                        # store the raw SIM stack
-                        # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
-                        # processor.setDate(date)
-                        if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
-                            # TODO: Revert date back to one
-                            # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
-                            frame_num = 0
-                            date = f"frame_{frame_num:004}" # prepped for timelapse
-                            processor.setDate(date)
-                            # processor.setFrameNum(frame_num)
-                            mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{self.LaserWL}um_{zPos+zPosInitially}mum.tif"
-                            threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
-                            if k == len(processors)-1:
-                                # Save WF three color
-                                mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_{zPos+zPosInitially}mum_wf.tif"
-                                threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
-                                
-                                # TODO: Delete this, just for development purposes
-                                # mFilenameStack2 = f"{date}_SIM_Stack_pos_{j:03}_{'_'.join(map(str,dic_wl))}_{zPos+zPosInitially}mum_stack.tif"
-                                # threading.Thread(target=self.saveImageInBackground, args=(stackSIM, mFilenameStack2,), daemon=True).start()
-                        # -----loop end-----
-                        # self.detector.stopAcquisition()
-                        # We will collect N*M images and process them with the SIM processor
-
-                        # process the frames and display
-                        processor.reconstructSIMStackLBF(frame_num, j)
-
-                        # reset the per-colour stack to add new frames in the next imaging series
-                        processor.clearStack()
-                        # ----sub loop end----
+                    # Choose pre-simulated image - testing code is 4x faster
+                    self.SIMStack = color_stacks_simulated[k]
                     
+                    # TODO: remove after development is done, kept for testing
+                    # Push all colors into one array - export disabled below
+                    # Enable below if you need this
+                    # stackSIM[k].append(self.SIMStack)
+                    
+                    self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength)[2:])
+                    
+                    # Set sim stack for processing all functions work on 
+                    # self.stack in SIMProcessor class
+                    processor.setSIMStack(self.SIMStack)
+                    
+                    # Push all wide fields into one array
+                    wfImages[k].append(processor.getWFlbf(self.SIMStack))
+                    
+                    # Activate recording and reconstruction in processor
+                    processor.setRecordingMode(self.isRecording)
+                    processor.setReconstructionMode(self.isReconstruction)
+                    processor.setWavelength(self.LaserWL, sim_parameters)
+                    
+                    # Save the raw SIM stack
+                    # TODO: Remove if obsolete, or move to before the loop?
+                    # Maybe include in accompanying log file (exact times) 
+                    # after recording is finished?
+                    # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                    # TODO: Remove? Our implementation feeds frame number and 
+                    # position direct into the processor function (the only 
+                    # way we could make it work reliably)
+                    # Sets the date in processor for saving file
+                    # processor.setDate(date) 
+                    if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
+                        # Set frame number - prepared for time-lapse
+                        # Final implementation will maybe have a little 
+                        # different form - we will need to empty a buffer of
+                        # the cam as fast as possible
+                        frame_num = 0
+                        date = f"frame_{frame_num:004}" # prepped for timelapse
+                        processor.setDate(date)
+                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm.tif"
+                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+                        if k == len(processors)-1:
+                            # Save WF three color
+                            mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_wf.tif"
+                            threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
+                            
+                            # TODO: Delete this, just for development purposes
+                            # Export a stack for all three lasers in one file
+                            # Did not seem very useful for further data
+                            # processing
+                            # mFilenameStack2 = f"{date}_SIM_Stack_pos_{j:03}_{'_'.join(map(str,dic_wl))}.tif"
+                            # threading.Thread(target=self.saveImageInBackground, args=(stackSIM, mFilenameStack2,), daemon=True).start()
+                    # -----loop end-----
+                    # TODO: Remove this? Kept commented from original code.
+                    # self.detector.stopAcquisition()
+                    
+                    # Process the frames and display reconstructions
+                    processor.reconstructSIMStackLBF(frame_num, j)
+
+                    # reset the per-colour stack to add new frames in the next
+                    # imaging series
+                    processor.clearStack()
+                    # ----sub loop end----
+                    
+                    # Timing of the process for testing purposes
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
                     self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
-
-            # move back to initial position
-            if len(allZPositions)!=1:
-                self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                time.sleep(tDebounce)
-
+            
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
             self.active = False
             print(count)
             # TODO: Remove this (left from openUC2 implementation)
+            # Maybe good idea for longer time-lapse movies to do a "snapshot"
+            # every couple of images and program this section to grab only one 
+            # set of images on trigger - time-lapse to in two ways, snap-shot 
+            # with wait times and continuous trigger mode (as fast as possible)
             # wait for the next round
             # time.sleep(timePeriod)
+            
+            # Timing of the process for testing purposes
             time_whole_end = time.time()
             time_whole_total = time_whole_end-time_whole_start
             
@@ -1521,7 +1549,7 @@ class SIMProcessor(object):
             # date = f"frame_{self.frame_num:004}"
             date = f"frame_{frame_num:004}"
             # pos_num = self.pos_num # don't really work, not unique, changes to quick
-            mFilenameRecon = f"{date}_pos_{pos_num:03}_SIM_Reconstruction_{self.LaserWL}um.tif"
+            mFilenameRecon = f"{date}_pos_{pos_num:03}_SIM_Reconstruction_{int(self.LaserWL*1000):03}nm.tif"
             threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
 
         self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
