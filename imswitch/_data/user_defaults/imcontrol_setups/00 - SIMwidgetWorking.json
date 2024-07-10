@@ -26,7 +26,8 @@
   "simETA": 0,
   "fastAPISIM_host": "192.168.0.1",
   "fastAPISIM_port": 0,
-  "tWaitSequence": 0
+  "tWaitSequence": 0,
+  "isMock": 1
 },
 "detectors": {
     "65Camera": {

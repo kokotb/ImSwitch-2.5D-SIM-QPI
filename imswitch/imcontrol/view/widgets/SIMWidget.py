@@ -99,20 +99,44 @@ class SIMWidget(NapariHybridWidget):
             "Enable Record RAW", "Enable Laser 488", "Enable Laser 635",
             "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
             "Selected Path", "D:\\Documents\\4 - software\python-scripting\\2p5D-SIM\\test_export\\",
+            "Mock"
             
         ]
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
+        
+        # Grid scan settings
+        params = [
+            ("N grid X", "1"), ("N grid Y", "1"), ("overlap","0")]
+        self.numGridX_label = QLabel(params[0][0])
+        self.numGridX_textedit = QLineEdit(params[0][1])
+        self.numGridY_label = QLabel(params[1][0])
+        self.numGridY_textedit = QLineEdit(params[1][1])
+        self.overlap_label = QLabel(params[2][0])
+        self.overlap_textedit = QLineEdit(params[2][1])
+                
+        # Save folder
         self.path_label = QLabel(checkboxes[8])
         self.path_edit = QLineEdit(checkboxes[9])
         self.openFolderButton = guitools.BetterPushButton('Open')
+        self.checkbox_mock = QCheckBox(checkboxes[10])
+        # TODO: change after development is over
+        self.checkbox_mock.setChecked(True) # Sets default fo true 
+        
         layout.addWidget(self.checkbox_reconstruction)
         layout.addWidget(self.checkbox_record_reconstruction)
         layout.addWidget(self.checkbox_record_raw)
+        layout.addWidget(self.numGridX_label)
+        layout.addWidget(self.numGridX_textedit)
+        layout.addWidget(self.numGridY_label)
+        layout.addWidget(self.numGridY_textedit)
+        layout.addWidget(self.overlap_label)
+        layout.addWidget(self.overlap_textedit)
         layout.addWidget(self.path_label)
         layout.addWidget(self.path_edit)        
         layout.addWidget(self.openFolderButton)
+        layout.addWidget(self.checkbox_mock)
 
         
         tab.setLayout(layout)
@@ -131,33 +155,36 @@ class SIMWidget(NapariHybridWidget):
         # ]
         
         params = [
-            ("Wavelength 1", "0.57"), ("Wavelength 2", "0.65"), ("NA", "1.4"),
+            ("Wavelength 1", "0.488"), ("Wavelength 2", "0.561"), ("Wavelength 3", "0.640"), ("NA", "1.4"),
             ("n", "1.33"),
             ("Pixelsize", "6.5"), ("Alpha", "0.5"), ("Beta", "0.98"),
             ("w", "0.2"), ("eta", "0.6"), ("Magnification", "60")
         ]
+        checkboxes = ["Calibrate each run"]
         
         # create widget per label
         self.wavelength1_label = QLabel(params[0][0])
         self.wavelength1_textedit = QLineEdit(params[0][1])
         self.wavelength2_label = QLabel(params[1][0])
         self.wavelength2_textedit = QLineEdit(params[1][1])
-        self.NA_label = QLabel(params[2][0])
-        self.NA_textedit = QLineEdit(params[2][1])
-        self.n_label = QLabel(params[3][0])
-        self.n_textedit = QLineEdit(params[3][1])
-        self.pixelsize_label = QLabel(params[4][0])
-        self.pixelsize_textedit = QLineEdit(params[4][1])
-        self.alpha_label = QLabel(params[5][0])
-        self.alpha_textedit = QLineEdit(params[5][1])
-        self.beta_label = QLabel(params[6][0])
-        self.beta_textedit = QLineEdit(params[6][1])
-        self.w_label = QLabel(params[7][0])
-        self.w_textedit = QLineEdit(params[7][1])
-        self.eta_label = QLabel(params[8][0])
-        self.eta_textedit = QLineEdit(params[8][1])
-        self.magnification_label = QLabel(params[9][0])
-        self.magnification_textedit = QLineEdit(params[9][1])
+        self.wavelength3_label = QLabel(params[2][0])
+        self.wavelength3_textedit = QLineEdit(params[2][1])
+        self.NA_label = QLabel(params[3][0])
+        self.NA_textedit = QLineEdit(params[3][1])
+        self.n_label = QLabel(params[4][0])
+        self.n_textedit = QLineEdit(params[4][1])
+        self.pixelsize_label = QLabel(params[5][0])
+        self.pixelsize_textedit = QLineEdit(params[5][1])
+        self.alpha_label = QLabel(params[6][0])
+        self.alpha_textedit = QLineEdit(params[6][1])
+        self.beta_label = QLabel(params[7][0])
+        self.beta_textedit = QLineEdit(params[7][1])
+        self.w_label = QLabel(params[8][0])
+        self.w_textedit = QLineEdit(params[8][1])
+        self.eta_label = QLabel(params[9][0])
+        self.eta_textedit = QLineEdit(params[9][1])
+        self.magnification_label = QLabel(params[10][0])
+        self.magnification_textedit = QLineEdit(params[10][1])
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.wavelength1_label)
         row_layout_1.addWidget(self.wavelength1_textedit)
@@ -165,29 +192,35 @@ class SIMWidget(NapariHybridWidget):
         row_layout_2.addWidget(self.wavelength2_label)
         row_layout_2.addWidget(self.wavelength2_textedit)
         row_layout_3 = QHBoxLayout()
-        row_layout_3.addWidget(self.NA_label)
-        row_layout_3.addWidget(self.NA_textedit)
+        row_layout_3.addWidget(self.wavelength3_label)
+        row_layout_3.addWidget(self.wavelength3_textedit)
         row_layout_4 = QHBoxLayout()
-        row_layout_4.addWidget(self.pixelsize_label)
-        row_layout_4.addWidget(self.pixelsize_textedit)
+        row_layout_4.addWidget(self.NA_label)
+        row_layout_4.addWidget(self.NA_textedit)
         row_layout_5 = QHBoxLayout()
-        row_layout_5.addWidget(self.alpha_label)
-        row_layout_5.addWidget(self.alpha_textedit)
+        row_layout_5.addWidget(self.pixelsize_label)
+        row_layout_5.addWidget(self.pixelsize_textedit)
         row_layout_6 = QHBoxLayout()
-        row_layout_6.addWidget(self.beta_label)
-        row_layout_6.addWidget(self.beta_textedit)
+        row_layout_6.addWidget(self.alpha_label)
+        row_layout_6.addWidget(self.alpha_textedit)
         row_layout_7 = QHBoxLayout()
-        row_layout_7.addWidget(self.w_label)
-        row_layout_7.addWidget(self.w_textedit)
+        row_layout_7.addWidget(self.beta_label)
+        row_layout_7.addWidget(self.beta_textedit)
         row_layout_8 = QHBoxLayout()
-        row_layout_8.addWidget(self.eta_label)
-        row_layout_8.addWidget(self.eta_textedit)
+        row_layout_8.addWidget(self.w_label)
+        row_layout_8.addWidget(self.w_textedit)
         row_layout_9 = QHBoxLayout()
-        row_layout_9.addWidget(self.n_label)
-        row_layout_9.addWidget(self.n_textedit)
+        row_layout_9.addWidget(self.eta_label)
+        row_layout_9.addWidget(self.eta_textedit)
         row_layout_10 = QHBoxLayout()
-        row_layout_10.addWidget(self.magnification_label)
-        row_layout_10.addWidget(self.magnification_textedit)
+        row_layout_10.addWidget(self.n_label)
+        row_layout_10.addWidget(self.n_textedit)
+        row_layout_11 = QHBoxLayout()
+        row_layout_11.addWidget(self.magnification_label)
+        row_layout_11.addWidget(self.magnification_textedit)
+        
+        # Create checkboxes
+        self.checkbox_calibrate = QCheckBox(checkboxes[0])
         
         layout.addLayout(row_layout_1)
         layout.addLayout(row_layout_2)
@@ -199,6 +232,8 @@ class SIMWidget(NapariHybridWidget):
         layout.addLayout(row_layout_8)
         layout.addLayout(row_layout_9)
         layout.addLayout(row_layout_10)
+        layout.addLayout(row_layout_11)
+        layout.addWidget(self.checkbox_calibrate)
         
 
         tab.setLayout(layout)
@@ -294,6 +329,10 @@ class SIMWidget(NapariHybridWidget):
     
     def getRecFolder(self):
         return self.path_edit.text()
+    
+    def getRecParameters(self):
+        parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text()}
+        return parameter_dict
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

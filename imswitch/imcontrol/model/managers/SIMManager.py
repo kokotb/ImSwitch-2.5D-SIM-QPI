@@ -38,6 +38,7 @@ class SIMManager(SignalInterface):
         self.simNA = self.__simInfo.simNA
         self.simN = self.__simInfo.simN # refr
         self.simETA = self.__simInfo.simETA
+        self.isMock = self.__simInfo.isMock
 
         # Load all patterns
         if type(self.__patternsDir) is not list:

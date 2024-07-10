@@ -322,6 +322,8 @@ class SIMInfo:
     simN: float
     
     tWaitSequence: float
+    
+    isMock: bool
 
 @dataclass(frozen=True)
 class SIMslmInfo:
