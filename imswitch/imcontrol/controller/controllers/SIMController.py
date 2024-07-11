@@ -94,8 +94,7 @@ class SIMController(ImConWidgetController):
         self.is488 = True
         self.is561 = True
         self.is640 = True
-        
-        
+        self.processors = []
         
 
         # we can switch between mcSIM and napari
@@ -165,6 +164,8 @@ class SIMController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         self.sigSIMProcessorImageComputed.connect(self.displayImage)
+        # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
+        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
 
         self.initFastAPISIM(self._master.simManager.fastAPISIMParams)
 
@@ -275,7 +276,16 @@ class SIMController(ImConWidgetController):
     def displayImage(self, im, name="SIM Reconstruction"):
         """ Displays the image in the view. """
         self._widget.setImage(im, name=name)
-
+    
+    def updateROIsize(self):
+        # FIXME: Make it so calibration of only the modified detector is 
+        # toggled False
+        # Each time size is changed on chip, calibration needs to be reset
+        processors = self.processors
+        if processors != []:
+            for processor in processors:
+                processor.isCalibrated = False
+    
     def saveParams(self):
         pass
 
@@ -604,6 +614,11 @@ class SIMController(ImConWidgetController):
         laser_wl = 488
         exposure_ms = 1
         dic_wl_dev = {488:0, 561:1, 640:2}
+        # FIXME: Correct for how the cams are wired
+        dic_det_names = {488:'55Camera', 561:'65Camera', 640:'66Camera'} 
+        # TODO: Delete after development is done - here to help get devices 
+        # names
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
         dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
         dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
         # self.patternID = 0
@@ -613,6 +628,7 @@ class SIMController(ImConWidgetController):
         dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
+        
         
         # TODO: Remove if not in use.
         # self.file_path = self._widget.getRecFolder()
@@ -624,6 +640,57 @@ class SIMController(ImConWidgetController):
             if dic_laser_present[dic] and self.lasers[dic_wl_dev[dic]].power > 0.0:
                 dic_wl.append(dic)
                 # num_lasers += 1
+        
+        # Check if detector is present comparing hardcoded names to connected 
+        # names, detector names are used only for pulling imageSize from the 
+        # detector
+        # FIXME: Check again if this laser checkup makes sense
+        det_names = []
+        if dic_wl != []:
+            for dic in dic_wl:
+                det_name = dic_det_names[dic]
+                if det_name in detector_names_connected:
+                    det_names.append(det_name)
+                else:
+                    self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
+                    if len(dic_wl) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {dic_wl}")
+                    # FIXME: If used for anything else but pixel number 
+                    # readout it should be changed to not continue the code if 
+                    # detector not present
+                    # break
+                    # Defaulting to detector 0 to be still able to run the 
+                    # code with only one detector connected. Probably redundant
+                    # since detectors default to mocker if the right number of 
+                    # detectors is configured in the config file
+                    det_name = detector_names_connected[0]
+                    det_names.append()
+        
+        # Pulling info from detectors
+        self.detectors = []
+        image_sizes_px = []
+        image_pix_common = []
+        for det_name in det_names:
+            detector = self._master.detectorsManager[det_name]
+            self.detectors.append(detector)
+            image_sizes_px.append(detector.shape)
+        
+        # Check if image-sizes on all detectors are the same
+        if image_sizes_px.count(image_sizes_px[0]) == len(image_sizes_px):
+            image_pix_common = image_sizes_px[0]
+        else:
+            self._logger.debug(f"Check detector settings. Not all colors have same image size on the detectors: {det_names} with sizes {image_sizes_px}. Defaulting to smallest size")
+            size = 0
+            # Setting each dimension of the image to the smallest dimension of 
+            # selected on any camera
+            image_size_x = image_sizes_px[0][0]
+            image_size_y = image_sizes_px[0][1]
+            for image_size_px in image_sizes_px:
+                if image_size_px[0] < image_size_x:
+                    image_size_x = image_size_px[0]
+                if image_size_px[1] < image_size_y:
+                    image_size_y = image_size_px[1]
+            image_pix_common = [image_size_x, image_size_y]
         
         # Set processors for selected lasers
         processors = []
@@ -637,6 +704,9 @@ class SIMController(ImConWidgetController):
                     # If calibrated it will check in widget if calibrate
                     # Widget True, calibration needs to be False
                     processors_dic[wl].isCalibrated = not self._widget.checkbox_calibrate.isChecked()
+        # Make processors object attribute so calibration can be changed when 
+        # detector size is changed.
+        self.processors = processors
         
         # retreive Z-stack parameters
         zStackParameters = self._widget.getZStackParameters()
@@ -888,9 +958,13 @@ class SIMController(ImConWidgetController):
             
             # Image size - I need to grab that from GUI but is hardcoded 
             # at the moment
-            image_pix_x = 512 # TODO: read from widget 
-            image_pix_y = 512 # TODO: read from widge
-            pix_size = 0.123 # um # TODO: read from widge
+            image_pix_x = image_pix_common[0]
+            image_pix_y = image_pix_common[1]
+            magnification = sim_parameters.magnification
+            pixel_size_on_cam = sim_parameters.pixelsize # in um
+            # TODO: remove once development is done. 
+            # pix_size = 0.123 # um 
+            pix_size = pixel_size_on_cam/magnification
             
             # Set experiment info
             grid_x_num = self.num_grid_x
@@ -977,7 +1051,7 @@ class SIMController(ImConWidgetController):
             # simSimulator (hardcoded in the simulator)
             color_stacks_simulated = []
             for processor in processors:
-                stack_simulated = processor.simSimulator()
+                stack_simulated = processor.simSimulator(image_pix_x, image_pix_y)
                 color_stacks_simulated.append(stack_simulated)
             # -----------SIM acquire-----------
             
