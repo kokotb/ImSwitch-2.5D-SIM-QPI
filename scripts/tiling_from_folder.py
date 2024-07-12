@@ -15,10 +15,11 @@ import numpy as np
 import glob
 import tifffile
 import os
+import time
 # import imagej
 
 
-def create_tiling_from_tif(tiling_paths, num_columns, num_rows, overlay):
+def create_tiling_from_tif_TZYX(tiling_paths, num_columns, num_rows, overlay):
     """
     Creates tiling from tifs that were acquired in a snake shape (alphabetic order should be the same as the acquisition).
     It is writen for a multidimensional stack, 5 or 4 dimensional (e.g. TCZYX or TZYX).
@@ -71,6 +72,59 @@ def create_tiling_from_tif(tiling_paths, num_columns, num_rows, overlay):
     return final_tiling
 
 
+def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
+    """
+    Creates tiling from tifs that were acquired in a snake shape (alphabetic order should be the same as the acquisition).
+    It is adjusted for a two-dimensional stack.
+    :param tiling_paths: paths of tif files that should be combined in to one image
+    :param num_columns: number of columns in tile acquisition
+    :param num_rows: number of rows in tile acquisition
+    :param overlay: amount of overlay between neighboring images (e.g. 0.1 = 10%)
+    :return: combined image
+    """
+    all_tifs = tiling_paths
+    stack1 = tifffile.imread(all_tifs[0])
+    
+    dim_len = len(stack1.shape) # [tiles, x, y]
+    # dimx, dimy = stack1.shape
+    
+    dimx = 1
+    dimy = 0
+    for row in range(num_rows):
+        new_row = []
+        if row % 2 == 0:
+            num_list = range(num_columns)
+        else:
+            num_list = range(num_columns - 1, -1, -1)
+        for count, column in enumerate(num_list):
+            if dim_len != 2:
+                print('wrong number of dimensions!!!')
+                return None
+            else:
+                # Import the correct stack at correct position
+                stack = tifffile.imread(all_tifs[row * num_columns + column])
+            if count != (num_columns - 1):
+                shape_x = stack.shape[dimx]
+                cut_off = int(shape_x * (1-overlay))
+                stack = stack[:, 0:cut_off]
+            if count == 0:
+                new_row = np.copy(stack)
+            else:
+                new_row = np.concatenate((new_row, stack), axis=dimx)
+        new_row = np.array(new_row)
+        tifffile.imwrite(f'test_cut2_{row}.tif', new_row, imagej=True)
+        if row != num_rows:
+            shape_y = new_row.shape[dimy]
+            cut_off = int(shape_y * (1-overlay))
+            new_row = new_row[0:cut_off, :]
+        if row == 0:
+            final_tiling = new_row
+        else:
+            final_tiling = np.concatenate((final_tiling, new_row), axis=dimy)
+
+    return final_tiling
+
+
 def getUniqueNamesByPattern(file_names, pattern):
     all_names_unique = []
     # Split by time
@@ -110,11 +164,14 @@ name_pattern = "Reconstruction" # can be wf or something else
 t_pattern = "frame_"
 number_of_rows = 5
 number_of_columns = 5
+image_overlay = 0
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run
 create_tiling = True                                   # can be True or False
-
+combine_timepoints = True
+colors_separate = False
+# reorder_stack = True
 
 ##############################
 #         ALL DONE           #
@@ -133,6 +190,16 @@ try:
     os.mkdir(save_path_tiling)
 except OSError as error:
     print(error)
+    
+# Create tiling directory
+save_path_tiling_time = os.path.join(input_dir, 'tiling_t')
+try:
+    os.mkdir(save_path_tiling_time)
+except OSError as error:
+    print(error)
+    
+# Change dir to tiling diectory
+os.chdir(save_path_tiling)
 
     
 #TODO: Recognize "Reconstruction" pattern, only take those files
@@ -145,7 +212,9 @@ except OSError as error:
 
 # Perform tiling
 if create_tiling:
-    # Repeat for each 
+    name_tiling = 'tiling'
+    print('\nCreating panoramas ...')
+    # Repeat for each experiment
     for exp_name in exp_names:
         # Get all tif files
         all_paths = glob.glob(input_dir + f'\\{exp_name}*{name_pattern}*.tif')
@@ -170,84 +239,56 @@ if create_tiling:
         
         num_times, all_times = getUniqueNamesByPattern(all_names, t_pattern)
         
-        # Do each chan seprately
-        for ch in single_channels_names:
-            # num_rois_times, all_rois_times = getUniqueNamesByPattern(all_names, ch)
+        start = time.time()
+        # Do each chan separately
+        time_stack_colors = []
+        for num_ch, ch in enumerate(single_channels_names):
+            print(f'--Chan {num_ch+1} out of {len(single_channels_names)}----')
             # Do each time point separately
+            start_chan = time.time()
             for num_time, name_time in enumerate(all_times):
-                roi_names_unique = []
-                # Get all unique ROI names for this time point
-                # num_rois, all_rois = getNamesByPattern(all_rois_times, name_time)
-                
+                print(f'----Time {num_time+1} out of {num_times}----')
+                # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
-                # for roi in all_rois:
-                #     roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}.tif')
-                #     roi_names_import.append(all_rois_org[0])
-                # for roi in all_rois: 
-                #     num, all_rois_org = getNamesByPattern(all_names, roi)
-                #     roi_names_import.append(all_rois_org[0])
-                print("")
-                # for part in all_names: 
-                #     is_part = part.find(name_time)
-                #     if is_part != -1:
-                #         start = part.find(name_pattern)
-                #         new = part[0:start + len(name_pattern)]
-                #         roi_names_unique.append(new)
-                # all_rois = list(set(roi_names_unique))
-                # all_rois = sorted(all_rois)
-                # num_rois = len(all_rois)
+                tiling = create_tiling_from_tif_XY(roi_names_import, number_of_rows, number_of_columns, image_overlay)
+                tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, imagej=True)
                 
-                # Tile each chan
-                chan_names_unique = []
-                for chan in single_channels_names:
-                    # Get name patterns
-                    for part in all_names: 
-                        is_part = part.find(chan)
-                        if is_part != -1:
-                            start = is_part
-                            new = part[0:start + len(chan)]
-                            chan_names_unique.append(new)
-                    all_rois_chan = list(set(chan_names_unique))
-                    all_rois_chan = sorted(all_rois_chan)
-                    num_rois_chan = len(all_rois_chan)
-
-                    print("")
-        # # Get all the unique names (positions), needs changing if the name structure is different!!!!
-        # for part in all_names:
-        #     start = part.find(name_pattern)
-        #     new = part[0:start + len(name_pattern) + 1]
-        #     all_names_unique.append(new)
-        # # List of unique names - channels omitted
-        # all_times_rois = list(set(all_names_unique))
-        # all_times_rois = sorted(all_times_rois)
-        # num_times_rois = len(all_times_rois)
+            if combine_timepoints:
+                name_times_import = glob.glob(f'{save_path_tiling}\\{exp_name}*{ch}*{name_tiling}*.tif')
+                time_stack = []
+                for name in name_times_import:
+                    time_stack.append(tifffile.imread(name))
+                time_stack = np.array(time_stack)
+                time_stack_colors.append(time_stack) 
+                if colors_separate:
+                    tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', time_stack, imagej=True)
+                    
+            
+            end_chan = time.time()
+            dt_chan = end_chan - start_chan
+            print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
         
-
+        if combine_timepoints:
+            # path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif'
+            # new_path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}_re.tif'
+            time_stack_colors = np.array([time_stack_colors])
+            tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors, imagej=True)
+            # if reorder_stack:
+            #     macro = """
+            #     #@ String image_path
+            #     #@ String new_path
+            #     open(image_path);
+            #     run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Slices (z)] frames=[Frames (t)]");
+            #     saveAs("tif", "" + new_path + "");
+            #     close();
+            #     """
+            #     ij = imagej.init('sc.fiji:fiji')
+            #     args = {'image_path': path,
+            #         'new_path': new_path}
+            #     result = ij.py.run_macro(macro, args)
+                
+        end = time.time()
+        dt = end - start
+        print(f'Tiling done in {int(dt):03} s')
         
-        # for i, roi in enumerate(all_times_rois):
-        #     print(f'----ROI{i+1} out of {num_times_rois}----')
-        #     print(f'{roi} \n')
-        #     roi_times = glob.glob(input_dir + f'\\{roi}*.tif')
-        # print(roi_times)
-    # print('\ncreating panoramas ...')
-    # tiling_from = [input_dir]
-    # endings = ['Reconstruction_']
-    # for ch in single_channels_names:
-    #     endings.append(ch)
-    # for til_path in tiling_from:
-    #     for ending in endings:
-    #         all_paths = glob.glob(f'{til_path}\\*{ending}*.tif')
-    #         print(all_paths)
-    #         all_names = [os.path.basename(x) for x in all_paths]
-            # all_names_unique = []
-            # # get all the unique names (positions), needs changing if the name structure is different!!!!
-            # for part in all_names:
-            #     start = part.find('_xy')
-            #     new = part[0:start]
-            #     all_names_unique.append(new)
-            # all_unique_tilings = sorted(list(set(all_names_unique)))
-            # for tiling_name in all_unique_tilings:
-            #     print(f'\n--- {tiling_name}{ending} ---')
-            #     cur_tiling_paths = glob.glob(f'{til_path}\\{tiling_name}*{ending}*.tif')
-            #     tiling = create_tiling_from_tif(cur_tiling_paths, number_of_rows, number_of_columns, image_overlay)
-            #     tifffile.imwrite(f'{save_path_tiling}\\{tiling_name}_{ending}_tiling.tif', tiling, imagej=True)
+        
