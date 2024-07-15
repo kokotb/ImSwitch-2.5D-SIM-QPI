@@ -112,6 +112,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
             else:
                 new_row = np.concatenate((new_row, stack), axis=dimx)
         new_row = np.array(new_row)
+        # For development - uncomment if snake-scan does not seem right
         # tifffile.imwrite(f'test_cut2_{row}.tif', new_row, imagej=True)
         if row != num_rows:
             shape_y = new_row.shape[dimy]
