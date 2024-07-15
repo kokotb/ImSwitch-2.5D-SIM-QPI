@@ -157,7 +157,7 @@ def getNamesByPattern(file_names, pattern):
 ##############################
 #      SET PARAMETERS        #
 ##############################
-input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\recon"
+input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
 exp_names = ["2024_07_11-04-15-53_PM"]
 single_channels_names = ['488nm', '561nm', '640nm']
 name_pattern = "Reconstruction" # can be wf or something else
@@ -170,7 +170,8 @@ image_overlay = 0
 # can't be done in the same run
 create_tiling = True                                   # can be True or False
 combine_timepoints = True
-colors_separate = False
+combine_timepoints_colors_separate = False
+single_chan_tiling = False
 # reorder_stack = True
 
 ##############################
@@ -251,7 +252,8 @@ if create_tiling:
                 # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
                 tiling = create_tiling_from_tif_XY(roi_names_import, number_of_rows, number_of_columns, image_overlay)
-                tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, imagej=True)
+                if single_chan_tiling:
+                    tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)
                 
             if combine_timepoints:
                 name_times_import = glob.glob(f'{save_path_tiling}\\{exp_name}*{ch}*{name_tiling}*.tif')
@@ -260,8 +262,8 @@ if create_tiling:
                     time_stack.append(tifffile.imread(name))
                 time_stack = np.array(time_stack)
                 time_stack_colors.append(time_stack) 
-                if colors_separate:
-                    tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', time_stack, imagej=True)
+                if combine_timepoints_colors_separate:
+                    tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', time_stack, metadata={"axes": "TYX", "Channel": {"Name": ch}}, imagej=True)
                     
             
             end_chan = time.time()
@@ -271,8 +273,9 @@ if create_tiling:
         if combine_timepoints:
             # path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif'
             # new_path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}_re.tif'
-            time_stack_colors = np.array([time_stack_colors])
-            tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors, imagej=True)
+            time_stack_colors_out = time_stack_colors
+            time_stack_colors_out = np.swapaxes(time_stack_colors_out,0,1)
+            tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "TCYX", "Channel": {"Name": single_channels_names}}, imagej=True)
             # if reorder_stack:
             #     macro = """
             #     #@ String image_path

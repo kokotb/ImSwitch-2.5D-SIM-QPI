@@ -1053,7 +1053,7 @@ class SIMController(ImConWidgetController):
         # TODO: Check if it affects speed, remove if it does
         # move to top where all this is handled
         # Set stacks to be saved into separate folder
-        folder = os.path.join(sim_parameters.path, "stack")
+        folder = os.path.join(sim_parameters.path, "astack")
         if not os.path.exists(folder):
             os.makedirs(folder)
         self.folder = folder
@@ -1597,7 +1597,7 @@ class SIMController(ImConWidgetController):
         # TODO: Check if it affects speed, remove if it does
         # move to top where all this is handled
         # Set stacks to be saved into separate folder
-        folder = os.path.join(sim_parameters.path, "stack")
+        folder = os.path.join(sim_parameters.path, "astack")
         if not os.path.exists(folder):
             os.makedirs(folder)
         self.folder = folder
@@ -2343,7 +2343,7 @@ class SIMProcessor(object):
                     # self.folder = SIMparameters.path
                     # TODO: Check if speed is affected, delete if it is
                     # Dedicated reconstruction folder
-                    folder = os.path.join(self.path, "recon")
+                    folder = os.path.join(self.path, "arecon")
                     if not os.path.exists(folder):
                         os.makedirs(folder)
                     self.folder = folder
