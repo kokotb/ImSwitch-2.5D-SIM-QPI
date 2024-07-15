@@ -112,7 +112,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
             else:
                 new_row = np.concatenate((new_row, stack), axis=dimx)
         new_row = np.array(new_row)
-        tifffile.imwrite(f'test_cut2_{row}.tif', new_row, imagej=True)
+        # tifffile.imwrite(f'test_cut2_{row}.tif', new_row, imagej=True)
         if row != num_rows:
             shape_y = new_row.shape[dimy]
             cut_off = int(shape_y * (1-overlay))
@@ -222,21 +222,9 @@ if create_tiling:
         all_names = [os.path.basename(x) for x in all_paths]
         all_names_unique = []
         
-        
-        
         if all_names == []:
             print(f"{exp_name} not present in folder. Skipping analysis.")
             continue
-        
-        # # Split by time
-        # for part in all_names:
-        #     start = part.find(t_pattern)
-        #     new = part[0:start + len(t_pattern) + 4]
-        #     all_names_unique.append(new)
-        # # List of unique names for time points
-        # all_times = list(set(all_names_unique))
-        # all_times = sorted(all_times)
-        # num_times = len(all_times)
         
         num_times, all_times = getUniqueNamesByPattern(all_names, t_pattern)
         
@@ -247,48 +235,29 @@ if create_tiling:
             print(f'--Chan {num_ch+1} out of {len(single_channels_names)}----')
             # Do each time point separately
             start_chan = time.time()
+            single_chan_time_stack = []
             for num_time, name_time in enumerate(all_times):
                 print(f'----Time {num_time+1} out of {num_times}----')
                 # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
                 tiling = create_tiling_from_tif_XY(roi_names_import, number_of_rows, number_of_columns, image_overlay)
+                single_chan_time_stack.append(tiling)
                 if single_chan_tiling:
                     tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)
-                
-            if combine_timepoints:
-                name_times_import = glob.glob(f'{save_path_tiling}\\{exp_name}*{ch}*{name_tiling}*.tif')
-                time_stack = []
-                for name in name_times_import:
-                    time_stack.append(tifffile.imread(name))
-                time_stack = np.array(time_stack)
-                time_stack_colors.append(time_stack) 
-                if combine_timepoints_colors_separate:
-                    tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', time_stack, metadata={"axes": "TYX", "Channel": {"Name": ch}}, imagej=True)
-                    
-            
-            end_chan = time.time()
-            dt_chan = end_chan - start_chan
-            print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
+            time_stack_colors.append(single_chan_time_stack)    
+            if combine_timepoints_colors_separate:
+                single_chan_time_stack = np.array(single_chan_time_stack)
+                tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', single_chan_time_stack, metadata={"axes": "TYX", "Channel": {"Name": ch}}, imagej=True)
+                end_chan = time.time()
+                dt_chan = end_chan - start_chan
+                print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
         
         if combine_timepoints:
-            # path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif'
-            # new_path = f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}_re.tif'
-            time_stack_colors_out = time_stack_colors
+            time_stack_colors_out = np.array(time_stack_colors)
             time_stack_colors_out = np.swapaxes(time_stack_colors_out,0,1)
             tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "TCYX", "Channel": {"Name": single_channels_names}}, imagej=True)
-            # if reorder_stack:
-            #     macro = """
-            #     #@ String image_path
-            #     #@ String new_path
-            #     open(image_path);
-            #     run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Slices (z)] frames=[Frames (t)]");
-            #     saveAs("tif", "" + new_path + "");
-            #     close();
-            #     """
-            #     ij = imagej.init('sc.fiji:fiji')
-            #     args = {'image_path': path,
-            #         'new_path': new_path}
-            #     result = ij.py.run_macro(macro, args)
+            # Bigger tiffs
+            # tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "TCYX", "Channel": {"Name": single_channels_names}}, imagej=True, bigtiff=True)
                 
         end = time.time()
         dt = end - start
