@@ -159,6 +159,8 @@ def getNamesByPattern(file_names, pattern):
 #      SET PARAMETERS        #
 ##############################
 input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
+# Set if you want to run tiling from folder
+# input_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
 exp_names = ["2024_07_11-04-15-53_PM"]
 single_channels_names = ['488nm', '561nm', '640nm']
 name_pattern = "Reconstruction" # can be wf or something else
