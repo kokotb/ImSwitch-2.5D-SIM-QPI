@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import glob
 
 import numpy as np
 import time
@@ -1078,7 +1079,15 @@ class SIMController(ImConWidgetController):
         while self.active and mock and dic_wl != []:
         # run only once
         # while count == 0:
-            count += 1 
+            count += 1
+            
+            # TODO: Move to top where all parameters are set
+            # Set positioner info axis_y is set to 'X' for testing purposes
+            # Positioner info for ImSwitch to recognize the stage
+            positioner_xy = 'XY' # Must match positioner name in config file
+            axis_x = 'X'
+            axis_y = 'Y'  # Change to 'Y' when testing for real
+            dic_axis = {'X':0, 'Y':1}
             
             # each color SIMstacks and positions
             # TODO: check if some of this are redundant or obsolete and delete
@@ -1099,12 +1108,6 @@ class SIMController(ImConWidgetController):
             # Generate positions - can be done anywhere in this function
             # Copied over from grid_xy script
             
-            # Set positioner info axis_y is set to 'X' for testing purposes
-            # Positioner info for ImSwitch to recognize the stage
-            positioner_xy = 'XY' # Must match positioner name in config file
-            axis_x = 'X'
-            axis_y = 'Y'  # Change to 'Y' when testing for real
-            dic_axis = {'X':0, 'Y':1}
             
             # Image size - I need to grab that from GUI but is hardcoded 
             # at the moment
@@ -1196,13 +1199,29 @@ class SIMController(ImConWidgetController):
                 wfImages.append([])
                 stackSIM.append([])
             
+
+            color_stacks_simulated = []
+            import_simu_switch = 1
+            if import_simu_switch == 0:
             # Generate one image for each color to make testing code faster
             # Simulation takes 0.33 s for 512x512 image - the default of 
             # simSimulator (hardcoded in the simulator)
-            color_stacks_simulated = []
-            for processor in processors:
-                stack_simulated = processor.simSimulator(image_pix_x, image_pix_y)
-                color_stacks_simulated.append(stack_simulated)
+                for processor in processors:
+                    stack_simulated = processor.simSimulator(image_pix_x, image_pix_y)
+                    color_stacks_simulated.append(stack_simulated)
+            elif import_simu_switch == 1:
+                # Import our set of images for testing
+                for num, processor in enumerate(processors):
+                    # Hardcoded path
+                    path_in = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\test_data_ImSwitch"
+                    names_import = glob.glob(f'{path_in}\\*{dic_wl[num]}*.tif*')
+                    stack_mock_color = []
+                    for name in names_import:
+                        stack_mock_color.append(tif.imread(name))
+                    color_stacks_simulated.append(stack_mock_color)
+            else:
+                self.logger.debug("Simulation switch not set right! Check hardcoded import_simu_switch.")
+                break
             # -----------SIM acquire-----------
             
             # Set frame number - prepared for time-lapse
@@ -1212,8 +1231,12 @@ class SIMController(ImConWidgetController):
             frame_num = 0
             dt_export_string = "" # no time duration between frames is needed
             
+            times_color = []
             # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
+                
+                # FIXME: Remove after development is completed
+                time_color_start = time.time()
                 
                 # Move stage
                 x_set = pos[0]
@@ -1223,6 +1246,12 @@ class SIMController(ImConWidgetController):
                 # time.sleep(tDebounceXY) # prepared in case we need it
                 # For development purposes
                 # print(f"Move to x = {x_set}, y = {y_set}")
+                
+                # FIXME: Remove after development is completed
+                time_color_end = time.time()
+                time_color_total = time_color_end-time_color_start
+                
+                times_color.append([f"{time_color_total*1000}ms","move stage"])
                 
                 # Acquire SIM set for all present lasers
                 # ----sub loop start----
@@ -1279,6 +1308,13 @@ class SIMController(ImConWidgetController):
                     processor.setReconstructionMode(self.isReconstruction)
                     processor.setWavelength(self.LaserWL, sim_parameters)
                     
+                    # FIXME: Remove after development is completed
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","acquire data"])
+                    time_color_start = time.time()
+                    
                     # Save the raw SIM stack
                     # TODO: Remove if obsolete, or move to before the loop?
                     # Maybe include in accompanying log file (exact times) 
@@ -1294,10 +1330,11 @@ class SIMController(ImConWidgetController):
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
-                        if k == len(processors)-1:
-                            # Save WF three color
-                            mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_wf.tif"
-                            threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
+                        # TODO: Keep this just in case?
+                        # if k == len(processors)-1:
+                        #     # Save WF three color
+                        #     mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_wf.tif"
+                        #     threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
                             
                             # TODO: Delete this, just for development purposes
                             # Export a stack for all three lasers in one file
@@ -1309,9 +1346,24 @@ class SIMController(ImConWidgetController):
                     # TODO: Remove this? Kept commented from original code.
                     # self.detector.stopAcquisition()
                     
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","save data"])
+                    time_color_start = time.time()
+                    
                     # Process the frames and display reconstructions
-                    processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
-
+                    # FIXME: Testing threading, this solution below does the 
+                    # same thing, takes the same amount of time 
+                    threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
+                    # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    
+                    # FIXME: Remove after development is completed
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","reconstruct data"])
+                    time_color_start = time.time()
                     # reset the per-colour stack to add new frames in the next
                     # imaging series
                     processor.clearStack()
@@ -1321,8 +1373,9 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
-            
+                    times_color.append([f"{time_color_total*1000}ms","clear stack"])
+                    # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
+            self._logger.debug(f"{times_color}")
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
             self.active = False
@@ -1647,6 +1700,7 @@ class SIMController(ImConWidgetController):
         
         # Image size - I need to grab that from GUI but is hardcoded 
         # at the moment
+        # TODO: Change back after done testing
         image_pix_x = image_pix_common[0]
         image_pix_y = image_pix_common[1]
         magnification = sim_parameters.magnification

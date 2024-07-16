@@ -7,13 +7,13 @@ import time
 class MockCameraTIS:
     def __init__(self):
         self.properties = {
-            'image_height': 512,
-            'image_width': 512,
+            'image_height': 1024,
+            'image_width': 1024,
             'subarray_vpos': 0,
             'subarray_hpos': 0,
             'exposure_time': 0.1,
-            'subarray_vsize': 512,
-            'subarray_hsize': 512,
+            'subarray_vsize': 1024,
+            'subarray_hsize': 1024,
             'SensorHeight': 4600,
             'SensorWidth': 5320
         }

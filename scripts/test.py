@@ -58,18 +58,44 @@ Tetsing the functionalities of scripting.
 #     plt.close()
 #     print("Done.")
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as patches
+# from PIL import Image
+# import numpy as np
+# import matplotlib.pyplot as plt
 
-x, y = np.random.random(size=(2,10))
-print(x)
+# x, y = np.random.random(size=(2,10))
+# print(x)
 
-for i in range(0, len(x), 2):
-    print(x[i:i+2])
-    plt.plot(x[i:i+2], y[i:i+2], 'ro-')
+# for i in range(0, len(x), 2):
+#     print(x[i:i+2])
+#     plt.plot(x[i:i+2], y[i:i+2], 'ro-')
     
 
-plt.show()
+# plt.show()
+
+# import torch
+# import os
+
+# torch.cuda.is_available()
+
+import numpy as np
+import time
+
+elements = np.arange(1000)
+time_start = time.time()
+
+elements_time = []
+
+for element in elements:
+    time_start_el = time.time()
+    # print(f"Element:{element}")
+    time_end_el = time.time()
+    elements_time.append(time_end_el-time_start_el)
+    pass
+
+time_end = time.time()
+
+time_total = time_end - time_start
+print('--\nDone!\nIt took: {:.12f} sec\n--'.format(time_total))
+print(f'{elements_time}')
