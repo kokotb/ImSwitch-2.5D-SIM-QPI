@@ -618,7 +618,7 @@ class SIMController(ImConWidgetController):
 
     #                 # store the raw SIM stack
     #                 if self.isRecording and self.lasers[iColour].power>0.0:
-    #                     date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+    #                     date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
     #                     processor.setDate(date)
     #                     mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{zPos+zPosInitially}mum.tif"
     #                     threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
@@ -707,7 +707,7 @@ class SIMController(ImConWidgetController):
     #         # store the raw SIM stack
     #         if self.isRecording and self.lasers[iColour].power>0.0:
     #             uniqueID = np.random.randint(0,1000)
-    #             date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+    #             date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
     #             processor.setDate(date)
     #             mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{uniqueID}.tif"
     #             threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
@@ -873,8 +873,6 @@ class SIMController(ImConWidgetController):
         while self.active and not mock and dic_wl != []:
         # run only once
         # while count == 0:
-            count += 1
-
             # TODO: We don't need that remove?
             # iterate over all z-positions
             if zStep > 0:
@@ -1019,7 +1017,7 @@ class SIMController(ImConWidgetController):
 
                     # store the raw SIM stack
                     if self.isRecording and self.lasers[iColour].power>0.0:
-                        date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                        date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
                         processor.setDate(date)
                         mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{zPos+zPosInitially}mum.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
@@ -1036,10 +1034,11 @@ class SIMController(ImConWidgetController):
                 if len(allZPositions)!=1:
                     self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
                     time.sleep(tDebounce)
+            count += 1
 
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
-            self.active = False
+            # self.active = False
             # print(count)
             # wait for the next round
             time.sleep(timePeriod)
@@ -1061,7 +1060,7 @@ class SIMController(ImConWidgetController):
         
         # Creating a unique identifier for experiment name generated 
         # before a grid scan is acquired
-        date_in = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
         # Set file-path read from GUI for each processor
         for processor in processors:
             processor.setPath(sim_parameters.path)
@@ -1079,8 +1078,6 @@ class SIMController(ImConWidgetController):
         while self.active and mock and dic_wl != []:
         # run only once
         # while count == 0:
-            count += 1
-            
             # TODO: Move to top where all parameters are set
             # Set positioner info axis_y is set to 'X' for testing purposes
             # Positioner info for ImSwitch to recognize the stage
@@ -1228,10 +1225,21 @@ class SIMController(ImConWidgetController):
             # Final implementation will maybe have a little 
             # different form - we will need to empty a buffer of
             # the cam as fast as possible
-            frame_num = 0
+            # frame_num = 0
+            frame_num = count
             dt_export_string = "" # no time duration between frames is needed
             
             times_color = []
+            # Generate time_step
+            if count == 0:
+                dt_export = 0.0
+            else:
+                dt_export = time.time() - self.timelapse_old
+            
+            integer, decimal = divmod(dt_export,1) # *1000 in ms
+            dt_export_string = f"{int(integer):04}.{int(decimal*10000):04}s"
+            self.timelapse_old = time.time()
+            
             # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
                 
@@ -1319,16 +1327,16 @@ class SIMController(ImConWidgetController):
                     # TODO: Remove if obsolete, or move to before the loop?
                     # Maybe include in accompanying log file (exact times) 
                     # after recording is finished?
-                    # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                    # date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
                     # TODO: Remove? Our implementation feeds frame number and 
                     # position direct into the processor function (the only 
                     # way we could make it work reliably)
                     # Sets the date in processor for saving file
                     # processor.setDate(date) 
                     if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
-                        date = f"{date_in}_frame_{frame_num:004}" # prepped for timelapse
+                        date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
-                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm.tif"
+                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
                         # TODO: Keep this just in case?
                         # if k == len(processors)-1:
@@ -1378,7 +1386,7 @@ class SIMController(ImConWidgetController):
             self._logger.debug(f"{times_color}")
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
-            self.active = False
+            # self.active = False
             # print(count)
             # TODO: Remove this (left from openUC2 implementation)
             # Maybe good idea for longer time-lapse movies to do a "snapshot"
@@ -1388,6 +1396,7 @@ class SIMController(ImConWidgetController):
             # wait for the next round
             # time.sleep(timePeriod)
             
+            count += 1
             # Timing of the process for testing purposes
             time_whole_end = time.time()
             time_whole_total = time_whole_end-time_whole_start
@@ -1625,7 +1634,7 @@ class SIMController(ImConWidgetController):
                 # store the raw SIM stack
                 if self.isRecording and self.lasers[iColour].power>0.0:
                     uniqueID = np.random.randint(0,1000)
-                    date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                    date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
                     processor.setDate(date)
                     mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{uniqueID}.tif"
                     threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
@@ -1657,7 +1666,7 @@ class SIMController(ImConWidgetController):
         
         # Creating a unique identifier for experiment name generated 
         # before a grid scan is acquired
-        date_in = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
         # Set file-path read from GUI for each processor
         for processor in processors:
             processor.setPath(sim_parameters.path)
@@ -1914,14 +1923,14 @@ class SIMController(ImConWidgetController):
                     # TODO: Remove if obsolete, or move to before the loop?
                     # Maybe include in accompanying log file (exact times) 
                     # after recording is finished?
-                    # date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+                    # date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
                     # TODO: Remove? Our implementation feeds frame number and 
                     # position direct into the processor function (the only 
                     # way we could make it work reliably)
                     # Sets the date in processor for saving file
                     # processor.setDate(date) 
                     if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
-                        date = f"{date_in}_frame_{frame_num:004}" # prepped for timelapse
+                        date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
@@ -2004,7 +2013,7 @@ class SIMController(ImConWidgetController):
 
     def saveImageInBackground(self, image, filename = None):
         if filename is None:
-            date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+            date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
             filename = f"{date}_SIM_Stack.tif"
         try:
             # self.folder = self._widget.getRecFolder()
@@ -2411,7 +2420,7 @@ class SIMProcessor(object):
             # TODO: Revert back to date
             # date = self.date
             # date = f"frame_{self.frame_num:004}"
-            date_out = f"{date}_frame_{frame_num:004}"
+            date_out = f"{date}_t_{frame_num:004}"
             # pos_num = self.pos_num # don't really work, not unique, changes to quick
             mFilenameRecon = f"{date_out}_pos_{pos_num:03}_SIM_Reconstruction_{int(self.LaserWL*1000):03}nm-{dt_frame}.tif"
             threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()

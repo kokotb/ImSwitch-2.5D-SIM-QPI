@@ -179,7 +179,7 @@ class CameraTIS:
         frame = np.moveaxis(frame, 1 , 2)
         # self.device.stop_stream()
         """
-            Destroy the copied item toa prevent memory leaks
+            Destroy the copied item to prevent memory leaks
         """
         # BufferFactory.destroy(item)
         # time.sleep(.25)        
