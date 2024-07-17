@@ -47,7 +47,8 @@ class MasterController:
                                              **lowLevelManagers)
             
         self.simManager = SIMManager(self.__setupInfo.sim)
-        self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm,
+        if self.__setupInfo.SIMslm:
+            self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm,
                                              **lowLevelManagers)
 
         # Generate scanManager type according to setupInfo

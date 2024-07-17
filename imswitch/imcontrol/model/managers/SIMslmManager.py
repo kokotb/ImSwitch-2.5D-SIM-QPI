@@ -15,6 +15,14 @@ import requests
 class SIMslmManager(SignalInterface):
     
     def __init__(self,  setupInfo, **lowLevelManagers):
+        
+        # TODO: Remove after development. Handled in MasterController.
+        # the same way StandManager is handled
+        # That is how they handled this in SLMManager.py
+        # if setupInfo is None:
+        #     self._rs232manager = None
+        #     return
+        
         self._rs232manager = lowLevelManagers['rs232sManager'][
             setupInfo.managerProperties['rs232device']
         ]
