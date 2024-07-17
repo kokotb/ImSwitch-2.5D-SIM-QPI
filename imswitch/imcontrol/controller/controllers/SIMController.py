@@ -752,6 +752,13 @@ class SIMController(ImConWidgetController):
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
+        # Set positioner info axis_y is set to 'X' for testing purposes
+        # Positioner info for ImSwitch to recognize the stage
+        positioner_xy = 'XY' # Must match positioner name in config file
+        axis_x = 'X'
+        axis_y = 'Y'  # Change to 'Y' when testing for real
+        dic_axis = {'X':0, 'Y':1}
+        
         # -------------Parameters - old code------------- #
         # self.patternID = 0 # processed above
         self.isReconstructing = False
@@ -863,6 +870,121 @@ class SIMController(ImConWidgetController):
         # TODO: Implement z-scan the same way they did for our convenience?
         # get current z-position
         zPosInitially = self.positioner.get_abs()
+        
+        # ----------scanning over more FOVs------------
+        ##################################################
+        # ----------------Grid scan info---------------- #
+        ##################################################
+        # Generate positions - can be done anywhere in this function
+        # Copied over from grid_xy script
+        
+        # Load experiment parameters to object
+        self.getExperimentSettings()
+        
+        # Image size - I need to grab that from GUI but is hardcoded 
+        # at the moment
+        image_pix_x = image_pix_common[0]
+        image_pix_y = image_pix_common[1]
+        magnification = sim_parameters.magnification
+        pixel_size_on_cam = sim_parameters.pixelsize # in um
+        # TODO: remove once development is done. 
+        # pix_size = 0.123 # um 
+        pix_size = pixel_size_on_cam/magnification
+        
+        # Set experiment info
+        grid_x_num = self.num_grid_x
+        grid_y_num = self.num_grid_y
+        overlap_xy = self.overlap
+        xy_scan_type = 'square' # or 'quad', not sure what that does yet...
+        count_limit = 9999
+        
+        ##################################################
+        # ----------------Grid scan info---------------- #
+        ##################################################
+        
+        ##################################################
+        # ---------Grid scan generate positions--------- #
+        ##################################################
+        
+        # Grab starting position that we can return to
+        positions_start = self.positionerXY.get_abs()
+        start_position_x = float(positions_start[dic_axis[axis_x]])
+        start_position_y = float(positions_start[dic_axis[axis_y]])
+        xy_start = [start_position_x, start_position_y]
+        
+        # Determine stage travel range, stage accepts values in microns
+        frame_size_x = image_pix_x*pix_size
+        frame_size_y = image_pix_y*pix_size
+        
+        # Step-size based on overlap info
+        x_step = (1 - overlap_xy) * frame_size_x
+        y_step = (1 - overlap_xy) * frame_size_y
+        xy_step = [x_step, y_step]
+        
+        # Confirm parameters are set correctly
+        assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
+        
+        if grid_x_num > 0 and grid_y_num > 0:
+            x_range = grid_x_num * x_step
+            y_range = grid_y_num * y_step
+            xy_range = [x_range, y_range]
+        else:
+            print("Grid parameters are not set correct!")
+        
+        # Generate list of coordinates
+        positions = []
+        y_start = xy_start[1]
+        y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
+        
+        # ------------Grid scan------------
+        # Generate positions for each row
+        for y in y_list:
+            # Where to start this row
+            x_start = xy_start[0]
+            if xy_scan_type == 'square':
+                x_stop = x_start - x_range
+                # Generate x coordinates
+                x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
+            elif xy_scan_type == 'quad':
+                x_stop = x_start - math.sqrt(x_range**2 - (y-y_start)**2)
+                # Generate x coordinates
+                x_list = list(np.arange(x_start, x_stop, -x_step))
+                
+            # Run every other row backwards to minimize stage movement
+            if y_list.index(y) % 2 == 1:
+                x_list.reverse()
+            
+            # Populate the final list
+            for x in x_list:
+                # print(np.round(x, 2))
+                # positions.append([np.round(x, 2),np.round(y, 2)])
+                positions.append([x,y])
+                
+            # Truncate the list if the length/the number of created
+            # positions exceeds the specified limit
+            if len(positions) > count_limit:
+                positions = positions[:count_limit]
+                self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
+        ##################################################
+        # ---------Grid scan generate positions--------- #
+        ##################################################
+        
+                
+        # TODO: Check if it affects speed, remove if it does
+        # move to top where all this is handled
+        # Set stacks to be saved into separate folder
+        folder = os.path.join(sim_parameters.path, "astack")
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        self.folder = folder
+        
+        # Creating a unique identifier for experiment name generated 
+        # before a grid scan is acquired
+        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+        # Set file-path read from GUI for each processor
+        for processor in processors:
+            processor.setPath(sim_parameters.path)
+        
         ###################################################
         # ----------Preprocessing done only once--------- #
         ###################################################
@@ -1050,153 +1172,23 @@ class SIMController(ImConWidgetController):
         if mock:
             print("Activating mocker for our SIM implementation.")
         
-        # TODO: Check if it affects speed, remove if it does
-        # move to top where all this is handled
-        # Set stacks to be saved into separate folder
-        folder = os.path.join(sim_parameters.path, "astack")
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        self.folder = folder
-        
-        # Creating a unique identifier for experiment name generated 
-        # before a grid scan is acquired
-        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-        # Set file-path read from GUI for each processor
-        for processor in processors:
-            processor.setPath(sim_parameters.path)
-        # TODO: Remove, laser selection is done at the beginning of the 
-        # function. This below is old implementation.
-        # # If no laser present do nothing
-        # num_lasers = 0            
-        # for k, dic in enumerate(dic_wl):
-        #     if isLaser[k] and self.lasers[dic_wl_dev[dic]].power > 0.0:
-        #         num_lasers += 1
-        # # Will not run if no laser is present
-        # while self.active and mock and num_lasers != 0:
-        
         # # If no laser present do nothing
         while self.active and mock and dic_wl != []:
+        # TODO: Remove after development is finished.
         # run only once
         # while count == 0:
-            # TODO: Move to top where all parameters are set
-            # Set positioner info axis_y is set to 'X' for testing purposes
-            # Positioner info for ImSwitch to recognize the stage
-            positioner_xy = 'XY' # Must match positioner name in config file
-            axis_x = 'X'
-            axis_y = 'Y'  # Change to 'Y' when testing for real
-            dic_axis = {'X':0, 'Y':1}
+            ##################################################
+            # ------Import mock data or generate data------- #
+            ##################################################
             
-            # each color SIMstacks and positions
+            # Generate empty vectors to save data
             # TODO: check if some of this are redundant or obsolete and delete
             wfImages = []
-            stackSIM = []
-            positions = []
-            
-            # Load experiment parameters to object
-            self.getExperimentSettings()
-            
-            # ----------scanning over more FOVs------------
-            # TODO: Copy to top of the function - this is common to all 
-            # mock and actual scan
-            ##################################################
-            # ----------------Grid scan info---------------- #
-            # ----Copy over to top once fully implemented--- #
-            ##################################################
-            # Generate positions - can be done anywhere in this function
-            # Copied over from grid_xy script
-            
-            
-            # Image size - I need to grab that from GUI but is hardcoded 
-            # at the moment
-            image_pix_x = image_pix_common[0]
-            image_pix_y = image_pix_common[1]
-            magnification = sim_parameters.magnification
-            pixel_size_on_cam = sim_parameters.pixelsize # in um
-            # TODO: remove once development is done. 
-            # pix_size = 0.123 # um 
-            pix_size = pixel_size_on_cam/magnification
-            
-            # Set experiment info
-            grid_x_num = self.num_grid_x
-            grid_y_num = self.num_grid_y
-            overlap_xy = self.overlap
-            xy_scan_type = 'square' # or 'quad', not sure what that does yet...
-            count_limit = 9999
-            
-            ##################################################
-            # ----------------Grid scan info---------------- #
-            # ----Copy over to top once fully implemented--- #
-            ##################################################
-            
-            # Grab starting position that we can return to
-            positions_start = self.positionerXY.get_abs()
-            start_position_x = float(positions_start[dic_axis[axis_x]])
-            start_position_y = float(positions_start[dic_axis[axis_y]])
-            xy_start = [start_position_x, start_position_y]
-            
-            # Determine stage travel range, stage accepts values in microns
-            frame_size_x = image_pix_x*pix_size
-            frame_size_y = image_pix_y*pix_size
-            
-            # Step-size based on overlap info
-            x_step = (1 - overlap_xy) * frame_size_x
-            y_step = (1 - overlap_xy) * frame_size_y
-            xy_step = [x_step, y_step]
-            
-            # Confirm parameters are set correctly
-            assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
-            
-            if grid_x_num > 0 and grid_y_num > 0:
-                x_range = grid_x_num * x_step
-                y_range = grid_y_num * y_step
-                xy_range = [x_range, y_range]
-            else:
-                print("Grid parameters are not set correct!")
-            
-            # Generate list of coordinates
-            positions = []
-            y_start = xy_start[1]
-            y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
-            
-            # ------------Grid scan------------
-            # Generate positions for each row
-            for y in y_list:
-                # Where to start this row
-                x_start = xy_start[0]
-                if xy_scan_type == 'square':
-                    x_stop = x_start - x_range
-                    # Generate x coordinates
-                    x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
-                elif xy_scan_type == 'quad':
-                    x_stop = x_start - math.sqrt(x_range**2 - (y-y_start)**2)
-                    # Generate x coordinates
-                    x_list = list(np.arange(x_start, x_stop, -x_step))
-                    
-                # Run every other row backwards to minimize stage movement
-                if y_list.index(y) % 2 == 1:
-                    x_list.reverse()
-                
-                # Populate the final list
-                for x in x_list:
-                    # print(np.round(x, 2))
-                    # positions.append([np.round(x, 2),np.round(y, 2)])
-                    positions.append([x,y])
-                    
-                # Truncate the list if the length/the number of created
-                # positions exceeds the specified limit
-                if len(positions) > count_limit:
-                    positions = positions[:count_limit]
-                    self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-            # ------------Grid scan------------
-            
-            # -----------SIM acquire-----------
-            # Generate empty vectors to save data
-            # Will also be maybe used for processing
+            stackSIM = []  
             for k in range(0, len(processors)):
                 wfImages.append([])
                 stackSIM.append([])
             
-
             color_stacks_simulated = []
             import_simu_switch = 1
             if import_simu_switch == 0:
@@ -1219,12 +1211,12 @@ class SIMController(ImConWidgetController):
             else:
                 self.logger.debug("Simulation switch not set right! Check hardcoded import_simu_switch.")
                 break
-            # -----------SIM acquire-----------
+            
+            ##################################################
+            # ------Import mock data or generate data------- #
+            ##################################################
             
             # Set frame number - prepared for time-lapse
-            # Final implementation will maybe have a little 
-            # different form - we will need to empty a buffer of
-            # the cam as fast as possible
             # frame_num = 0
             frame_num = count
             dt_export_string = "" # no time duration between frames is needed
@@ -1268,7 +1260,7 @@ class SIMController(ImConWidgetController):
                     # If power of laser set to  0 or laser set not be used in
                     # measurement skip laser
                     if not isLaser[k] or self.lasers[dic_wl_dev[dic_wl[k]]].power <= 0.0:
-                        time.sleep(.1) # reduce CPU load
+                        time.sleep(.001) # reduce CPU load
                         continue
                     time_color_start = time.time()
                     
