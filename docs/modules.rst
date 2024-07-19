@@ -11,6 +11,8 @@ ImSwitch consists of multiple different modules:
 +----------------------+-------------------+
 | Image Reconstruction | ``imreconstruct`` |
 +----------------------+-------------------+
+| Image Reconstruction SIM | ``imreconstructSIM`` |
++----------------------+-------------------+
 | Scripting            | ``imscripting``   |
 +----------------------+-------------------+
 
