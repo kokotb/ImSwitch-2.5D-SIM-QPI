@@ -50,7 +50,7 @@ class ReconstructionView(QtWidgets.QFrame):
         self.chooseViewBox.setLayout(self.viewLayout)
         self.chooseViewGroup.buttonClicked.connect(self.sigViewChanged)
 
-        # List for storing sevral data sets
+        # List for storing several data sets
         self.reconList = QtWidgets.QListWidget()
         self.reconList.currentItemChanged.connect(self.sigItemSelected)
         self.reconList.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)

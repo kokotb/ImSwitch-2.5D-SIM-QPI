@@ -1,7 +1,7 @@
 from imswitch.imcommon.model import VFileItem, initLogger
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, NidaqManager, PositionersManager, RecordingManager, RS232sManager, 
-    ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SIMslmManager
+    ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SIMslmManager, ArduinoManager
 )
 
 
@@ -50,7 +50,10 @@ class MasterController:
         if self.__setupInfo.SIMslm:
             self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm,
                                              **lowLevelManagers)
-
+            
+        if self.__setupInfo.Arduino:
+            self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,
+                                             **lowLevelManagers)
         # Generate scanManager type according to setupInfo
         if self.__setupInfo.scan:
             if self.__setupInfo.scan.scanWidgetType == "PointScan":

@@ -12,9 +12,9 @@ from imswitch.imcommon.model import initLogger
 import requests
 
 
-class SIMslmManager(SignalInterface):
+class ArduinoManager(SignalInterface):
     """ 
-    Set running order directly on the SXGA ForthDD display.
+    Arduino trigger to start and stop SLM sequence.
     """
     def __init__(self,  setupInfo, **lowLevelManagers):
         
@@ -30,24 +30,24 @@ class SIMslmManager(SignalInterface):
             setupInfo.managerProperties['rs232device']
         ]
     
+    def start_sequence(self):
+        """Sends a trigger to SLM to start a sequence."""
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'S'
+        self._rs232manager.query(cmd)
+        
+    def stop_sequence(self):
+        """Sends loop termination signal."""
+        cmd = 'CE'
+        self._rs232manager.query(cmd)
+    
     # FIXME: Remove all obsolete functions
     # Currently set up, to set running order and start a sequence through two 
-    # different devices
-    # def start_sequence(self):
-    #     """Sends a trigger to SLM to start a sequence."""
-    #     # FIXME: Needs to be synced with our commands on Arduino
-    #     cmd = 'S'
+    # different devices    
+    # def set_running_order(self, orderID):
+    #     """Sets running order on the SLM. """
+    #     cmd = "RO "+str(orderID)
     #     self._rs232manager.query(cmd)
-        
-    # def stop_sequence(self):
-    #     """Sends loop termination signal."""
-    #     cmd = 'CE'
-    #     self._rs232manager.query(cmd)
-        
-    def set_running_order(self, orderID):
-        """Sets running order on the SLM. """
-        cmd = "RO "+str(orderID)
-        self._rs232manager.query(cmd)
     
     # # Structure copied over from SIMclient
     #     self.commands = {

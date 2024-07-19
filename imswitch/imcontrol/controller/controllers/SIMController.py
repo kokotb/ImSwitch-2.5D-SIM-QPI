@@ -1071,8 +1071,8 @@ class SIMController(ImConWidgetController):
                 times_color.append([f"{time_color_total*1000}ms","move stage"])
                 time_color_start = time.time()
                 
-                # Acquire SIM set for all present lasers
-                self._master.simslmManager.start_sequence()
+                # Trigger SIM set acquisition for all present lasers
+                self._master.arduinoManager.start_sequence()
                 # SIMClient.send_start_sequence_trigger()
                 
                 time_color_end = time.time()

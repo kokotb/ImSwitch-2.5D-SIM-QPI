@@ -342,6 +342,23 @@ class SIMslmInfo:
     managerProperties: dict
     """ Dict of properties for a lower level manager. """
 
+@dataclass(frozen=True)
+class ArduinoInfo:
+    width: int
+    """ Width of SLM, in pixels. """
+
+    height: int
+    """ Height of SLM, in pixels. """
+
+    pixelSize: float
+    """ Pixel size or pixel pitch of the SLM, in millimetres. """
+    
+    managerName: str
+    """ Manager name in string. """
+    
+    managerProperties: dict
+    """ Dict of properties for a lower level manager. """
+
 @dataclass_json(undefined=Undefined.INCLUDE)
 @dataclass
 class SetupInfo:
@@ -402,7 +419,10 @@ class SetupInfo:
     
     SIMslm: Optional[SIMslmInfo] = field(default_factory=lambda: None)
     """SIM slm settings. Just testing out."""
-
+    
+    Arduino: Optional[ArduinoInfo] = field(default_factory=lambda: None)
+    """Arduino settings. Just testing out."""
+    
     _catchAll: CatchAll = None
     
     

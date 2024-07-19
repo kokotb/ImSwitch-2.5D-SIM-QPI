@@ -13,3 +13,4 @@ from .StandManager import StandManager
 from .RotatorsManager import RotatorsManager
 from .SIMManager import SIMManager
 from .SIMslmManager import SIMslmManager
+from .ArduinoManager import ArduinoManager
