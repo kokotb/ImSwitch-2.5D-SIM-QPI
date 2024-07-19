@@ -779,10 +779,12 @@ class SIMController(ImConWidgetController):
         
         # Check if lasers are set and have power in them select only lasers with powers
         dic_wl = []
+        laser_ID = []
         # num_lasers = 0            
         for k, dic in enumerate(dic_wl_in):
             if dic_laser_present[dic] and self.lasers[dic_wl_dev[dic]].power > 0.0:
                 dic_wl.append(dic)
+                laser_ID.append(dic_wl_dev[dic])
                 # num_lasers += 1
         
         # Check if detector is present comparing hardcoded names to connected 
@@ -984,92 +986,237 @@ class SIMController(ImConWidgetController):
         # Set file-path read from GUI for each processor
         for processor in processors:
             processor.setPath(sim_parameters.path)
+            
+        # Set count for frames to 0
+        count = 0
+        
+        # -------------------Set-up SLM-------------------
+        # Set running order
+        orderID = self.patternID
+        self._master.simslmManager.set_running_order(orderID)
+        # self.SIMClient.set_running_order(orderID)
+        # -------------------Set-up SLM-------------------
+        
+        # -------------------Set-up cams-------------------
+        # TODO: Include all cam setup in same function?
+        # Set buffer mode
+        buffer_mode = "OldestFirst"
+        # TODO: Test out and set to fixed as temporary solution
+        buffer_size = 300
+        total_buffer_size_MB = 380 # in MBs
+        for detector in self.detectors:
+            image_size = detector.shape
+            image_size_MB = image_size[0]*image_size[1]/1000000
+            buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
+            detector._camera.setPropertyValue('buffer_mode', buffer_mode)
+            detector._camera.setCamForAcquisition(buffer_size)
+        # -------------------Set-up cams-------------------
         
         ###################################################
         # ----------Preprocessing done only once--------- #
         ###################################################
         
-        # TODO: Old, to check and delete
-        # run the experiment indefinitely
-        count = 0
+        ###################################################
+        # -----------------SIM acquisition--------------- #
+        ###################################################
+        
         while self.active and not mock and dic_wl != []:
         # run only once
         # while count == 0:
-            # TODO: We don't need that remove?
-            # iterate over all z-positions
-            if zStep > 0:
-                # TODO: Disabling this option although accessible through GUI
-                # allZPositions = np.arange(zMin, zMax, zStep)
-                allZPositions = [0]
+            wfImages = []
+            stackSIM = [] 
+            for k in range(0, len(processors)):
+                wfImages.append([])
+                stackSIM.append([]) 
+            # TODO: SLM drives laser powers, do lasers really need to be 
+            # enabled?
+            for ID in laser_ID:
+                self.lasers[ID].setEnabled(True)
+                
+            # Set frame number - prepared for time-lapse
+            # frame_num = 0
+            frame_num = count
+            dt_export_string = "" # no time duration between frames is needed
+            
+            times_color = []
+            # Generate time_step
+            if count == 0:
+                dt_export = 0.0
             else:
-                allZPositions = [0]
-
-            # TODO: Our triggering schema is different, number of colors is 
-            # determined by the SLM program - SLM directly controls the lasers
-            # I suggest removal of this for loop
+                dt_export = time.time() - self.timelapse_old
             
-            # Change from openUC2 concept - all colors are taken at once
-            # Might be a bad idea, but we need to try our options - one trigger
-            # will trigger the 3 color sequence, we don't have a trigger 
-            # for each sequence
+            integer, decimal = divmod(dt_export,1) # *1000 in ms
+            dt_export_string = f"{int(integer):04}.{int(decimal*10000):04}s"
+            self.timelapse_old = time.time()
             
-            # SLM enables lasers - we do not need activation of the lasers
-            # self.lasers[0].setEnabled(True)
-            # self.lasers[1].setEnabled(True)
-            # self.lasers[2].setEnabled(True)
-            
-            
-            
-            for iColour in range(nColour):
-                # Move piezo to initial position
-                if not self.active:
-                    if len(allZPositions)!=1:
-                        self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                        time.sleep(tDebounce)
-                    break
-                # toggle laser
-                if iColour == 0 and self.is488 and self.lasers[iColour].power>0.0:
-                    # enable laser 1
-                    self.lasers[0].setEnabled(True)
-                    self.lasers[1].setEnabled(False)
-                    self.lasers[2].setEnabled(False)
-                    self._logger.debug("Switching to pattern"+self.lasers[0].name)
-                    processor = self.SimProcessorLaser1
+            # Scan over all positions generated for grid
+            for j, pos in enumerate(positions):
+                
+                # FIXME: Remove after development is completed
+                time_color_start = time.time()
+                
+                # Move stage
+                x_set = pos[0]
+                y_set = pos[1]
+                # tDebounceXY = 0 # prepared in case we need it
+                self.positionerXY.setPositionXY(x_set, y_set)
+                # time.sleep(tDebounceXY) # prepared in case we need it
+                # For development purposes
+                # print(f"Move to x = {x_set}, y = {y_set}")
+                
+                # FIXME: Remove after development is completed
+                time_color_end = time.time()
+                time_color_total = time_color_end-time_color_start
+                
+                times_color.append([f"{time_color_total*1000}ms","move stage"])
+                time_color_start = time.time()
+                
+                # Acquire SIM set for all present lasers
+                self._master.simslmManager.start_sequence()
+                # SIMClient.send_start_sequence_trigger()
+                
+                time_color_end = time.time()
+                time_color_total = time_color_end-time_color_start
+                
+                times_color.append([f"{time_color_total*1000}ms","start_sequence"])
+                time_color_start = time.time()
+                
+                # ----sub loop start----
+                for k, processor in enumerate(processors):
+                    # -----loop start-----
+                    
+                    # Setting a reconstruction processor for current laser
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 1
-                elif iColour == 1 and self.is561 and self.lasers[iColour].power>0.0:
-                    # enable laser 2
-                    self.lasers[0].setEnabled(False)
-                    self.lasers[1].setEnabled(True)
-                    self.lasers[2].setEnabled(False)
-                    self._logger.debug("Switching to pattern"+self.lasers[1].name)
-                    processor = self.SimProcessorLaser2
-                    processor.setParameters(sim_parameters)
-                    self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 2
-                elif iColour == 2 and self.is640 and self.lasers[iColour].power>0.0:
-                    # enable laser 2
-                    self.lasers[0].setEnabled(False)
-                    self.lasers[1].setEnabled(False)
-                    self.lasers[2].setEnabled(True)
-                    self._logger.debug("Switching to pattern"+self.lasers[2].name)
-                    processor = self.SimProcessorLaser2
-                    processor.setParameters(sim_parameters)
-                    self.LaserWL = processor.wavelength
-                    # set the pattern-path for laser wl 3
-                else:
-                    time.sleep(.1) # reduce CPU load
-                    continue
+                    
+                    # Grab a stack from cam
+                    detector = self.detectors[k]
+                    
+                    # FIXME: Remove soon - create cam option to grab a set of 
+                    # 9 from buffer
+                    # Just for now
+                    stack = []
+                    
+                    # 3 angles 3 phases
+                    img_number_per_set = 9
+                    self.SIMStack = detector._camera.grabFrameSet(img_number_per_set)
+                    
+                    if self.SIMStack is None:
+                        self._logger.error("No image received")
+                        continue
+                    
+                    
+                    # TODO: remove after development is done, kept for testing
+                    # Push all colors into one array - export disabled below
+                    # Enable below if you need this
+                    # stackSIM[k].append(self.SIMStack)
+                    
+                    self.sigImageReceived.emit(np.array(self.SIMStack),f"SIMStack{int(processor.wavelength*1000):03}")
+                    
+                    # Set sim stack for processing all functions work on 
+                    # self.stack in SIMProcessor class
+                    processor.setSIMStack(self.SIMStack)
+                    
+                    # Push all wide fields into one array
+                    wfImages[k].append(processor.getWFlbf(self.SIMStack))
+                    
+                    # Activate recording and reconstruction in processor
+                    processor.setRecordingMode(self.isRecording)
+                    processor.setReconstructionMode(self.isReconstruction)
+                    processor.setWavelength(self.LaserWL, sim_parameters)
+                    
+                    # FIXME: Remove after development is completed
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","acquire data"])
+                    time_color_start = time.time()
+                    
+                    # Save the raw SIM stack
+                    # TODO: Remove if obsolete, or move to before the loop?
+                    # Maybe include in accompanying log file (exact times) 
+                    # after recording is finished?
+                    # date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+                    # TODO: Remove? Our implementation feeds frame number and 
+                    # position direct into the processor function (the only 
+                    # way we could make it work reliably)
+                    # Sets the date in processor for saving file
+                    # processor.setDate(date) 
+                    if self.isRecording:
+                        date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
+                        processor.setDate(date)
+                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
+                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+                        # TODO: Keep this just in case?
+                        # if k == len(processors)-1:
+                        #     # Save WF three color
+                        #     mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_wf.tif"
+                        #     threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
+                            
+                            # TODO: Delete this, just for development purposes
+                            # Export a stack for all three lasers in one file
+                            # Did not seem very useful for further data
+                            # processing
+                            # mFilenameStack2 = f"{date}_SIM_Stack_pos_{j:03}_{'_'.join(map(str,dic_wl))}.tif"
+                            # threading.Thread(target=self.saveImageInBackground, args=(stackSIM, mFilenameStack2,), daemon=True).start()
+                    # -----loop end-----
+                    # TODO: Remove this? Kept commented from original code.
+                    # self.detector.stopAcquisition()
+                    
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","save data"])
+                    time_color_start = time.time()
+                    
+                    # Process the frames and display reconstructions
+                    # FIXME: Testing threading, this solution below does the 
+                    # same thing, takes the same amount of time 
+                    threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
+                    # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    
+                    # FIXME: Remove after development is completed
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","reconstruct data"])
+                    time_color_start = time.time()
+                    # reset the per-colour stack to add new frames in the next
+                    # imaging series
+                    processor.clearStack()
+                    # ----sub loop end----
+                    
+                    # Timing of the process for testing purposes
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append([f"{time_color_total*1000}ms","clear stack"])
+                    # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
+            self._logger.debug(f"{times_color}")
+            # TODO: Delete this our keep. At least check.
+            # Deactivate indefinite running of the experiment
+            # self.active = False
+            # print(count)
+            # TODO: Remove this (left from openUC2 implementation)
+            # Maybe good idea for longer time-lapse movies to do a "snapshot"
+            # every couple of images and program this section to grab only one 
+            # set of images on trigger - time-lapse to in two ways, snap-shot 
+            # with wait times and continuous trigger mode (as fast as possible)
+            # wait for the next round
+            # time.sleep(timePeriod)
+            
+            count += 1
+            # Timing of the process for testing purposes
+            time_whole_end = time.time()
+            time_whole_total = time_whole_end-time_whole_start
+            
+            self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+            if False:
+                # ------------Old code---------------
+                for iColour in range(nColour):
 
-                # select the pattern for the current colour
-                self.SIMClient.set_wavelength(dic_wl[iColour])
-
-                for zPos in allZPositions:
-                    # move to the next z-position
-                    if len(allZPositions)!=1:
-                        self.positioner.move(value=zPos+zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                        time.sleep(tDebounce)
+                    # select the pattern for the current colour
+                    self.SIMClient.set_wavelength(dic_wl[iColour])
 
                     if self.isPCO:
                         # display one round of SIM patterns for the right colour
@@ -1156,14 +1303,15 @@ class SIMController(ImConWidgetController):
                 if len(allZPositions)!=1:
                     self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
                     time.sleep(tDebounce)
-            count += 1
+                count += 1
 
-            # TODO: Delete this our keep. At least check.
-            # Deactivate indefinite running of the experiment
-            # self.active = False
-            # print(count)
-            # wait for the next round
-            time.sleep(timePeriod)
+                # TODO: Delete this our keep. At least check.
+                # Deactivate indefinite running of the experiment
+                # self.active = False
+                # print(count)
+                # wait for the next round
+                time.sleep(timePeriod)
+                # ------------Old code---------------
 
         ##################################################
         # -----------------Mocker start----------------- #
@@ -1257,12 +1405,6 @@ class SIMController(ImConWidgetController):
                 # ----sub loop start----
                 for k, processor in enumerate(processors):
                     # -----loop start-----
-                    # If power of laser set to  0 or laser set not be used in
-                    # measurement skip laser
-                    if not isLaser[k] or self.lasers[dic_wl_dev[dic_wl[k]]].power <= 0.0:
-                        time.sleep(.001) # reduce CPU load
-                        continue
-                    time_color_start = time.time()
                     
                     # TODO: see if lasers need to be enabled to take an image
                     # using our SLM. The reasons the comment below is kept here
@@ -1325,7 +1467,7 @@ class SIMController(ImConWidgetController):
                     # way we could make it work reliably)
                     # Sets the date in processor for saving file
                     # processor.setDate(date) 
-                    if self.isRecording and self.lasers[dic_wl_dev[dic_wl[k]]].power>0.0:
+                    if self.isRecording:
                         date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
@@ -1397,6 +1539,12 @@ class SIMController(ImConWidgetController):
         ##################################################
         # -----------------Mocker end----------------- #
         ##################################################
+        
+        # FIXME: Should we even do this?
+        # Set buffer mode back to normal cam operation
+        buffer_mode = "NewestOnly"
+        for detector in self.detectors:
+            detector._camera.setPropertyValue('buffer_mode', buffer_mode)
 
 
     def performSIMTimelapseThread(self, sim_parameters):
@@ -2503,6 +2651,7 @@ class SIMClient:
     # client.set_pause(1.5)
     # client.stop_loop()
     # client.set_wavelength(1)
+    # FIXME: Re-do SIMClient for our purposes so no errors are thrownS
     def __init__(self, URL, PORT):
         self.base_url = f"http://{URL}:{PORT}"
         self.commands = {
@@ -2553,7 +2702,20 @@ class SIMClient:
     def display_pattern(self, iPattern):
         url = f"{self.base_url}{self.commands['display_pattern']}{iPattern}"
         self.get_request(url)
-
+    
+    # Cannot do it this way, because SIMClient does not inhert _master
+    # def send_start_sequence_trigger(self):
+    #     # A trigger to the SLM will be sent from here.
+    #     self._master.simslmManager.start_seqeunce()
+    
+    # def send_stop_sequence_trigger(self):
+    #     # A trigger to the SLM will be sent from here.
+    #     self._master.simslmManager.stop_seqeunce()
+    
+    # def set_running_order(self, orderID):
+    #     # Running order selection is performed through this
+    #     self._master.simslmManager.set_running_order(orderID)
+    #     pass
 
 
 

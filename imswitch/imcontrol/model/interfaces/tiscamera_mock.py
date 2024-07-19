@@ -15,14 +15,15 @@ class MockCameraTIS:
             'subarray_vsize': 1024,
             'subarray_hsize': 1024,
             'SensorHeight': 4600,
-            'SensorWidth': 5320
+            'SensorWidth': 5320,
+            'buffer_mode': "NewestOnly"
         }
         self.exposure = 100
         self.gain = 1
         self.brightness = 1
         self.model = 'mock'
-        self.SensorHeight = 500
-        self.SensorWidth = 500
+        self.SensorHeight = 1024
+        self.SensorWidth = 1024
         self.shape = (self.SensorHeight,self.SensorWidth)
 
     def start_live(self):
@@ -50,7 +51,8 @@ class MockCameraTIS:
             beamCenter = [int(np.random.randn() * 1 + 250), int(np.random.randn() * 30 + 300)]
             img[beamCenter[0] - 10:beamCenter[0] + 10, beamCenter[1] - 10:beamCenter[1] + 10] = 1
         elif mocktype=="random_peak":
-            imgsize = (800, 800)
+            # imgsize = (800, 800)
+            imgsize = self.shape
             peakmax = 60
             noisemean = 10
             # generate image
@@ -99,6 +101,31 @@ class MockCameraTIS:
     
     def flushBuffer(self):
         pass 
+    
+    def setCamForAcquisition(self, buffer_size):
+        pass
+    
+    def grabFrameSet(self, buffer_size):
+        # Simulate SIM set 
+        # Nx = 1024
+        # Ny = 1024
+        import NanoImagingPack as nip
+        Nx, Ny = self.shape
+        Nrot = 3
+        Nphi = 3
+        Isample = np.zeros((Nx,Ny))
+        Isample[np.random.random(Isample.shape)>0.999]=1
+
+        allImages = []
+        for iRot in range(Nrot):
+            for iPhi in range(Nphi):
+                IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
+                allImages.append(nip.gaussf(IGrating*Isample,3))
+
+        allImages=np.array(allImages)
+        allImages-=np.min(allImages)
+        allImages/=np.max(allImages)
+        return allImages
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

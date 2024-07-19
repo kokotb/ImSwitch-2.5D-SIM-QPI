@@ -88,7 +88,6 @@ class CameraTIS:
 
         # return device
         
-
     def create_device_from_serial_number(self, serial_number):
         
         device = []
@@ -124,7 +123,6 @@ class CameraTIS:
         print("stop_live")
         # print(self.device)
         self.device.stop_stream()
-
 
     def suspend_live(self):
         print("suspend_live")
@@ -239,6 +237,8 @@ class CameraTIS:
         elif property_name == 'image_width': 
             self.shape = (self.shape[0], property_value)
             # self.shape = (property_value, self.shape[1])
+        elif property_name == 'buffer_mode':
+            self.nodes['StreamBufferHandlingMode'].value = property_value
         else:
             self.__logger.warning(f'Property {property_name} does not exist')
             return False
@@ -272,6 +272,49 @@ class CameraTIS:
         pass
         # self.cam.show_property_dialog()
 
+def setCamForAcquisition(self, buffer_size):
+    # FIXME: Include that once onlien
+    # Set triggers - tell it to wait for trigger.
+    print('Triggers not set yet.')
+    
+    # Set buffers
+    self.device.start_stream(buffer_size)
+    
+def grabFrameSet(self, buffer_size):
+    # buffer_size = image number pulled from a cam
+    
+    buffer = self.device.get_buffer(buffer_size) 
+    """
+    Copy buffer and requeue to avoid running out of buffers
+    """
+    item = BufferFactory.copy(buffer)
+    self.device.requeue_buffer(buffer)
+    buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height)/buffer_size)
+    """
+    Buffer data as cpointers can be accessed using buffer.pbytes
+    """
+    num_channels = buffer_size
+    prev_frame_time = 0
+    array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
+    
+    """
+    Create a reshaped NumPy array to display using OpenCV
+    """
+    # FIXME: check how I need to re-shape the data grabbed to bi output correctly
+    sim_set = np.ndarray(buffer=array, dtype=np.uint16, shape=(item.height, item.width, buffer_bytes_per_pixel))
+    # print(np.shape(frame))
+    # print(buffer_bytes_per_pixel)
+    
+    # TODO: Remove this, kept just in case it would come in handy.
+    # frame = np.transpose(frame)
+    # frame = np.moveaxis(frame, 1 , 2)
+    """
+        Destroy the copied item to prevent memory leaks
+    """
+    # FIXME: Include this in the final version?
+    # BufferFactory.destroy(item)
+    
+    return sim_set
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

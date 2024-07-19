@@ -193,7 +193,7 @@
     "simslm": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM6",
+        "port": "ASRLCOM9",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",

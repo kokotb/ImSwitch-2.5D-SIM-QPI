@@ -13,7 +13,9 @@ import requests
 
 
 class SIMslmManager(SignalInterface):
-    
+    """ 
+    For now SIMslmManager will drive the Arduino.
+    """
     def __init__(self,  setupInfo, **lowLevelManagers):
         
         # TODO: Remove after development. Handled in MasterController.
@@ -23,11 +25,27 @@ class SIMslmManager(SignalInterface):
         #     self._rs232manager = None
         #     return
         
+        # FIXME: Check in config file that the baudrate is set right
         self._rs232manager = lowLevelManagers['rs232sManager'][
             setupInfo.managerProperties['rs232device']
         ]
+    
+    def start_sequence(self):
+        """Sends a trigger to SLM to start a sequence."""
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'S'
+        self._rs232manager.query(cmd)
         
-    print("Here!")
+    def stop_sequence(self):
+        """Sends loop termination signal."""
+        cmd = 'CE'
+        self._rs232manager.query(cmd)
+        
+    def set_running_order(self, orderID):
+        """Sets running order on the SLM. """
+        cmd = "RO "+str(orderID)
+        self._rs232manager.query(cmd)
+    
     # # Structure copied over from SIMclient
     #     self.commands = {
     #         "start": "/start_viewer/",
