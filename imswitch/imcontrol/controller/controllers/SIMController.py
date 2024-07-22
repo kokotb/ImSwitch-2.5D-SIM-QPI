@@ -1172,8 +1172,8 @@ class SIMController(ImConWidgetController):
                     # Process the frames and display reconstructions
                     # FIXME: Testing threading, this solution below does the 
                     # same thing, takes the same amount of time 
-                    threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                    # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    # threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
+                    processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
@@ -1350,7 +1350,7 @@ class SIMController(ImConWidgetController):
                 # Import our set of images for testing
                 for num, processor in enumerate(processors):
                     # Hardcoded path
-                    path_in = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\test_data_ImSwitch"
+                    path_in = "D:\\SIM_data\\test_export\\test_data_ImSwitch"
                     names_import = glob.glob(f'{path_in}\\*{dic_wl[num]}*.tif*')
                     stack_mock_color = []
                     for name in names_import:
@@ -2212,7 +2212,7 @@ class SIMParameters(object):
     eta = 0.6
     alpha = 0.5
     beta = 0.98#
-    path = 'D:\\Documents\\4 - software\python-scripting\\2p5D-SIM\\test_export\\'
+    path = 'D:\\SIM_data\\test_export\\'
 
 '''#####################################
 # SIM PROCESSOR

@@ -34,12 +34,12 @@ class ArduinoManager(SignalInterface):
         """Sends a trigger to SLM to start a sequence."""
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'S'
-        self._rs232manager.query(cmd)
+        self._rs232manager.write(cmd)
         
     def stop_sequence(self):
         """Sends loop termination signal."""
         cmd = 'CE'
-        self._rs232manager.query(cmd)
+        self._rs232manager.write(cmd)
     
     # FIXME: Remove all obsolete functions
     # Currently set up, to set running order and start a sequence through two 
