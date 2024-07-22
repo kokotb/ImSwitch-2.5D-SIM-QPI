@@ -98,7 +98,7 @@ class SIMWidget(NapariHybridWidget):
             "Enable Reconstruction", "Enable Record Reconstruction",
             "Enable Record RAW", "Enable Laser 488", "Enable Laser 635",
             "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
-            "Selected Path", "D:\\Documents\\4 - software\python-scripting\\2p5D-SIM\\test_export\\",
+            "Selected Path", "D:\\SIM_data\\test_export\\",
             "Mock"
             
         ]

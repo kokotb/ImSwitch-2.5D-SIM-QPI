@@ -218,7 +218,7 @@
     "arduino": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM17",
+        "port": "ASRLCOM7",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",
