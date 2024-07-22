@@ -40,7 +40,7 @@ class LUCIDManager(DetectorManager):
             'gamma': DetectorNumberParameter(group='Analog Control', value=1, valueUnits='arb.u.',
                                                   editable=True),
             'exposureauto': DetectorListParameter(group='Acq. Control', value='Off', options=['Off','Once','Continuous'],
-                                                editable=True),                        
+                                                editable=True)                    
         }
 
         # Prepare actions

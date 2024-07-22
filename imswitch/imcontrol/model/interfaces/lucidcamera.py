@@ -49,28 +49,55 @@ class CameraTIS:
         self.device = device
 ##Populate a reference to all device nodes. Some setting are in 'tl stream modemap'
         self.nodemap = device.nodemap
-        tl_stream_nodemap = device.tl_stream_nodemap
-        tl_stream_nodemap['StreamAutoNegotiatePacketSize'].value = True
-        tl_stream_nodemap["StreamBufferHandlingMode"].value = "NewestOnly"
+        self.t1_stream_nopdemap = device.tl_stream_nodemap
+        # tl_stream_nodemap = device.tl_stream_nodemap
+        self.t1_stream_nopdemap['StreamAutoNegotiatePacketSize'].value = True
+        self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = "NewestOnly"
 ##Populate dict with desired node values/properties from camera
-        self.nodes = self.nodemap.get_node(['Width', 'Height', 'PixelFormat', 
+        # Define node names
+        self.node_names = ['Width', 'Height', 'PixelFormat', 
                                        'ExposureAuto','ExposureTime','DeviceStreamChannelPacketSize', 'OffsetX', 'OffsetY','Gamma',
-                                       'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth'])
+                                       'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth', 'WidthMax', 'HeightMax']
+        # Link node names to imswitch names
+        self.node_names_dict = {'Width':'image_width', 'Height':'image_height', 'PixelFormat':"pixel_format", 
+                                       'ExposureAuto':'exposureauto','ExposureTime':'exposure','DeviceStreamChannelPacketSize':'streampacketsize', 'OffsetX':'x0', 'OffsetY':'y0','Gamma':'gamma',
+                                       'Gain':'gain','AcquisitionFrameRateEnable':'acqframerateenable','AcquisitionFrameRate':'acqframerate','ADCBitDepth':'ADC_bit_depth',
+                                       'WidthMax':'sensor_width', 
+                                       'HeightMax':'sensor_height'}
+        # Generate imswitch names dict (inverse dictionary)
+        # self.parameter_names = []
+        self.parameter_names_dict = {}
+        for node_name in self.node_names:
+            # self.parameter_names.append(self.node_names_dict[node_name])
+            self.parameter_names_dict[self.node_names_dict[node_name]] = node_name
+
+        # Get actual nodes
+        self.nodes = self.nodemap.get_node(self.node_names)
 ##Create string referencing model name of cam =='ATX245S-M' for all cams
+
+        # FIXME: Initializations ettings, ExposureAuto, AcquisitionFrameRateEnable, AcquisitionFrameRate
+        # Will be moved to config files
         self.model = device_info['serial']
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
         self.nodes['ExposureAuto'].value = 'Off'
         self.nodes['AcquisitionFrameRateEnable'].value = True
         self.nodes['AcquisitionFrameRate'].value = 25.0
 
-
+        # Get all current cam parameters
+        self.parameters = {}
+        for node_name in self.node_names:
+            self.parameters[self.node_names_dict[node_name]] = self.getPropertyValue(self.node_names_dict[node_name])
         
         # self.exposure = 100.1negotbuffer
         # self.gain = 0.0
         # self.gamma = 1
-        self.SensorHeight = 4600
-        self.SensorWidth = 5320
+        # FIXME: Change this so it is not hardcoded but read from config file
+        self.SensorHeight = self.parameters['sensor_height']
+        self.SensorWidth = self.parameters['sensor_width']
+        # Setting image shape to full sensor
         self.shape = (self.SensorHeight,self.SensorWidth)
+
+        
         
         # self.properties = {
         #     'image_height': self.nodes['Height'].value,
@@ -218,6 +245,31 @@ class CameraTIS:
 
 ###Write values from JSON config to the camera
     def setPropertyValue(self, property_name, property_value):
+        # Check if the property exists in the import properties.
+        # Available properties are set in __init__
+        # gain: min=0, max=48
+        # gamma: min=0.2, max=2.0
+        # exposure: min and max can change depending on other settings
+
+        names_dict = self.parameter_names_dict
+        if property_name in names_dict:
+            if property_name == "image_width":
+                self.nodes[names_dict[property_name]].value = property_value
+                self.shape = (self.shape[0], property_value)
+            elif property_name == "image_height":
+                self.nodes[names_dict[property_name]].value = property_value
+                self.shape = (property_value, self.shape[1])
+            else:
+                property_value = self.nodes[names_dict[property_name]].value        
+                # Different nodeamp
+        elif property_name == "buffer_mode":
+            self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = property_value
+        else:
+            self.__logger.warning(f'Property {property_name} does not exist')
+            return False
+        return property_value
+
+        # FIXME: Delete if not needed
         # Check if the property exists.
         if property_name == "gain": # min=0, max=48
             self.nodes['Gain'].value = property_value
@@ -246,6 +298,28 @@ class CameraTIS:
 ###
 ###Get values from the camera and store as variable
     def getPropertyValue(self, property_name):
+        # Check if the property exists in the import properties.
+        # Available properties are set in __init__
+        names_dict = self.parameter_names_dict
+        if property_name in names_dict:
+            if property_name == "image_width":
+                property_value = self.nodes[names_dict[property_name]].value
+                # self.shape[1] = property_value
+            elif property_name == "image_height":
+                property_value = self.nodes[names_dict[property_name]].value
+                # self.shape[0] = property_value
+            else:
+                property_value = self.nodes[names_dict[property_name]].value
+        # Different nodeamp
+        elif property_name == "buffer_mode":
+            property_value = self.t1_stream_nopdemap["StreamBufferHandlingMode"].value
+        else:
+            self.__logger.warning(f'Property {property_name} does not exist')
+            return False
+        return property_value
+
+        
+        # FIXME: Old hard-coded code. Delete after testing new code.
         # Check if the property exists.
         if property_name == "gain":
             property_value = self.nodes['Gain'].value
