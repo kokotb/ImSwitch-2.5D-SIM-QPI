@@ -71,7 +71,7 @@ class DetectorManager(SignalInterface):
                  supportedBinnings: List[int], model: str, *,
                  parameters: Optional[Dict[str, DetectorParameter]] = None,
                  actions: Optional[Dict[str, DetectorAction]] = None,
-                 croppable: bool = True) -> None:
+                 croppable: bool = True, frameStart: Tuple[int, int], offsetRelative: Tuple[int,int], frameStartGlobal:  Tuple[int,int]) -> None:
         """
         Args:
             detectorInfo: See setup file documentation.
@@ -90,8 +90,11 @@ class DetectorManager(SignalInterface):
 
         self._detectorInfo = detectorInfo
 
-        self._frameStart = (0, 0)
+        # self._frameStart = (0, 0)
+        self._frameStart = frameStart
+        self._frameStartGlobal = frameStartGlobal
         self._shape = fullShape
+        self._offsetRelative = offsetRelative
 
         self.__name = name
         self.__model = model
@@ -165,6 +168,18 @@ class DetectorManager(SignalInterface):
         """ Position of the top left corner of the current frame as a tuple
         ``(x, y)``. """
         return self._frameStart
+
+    @property
+    def frameStartGlobal(self) -> Tuple[int, int]:
+        """ Global offset for all cams as a tuple
+        ``(x, y)``. """
+        return self._frameStartGlobal
+    
+    @property
+    def offsetRelative(self) -> Tuple[int, int]:
+        """ Position of relative offset between cams
+        ``(x, y)``. """
+        return self._offsetRelative
 
     @property
     def shape(self) -> Tuple[int, ...]:

@@ -55,12 +55,12 @@ class CameraTIS:
         self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = "NewestOnly"
 ##Populate dict with desired node values/properties from camera
         # Define node names
-        self.node_names = ['Width', 'Height', 'PixelFormat', 
-                                       'ExposureAuto','ExposureTime','DeviceStreamChannelPacketSize', 'OffsetX', 'OffsetY','Gamma',
+        self.node_names = ['OffsetX', 'OffsetY', 'Width', 'Height', 'PixelFormat', 
+                                       'ExposureAuto','ExposureTime','DeviceStreamChannelPacketSize', 'Gamma',
                                        'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth', 'WidthMax', 'HeightMax']
         # Link node names to imswitch names
-        self.node_names_dict = {'Width':'image_width', 'Height':'image_height', 'PixelFormat':"pixel_format", 
-                                       'ExposureAuto':'exposureauto','ExposureTime':'exposure','DeviceStreamChannelPacketSize':'streampacketsize', 'OffsetX':'x0', 'OffsetY':'y0','Gamma':'gamma',
+        self.node_names_dict = {'OffsetX':'x0', 'OffsetY':'y0', 'Width':'image_width', 'Height':'image_height', 'PixelFormat':"pixel_format", 
+                                       'ExposureAuto':'exposureauto','ExposureTime':'exposure','DeviceStreamChannelPacketSize':'streampacketsize', 'Gamma':'gamma',
                                        'Gain':'gain','AcquisitionFrameRateEnable':'acqframerateenable','AcquisitionFrameRate':'acqframerate','ADCBitDepth':'ADC_bit_depth',
                                        'WidthMax':'sensor_width', 
                                        'HeightMax':'sensor_height'}
@@ -96,7 +96,6 @@ class CameraTIS:
         self.SensorWidth = self.parameters['sensor_width']
         # Setting image shape to full sensor
         self.shape = (self.SensorHeight,self.SensorWidth)
-
         
         
         # self.properties = {
@@ -212,30 +211,168 @@ class CameraTIS:
         return frame
 
     def setROI(self, hpos, vpos, hsize, vsize):
-        hsize = max(hsize, 32)  # minimum ROI size (32 for Lucid cam)
-        vsize = max(vsize, 32)  # minimum ROI size (32 for Lucid cam)
-        print('setROI1')
+
+        # print('setROI1')
+        hsize_max = self.SensorHeight
+        vsize_max = self.SensorWidth
+
         self.__logger.debug(
             f'{self.model}: setROI started with {hsize}x{vsize} at {hpos},{vpos}.'
         )
+
+        # ---------------New implementation2-------------------
+        # Already imeplemented in SettingsController - moved there, kept for safety if function is 
+        # called not from SettingsController 
+        # # Cam only accepts multiples of 8 for positions, set position to the nearest multiple of 8
+        mod = 8
+        integer, decimal = divmod(hpos/mod,1)
+        if decimal < 0.5:
+            hpos_new = int(mod*integer)
+        else:
+            hpos_new = int(mod*(integer+1))
+        integer, decimal = divmod(vpos/mod,1)
+        if decimal < 0.5:
+            vpos_new = int(mod*integer)
+        else:
+            vpos_new = int(mod*(integer+1))
+
+        integer, decimal = divmod(hsize/mod,1)
+        if decimal < 0.5:
+            hsize_new = int(mod*integer)
+        else:
+            hsize_new = int(mod*(integer+1))
+        integer, decimal = divmod(vsize/mod,1)
+        if decimal < 0.5:
+            vsize_new = int(mod*integer)
+        else:
+            vsize_new = int(mod*(integer+1))
+        
+        hsize_new = max(hsize_new, 32)  # minimum ROI size (32 for Lucid cam)
+        vsize_new = max(vsize_new, 32)  # minimum ROI size (32 for Lucid cam)
+         
+         
+        hpos_new = hpos
+        vpos_new = vpos
+        
+        # Get current image size
+        hsize_old = self.getPropertyValue("image_height")
+        vsize_old = self.getPropertyValue("image_width")
+        # hpos_old = self.getPropertyValue("x0")
+        # vpos_old = self.getPropertyValue("y0")
+        # Need to limit values - cam does not except values if we go of the cam area with 
+        # either position or size of the image
+
+        # Crop image size if target size at target offset sets us over the cam border
+        if hsize_new > hsize_max - abs(hpos_new):
+            hsize_set = int(hsize_max - abs(hpos_new))
+        else:
+            hsize_set = hsize_new
+        if vsize_new > vsize_max - abs(vpos_new):
+            vsize_set = int(vsize_max - abs(vpos_new))
+        else:
+            vsize_set = vsize_new
+        # Issue a warning to a user that this happend
+        if hsize_new > hsize_max - abs(hpos_new) or vsize_new > vsize_max - abs(vpos_new):
+            self.__logger.warning(
+                    f'{self.model}: Image size or position out of bounds!\nImage cropped {hsize_new}x{vsize_new} to {hsize_set}x{vsize_set} at {hpos_new},{vpos_new}.'
+                    )
+
+        # Check wheter we are shrinking or enrlarging an image, this sets wether to move the image
+        # first and then set the size or shrink the image first and then move the image
+        if hsize_set < hsize_old:
+            # Shrink first then move, if moving sets us of the cam at current image size, cam will
+            # not accept that
+            self.setPropertyValue("image_height", hsize_set)
+            self.setPropertyValue("y0", hpos_new)
+        else:
+            # Move first then enlarge, if larger size is of the cam size at current location cam
+            # will not accept that
+            self.setPropertyValue("y0", hpos_new)
+            self.setPropertyValue("image_height", hsize_set)
+        # Do the same for the other axis
+        if vsize_set < vsize_old:
+            self.setPropertyValue("image_width", vsize_set)
+            self.setPropertyValue("x0", vpos_new)
+        else:
+            self.setPropertyValue("x0", vpos_new)
+            self.setPropertyValue("image_width", vsize_set)
+        # ---------------New implementation2-------------------
+
+        # # ---------------old implementation-------------------
+        
+        # if self.nodes['Width'].is_readable and self.nodes['Width'].is_writable:
+        #     self.setPropertyValue("image_width", hsize)
+        # if self.nodes['Height'].is_readable and self.nodes['Height'].is_writable:
+        #     self.setPropertyValue("image_height", vsize)
+        # # TODO: Limit offset movement so we don't go of axis
+        # if self.nodes['OffsetX'].is_readable and self.nodes['OffsetX'].is_writable:
+        #     # Cam only accepts multiples of 8 for offset position
+        #     integer, decimal = divmod(hpos/mod,1)
+        #     if decimal < 0.5:
+        #         hpos_set = int(mod*integer)
+        #     else:
+        #         hpos_set = int(mod*(integer+1))    
+        #     self.setPropertyValue("x0", hpos_set)
+        # if self.nodes['OffsetY'].is_readable and self.nodes['OffsetY'].is_writable:
+        #     # Cam only accepts multiples of mod for offset position
+        #     integer, decimal = divmod(vpos/mod,1)
+        #     if decimal < 0.5:
+        #         vpos_set = int(mod*integer)
+        #     else:
+        #         vpos_set = int(mod*(integer+1))      
+        #     self.setPropertyValue("y0", vpos_set)
+        # # ---------------old implementation-------------------
+
+        # ---------------new implementation-------------------
         #Replaces what si below
-        if self.nodes['Width'].is_readable and self.nodes['Width'].is_writable:
-            self.nodes['Width'].value = hsize
-        if self.nodes['Height'].is_readable and self.nodes['Height'].is_writable:
-            self.nodes['Height'].value = vsize
-        if self.nodes['OffsetX'].is_readable and self.nodes['OffsetX'].is_writable:    
-            self.nodes['OffsetX'].value = hpos
-        if self.nodes['OffsetY'].is_readable and self.nodes['OffsetY'].is_writable:       
-            self.nodes['OffsetY'].value = vpos
+        # if self.nodes['Width'].is_readable and self.nodes['Width'].is_writable:
+        #     if hsizemax == hsize:
+                
+        #         # self.nodes['OffsetX'].value = hpos
+        #         # self.nodes['Width'].value = hsize
+        #         self.setPropertyValue("x0", hpos)
+        #         self.setPropertyValue("image_width", hsize)
+        #     else:
+        #         # self.nodes['Width'].value = hsize
+        #         self.setPropertyValue("image_width", hsize)
+        # if self.nodes['Height'].is_readable and self.nodes['Height'].is_writable:
+        #     if vsizemax == vsize:
+        #         self.setPropertyValue("y0", vpos)
+        #         self.setPropertyValue("image_height", vsize)
+        #         # self.nodes['OffsetY'].value = vpos
+        #         # self.nodes['Height'].value = vsize
+        #     else:
+        #         # self.nodes['Height'].value = vsize
+        #         self.setPropertyValue("image_height", vsize)
+        # # TODO: Limit offset movement so we don't go of axis
+        # if self.nodes['OffsetX'].is_readable and self.nodes['OffsetX'].is_writable:
+        #     # Cam only accepts multiples of mod for offset position
+        #     integer, decimal = divmod(hpos/mod,1)
+        #     if decimal < 0.5:
+        #         hpos_set = int(mod*integer)
+        #     else:
+        #         hpos_set = int(mod*(integer+1))    
+        #     # self.nodes['OffsetX'].value = hpos_set
+        #     self.setPropertyValue("x0", hpos_set)
+        # if self.nodes['OffsetY'].is_readable and self.nodes['OffsetY'].is_writable:
+        #     # Cam only accepts multiples of mod for offset position
+        #     integer, decimal = divmod(vpos/mod,1)
+        #     if decimal < 0.5:
+        #         vpos_set = int(mod*integer)
+        #     else:
+        #         vpos_set = int(mod*(integer+1))      
+        #     # self.nodes['OffsetY'].value = vpos_set
+        #     self.setPropertyValue("y0", vpos_set)
+        # ---------------new implementation-------------------
         
         #self.cam.frame_filter_set_parameter(self.roi_filter, 'Top'.encode('utf-8'), vpos)        # self.cam.frame_filter_set_parameter(self.roi_filter, 'Top', vpos)
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Left', hpos)
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Height', vsize)
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Width', hsize)
-        top = self.nodes['OffsetY']
-        left = self.nodes['OffsetX']
-        hei = self.nodes['Height']
-        wid = self.nodes['Width']
+        # top = self.nodes['OffsetY']
+        # left = self.nodes['OffsetX']
+        # hei = self.nodes['Height']
+        # wid = self.nodes['Width']
 ##Large string of ROI info that print during camera initialization
         # self.__logger.info(
         #     f'ROI set: w{wid} x h{hei} at l{left},t{top}'
@@ -259,8 +396,10 @@ class CameraTIS:
             elif property_name == "image_height":
                 self.nodes[names_dict[property_name]].value = property_value
                 self.shape = (property_value, self.shape[1])
+            elif property_name == "sensor_width" or property_name == "sensor_height":
+                pass
             else:
-                property_value = self.nodes[names_dict[property_name]].value        
+                self.nodes[names_dict[property_name]].value = property_value        
                 # Different nodeamp
         elif property_name == "buffer_mode":
             self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = property_value

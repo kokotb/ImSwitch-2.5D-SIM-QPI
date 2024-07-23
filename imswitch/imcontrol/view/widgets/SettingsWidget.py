@@ -222,6 +222,16 @@ class SettingsWidget(Widget):
     def hideROI(self):
         self.ROI.hide()
 
+    # FIXME: Remove if not in use
+    # def populateWidget(self, detector, parameters):
+    #     # To check values
+    #     # self.trees['65Camera'].p.param('Image frame').param('Y0').opts['value']
+    #     detctorName = '65Camera'
+    #     self.trees[detctorName].p.param('Image frame').param('Y0').set[128]
+    #     self.trees[detctorName].p.param('Image frame').param('X0').set[520]
+    #     self.trees[detctorName].p.param('Image frame').param('Width').set[256]
+    #     self.trees[detctorName].p.param('Image frame').param('Height').set[1024]
+
     @shortcut("Ctrl+N", "Next detector")
     def toggleNextButton(self):
         self.nextDetectorButton.click()

@@ -45,6 +45,8 @@
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 65,
+        "x0_global": 0,
+        "y0_global": 0,
         "lucid": {
           "exposure": 2000.0,
           "exposureauto": "Once",
@@ -52,9 +54,11 @@
           "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
-          "image_width": 5320,
-          "image_height": 4600,
-          "sensor_width":5320,
+          "x0": 200,
+          "y0": 200,
+          "image_width": 512,
+          "image_height": 512,
+          "sensor_width": 5320,
           "sensor_height": 4600,
           "buffer_mode":"NewestOnly"
         }
@@ -67,6 +71,8 @@
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 66,
+        "x0_global": 52,
+        "y0_global": 52,
         "lucid": {
           "exposure": 2000.0,
           "exposureauto": "Once",
@@ -74,9 +80,11 @@
           "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
-          "image_width": 5320,
-          "image_height": 4600,
-          "sensor_width":5320,
+          "x0": 152,
+          "y0": 232,
+          "image_width": 512,
+          "image_height": 512,
+          "sensor_width": 5320,
           "sensor_height": 4600,
           "buffer_mode":"NewestOnly"
         }
@@ -89,6 +97,8 @@
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 55,
+        "x0_global": 0,
+        "y0_global": 0,
         "lucid": {
           "exposure": 2000.0,
           "exposureauto": "Once",
@@ -96,9 +106,11 @@
           "gamma": 1.0,
           "pixel_format": "Mono8",
           "ADC_bit_depth": "Bits8",
-          "image_width": 5320,
-          "image_height": 4600,
-          "sensor_width":5320,
+          "x0": 32,
+          "y0": 64,
+          "image_width": 512,
+          "image_height": 512,
+          "sensor_width": 5320,
           "sensor_height": 4600,
           "buffer_mode":"NewestOnly"
         }

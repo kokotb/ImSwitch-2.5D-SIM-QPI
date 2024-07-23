@@ -25,11 +25,27 @@ class LUCIDManager(DetectorManager):
         self._adjustingParameters = False
 
         for propertyName, propertyValue in detectorInfo.managerProperties['lucid'].items():
+            # TODO: Remove after develpement is finished
+            # print(f"{propertyName},{propertyValue}")
             self._camera.setPropertyValue(propertyName, propertyValue)
 
-        fullShape = (self._camera.getPropertyValue('image_height'),self._camera.getPropertyValue('image_width'))
-
+        self.setupInfo = detectorInfo.managerProperties['lucid']
+        # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
+        fullShape = (self.setupInfo['image_width'] ,self.setupInfo['image_height'])
+        frameStartGlobal = (self.setupInfo['x0'], self.setupInfo['y0'])
+        frameStart = (self.setupInfo['x0'], self.setupInfo['y0'])
+        # offsetRelative = (self.setupInfo['x0_global'], self.setupInfo['y0_global'])
+        offsetRelative = (0,0)
+        self.globalOffset = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
+        # FIXME: When doing actual full chip...Tink if we can implement this smartly
+        # fullShape = (self._camera.getPropertyValue('sensor_width'),self._camera.getPropertyValue('sensor_height'))
+        # offsets = (self.setupInfo['x0'], self.setupInfo['y0'])
+        # self.crop(hpos=offsetRelative[1]+frameStart[1], vpos=offsetRelative[0]+frameStart[0], hsize=fullShape[1], vsize=fullShape[0])
+        # FIXME: Remove this? It makes debug window very confusing.
+        # Just crop, no moving of image on the sensor, do not know yet why this is needed
+        self.__logger.debug("Setting crop - it is not the same as final setting in the widget!")
         self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
+        
 
 ## These parameters are used to populate the detector settings panel.
         parameters = {
@@ -50,7 +66,7 @@ class LUCIDManager(DetectorManager):
         }
 
         super().__init__(detectorInfo, name, fullShape=fullShape, supportedBinnings=[1],
-                         model=self._camera.model, parameters=parameters, actions=actions, croppable=True)
+                         model=self._camera.model, parameters=parameters, actions=actions, croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, frameStartGlobal=frameStartGlobal)
  
     @property
     def scale(self):
@@ -169,6 +185,9 @@ class LUCIDManager(DetectorManager):
     def close(self):
         self.__logger.info(f'Shutting down camera, model: {self._camera.model}')
         pass
+
+    def setOffsetRelative(self, value):
+        self._offsetRelative = value
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

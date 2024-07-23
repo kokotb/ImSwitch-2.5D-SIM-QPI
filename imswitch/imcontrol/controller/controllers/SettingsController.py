@@ -51,6 +51,33 @@ class SettingsController(ImConWidgetController):
         self.roiAdded = False
         self.initParameters()
 
+        # Calculate and set relative positions of the detectors, position of the detector does not accept negative values
+        detector_names = self._master.detectorsManager.getAllDeviceNames()
+        tuple2 = self._master.detectorsManager[detector_names[0]].frameStartGlobal
+
+        frameSizesX = []
+        frameSizesY = []
+
+        globalOffsetX = []
+        globalOffsetY = []
+        for detector in self._master.detectorsManager: 
+            size = detector[1].frameStartGlobal
+            frameSizesX.append(size[0])
+            frameSizesY.append(size[1])
+            size = detector[1].globalOffset
+            globalOffsetX.append(size[0])
+            globalOffsetY.append(size[1])
+
+        # Set to max if different offsets in the config file (should not be...)
+        tuple2 = (max(frameSizesX)+max(globalOffsetX), max(frameSizesY)+max(globalOffsetY))
+
+        for k,detector in enumerate(self._master.detectorsManager): 
+            tuple1 = detector[1].frameStartGlobal
+            tuple_set = tuple(map(lambda i, j: i - j, tuple2, tuple1))
+            print(self._master.detectorsManager[detector_names[k]].offsetRelative)
+            self._master.detectorsManager[detector_names[k]].setOffsetRelative(tuple_set)
+            print(self._master.detectorsManager[detector_names[k]].offsetRelative)
+
         execOnAll = self._master.detectorsManager.execOnAll
         execOnAll(lambda c: (self.updateParamsFromDetector(detector=c)),
                   condition=lambda c: c.forAcquisition)
@@ -74,6 +101,8 @@ class SettingsController(ImConWidgetController):
         self._widget.sigDetectorChanged.connect(self.detectorSwitchClicked)
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
 
+
+    
     def addROI(self):
         """ Adds the ROI to ImageWidget viewbox through the CommunicationChannel. """
         if not self.roiAdded:
@@ -157,6 +186,9 @@ class SettingsController(ImConWidgetController):
             return
 
         # Adjust frame
+        # frameStart = detector.frameStart
+        # shape = detector.shape
+        # fullShape = detector.fullShape
         params = self.allParams[detector.name]
         binning = int(params.binning.value())
         width = params.width.value()
@@ -170,12 +202,43 @@ class SettingsController(ImConWidgetController):
         hsize = binning * width
         vsize = binning * height
 
-        hmodulus = 4
-        vmodulus = 4
-        vpos = int(vmodulus * np.ceil(vpos / vmodulus))
-        hpos = int(hmodulus * np.ceil(hpos / hmodulus))
-        vsize = int(vmodulus * np.ceil(vsize / vmodulus))
-        hsize = int(hmodulus * np.ceil(hsize / hmodulus))
+        hmodulus = 8
+        vmodulus = 8
+
+        integer, decimal = divmod(hpos/hmodulus,1)
+        if decimal < 0.5:
+            hpos = int(hmodulus*integer)
+        else:
+            hpos = int(hmodulus*(integer+1))
+        integer, decimal = divmod(vpos/vmodulus,1)
+        if decimal < 0.5:
+            vpos = int(vmodulus*integer)
+        else:
+            vpos = int(vmodulus*(integer+1))
+
+        integer, decimal = divmod(hsize/hmodulus,1)
+        if decimal < 0.5:
+            hsize = int(hmodulus*integer)
+        else:
+            hsize = int(hmodulus*(integer+1))
+        integer, decimal = divmod(vsize/vmodulus,1)
+        if decimal < 0.5:
+            vsize = int(vmodulus*integer)
+        else:
+            vsize = int(vmodulus*(integer+1))
+
+        # Set minimum ROI size for Lucid cam
+        hsize = max(hsize, 32)  # minimum ROI size (32 for Lucid cam)
+        vsize = max(vsize, 32)  # minimum ROI size (32 for Lucid cam)
+
+        # hsize = hsize
+        # vsize = vsize
+
+        # Old implementation
+        # vpos = int(vmodulus * np.ceil(vpos / vmodulus))
+        # hpos = int(hmodulus * np.ceil(hpos / hmodulus))
+        # vsize = int(vmodulus * np.ceil(vsize / vmodulus))
+        # hsize = int(hmodulus * np.ceil(hsize / hmodulus))
 
         detector.crop(hpos, vpos, hsize, vsize)
 
@@ -358,10 +421,20 @@ class SettingsController(ImConWidgetController):
         params.y0.show()
         params.width.show()
         params.height.show()
+        frameStart = detector.frameStartGlobal
+        fullShape = detector.fullShape
 
         if customFrame:
-            ROIsize = (64, 64)
-            ROIcenter = self._commChannel.getCenterViewbox()
+            # ROIsize = (64, 64)
+            # Grab ROIsize from config file
+            # FIXME: Might be we need to swap here to
+            ROIsize = (fullShape[1], fullShape[0])
+
+            # Grab offsets from config file
+            ROIcenter = (frameStart[1], frameStart[0])
+            # TODO: figure out how to make ROI selection be offset for a difference between the detectors
+            # Maybe add relative offsets to on channel 
+            # ROIcenter = self._commChannel.getCenterViewbox()
 
             ROIpos = (ROIcenter[0] - 0.5 * ROIsize[0],
                       ROIcenter[1] - 0.5 * ROIsize[1])
@@ -372,8 +445,15 @@ class SettingsController(ImConWidgetController):
         else:
             if frameMode == 'Full chip':
                 fullChipShape = detector.fullShape
-                params.x0.setValue(0)
-                params.y0.setValue(0)
+                # frameStart = detector.frameStart
+                # shape = detector.shape
+                # fullShape = detector.fullShape
+                offsetRelative = detector.offsetRelative
+                
+                params.x0.setValue(offsetRelative[0])#BKEDIT sam swap as CTEDIT
+                params.y0.setValue(offsetRelative[1])#BKEDIT
+                # params.x0.setValue(0)
+                # params.y0.setValue(0)
                 params.width.setValue(fullChipShape[1])#CTEDIT swapped indices
                 params.height.setValue(fullChipShape[0])#CTEDIT
             else:
