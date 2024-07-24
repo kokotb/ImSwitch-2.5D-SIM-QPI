@@ -81,8 +81,12 @@ class SettingsController(ImConWidgetController):
         execOnAll = self._master.detectorsManager.execOnAll
         execOnAll(lambda c: (self.updateParamsFromDetector(detector=c)),
                   condition=lambda c: c.forAcquisition)
+        # No loggers in controllers
+        # self.logger.debug("Initialize: running adjustFrame - no global offset.")
         execOnAll(lambda c: (self.adjustFrame(detector=c)),
                   condition=lambda c: c.forAcquisition)
+        # self.logger.debug("Initialize: running updateFrame - with global offset.")
+        # No loggers in controllers
         execOnAll(lambda c: (self.updateFrame(detector=c)),
                   condition=lambda c: c.forAcquisition)
         execOnAll(lambda c: (self.updateFrameActionButtons(detector=c)),
@@ -385,18 +389,20 @@ class SettingsController(ImConWidgetController):
                 parameterName
             )
             paramInWidget.setValue(parameter.value)
+        # Does not have relative offsets - it breaks ROI selection
 
         # Frame
         params.binning.setValue(detector.binning)
         frameStart = detector.frameStart
         shape = detector.shape
         fullShape = detector.fullShape
+        fullShapeSensor = detector.fullShapeSensor
         params.x0.setValue(frameStart[0])
         params.y0.setValue(frameStart[1])
         params.width.setValue(shape[1])#CTEDIT
-        params.width.setLimits((1, fullShape[1]))#CTEDIT
+        params.width.setLimits((1, fullShapeSensor[1]))#CTEDIT
         params.height.setValue(shape[0])#CTEDIT swapped indices
-        params.height.setLimits((1, fullShape[0]))#CTEDIT
+        params.height.setLimits((1, fullShapeSensor[0]))#CTEDIT
 
         # Model
         params.model.setValue(detector.model)
@@ -421,21 +427,27 @@ class SettingsController(ImConWidgetController):
         params.y0.show()
         params.width.show()
         params.height.show()
-        frameStart = detector.frameStartGlobal
+        # frameStart = detector.frameStart
+        frameStart = (0,0) # ROIchanged() takes care of centerdeness 
         fullShape = detector.fullShape
 
         if customFrame:
             # ROIsize = (64, 64)
-            # Grab ROIsize from config file
-            # FIXME: Might be we need to swap here to
+            # Grab ROIsize from config file - default ROI size is ROI of initial image
+            # Make sense since we do not use full capacity of the sensor
+            # FIXME: This is good for development. For final use mayb 1/2 or 1/4 of FOV?
+            # FIXME: Might be we need to swap here too
             ROIsize = (fullShape[1], fullShape[0])
-
-            # Grab offsets from config file
-            ROIcenter = (frameStart[1], frameStart[0])
-            # TODO: figure out how to make ROI selection be offset for a difference between the detectors
-            # Maybe add relative offsets to on channel 
-            # ROIcenter = self._commChannel.getCenterViewbox()
-
+            
+            # If I want to have ROI at the center of my initial FOV
+            # --------New implementation-------
+            # ROIcenter = (frameStart[1], frameStart[0])
+            # ROIpos = (ROIcenter[0], ROIcenter[1])
+            
+            # If I want to have a ROI at the center of new ROI
+            # Toggle between custom and fullChip sests us back to config center
+            # # --------Old implementation-------
+            ROIcenter = self._commChannel.getCenterViewbox()
             ROIpos = (ROIcenter[0] - 0.5 * ROIsize[0],
                       ROIcenter[1] - 0.5 * ROIsize[1])
 
@@ -448,10 +460,16 @@ class SettingsController(ImConWidgetController):
                 # frameStart = detector.frameStart
                 # shape = detector.shape
                 # fullShape = detector.fullShape
+                # Sets relative offset taking into account global offset
+                # Good for calibration purposes if we need to re-adjust centerdness on all 
+                # cameras together
                 offsetRelative = detector.offsetRelative
                 
                 params.x0.setValue(offsetRelative[0])#BKEDIT sam swap as CTEDIT
                 params.y0.setValue(offsetRelative[1])#BKEDIT
+                # Old implementation recentering to the center of the detector
+                # TODO: Remove this? In our case does not make sense since we are not perfectly 
+                # centered to the cam
                 # params.x0.setValue(0)
                 # params.y0.setValue(0)
                 params.width.setValue(fullChipShape[1])#CTEDIT swapped indices

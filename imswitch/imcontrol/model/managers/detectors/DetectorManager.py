@@ -71,7 +71,9 @@ class DetectorManager(SignalInterface):
                  supportedBinnings: List[int], model: str, *,
                  parameters: Optional[Dict[str, DetectorParameter]] = None,
                  actions: Optional[Dict[str, DetectorAction]] = None,
-                 croppable: bool = True, frameStart: Tuple[int, int], offsetRelative: Tuple[int,int], frameStartGlobal:  Tuple[int,int]) -> None:
+                 croppable: bool = True, frameStart: Tuple[int, int], 
+                 offsetRelative: Tuple[int,int], frameStartGlobal:  Tuple[int,int], 
+                 fullShapeSensor:  Tuple[int,int]) -> None:
         """
         Args:
             detectorInfo: See setup file documentation.
@@ -103,6 +105,7 @@ class DetectorManager(SignalInterface):
         self.__croppable = croppable
 
         self.__fullShape = fullShape
+        self.__fullShapeSensor = fullShapeSensor
         self.__supportedBinnings = supportedBinnings
         self.__image = np.array([])
 
@@ -191,6 +194,11 @@ class DetectorManager(SignalInterface):
         """ Maximum image size as a tuple ``(width, height, ...)``. """
         return self.__fullShape
 
+    @property
+    def fullShapeSensor(self) -> Tuple[int, ...]:
+        """ Maximum image size as a tuple ``(width, height, ...)``. """
+        return self.__fullShapeSensor
+    
     @property
     def image(self) -> np.ndarray:
         """ Latest LiveView image. """

@@ -65,21 +65,19 @@ class CameraTIS:
                                        'WidthMax':'sensor_width', 
                                        'HeightMax':'sensor_height'}
         # Generate imswitch names dict (inverse dictionary)
-        # self.parameter_names = []
         self.parameter_names_dict = {}
         for node_name in self.node_names:
-            # self.parameter_names.append(self.node_names_dict[node_name])
             self.parameter_names_dict[self.node_names_dict[node_name]] = node_name
 
         # Get actual nodes
         self.nodes = self.nodemap.get_node(self.node_names)
 ##Create string referencing model name of cam =='ATX245S-M' for all cams
 
-        # FIXME: Initializations ettings, ExposureAuto, AcquisitionFrameRateEnable, AcquisitionFrameRate
-        # Will be moved to config files
+        # FIXME: Initializations settings, AcquisitionFrameRateEnable, AcquisitionFrameRate
+        # will be moved to config files, we should not be having hardcoded cam configs
         self.model = device_info['serial']
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
-        self.nodes['ExposureAuto'].value = 'Off'
+        # self.nodes['ExposureAuto'].value = 'Off'
         self.nodes['AcquisitionFrameRateEnable'].value = True
         self.nodes['AcquisitionFrameRate'].value = 25.0
 
@@ -91,13 +89,12 @@ class CameraTIS:
         # self.exposure = 100.1negotbuffer
         # self.gain = 0.0
         # self.gamma = 1
-        # FIXME: Change this so it is not hardcoded but read from config file
         self.SensorHeight = self.parameters['sensor_height']
         self.SensorWidth = self.parameters['sensor_width']
         # Setting image shape to full sensor
         self.shape = (self.SensorHeight,self.SensorWidth)
         
-        
+        # FIXME: Delete after development is done
         # self.properties = {
         #     'image_height': self.nodes['Height'].value,
         #     'image_width': self.nodes['Width'].value,
@@ -298,6 +295,7 @@ class CameraTIS:
             self.setPropertyValue("image_width", vsize_set)
         # ---------------New implementation2-------------------
 
+        # FIXME: Delete after development is done
         # # ---------------old implementation-------------------
         
         # if self.nodes['Width'].is_readable and self.nodes['Width'].is_writable:
@@ -387,6 +385,8 @@ class CameraTIS:
         # gain: min=0, max=48
         # gamma: min=0.2, max=2.0
         # exposure: min and max can change depending on other settings
+        # Generalized the import of parametersto just take into account exceptions that should not 
+        # be modified ever
 
         names_dict = self.parameter_names_dict
         if property_name in names_dict:
@@ -439,6 +439,8 @@ class CameraTIS:
     def getPropertyValue(self, property_name):
         # Check if the property exists in the import properties.
         # Available properties are set in __init__
+        # Generalized the import of parametersto just take into account exceptions that should not 
+        # be modified ever
         names_dict = self.parameter_names_dict
         if property_name in names_dict:
             if property_name == "image_width":

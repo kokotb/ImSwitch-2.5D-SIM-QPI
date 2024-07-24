@@ -24,14 +24,50 @@ class LUCIDManager(DetectorManager):
         self._running = False
         self._adjustingParameters = False
 
-        for propertyName, propertyValue in detectorInfo.managerProperties['lucid'].items():
+        self.setupInfo = detectorInfo.managerProperties['lucid']
+        
+        # Get old properties to compare with new for setting of FOV
+        properties_old = {}
+        
+        for propertyName, propertyValue in self.setupInfo.items():
+            properties_old[propertyName] = self._camera.getPropertyValue(propertyName)
+            # properties_new[propertyName] = propertyValue
+
+        # Set cam parameters in righ order for image height and centerdeness
+        hsize_set = self.setupInfo["image_height"]
+        hsize_old = properties_old["image_height"]
+        hpos_new = self.setupInfo["y0"]
+        vsize_set = self.setupInfo["image_width"]
+        vsize_old = properties_old["image_width"]
+        vpos_new = self.setupInfo["x0"]
+        if hsize_set < hsize_old:
+            # Shrink first then move, if moving sets us of the cam at current image size, cam will
+            # not accept that
+            self._camera.setPropertyValue("image_height", hsize_set)
+            self._camera.setPropertyValue("y0", hpos_new)
+        else:
+            # Move first then enlarge, if larger size is of the cam size at current location cam
+            # will not accept that
+            self._camera.setPropertyValue("y0", hpos_new)
+            self._camera.setPropertyValue("image_height", hsize_set)
+        # Do the same for the other axis
+        if vsize_set < vsize_old:
+            self._camera.setPropertyValue("image_width", vsize_set)
+            self._camera.setPropertyValue("x0", vpos_new)
+        else:
+            self._camera.setPropertyValue("x0", vpos_new)
+            self._camera.setPropertyValue("image_width", vsize_set)
+
+        for propertyName, propertyValue in self.setupInfo.items():
             # TODO: Remove after develpement is finished
+            # print(self._camera.getPropertyValue(propertyName))
             # print(f"{propertyName},{propertyValue}")
             self._camera.setPropertyValue(propertyName, propertyValue)
 
-        self.setupInfo = detectorInfo.managerProperties['lucid']
+        
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
         fullShape = (self.setupInfo['image_width'] ,self.setupInfo['image_height'])
+        fullShapeSensor = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
         frameStartGlobal = (self.setupInfo['x0'], self.setupInfo['y0'])
         frameStart = (self.setupInfo['x0'], self.setupInfo['y0'])
         # offsetRelative = (self.setupInfo['x0_global'], self.setupInfo['y0_global'])
@@ -43,8 +79,8 @@ class LUCIDManager(DetectorManager):
         # self.crop(hpos=offsetRelative[1]+frameStart[1], vpos=offsetRelative[0]+frameStart[0], hsize=fullShape[1], vsize=fullShape[0])
         # FIXME: Remove this? It makes debug window very confusing.
         # Just crop, no moving of image on the sensor, do not know yet why this is needed
-        self.__logger.debug("Setting crop - it is not the same as final setting in the widget!")
-        self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
+        # self.__logger.debug("Currently commented! Setting crop - it is not the same as final setting in the widget!")
+        # self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
         
 
 ## These parameters are used to populate the detector settings panel.
@@ -66,7 +102,7 @@ class LUCIDManager(DetectorManager):
         }
 
         super().__init__(detectorInfo, name, fullShape=fullShape, supportedBinnings=[1],
-                         model=self._camera.model, parameters=parameters, actions=actions, croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, frameStartGlobal=frameStartGlobal)
+                         model=self._camera.model, parameters=parameters, actions=actions, croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, frameStartGlobal=frameStartGlobal, fullShapeSensor=fullShapeSensor)
  
     @property
     def scale(self):
