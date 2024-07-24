@@ -57,7 +57,7 @@ class CameraTIS:
         # Define node names
         self.node_names = ['OffsetX', 'OffsetY', 'Width', 'Height', 'PixelFormat', 
                                        'ExposureAuto','ExposureTime','DeviceStreamChannelPacketSize', 'Gamma',
-                                       'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth', 'WidthMax', 'HeightMax']
+                                       'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth', 'WidthMax', 'HeightMax','DeviceStreamChannelPacketSize', 'TriggerSource','TriggerMode']
         # Link node names to imswitch names
         self.node_names_dict = {'OffsetX':'x0', 'OffsetY':'y0', 'Width':'image_width', 'Height':'image_height', 'PixelFormat':"pixel_format", 
                                        'ExposureAuto':'exposureauto','ExposureTime':'exposure','DeviceStreamChannelPacketSize':'streampacketsize', 'Gamma':'gamma',
@@ -67,7 +67,9 @@ class CameraTIS:
         # Generate imswitch names dict (inverse dictionary)
         self.parameter_names_dict = {}
         for node_name in self.node_names:
-            self.parameter_names_dict[self.node_names_dict[node_name]] = node_name
+            # Only takes the nodes we use for pulling data our of config files
+            if node_name in self.node_names_dict:
+                self.parameter_names_dict[self.node_names_dict[node_name]] = node_name
 
         # Get actual nodes
         self.nodes = self.nodemap.get_node(self.node_names)
@@ -77,14 +79,16 @@ class CameraTIS:
         # will be moved to config files, we should not be having hardcoded cam configs
         self.model = device_info['serial']
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
-        # self.nodes['ExposureAuto'].value = 'Off'
+        self.nodes['ExposureAuto'].value = 'Off'
         self.nodes['AcquisitionFrameRateEnable'].value = True
         self.nodes['AcquisitionFrameRate'].value = 25.0
 
         # Get all current cam parameters
         self.parameters = {}
         for node_name in self.node_names:
-            self.parameters[self.node_names_dict[node_name]] = self.getPropertyValue(self.node_names_dict[node_name])
+            if node_name in self.node_names_dict:
+                # print(self.getPropertyValue(self.node_names_dict[node_name]))
+                self.parameters[self.node_names_dict[node_name]] = self.getPropertyValue(self.node_names_dict[node_name])
         
         # self.exposure = 100.1negotbuffer
         # self.gain = 0.0
@@ -139,7 +143,7 @@ class CameraTIS:
         # print(self.device)
         # print("start_live2")
         num_buffers = 500
-
+        
         self.device.start_stream(num_buffers)
 
     def stop_live(self):

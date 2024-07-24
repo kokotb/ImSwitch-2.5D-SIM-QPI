@@ -85,7 +85,7 @@ class LUCIDManager(DetectorManager):
 
 ## These parameters are used to populate the detector settings panel.
         parameters = {
-            'exposure': DetectorNumberParameter(group='Acq. Control', value=1000, valueUnits='us',
+            'exposure': DetectorNumberParameter(group='Acq. Control', value=2000, valueUnits='us',
                                                 editable=True),
             'gain': DetectorNumberParameter(group='Analog Control', value=0, valueUnits='arb.u.',
                                             editable=True),
@@ -157,6 +157,7 @@ class LUCIDManager(DetectorManager):
 
     def startAcquisition(self):
         if not self._running:
+            
             self._camera.start_live()
             # print(self._camera)
             self._running = True
