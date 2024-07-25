@@ -49,21 +49,23 @@ class CameraTIS:
         self.device = device
 ##Populate a reference to all device nodes. Some setting are in 'tl stream modemap'
         self.nodemap = device.nodemap
-        self.t1_stream_nopdemap = device.tl_stream_nodemap
+        self.t1_stream_nodemap = device.tl_stream_nodemap
         # tl_stream_nodemap = device.tl_stream_nodemap
-        self.t1_stream_nopdemap['StreamAutoNegotiatePacketSize'].value = True
-        self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = "NewestOnly"
+        self.t1_stream_nodemap['StreamAutoNegotiatePacketSize'].value = True
+        self.t1_stream_nodemap["StreamBufferHandlingMode"].value = "NewestOnly"
 ##Populate dict with desired node values/properties from camera
         # Define node names
         self.node_names = ['OffsetX', 'OffsetY', 'Width', 'Height', 'PixelFormat', 
                                        'ExposureAuto','ExposureTime','DeviceStreamChannelPacketSize', 'Gamma',
                                        'Gain','AcquisitionFrameRateEnable','AcquisitionFrameRate','ADCBitDepth', 'WidthMax', 'HeightMax','DeviceStreamChannelPacketSize', 'TriggerSource','TriggerMode']
         # Link node names to imswitch names
-        self.node_names_dict = {'OffsetX':'x0', 'OffsetY':'y0', 'Width':'image_width', 'Height':'image_height', 'PixelFormat':"pixel_format", 
+        self.node_names_dict = {'OffsetX':'x0', 'OffsetY':'y0', 'Width':'image_width', 'Height':'image_height', 'PixelFormat':'pixel_format', 
                                        'ExposureAuto':'exposureauto','ExposureTime':'exposure','DeviceStreamChannelPacketSize':'streampacketsize', 'Gamma':'gamma',
                                        'Gain':'gain','AcquisitionFrameRateEnable':'acqframerateenable','AcquisitionFrameRate':'acqframerate','ADCBitDepth':'ADC_bit_depth',
                                        'WidthMax':'sensor_width', 
-                                       'HeightMax':'sensor_height'}
+                                       'HeightMax':'sensor_height',
+                                       'TriggerSource':'trigger_source',
+                                       'TriggerMode':'trigger_mode'}
         # Generate imswitch names dict (inverse dictionary)
         self.parameter_names_dict = {}
         for node_name in self.node_names:
@@ -142,8 +144,9 @@ class CameraTIS:
         # print("start_live1")
         # print(self.device)
         # print("start_live2")
+        self.setCamForLiveView()
         num_buffers = 500
-        
+
         self.device.start_stream(num_buffers)
 
     def stop_live(self):
@@ -164,6 +167,8 @@ class CameraTIS:
         # self.cam.prepare_live()  # prepare prepared state for live imaging
 
     def grabFrame(self):
+        buffer_type = "Mono8"
+
         # print("grab frame")
         # print(self.device)
         buffer = self.device.get_buffer()
@@ -174,41 +179,60 @@ class CameraTIS:
         """
         item = BufferFactory.copy(buffer)
         self.device.requeue_buffer(buffer)
-        buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
-        """
-        Buffer data as cpointers can be accessed using buffer.pbytes
-        """
-        num_channels = 1
-        prev_frame_time = 0
-        array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
-        
-        """
-        Create a reshaped NumPy array to display using OpenCV
-        """
-        frame = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
-        # print(np.shape(frame))
-        # print(buffer_bytes_per_pixel)
-        width = item.width
-        height = item.height
-        depth = 0
 
-        # fps = str(1/(curr_frame_time - prev_frame_time))
-        
-        # frame, width, height, depth = self.cam.get_image_data()
-        # frame = np.array(frame, dtype='float64')
-        # Check if below is giving the right dimensions out
-        # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
-        #       3D array and taking the first plane of that
-        # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
-        frame = np.transpose(frame)
-        frame = np.moveaxis(frame, 1 , 2)
-        # self.device.stop_stream()
-        """
-            Destroy the copied item to prevent memory leaks
-        """
-        # BufferFactory.destroy(item)
-        # time.sleep(.25)        
+        if buffer_type == "Mono16":
+            # FIXME: Include this in live view also? Now is hardcoded...
+            # Development only done for Mono8 at this point for live view
+            """
+            Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
+            """
+            array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+            array = np.ctypeslib.as_array(array, (item.height, item.width))
+            frame = array
+
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # BufferFactory.destroy(item)
+        elif buffer_type == "Mono8":
             
+            buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
+            """
+            Buffer data as cpointers can be accessed using buffer.pbytes
+            """
+            num_channels = 1
+            prev_frame_time = 0
+            array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
+            
+            """
+            Create a reshaped NumPy array to display using OpenCV
+            """
+            frame = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
+            # print(np.shape(frame))
+            # print(buffer_bytes_per_pixel)
+            width = item.width
+            height = item.height
+            depth = 0
+
+            # fps = str(1/(curr_frame_time - prev_frame_time))
+            
+            # frame, width, height, depth = self.cam.get_image_data()
+            # frame = np.array(frame, dtype='float64')
+            # Check if below is giving the right dimensions out
+            # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
+            #       3D array and taking the first plane of that
+            # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
+            frame = np.transpose(frame)
+            frame = np.moveaxis(frame, 1 , 2)
+            # self.device.stop_stream()
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # BufferFactory.destroy(item)
+            # time.sleep(.25)     
+        else:
+            self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
+            frame = None
         return frame
 
     def setROI(self, hpos, vpos, hsize, vsize):
@@ -406,7 +430,7 @@ class CameraTIS:
                 self.nodes[names_dict[property_name]].value = property_value        
                 # Different nodeamp
         elif property_name == "buffer_mode":
-            self.t1_stream_nopdemap["StreamBufferHandlingMode"].value = property_value
+            self.t1_stream_nodemap["StreamBufferHandlingMode"].value = property_value
         else:
             self.__logger.warning(f'Property {property_name} does not exist')
             return False
@@ -457,7 +481,7 @@ class CameraTIS:
                 property_value = self.nodes[names_dict[property_name]].value
         # Different nodeamp
         elif property_name == "buffer_mode":
-            property_value = self.t1_stream_nopdemap["StreamBufferHandlingMode"].value
+            property_value = self.t1_stream_nodemap["StreamBufferHandlingMode"].value
         else:
             self.__logger.warning(f'Property {property_name} does not exist')
             return False
@@ -491,49 +515,123 @@ class CameraTIS:
         pass
         # self.cam.show_property_dialog()
 
-def setCamForAcquisition(self, buffer_size):
-    # FIXME: Include that once onlien
-    # Set triggers - tell it to wait for trigger.
-    print('Triggers not set yet.')
+    def setCamForLiveView(self):
+    # Doing this to be on the safe side - SIMControler changes stuf
+    # Maybe keep this here and to nothing on the SIMControler side (setCamsAfterExperiment)?
+    # FIXME: Delete if obsolete
+        packet_size = 9000
+        trigger_source = 'Line0'
+        trigger_mode = 'Off'
+        exposure_auto = 'Off'
+        exposure_time = 2000.0 
+        pixel_format = 'Mono8'
+        frame_rate_enable = True
+        frame_rate = 50.0 # > 50Hz
+        buffer_mode = "NewestOnly"
+
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}
+
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+
+        for parameter_name in parameter_names:
+            # print(self.getPropertyValue(parameter_name))
+            self.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+            # print(self.getPropertyValue(parameter_name))
+            
+    def setCamForAcquisition(self, buffer_size):
+        # FIXME: Include that once onlien
+        # Set triggers - tell it to wait for trigger.
+        # print('Triggers not set yet.')
+        
+        # Set buffers
+        self.device.start_stream(buffer_size)
+
     
-    # Set buffers
-    self.device.start_stream(buffer_size)
-    
-def grabFrameSet(self, buffer_size):
-    # buffer_size = image number pulled from a cam
-    
-    buffer = self.device.get_buffer(buffer_size) 
-    """
-    Copy buffer and requeue to avoid running out of buffers
-    """
-    item = BufferFactory.copy(buffer)
-    self.device.requeue_buffer(buffer)
-    buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height)/buffer_size)
-    """
-    Buffer data as cpointers can be accessed using buffer.pbytes
-    """
-    num_channels = buffer_size
-    prev_frame_time = 0
-    array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
-    
-    """
-    Create a reshaped NumPy array to display using OpenCV
-    """
-    # FIXME: check how I need to re-shape the data grabbed to bi output correctly
-    sim_set = np.ndarray(buffer=array, dtype=np.uint16, shape=(item.height, item.width, buffer_bytes_per_pixel))
-    # print(np.shape(frame))
-    # print(buffer_bytes_per_pixel)
-    
-    # TODO: Remove this, kept just in case it would come in handy.
-    # frame = np.transpose(frame)
-    # frame = np.moveaxis(frame, 1 , 2)
-    """
-        Destroy the copied item to prevent memory leaks
-    """
-    # FIXME: Include this in the final version?
-    # BufferFactory.destroy(item)
-    
-    return sim_set
+    def grabFrameSet(self, buffer_size):
+        # buffer_size = image number pulled from a cam
+        
+        buffer_type = "Mono16"
+        buffer_set = self.device.get_buffer(buffer_size) 
+        # buffer = self.device.get_buffer()
+        # print(self.device)
+        """
+        Copy buffer and requeue to avoid running out of buffers
+        """
+        items = []
+        
+        for buffer in buffer_set:        
+            items.append(BufferFactory.copy(buffer))
+            self.device.requeue_buffer(buffer)
+        # item = BufferFactory.copy(buffer)
+        # self.device.requeue_buffer(buffer)
+
+        if buffer_type == "Mono16":
+            # Development only done for Mono16 at this point
+            """
+            Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
+            """
+            nparrays = []
+            nparray = []
+            for item in items:
+                nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+                nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
+            # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+            # array = np.ctypeslib.as_array(array, (item.height, item.width))
+            sim_set = nparrays
+
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # FIXME: Include this in the final version?
+            # BufferFactory.destroy(item)
+        elif buffer_type == "Mono8":
+            # FIXME: Do this in proper format - not finished yet
+            # buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
+           
+            
+            buffer_bytes_per_pixel_set = []
+            for item in items:
+                buffer_bytes_per_pixel_set.append(int(len(item.data)/(item.width * item.height)))
+            if max(buffer_bytes_per_pixel_set) > 1:
+                # If buffer_bytes exceed 8bit value, return empty set
+                self.__logger.warning("Data not Mono8! Something went wrong.")
+                sim_set = None
+                return sim_set
+            #  Taken from py_image_buffer_save_mono12_to_png_with_PIL.py
+            """
+            Buffer data as cpointers can be accessed using buffer.pbytes
+           
+            """
+            num_channels = 1
+            prev_frame_time = 0
+
+            # array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
+
+            arrays = []
+            for item in items:
+                arrays.append((ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes)))
+            
+            """
+            Create a reshaped NumPy array to display using OpenCV
+            """
+            # FIXME: check how I need to re-shape the data grabbed to bi output correctly
+            # sim_set = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
+            sim_set = []
+            for k, array in enumerate(arrays):
+                sim_set.append(np.ndarray(buffer=array, dtype=np.uint16, shape=(items[k].height, items[k].width, buffer_bytes_per_pixel_set[k])))
+            
+            # TODO: Remove this, kept just in case it would come in handy.
+            # frame = np.transpose(frame)
+            # frame = np.moveaxis(frame, 1 , 2)
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # FIXME: Include this in the final version?
+            # BufferFactory.destroy(item)
+        else:
+            self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
+            sim_set = None
+        return sim_set
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

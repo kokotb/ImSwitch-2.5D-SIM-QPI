@@ -23,6 +23,7 @@ class LUCIDManager(DetectorManager):
         
         self._running = False
         self._adjustingParameters = False
+        self._camSet = False
 
         self.setupInfo = detectorInfo.managerProperties['lucid']
         
@@ -157,7 +158,7 @@ class LUCIDManager(DetectorManager):
 
     def startAcquisition(self):
         if not self._running:
-            
+            self._camSet = False
             self._camera.start_live()
             # print(self._camera)
             self._running = True
@@ -165,6 +166,7 @@ class LUCIDManager(DetectorManager):
     def stopAcquisition(self):
         if self._running:
             self._running = False
+            self._camSet = False
             self._camera.suspend_live()
 
     def stopAcquisitionForROIChange(self):

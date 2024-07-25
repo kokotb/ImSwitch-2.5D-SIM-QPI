@@ -295,6 +295,8 @@ class SIMController(ImConWidgetController):
 
     def stopSIM(self):
         self.active = False
+
+
         self.simThread.join()
         self.lasers[0].setEnabled(False)
         self.lasers[1].setEnabled(False)
@@ -302,6 +304,8 @@ class SIMController(ImConWidgetController):
             self.detector.setParameter("trigger_source","Internal trigger")
             self.detector.setParameter("buffer_size",-1)
             self.detector.flushBuffers()
+                # Set settings on all cams for live-acquisition
+        self.setCamsAfterExperiment()
 
 
     def startSIMoriginal(self):
@@ -347,6 +351,13 @@ class SIMController(ImConWidgetController):
         sim_parameters = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
+        
+        
+        # # Load experiment parameters to object
+        self.getExperimentSettings()
+        # # Set settings on all cams for acquisition
+        self.setCamsForExperiment()
+
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
         self.simThread.start()
 
@@ -469,7 +480,81 @@ class SIMController(ImConWidgetController):
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
         self.overlap = float(parameter_dict['overlap'])
+        self.exposure = float(parameter_dict['exposure'])
 
+    def setCamsForExperiment(self):
+        self.getExperimentSettings()
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+        detectors = []
+        for det_name in detector_names_connected:
+            detectors.append(self._master.detectorsManager[det_name]._camera)
+        # Hardcoded parameters at the moment
+        packet_size = 9000
+        trigger_source = 'Line2'
+        trigger_mode = 'On'
+        exposure_auto = 'Off'
+        exposure_time = self.exposure # anything < 19 ms
+        pixel_format = 'Mono16'
+        frame_rate_enable = True
+        frame_rate = 50.0 # > 50Hz
+        buffer_mode = "OldestFirst"
+        # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
+
+        # Check if exposure is low otherwise set to max value
+        exposure_limit = 19000 # us
+        if exposure_time > exposure_limit:
+            exposure_time = exposure_limit
+            self.exposure = exposure_time
+            self.logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
+        
+        # Set cam parameters
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}
+
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+
+        for detector in detectors:
+            for parameter_name in parameter_names:
+                print(detector.getPropertyValue(parameter_name))
+                detector.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+                print(detector.getPropertyValue(parameter_name))
+            # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+
+    def setCamsAfterExperiment(self):
+        self.getExperimentSettings()
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+        detectors = []
+        for det_name in detector_names_connected:
+            detectors.append(self._master.detectorsManager[det_name]._camera)
+        # Hardcoded parameters at the moment
+        packet_size = 9000
+        trigger_source = 'Line0'
+        trigger_mode = 'Off'
+        exposure_auto = 'Off'
+        exposure_time = self.exposure # anything < 19 ms
+        pixel_format = 'Mono8'
+        frame_rate_enable = True
+        frame_rate = 50.0 # > 50Hz
+        buffer_mode = "NewestOnly"
+        # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
+
+        # Check if exposure is low otherwise set to max value
+        exposure_limit = 19000 # us
+        if exposure_time > exposure_limit:
+            exposure_time = exposure_limit
+            self.exposure = exposure_time
+            self.logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
+        
+        # Set cam parameters
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate', 'buffer_mode'}
+
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+
+        for detector in detectors:
+            for parameter_name in parameter_names:
+                print(detector.getPropertyValue(parameter_name))
+                detector.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+                print(detector.getPropertyValue(parameter_name))        
+            # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
     #@APIExport(runOnUIThread=True)
     def simPatternByID(self, patternID: int, wavelengthID: int):
         try:
@@ -880,9 +965,7 @@ class SIMController(ImConWidgetController):
         # Generate positions - can be done anywhere in this function
         # Copied over from grid_xy script
         
-        # Load experiment parameters to object
-        self.getExperimentSettings()
-        
+
         # Image size - I need to grab that from GUI but is hardcoded 
         # at the moment
         image_pix_x = image_pix_common[0]
@@ -1000,22 +1083,38 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up cams-------------------
         # TODO: Include all cam setup in same function?
         # Set buffer mode
-        buffer_mode = "OldestFirst"
+        # FIXME: Remove - included in setCamsForExperimetn
+        # buffer_mode = "OldestFirst"
         # TODO: Test out and set to fixed as temporary solution
         buffer_size = 300
         total_buffer_size_MB = 380 # in MBs
         for detector in self.detectors:
             image_size = detector.shape
-            image_size_MB = image_size[0]*image_size[1]/1000000
+            image_size_MB = image_size[0]*image_size[1]/max(image_size[0],image_size[1])/1000000
             buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            detector._camera.setPropertyValue('buffer_mode', buffer_mode)
+            if decimal != 0:
+                buffer_size = int(buffer_size - 1)
+            else:
+                buffer_size = int(buffer_size)
+            # FIXME: This is not working, trying with fixed 9 image buffer size.
+            buffer_size = 500
+            # FIXME: Remove - included in setCamsForExperimetn
+            # # detector._camera.setPropertyValue('buffer_mode', buffer_mode)
             detector._camera.setCamForAcquisition(buffer_size)
+
+        # In startSIM() function
+        # # Load experiment parameters to object
+        # self.getExperimentSettings()
+        # # Set settings on all cams for acquisition
+        # self.setCamsForExperiment()
+
+        # self.setCamsAfterExperiment()
         # -------------------Set-up cams-------------------
         
         ###################################################
         # ----------Preprocessing done only once--------- #
         ###################################################
-        
+        print("")
         ###################################################
         # -----------------SIM acquisition--------------- #
         ###################################################
@@ -1192,6 +1291,11 @@ class SIMController(ImConWidgetController):
                     
                     times_color.append([f"{time_color_total*1000}ms","clear stack"])
                     # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
+
+            # In stopSIM() function
+            # Set cams for live-view mode
+            # self.setCamsAfterExperiment()
+            
             self._logger.debug(f"{times_color}")
             # TODO: Delete this our keep. At least check.
             # Deactivate indefinite running of the experiment
