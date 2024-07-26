@@ -144,14 +144,14 @@ class CameraTIS:
         # print("start_live1")
         # print(self.device)
         # print("start_live2")
-        self.setCamForLiveView()
         num_buffers = 500
-        # Stop stream if it remaind open for some reason (SIMController)
+        self.device.start_stream(num_buffers)
+
+    def start_liveSIM(self, num_buffers):
         self.device.start_stream(num_buffers)
 
     def stop_live(self):
         print("stop_live")
-        # print(self.device)
         self.device.stop_stream()
 
     def suspend_live(self):
@@ -617,6 +617,7 @@ class CameraTIS:
         # buffer_size = image number pulled from a cam
         
         buffer_type = "Mono16"
+        # print(f"---Buffer gra --- on {self.device}")
         buffer_set = self.device.get_buffer(buffer_size) 
         # buffer = self.device.get_buffer()
         # print(self.device)

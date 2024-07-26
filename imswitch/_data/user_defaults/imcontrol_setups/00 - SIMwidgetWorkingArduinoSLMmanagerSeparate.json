@@ -45,8 +45,8 @@
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 65,
-        "x0_global": 0,
-        "y0_global": 0,
+        "x0_global": 1600,
+        "y0_global": 1904,
         "lucid": {
           "exposure": 15.0,
           "exposureauto": "Off",

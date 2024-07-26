@@ -158,12 +158,26 @@ class LUCIDManager(DetectorManager):
 
     def startAcquisition(self):
         if not self._running:
+            self._camera.setCamForLiveView()
             self._camSet = False
             self._camera.start_live()
             # print(self._camera)
             self._running = True
 
     def stopAcquisition(self):
+        if self._running:
+            self._running = False
+            self._camSet = False
+            self._camera.suspend_live()
+
+    def startAcquisitionSIM(self, num_buffers):
+        if not self._running:
+            self._camSet = False
+            self._camera.start_liveSIM(num_buffers)
+            # print(self._camera)
+            self._running = True
+
+    def stopAcquisitionSIM(self):
         if self._running:
             self._running = False
             self._camSet = False
