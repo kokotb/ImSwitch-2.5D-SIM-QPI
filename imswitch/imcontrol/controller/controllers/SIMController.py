@@ -296,10 +296,11 @@ class SIMController(ImConWidgetController):
     def stopSIM(self):
         self.active = False
 
-
+        self.detector.stopAcquisition()
         self.simThread.join()
         self.lasers[0].setEnabled(False)
         self.lasers[1].setEnabled(False)
+
         if self.isPCO:
             self.detector.setParameter("trigger_source","Internal trigger")
             self.detector.setParameter("buffer_size",-1)
@@ -336,6 +337,7 @@ class SIMController(ImConWidgetController):
     def startSIM(self):
         #  need to be in trigger mode
         # therefore, we need to stop the camera first and then set the trigger mode
+        self._logger.debug("----startSIM button pressed----")
 
         # TODO: Will need to use that with our cam, check with Cody the format
         if self.isPCO:
@@ -514,9 +516,9 @@ class SIMController(ImConWidgetController):
 
         for detector in detectors:
             for parameter_name in parameter_names:
-                print(detector.getPropertyValue(parameter_name))
+                # print(detector.getPropertyValue(parameter_name))
                 detector.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-                print(detector.getPropertyValue(parameter_name))
+                # print(detector.getPropertyValue(parameter_name))
             # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
 
     def setCamsAfterExperiment(self):
@@ -550,10 +552,16 @@ class SIMController(ImConWidgetController):
         dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
 
         for detector in detectors:
+            # FIXME: stop_live has that, stopSIM does it on each detector
+            # Maybe implement this per detector and rewrite setCams to setCam 
+            # and loop over all cams
+            # Need to stop streaming
+            # self.detector._camera.setCamStopAcquisition()
+            # self.detector._camera.device.stop_stream()
             for parameter_name in parameter_names:
-                print(detector.getPropertyValue(parameter_name))
+                # print(detector.getPropertyValue(parameter_name))
                 detector.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-                print(detector.getPropertyValue(parameter_name))        
+                # print(detector.getPropertyValue(parameter_name))        
             # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
     #@APIExport(runOnUIThread=True)
     def simPatternByID(self, patternID: int, wavelengthID: int):
@@ -1081,6 +1089,9 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up SLM-------------------
         
         # -------------------Set-up cams-------------------
+        # Load experiment parameters to object
+        self.getExperimentSettings()
+
         # TODO: Include all cam setup in same function?
         # Set buffer mode
         # FIXME: Remove - included in setCamsForExperimetn
@@ -1098,15 +1109,21 @@ class SIMController(ImConWidgetController):
                 buffer_size = int(buffer_size)
             # FIXME: This is not working, trying with fixed 9 image buffer size.
             buffer_size = 500
+            self.setCamForExperiment(detector)
             # FIXME: Remove - included in setCamsForExperimetn
             # # detector._camera.setPropertyValue('buffer_mode', buffer_mode)
-            detector._camera.setCamForAcquisition(buffer_size)
+            # detector._camera.setCamForAcquisition(buffer_size)
+            
 
         # In startSIM() function
-        # # Load experiment parameters to object
-        # self.getExperimentSettings()
-        # # Set settings on all cams for acquisition
-        # self.setCamsForExperiment()
+        
+        # Set settings on all cams for acquisition
+        for det_name in det_names:
+            detector = self._master.detectorsManager[det_name]
+            self.detector.startAcquisition()
+            self.detectors.append(detector)
+        self.setCamsForExperiment()
+
 
         # self.setCamsAfterExperiment()
         # -------------------Set-up cams-------------------

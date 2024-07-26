@@ -146,7 +146,7 @@ class CameraTIS:
         # print("start_live2")
         self.setCamForLiveView()
         num_buffers = 500
-
+        # Stop stream if it remaind open for some reason (SIMController)
         self.device.start_stream(num_buffers)
 
     def stop_live(self):
@@ -419,18 +419,57 @@ class CameraTIS:
         names_dict = self.parameter_names_dict
         if property_name in names_dict:
             if property_name == "image_width":
-                self.nodes[names_dict[property_name]].value = property_value
-                self.shape = (self.shape[0], property_value)
+                # Check if we can read and write to a variable on the cam
+                # Throw an error if we cannot
+                if self.nodes[names_dict[property_name]].is_readable and self.nodes[names_dict[property_name]].is_writable:
+                    # All is good, do the writing
+                    self.nodes[names_dict[property_name]].value = property_value
+                    self.shape = (self.shape[0], property_value)
+                else:
+                    if self.nodes[names_dict[property_name]].is_readable:
+                        # We can just read the parameter - setting cam parameter as parameter
+                        self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")
+                        property_value = self.getPropertyValue(property_name)
+                    else:
+                        self.__logger.debug(f"Property {property_name} is not readable nor writable! Property not set!")
+                        # FIXME: Maybe leave parameter in if needed for computation?
+                        property_value = None
             elif property_name == "image_height":
-                self.nodes[names_dict[property_name]].value = property_value
-                self.shape = (property_value, self.shape[1])
+                if self.nodes[names_dict[property_name]].is_readable and self.nodes[names_dict[property_name]].is_writable:
+                    self.nodes[names_dict[property_name]].value = property_value
+                    self.shape = (property_value, self.shape[1])    
+                else:
+                    if self.nodes[names_dict[property_name]].is_readable:
+                        self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")
+                        property_value = self.getPropertyValue(property_name)
+                    else:
+                        self.__logger.debug(f"Property {property_name} is not readable nor writable! Property not set!")
+                        property_value = None
             elif property_name == "sensor_width" or property_name == "sensor_height":
                 pass
             else:
-                self.nodes[names_dict[property_name]].value = property_value        
+                if self.nodes[names_dict[property_name]].is_readable and self.nodes[names_dict[property_name]].is_writable:
+                    self.nodes[names_dict[property_name]].value = property_value     
+                else:
+                    if self.nodes[names_dict[property_name]].is_readable:
+                        self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")
+                        property_value = self.getPropertyValue(property_name)
+                    else:
+                       self.__logger.debug(f"Property {property_name} is not readable nor writable! Property not set!")
+                       # FIXME: Maybe leave parameter in if needed for computation?
+                       property_value = None
                 # Different nodeamp
         elif property_name == "buffer_mode":
-            self.t1_stream_nodemap["StreamBufferHandlingMode"].value = property_value
+            if self.t1_stream_nodemap["StreamBufferHandlingMode"].is_readable and self.t1_stream_nodemap["StreamBufferHandlingMode"].is_writable:
+                self.t1_stream_nodemap["StreamBufferHandlingMode"].value = property_value     
+            else:
+                if self.t1_stream_nodemap["StreamBufferHandlingMode"].is_readable:
+                    self.__logger.debug(f"Property {property_name} is not writable!")
+                    property_value = self.getPropertyValue(property_name)
+                else:
+                    self.__logger.debug(f"Property {property_name} is not readable nor writable! Property not set!")
+                    # FIXME: Maybe leave parameter in if needed for computation?
+                    property_value = None
         else:
             self.__logger.warning(f'Property {property_name} does not exist')
             return False
@@ -472,16 +511,33 @@ class CameraTIS:
         names_dict = self.parameter_names_dict
         if property_name in names_dict:
             if property_name == "image_width":
-                property_value = self.nodes[names_dict[property_name]].value
+                # Need to check wether we can even read property from a cam
+                if self.nodes[names_dict[property_name]].is_readable:
+                    property_value = self.nodes[names_dict[property_name]].value
+                else:
+                    self.__logger.debug(f"Property {property_name} is not readable!")
+                    property_value = None
                 # self.shape[1] = property_value
             elif property_name == "image_height":
-                property_value = self.nodes[names_dict[property_name]].value
+                if self.nodes[names_dict[property_name]].is_readable:
+                    property_value = self.nodes[names_dict[property_name]].value
+                else:
+                    self.__logger.debug(f"Property {property_name} is not readable!")
+                    property_value = None
                 # self.shape[0] = property_value
             else:
-                property_value = self.nodes[names_dict[property_name]].value
+                if self.nodes[names_dict[property_name]].is_readable:
+                    property_value = self.nodes[names_dict[property_name]].value
+                else:
+                    self.__logger.debug(f"Property {property_name} is not readable!")
+                    property_value = None
         # Different nodeamp
         elif property_name == "buffer_mode":
-            property_value = self.t1_stream_nodemap["StreamBufferHandlingMode"].value
+            if self.t1_stream_nodemap["StreamBufferHandlingMode"].is_readable:
+                    property_value = self.t1_stream_nodemap["StreamBufferHandlingMode"].value
+            else:
+                self.__logger.debug(f"Property {property_name} is not readable!")
+                property_value = None  
         else:
             self.__logger.warning(f'Property {property_name} does not exist')
             return False
@@ -542,9 +598,19 @@ class CameraTIS:
         # FIXME: Include that once onlien
         # Set triggers - tell it to wait for trigger.
         # print('Triggers not set yet.')
-        
+        # Stop stream just in case it was left open by mock or some
+        # other process
+        # self.device.stop_stream()
         # Set buffers
         self.device.start_stream(buffer_size)
+
+    def setCamStopAcquisition(self):
+        # FIXME: Include that once onlien
+        # Set triggers - tell it to wait for trigger.
+        # print('Triggers not set yet.')
+        
+        # Set buffers
+        self.device.stop_stream()    
 
     
     def grabFrameSet(self, buffer_size):
