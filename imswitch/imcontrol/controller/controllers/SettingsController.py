@@ -410,10 +410,10 @@ class SettingsController(ImConWidgetController):
         fullShapeSensor = detector.fullShapeSensor
         params.x0.setValue(frameStart[0])
         params.y0.setValue(frameStart[1])
-        params.width.setValue(shape[1])#CTEDIT
-        params.width.setLimits((1, fullShapeSensor[1]))#CTEDIT
+        params.width.setValue(shape[1])#CTEDIT BKEDIT kept them
+        params.width.setLimits((1, fullShapeSensor[0]))#CTEDIT BKEDIT swapped them back
         params.height.setValue(shape[0])#CTEDIT swapped indices
-        params.height.setLimits((1, fullShapeSensor[0]))#CTEDIT
+        params.height.setLimits((1, fullShapeSensor[1]))#CTEDIT
 
         # Model
         params.model.setValue(detector.model)
@@ -458,7 +458,7 @@ class SettingsController(ImConWidgetController):
             # If I want to have a ROI at the center of new ROI
             # Toggle between custom and fullChip sests us back to config center
             
-            
+
             # --------Old implementation-------
             # Grab center of the current view for ROI center
             ROIcenter = self._commChannel.getCenterViewbox()
@@ -479,15 +479,16 @@ class SettingsController(ImConWidgetController):
                 # cameras together
                 offsetRelative = detector.offsetRelative
                 
-                params.x0.setValue(offsetRelative[1])#BKEDIT same swap as CTEDIT
-                params.y0.setValue(offsetRelative[0])#BKEDIT
+                params.x0.setValue(offsetRelative[0])#BKEDIT same swap as CTEDIT
+                params.y0.setValue(offsetRelative[1])#BKEDIT
                 # Old implementation recentering to the center of the detector
                 # TODO: Remove this? In our case does not make sense since we are not perfectly 
                 # centered to the cam
                 # params.x0.setValue(0)
                 # params.y0.setValue(0)
-                params.width.setValue(fullChipShape[1])#CTEDIT swapped indices
-                params.height.setValue(fullChipShape[0])#CTEDIT
+                #BKEDIT - swaped indices back only here, where you set up the cam
+                params.width.setValue(fullChipShape[0])#CTEDIT swapped indices
+                params.height.setValue(fullChipShape[1])#CTEDIT
             else:
                 # FIXME: Reading from GUI? Check if we need another swap
                 roiInfo = self._setupInfo.rois[frameMode]

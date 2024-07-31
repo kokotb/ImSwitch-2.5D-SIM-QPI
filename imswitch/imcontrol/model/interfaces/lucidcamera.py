@@ -236,10 +236,11 @@ class CameraTIS:
         return frame
 
     def setROI(self, hpos, vpos, hsize, vsize):
-
+        # v-vertical, h-horizontal
         # print('setROI1')
-        hsize_max = self.SensorHeight
-        vsize_max = self.SensorWidth
+        hsize_max = self.SensorWidth
+        vsize_max = self.SensorHeight
+        
 
         self.__logger.debug(
             f'{self.model}: setROI started with {hsize}x{vsize} at {hpos},{vpos}.'
@@ -280,8 +281,9 @@ class CameraTIS:
         vpos_new = vpos
         
         # Get current image size
-        hsize_old = self.getPropertyValue("image_height")
-        vsize_old = self.getPropertyValue("image_width")
+        hsize_old = self.getPropertyValue("image_width")
+        vsize_old = self.getPropertyValue("image_height")
+        
         # hpos_old = self.getPropertyValue("x0")
         # vpos_old = self.getPropertyValue("y0")
         # Need to limit values - cam does not except values if we go of the cam area with 
@@ -309,20 +311,20 @@ class CameraTIS:
         if hsize_set < hsize_old:
             # Shrink first then move, if moving sets us of the cam at current image size, cam will
             # not accept that
-            self.setPropertyValue("image_height", hsize_set)
-            self.setPropertyValue("y0", hpos_new)
+            self.setPropertyValue("image_width", hsize_set)
+            self.setPropertyValue("x0", hpos_new)
         else:
             # Move first then enlarge, if larger size is of the cam size at current location cam
             # will not accept that
-            self.setPropertyValue("y0", hpos_new)
-            self.setPropertyValue("image_height", hsize_set)
+            self.setPropertyValue("x0", hpos_new)
+            self.setPropertyValue("image_width", hsize_set)
         # Do the same for the other axis
         if vsize_set < vsize_old:
-            self.setPropertyValue("image_width", vsize_set)
-            self.setPropertyValue("x0", vpos_new)
+            self.setPropertyValue("image_height", vsize_set)
+            self.setPropertyValue("y0", vpos_new)
         else:
-            self.setPropertyValue("x0", vpos_new)
-            self.setPropertyValue("image_width", vsize_set)
+            self.setPropertyValue("y0", vpos_new)
+            self.setPropertyValue("image_height", vsize_set)
         # ---------------New implementation2-------------------
 
         # FIXME: Delete after development is done
@@ -397,14 +399,14 @@ class CameraTIS:
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Left', hpos)
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Height', vsize)
         # self.cam.frame_filter_set_parameter(self.roi_filter, 'Width', hsize)
-        # top = self.nodes['OffsetY']
-        # left = self.nodes['OffsetX']
-        # hei = self.nodes['Height']
-        # wid = self.nodes['Width']
+        top = self.nodes['OffsetY'].value
+        left = self.nodes['OffsetX'].value
+        hei = self.nodes['Height'].value
+        wid = self.nodes['Width'].value
 ##Large string of ROI info that print during camera initialization
-        # self.__logger.info(
-        #     f'ROI set: w{wid} x h{hei} at l{left},t{top}'
-        # )
+        self.__logger.info(
+            f'ROI set: w{wid} x h{hei} at l{left},t{top}'
+        )
 ##
 
 
@@ -584,7 +586,8 @@ class CameraTIS:
         exposure_time = 2000.0 
         pixel_format = 'Mono8'
         frame_rate_enable = True
-        frame_rate = 50.0 # > 50Hz
+        # Could not implement it by query. Max frame rate does not query.
+        frame_rate = 45.0 # <45 Hz at full frame size
         buffer_mode = "NewestOnly"
 
         parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}
