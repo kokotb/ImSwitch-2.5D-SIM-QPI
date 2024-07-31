@@ -465,7 +465,7 @@ class SettingsController(ImConWidgetController):
                 # cameras together
                 offsetRelative = detector.offsetRelative
                 
-                params.x0.setValue(offsetRelative[0])#BKEDIT sam swap as CTEDIT
+                params.x0.setValue(offsetRelative[0])#BKEDIT same swap as CTEDIT
                 params.y0.setValue(offsetRelative[1])#BKEDIT
                 # Old implementation recentering to the center of the detector
                 # TODO: Remove this? In our case does not make sense since we are not perfectly 
