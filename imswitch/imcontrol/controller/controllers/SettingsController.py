@@ -51,32 +51,43 @@ class SettingsController(ImConWidgetController):
         self.roiAdded = False
         self.initParameters()
 
-        # Calculate and set relative positions of the detectors, position of the detector does not accept negative values
-        detector_names = self._master.detectorsManager.getAllDeviceNames()
-        tuple2 = self._master.detectorsManager[detector_names[0]].frameStartGlobal
+        # Should be set in config file so all cams have the same
+        # Global moves realitvely to frameStart - meant for tiny adjustments
 
-        frameSizesX = []
-        frameSizesY = []
-
-        globalOffsetX = []
-        globalOffsetY = []
         for detector in self._master.detectorsManager: 
-            size = detector[1].frameStartGlobal
-            frameSizesX.append(size[0])
-            frameSizesY.append(size[1])
-            size = detector[1].globalOffset
-            globalOffsetX.append(size[0])
-            globalOffsetY.append(size[1])
+            frameStart_change = tuple(map(lambda i, j: i + j, detector[1].frameStart, detector[1].frameStartGlobal))
+            detector[1].setOffsetRelative(frameStart_change)
 
-        # Set to max if different offsets in the config file (should not be...)
-        tuple2 = (max(frameSizesX)+max(globalOffsetX), max(frameSizesY)+max(globalOffsetY))
 
-        for k,detector in enumerate(self._master.detectorsManager): 
-            tuple1 = detector[1].frameStartGlobal
-            tuple_set = tuple(map(lambda i, j: i - j, tuple2, tuple1))
-            print(self._master.detectorsManager[detector_names[k]].offsetRelative)
-            self._master.detectorsManager[detector_names[k]].setOffsetRelative(tuple_set)
-            print(self._master.detectorsManager[detector_names[k]].offsetRelative)
+
+        # ------------------Old implementation------------------
+        # # Calculate and set relative positions of the detectors, position of the detector does not accept negative values
+        # detector_names = self._master.detectorsManager.getAllDeviceNames()
+        # tuple2 = self._master.detectorsManager[detector_names[0]].frameStart
+
+        # camOffsetX = []
+        # camOffsetY = []
+
+        # globalOffsetX = []
+        # globalOffsetY = []
+        # for detector in self._master.detectorsManager: 
+        #     size = detector[1].frameStart
+        #     camOffsetX.append(size[0])
+        #     camOffsetY.append(size[1])
+        #     size = detector[1].frameStartGlobal
+        #     globalOffsetX.append(size[0])
+        #     globalOffsetY.append(size[1])
+
+        # # Set to max if different offsets in the config file (should not be...)
+        # tuple2 = (max(camOffsetX)+max(globalOffsetX), max(camOffsetY)+max(globalOffsetY))
+
+        # for k,detector in enumerate(self._master.detectorsManager): 
+        #     tuple1 = detector[1].frameStartGlobal
+        #     tuple_set = tuple(map(lambda i, j: i - j, tuple2, tuple1))
+        #     print(self._master.detectorsManager[detector_names[k]].offsetRelative)
+        #     self._master.detectorsManager[detector_names[k]].setOffsetRelative(tuple_set)
+        #     print(self._master.detectorsManager[detector_names[k]].offsetRelative)
+        # ------------------Old implementation------------------
 
         execOnAll = self._master.detectorsManager.execOnAll
         execOnAll(lambda c: (self.updateParamsFromDetector(detector=c)),
@@ -428,7 +439,7 @@ class SettingsController(ImConWidgetController):
         params.width.show()
         params.height.show()
         # frameStart = detector.frameStart
-        frameStart = (0,0) # ROIchanged() takes care of centerdeness 
+        # frameStart = (0,0) # ROIchanged() takes care of centerdeness 
         fullShape = detector.fullShape
 
         if customFrame:
@@ -446,7 +457,10 @@ class SettingsController(ImConWidgetController):
             
             # If I want to have a ROI at the center of new ROI
             # Toggle between custom and fullChip sests us back to config center
-            # # --------Old implementation-------
+            
+            
+            # --------Old implementation-------
+            # Grab center of the current view for ROI center
             ROIcenter = self._commChannel.getCenterViewbox()
             ROIpos = (ROIcenter[0] - 0.5 * ROIsize[0],
                       ROIcenter[1] - 0.5 * ROIsize[1])
@@ -465,8 +479,8 @@ class SettingsController(ImConWidgetController):
                 # cameras together
                 offsetRelative = detector.offsetRelative
                 
-                params.x0.setValue(offsetRelative[0])#BKEDIT same swap as CTEDIT
-                params.y0.setValue(offsetRelative[1])#BKEDIT
+                params.x0.setValue(offsetRelative[1])#BKEDIT same swap as CTEDIT
+                params.y0.setValue(offsetRelative[0])#BKEDIT
                 # Old implementation recentering to the center of the detector
                 # TODO: Remove this? In our case does not make sense since we are not perfectly 
                 # centered to the cam
@@ -475,6 +489,7 @@ class SettingsController(ImConWidgetController):
                 params.width.setValue(fullChipShape[1])#CTEDIT swapped indices
                 params.height.setValue(fullChipShape[0])#CTEDIT
             else:
+                # FIXME: Reading from GUI? Check if we need another swap
                 roiInfo = self._setupInfo.rois[frameMode]
                 params.x0.setValue(roiInfo.x)
                 params.y0.setValue(roiInfo.y)

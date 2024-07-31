@@ -69,11 +69,13 @@ class LUCIDManager(DetectorManager):
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
         fullShape = (self.setupInfo['image_width'] ,self.setupInfo['image_height'])
         fullShapeSensor = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
-        frameStartGlobal = (self.setupInfo['x0'], self.setupInfo['y0'])
+        frameStartGlobal = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
         frameStart = (self.setupInfo['x0'], self.setupInfo['y0'])
         # offsetRelative = (self.setupInfo['x0_global'], self.setupInfo['y0_global'])
         offsetRelative = (0,0)
-        self.globalOffset = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
+        
+        # FIXME: Remove if obsolete.
+        # self.globalOffset = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
         # FIXME: When doing actual full chip...Tink if we can implement this smartly
         # fullShape = (self._camera.getPropertyValue('sensor_width'),self._camera.getPropertyValue('sensor_height'))
         # offsets = (self.setupInfo['x0'], self.setupInfo['y0'])

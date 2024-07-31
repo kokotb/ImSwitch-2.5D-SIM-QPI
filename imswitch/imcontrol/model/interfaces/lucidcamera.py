@@ -151,18 +151,18 @@ class CameraTIS:
         self.device.start_stream(num_buffers)
 
     def stop_live(self):
-        print("stop_live")
+        self.__logger.info("stop_live")
         self.device.stop_stream()
 
     def suspend_live(self):
-        print("suspend_live")
+        self.__logger.info("suspend_live")
         # print(self.device)
         self.device.stop_stream()
         
         # self.cam.suspend_live()  # suspend imaging into prepared state
 
     def prepare_live(self):
-        print("prepare_live")
+        self.__logger.info("prepare_live")
         self.device.start_stream()
         # self.cam.prepare_live()  # prepare prepared state for live imaging
 
@@ -304,6 +304,8 @@ class CameraTIS:
 
         # Check wheter we are shrinking or enrlarging an image, this sets wether to move the image
         # first and then set the size or shrink the image first and then move the image
+        # h == horizontal
+        # v == vertical
         if hsize_set < hsize_old:
             # Shrink first then move, if moving sets us of the cam at current image size, cam will
             # not accept that
