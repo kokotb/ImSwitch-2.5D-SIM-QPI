@@ -85,7 +85,7 @@
           "acqframerateenable": true,
           "acqframerate":50.0,
           "x0": 2400,
-          "y0": 2400,
+          "y0": 2044,
           "image_width": 512,
           "image_height": 512,
           "sensor_width": 5320,

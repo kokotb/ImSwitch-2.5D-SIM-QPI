@@ -836,7 +836,7 @@ class SIMController(ImConWidgetController):
         exposure_ms = 1
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
-        dic_det_names = {488:'55Camera', 561:'65Camera', 640:'66Camera'} 
+        dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
         # TODO: Delete after development is done - here to help get devices 
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
