@@ -585,6 +585,7 @@ class CameraTIS:
         exposure_auto = 'Off'
         # It overrides what is in the widget each time you run live-view button
         # exposure_time = 2000.0 
+        exposure_time = float(self.getPropertyValue('exposure'))
         pixel_format = 'Mono8'
         frame_rate_enable = True
         # Could not implement it by query. Max frame rate does not query.

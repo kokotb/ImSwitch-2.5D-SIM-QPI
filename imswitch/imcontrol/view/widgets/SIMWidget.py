@@ -124,8 +124,9 @@ class SIMWidget(NapariHybridWidget):
         self.openFolderButton = guitools.BetterPushButton('Open')
         self.checkbox_mock = QCheckBox(checkboxes[10])
         # TODO: change after development is over
+        # Set in config file
         # self.checkbox_mock.setChecked(True) # Sets default fo true 
-        self.checkbox_mock.setChecked(False) # Sets default fo true 
+        # self.checkbox_mock.setChecked(False) # Sets default fo true 
         
         layout.addWidget(self.checkbox_reconstruction)
         layout.addWidget(self.checkbox_record_reconstruction)
@@ -334,6 +335,9 @@ class SIMWidget(NapariHybridWidget):
     
     def getRecFolder(self):
         return self.path_edit.text()
+    
+    def setMockValue(self, mock):
+            self.checkbox_mock.setChecked(mock)
     
     def getRecParameters(self):
         parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}

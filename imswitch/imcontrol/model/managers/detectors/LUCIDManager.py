@@ -87,14 +87,20 @@ class LUCIDManager(DetectorManager):
         
 
 ## These parameters are used to populate the detector settings panel.
+        # Initialization parameters
+        exposure_init = self.setupInfo['exposure']
+        gain_init = self.setupInfo['gain']
+        gamma_init = self.setupInfo['gamma']
+        exposureauto_init = self.setupInfo['exposureauto']
+        
         parameters = {
-            'exposure': DetectorNumberParameter(group='Acq. Control', value=2000, valueUnits='us',
+            'exposure': DetectorNumberParameter(group='Acq. Control', value=exposure_init, valueUnits='us',
                                                 editable=True),
-            'gain': DetectorNumberParameter(group='Analog Control', value=0, valueUnits='arb.u.',
+            'gain': DetectorNumberParameter(group='Analog Control', value=gain_init, valueUnits='arb.u.',
                                             editable=True),
-            'gamma': DetectorNumberParameter(group='Analog Control', value=1, valueUnits='arb.u.',
+            'gamma': DetectorNumberParameter(group='Analog Control', value=gamma_init, valueUnits='arb.u.',
                                                   editable=True),
-            'exposureauto': DetectorListParameter(group='Acq. Control', value='Off', options=['Off','Once','Continuous'],
+            'exposureauto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
                                                 editable=True)                    
         }
 

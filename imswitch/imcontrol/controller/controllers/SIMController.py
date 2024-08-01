@@ -115,6 +115,8 @@ class SIMController(ImConWidgetController):
         
         # Set if mock is present or not
         self.mock = self.setupInfo.isMock
+        # Set mock value in widget
+        self._widget.setMockValue(self.mock)
 
         # connect live update  https://github.com/napari/napari/issues/1110
         self.sigImageReceived.connect(self.displayImage)
@@ -499,9 +501,6 @@ class SIMController(ImConWidgetController):
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'exposure')
 
-        # detector_name = detector._DetectorManager__name
-        # shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
-        # exposure_time = float(shared_attributes[('Detector', detector_name, 'Param','exposure')])
         # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
         frame_rate_enable = True
@@ -514,7 +513,7 @@ class SIMController(ImConWidgetController):
         if exposure_time > exposure_limit:
             exposure_time = exposure_limit
             self.exposure = exposure_time
-            self.logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
+            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
         
         # Set cam parameters
         parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}

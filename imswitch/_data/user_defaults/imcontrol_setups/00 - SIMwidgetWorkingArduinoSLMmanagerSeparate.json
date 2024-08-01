@@ -36,7 +36,7 @@
   "fastAPISIM_host": "192.168.0.1",
   "fastAPISIM_port": 0,
   "tWaitSequence": 0,
-  "isMock": 1
+  "isMock": false
 },
 "detectors": {
     "65Camera": {
