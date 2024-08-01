@@ -115,8 +115,8 @@ class SIMWidget(NapariHybridWidget):
         self.numGridY_textedit = QLineEdit(params[1][1])
         self.overlap_label = QLabel(params[2][0])
         self.overlap_textedit = QLineEdit(params[2][1])
-        self.exposure_label = QLabel(params[3][0])
-        self.exposure_textedit = QLineEdit(params[3][1])
+        # self.exposure_label = QLabel(params[3][0])
+        # self.exposure_textedit = QLineEdit(params[3][1])
                 
         # Save folder
         self.path_label = QLabel(checkboxes[8])
@@ -137,8 +137,8 @@ class SIMWidget(NapariHybridWidget):
         layout.addWidget(self.numGridY_textedit)
         layout.addWidget(self.overlap_label)
         layout.addWidget(self.overlap_textedit)
-        layout.addWidget(self.exposure_label)
-        layout.addWidget(self.exposure_textedit)
+        # layout.addWidget(self.exposure_label)
+        # layout.addWidget(self.exposure_textedit)
         layout.addWidget(self.path_label)
         layout.addWidget(self.path_edit)        
         layout.addWidget(self.openFolderButton)
@@ -340,7 +340,8 @@ class SIMWidget(NapariHybridWidget):
             self.checkbox_mock.setChecked(mock)
     
     def getRecParameters(self):
-        parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
+        # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
+        parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text()}
         return parameter_dict
 
 # Copyright (C) 2020-2023 ImSwitch developers

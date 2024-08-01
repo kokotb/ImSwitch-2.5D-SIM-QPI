@@ -30,10 +30,11 @@ class ArduinoManager(SignalInterface):
             setupInfo.managerProperties['rs232device']
         ]
     
-    def start_sequence(self):
+    def start_sequence(self, running_order):
         """Sends a trigger to SLM to start a sequence."""
+        # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
-        cmd = 'S'
+        cmd = 'S'+str(running_order)
         self._rs232manager.write(cmd)
         
     def stop_sequence(self):

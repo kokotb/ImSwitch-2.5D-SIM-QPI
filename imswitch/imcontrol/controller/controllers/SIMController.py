@@ -474,7 +474,7 @@ class SIMController(ImConWidgetController):
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
         self.overlap = float(parameter_dict['overlap'])
-        self.exposure = float(parameter_dict['exposure'])
+        # self.exposure = float(parameter_dict['exposure'])
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name
@@ -522,9 +522,9 @@ class SIMController(ImConWidgetController):
 
         # for detector in detectors:
         for parameter_name in parameter_names:
-            print(detector._camera.getPropertyValue(parameter_name))
+            # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            print(detector._camera.getPropertyValue(parameter_name))
+            # print(detector._camera.getPropertyValue(parameter_name))
         # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisitionSIM(num_buffers)
 
@@ -843,7 +843,7 @@ class SIMController(ImConWidgetController):
         dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
         dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
         # self.patternID = 0
-        self.patternID = dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
+        self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
         dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
@@ -1190,7 +1190,7 @@ class SIMController(ImConWidgetController):
                 time_color_start = time.time()
                 
                 # Trigger SIM set acquisition for all present lasers
-                self._master.arduinoManager.start_sequence()
+                self._master.arduinoManager.start_sequence(orderID)
                 # SIMClient.send_start_sequence_trigger()
                 
                 time_color_end = time.time()
