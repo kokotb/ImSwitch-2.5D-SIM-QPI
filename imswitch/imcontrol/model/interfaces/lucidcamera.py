@@ -583,7 +583,8 @@ class CameraTIS:
         trigger_source = 'Line0'
         trigger_mode = 'Off'
         exposure_auto = 'Off'
-        exposure_time = 2000.0 
+        # It overrides what is in the widget each time you run live-view button
+        # exposure_time = 2000.0 
         pixel_format = 'Mono8'
         frame_rate_enable = True
         # Could not implement it by query. Max frame rate does not query.

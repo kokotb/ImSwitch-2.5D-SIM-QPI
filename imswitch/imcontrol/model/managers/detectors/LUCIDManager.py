@@ -105,7 +105,9 @@ class LUCIDManager(DetectorManager):
         }
 
         super().__init__(detectorInfo, name, fullShape=fullShape, supportedBinnings=[1],
-                         model=self._camera.model, parameters=parameters, actions=actions, croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, frameStartGlobal=frameStartGlobal, fullShapeSensor=fullShapeSensor)
+                         model=self._camera.model, parameters=parameters, actions=actions, 
+                         croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, 
+                         frameStartGlobal=frameStartGlobal, fullShapeSensor=fullShapeSensor)
  
     @property
     def scale(self):

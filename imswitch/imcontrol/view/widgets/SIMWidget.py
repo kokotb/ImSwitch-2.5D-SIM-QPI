@@ -124,7 +124,8 @@ class SIMWidget(NapariHybridWidget):
         self.openFolderButton = guitools.BetterPushButton('Open')
         self.checkbox_mock = QCheckBox(checkboxes[10])
         # TODO: change after development is over
-        self.checkbox_mock.setChecked(True) # Sets default fo true 
+        # self.checkbox_mock.setChecked(True) # Sets default fo true 
+        self.checkbox_mock.setChecked(False) # Sets default fo true 
         
         layout.addWidget(self.checkbox_reconstruction)
         layout.addWidget(self.checkbox_record_reconstruction)

@@ -604,6 +604,7 @@ class SettingsController(ImConWidgetController):
         self.allParams[detectorName].frameMode.setValue('Custom')
         self.updateFrame(detector=detector)
 
+        # FIXME: Another spot where region selection might be wrong
         self.allParams[detectorName].x0.setValue(frameStart[0])
         self.allParams[detectorName].y0.setValue(frameStart[1])
         self.allParams[detectorName].width.setValue(shape[0])

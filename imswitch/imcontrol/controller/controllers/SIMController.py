@@ -474,6 +474,16 @@ class SIMController(ImConWidgetController):
         self.overlap = float(parameter_dict['overlap'])
         self.exposure = float(parameter_dict['exposure'])
 
+    def getParameterValue(self, detector, parameter_name):
+        detector_name = detector._DetectorManager__name
+        shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
+        if parameter_name == 'exposure':
+            value = float(shared_attributes[('Detector', detector_name, 'Param', parameter_name)])
+        else:
+            self._logger.warning("Debuging needed.")
+            self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
+        return value
+    
     def setCamForExperiment(self, detector, num_buffers):
         # self.getExperimentSettings()
         # detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
@@ -485,7 +495,14 @@ class SIMController(ImConWidgetController):
         trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'
-        exposure_time = self.exposure # anything < 19 ms
+        # FIXME: There must be a neater, better, more stable way to do this
+        # Pull the exposure time from settings widget
+        exposure_time = self.getParameterValue(detector, 'exposure')
+
+        # detector_name = detector._DetectorManager__name
+        # shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
+        # exposure_time = float(shared_attributes[('Detector', detector_name, 'Param','exposure')])
+        # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
         frame_rate_enable = True
         frame_rate = 50.0 # > 50Hz
@@ -506,9 +523,9 @@ class SIMController(ImConWidgetController):
 
         # for detector in detectors:
         for parameter_name in parameter_names:
-            # print(detector.getPropertyValue(parameter_name))
+            print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            # print(detector.getPropertyValue(parameter_name))
+            print(detector._camera.getPropertyValue(parameter_name))
         # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisitionSIM(num_buffers)
 
@@ -524,7 +541,8 @@ class SIMController(ImConWidgetController):
         trigger_source = 'Line0'
         trigger_mode = 'Off'
         exposure_auto = 'Off'
-        exposure_time = 2000.0 # anything < 19 ms
+        exposure_time = self.getParameterValue(detector, 'exposure')
+        # exposure_time = 2000.0 # anything < 19 ms
         pixel_format = 'Mono8'
         frame_rate_enable = True
         frame_rate = 50.0 # > 50Hz
@@ -1147,7 +1165,7 @@ class SIMController(ImConWidgetController):
                 dt_export = time.time() - self.timelapse_old
             
             integer, decimal = divmod(dt_export,1) # *1000 in ms
-            dt_export_string = f"{int(integer):04}.{int(decimal*10000):04}s"
+            dt_export_string = f"{int(integer):04}p{int(decimal*10000):04}s"
             self.timelapse_old = time.time()
             
             # Scan over all positions generated for grid
@@ -1498,7 +1516,7 @@ class SIMController(ImConWidgetController):
                 dt_export = time.time() - self.timelapse_old
             
             integer, decimal = divmod(dt_export,1) # *1000 in ms
-            dt_export_string = f"{int(integer):04}.{int(decimal*10000):04}s"
+            dt_export_string = f"{int(integer):04}p{int(decimal*10000):04}s"
             self.timelapse_old = time.time()
             
             # Scan over all positions generated for grid
@@ -2099,7 +2117,7 @@ class SIMController(ImConWidgetController):
             
             # Transform the dt_export into string format
             integer, decimal = divmod(dt_export,1) # *1000 in ms
-            dt_export_string = f"{int(integer):04}.{int(decimal*10000):04}s"
+            dt_export_string = f"{int(integer):04}p{int(decimal*10000):04}s"
             self._logger.debug(f"Frame time: {dt_export} s")
             
             # Start recording
