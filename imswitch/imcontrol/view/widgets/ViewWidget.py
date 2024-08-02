@@ -12,6 +12,7 @@ class ViewWidget(Widget):
     sigCrosshairToggled = QtCore.Signal(bool)  # (enabled)
     sigLiveviewToggled = QtCore.Signal(bool)  # (enabled)
     sigAcquireSetToggled = QtCore.Signal(bool)  # (enabled)
+    sigTriggerModeToggled = QtCore.Signal(bool)  # (enabled)
 
 
     def __init__(self, *args, **kwargs):
@@ -37,16 +38,21 @@ class ViewWidget(Widget):
                                           QtWidgets.QSizePolicy.Expanding)
         self.liveviewButton.setEnabled(True)
         
+        # FIXME: Button not in use (in separate SIM widget). Remove.
         # Acquire set button
         self.acquireSetButton = guitools.BetterPushButton('AcquireSet')
         self.acquireSetButton.setCheckable(False)
         self.acquireSetButton.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                            QtWidgets.QSizePolicy.Expanding)
+        
+        # Add checkbox for triggered mode
+        self.checkbox_trigerred = QtWidgets.QCheckBox('Triggered')
 
         # Add elements to GridLayout
         self.viewCtrlLayout = QtWidgets.QGridLayout()
         self.setLayout(self.viewCtrlLayout)
-        self.viewCtrlLayout.addWidget(self.liveviewButton, 0, 0, 1, 2)
+        self.viewCtrlLayout.addWidget(self.liveviewButton, 0, 1, 1, 1)
+        self.viewCtrlLayout.addWidget(self.checkbox_trigerred, 0, 0, 1, 1)
         self.viewCtrlLayout.addWidget(self.gridButton, 1, 0)
         self.viewCtrlLayout.addWidget(self.crosshairButton, 1, 1)
         self.viewCtrlLayout.addWidget(self.acquireSetButton, 2, 0, 1, 0)
@@ -56,6 +62,7 @@ class ViewWidget(Widget):
         self.crosshairButton.toggled.connect(self.sigCrosshairToggled)
         self.liveviewButton.toggled.connect(self.sigLiveviewToggled)
         self.acquireSetButton.clicked.connect(self.sigAcquireSetToggled)
+        self.checkbox_trigerred.toggled.connect(self.sigTriggerModeToggled)
 
     def getLiveViewActive(self):
         return self.liveviewButton.isChecked()

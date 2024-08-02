@@ -16,7 +16,7 @@ class ViewController(ImConWidgetController):
         self._widget.sigCrosshairToggled.connect(self.crosshairToggle)
         self._widget.sigLiveviewToggled.connect(self.liveview)
         self._widget.sigAcquireSetToggled.connect(self.acquireSet)
-        
+        self._widget.sigTriggerModeToggled.connect(self.setLiveTriggerModeState)
 
     def liveview(self, enabled):
         """ Start liveview and activate detector acquisition. """
@@ -57,6 +57,16 @@ class ViewController(ImConWidgetController):
         else:
             print("else if detector name")
             return self._master.detectorsManager[detectorName].getLatestFrame()
+    
+    def setLiveTriggerModeState(self):
+        """ Sets trigger mode down to a detector level"""
+        # Check checkbox
+        trigger_mode = self._widget.checkbox_trigerred.isChecked()
+        detector = self._master.detectorsManager.getCurrentDetector()
+
+        # Setting trigger mode to a detector
+        detector.live_trigger_mode = trigger_mode
+
 
     @APIExport(runOnUIThread=True)
     def setLiveViewActive(self, active: bool) -> None:

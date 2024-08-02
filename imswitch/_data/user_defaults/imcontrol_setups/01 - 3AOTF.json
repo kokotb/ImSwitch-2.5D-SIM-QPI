@@ -46,7 +46,7 @@
     "aaaotf": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM4",
+        "port": "ASRLCOM3",
         "encoding": "ascii",
         "recv_termination": "\n\r",
         "send_termination": "\r",

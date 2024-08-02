@@ -25,6 +25,9 @@ class LUCIDManager(DetectorManager):
         self._adjustingParameters = False
         self._camSet = False
 
+        # FIXME: Make it read out from settings widget
+        self.live_trigger_mode = False
+
         self.setupInfo = detectorInfo.managerProperties['lucid']
         
         # Get old properties to compare with new for setting of FOV
@@ -199,6 +202,10 @@ class LUCIDManager(DetectorManager):
         
     def acquireSetNow(self):
         print("acquireSetNow")
+
+    # def getTriggerModeState(self):
+    #     self.trigger_mode_state = self._master.getTriggerModeState()
+
 
     @property
     def pixelSizeUm(self):
