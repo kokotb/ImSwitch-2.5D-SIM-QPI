@@ -85,7 +85,6 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
     all_tifs = tiling_paths
     stack1 = tifffile.imread(all_tifs[0])
     
-    # stack1 = np.sum(np.array(stack1[-3:]), 0)
     dim_len = len(stack1.shape) # [tiles, x, y]
     # dimx, dimy = stack1.shape
     
@@ -104,6 +103,70 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
             else:
                 # Import the correct stack at correct position
                 stack = tifffile.imread(all_tifs[row * num_columns + column])
+            if count != (num_columns - 1):
+                shape_x = stack.shape[dimx]
+                cut_off = int(shape_x * (1-overlay))
+                stack = stack[:, 0:cut_off]
+            if count == 0:
+                new_row = np.copy(stack)
+            else:
+                new_row = np.concatenate((new_row, stack), axis=dimx)
+        new_row = np.array(new_row)
+        # For development - uncomment if snake-scan does not seem right
+        # tifffile.imwrite(f'test_cut2_{row}.tif', new_row, imagej=True)
+        if row != num_rows:
+            shape_y = new_row.shape[dimy]
+            cut_off = int(shape_y * (1-overlay))
+            new_row = new_row[0:cut_off, :]
+        if row == 0:
+            final_tiling = new_row
+        else:
+            final_tiling = np.concatenate((final_tiling, new_row), axis=dimy)
+
+    return final_tiling
+
+
+def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, overlay):
+    """
+    Creates tiling from tifs that were acquired in a snake shape (alphabetic order should be the same as the acquisition).
+    It is adjusted for a two-dimensional stack.
+    :param tiling_paths: paths of tif files that should be combined in to one image
+    :param num_columns: number of columns in tile acquisition
+    :param num_rows: number of rows in tile acquisition
+    :param overlay: amount of overlay between neighboring images (e.g. 0.1 = 10%)
+    :return: combined image
+    """
+    all_tifs = tiling_paths
+    
+    stack1_in = tifffile.imread(all_tifs)
+    
+    # FIXME: Remove when actual SIM data, in just for Arduino simulator
+    normalize = np.shape(stack1_in)[0]
+    stack1 = []
+    for stack in stack1_in:
+        # stack1.append(np.sum(stack[-3:], 0, dtype=np.int16))
+        stack1.append(np.sum(stack[-3:], 0)/normalize)
+    
+    stack1 = np.array(stack1)
+    dim_len = len(stack1.shape) # [tiles, x, y]
+    # tile_num, dimx, dimy = stack1.shape
+    
+    dimx = 1
+    dimy = 0
+    for row in range(num_rows):
+        new_row = []
+        if row % 2 == 0:
+            num_list = range(num_columns)
+        else:
+            num_list = range(num_columns - 1, -1, -1)
+        for count, column in enumerate(num_list):
+            if dim_len != 3:
+                print('wrong number of dimensions!!!')
+                return None
+            else:
+                # Import the correct stack at correct position
+                # stack = tifffile.imread(all_tifs[row * num_columns + column])
+                stack = stack1[row * num_columns + column] 
             if count != (num_columns - 1):
                 shape_x = stack.shape[dimx]
                 cut_off = int(shape_x * (1-overlay))
@@ -159,17 +222,14 @@ def getNamesByPattern(file_names, pattern):
 ##############################
 #      SET PARAMETERS        #
 ##############################
-# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
-input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
+input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
+# input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
 # Set if you want to run tiling from folder
 # input_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
-exp_names = ["2024_07_11-04-15-53_PM"]
-# exp_names = ["2024_08_02-15-08-10"]
+exp_names = ["2024_08_02-15-08-10"]
 single_channels_names = ['488nm', '561nm', '640nm']
-name_pattern = "Reconstruction" # can be wf or something else
-t_pattern = "frame_"
-# name_pattern = "SIM_Stack" # can be wf or something else
-# t_pattern = "t_"
+name_pattern = "SIM_Stack" # can be wf or something else
+t_pattern = "t_"
 number_of_rows = 5
 number_of_columns = 5
 image_overlay = 0
@@ -248,12 +308,20 @@ if create_tiling:
                 print(f'----Time {num_time+1} out of {num_times}----')
                 # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
-                tiling = create_tiling_from_tif_XY(roi_names_import, number_of_rows, number_of_columns, image_overlay)
+                tiling = create_tiling_from_tif_XY_stack_to_WF(roi_names_import, number_of_rows, number_of_columns, image_overlay)
+                tiling = np.array(tiling, dtype="uint16")
                 single_chan_time_stack.append(tiling)
                 if single_chan_tiling:
                     tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)
             time_stack_colors.append(single_chan_time_stack)    
             if combine_timepoints_colors_separate:
+                # if num_times < 2:
+                #     single_chan_time_stack = np.array(single_chan_time_stack)
+                #     tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', single_chan_time_stack, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)
+                #     end_chan = time.time()
+                #     dt_chan = end_chan - start_chan
+                #     print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
+                # else:    
                 single_chan_time_stack = np.array(single_chan_time_stack)
                 tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_{ch}_{name_tiling}.tif', single_chan_time_stack, metadata={"axes": "TYX", "Channel": {"Name": ch}}, imagej=True)
                 end_chan = time.time()
@@ -261,7 +329,14 @@ if create_tiling:
                 print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
         
         if combine_timepoints:
-            time_stack_colors_out = np.array(time_stack_colors)
+            # if num_times < 2:
+            #     time_stack_colors_out = np.array(time_stack_colors)
+            #     time_stack_colors_out = np.swapaxes(time_stack_colors_out,0,1)
+            #     tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "CYX", "Channel": {"Name": single_channels_names}}, imagej=True)
+            #     # Bigger tiffs
+            #     # tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "CYX", "Channel": {"Name": single_channels_names}}, imagej=True, bigtiff=True)
+            # else:
+            time_stack_colors_out = np.array(time_stack_colors, )
             time_stack_colors_out = np.swapaxes(time_stack_colors_out,0,1)
             tifffile.imwrite(f'{save_path_tiling_time}\\{exp_name}_tAll_cAll_{name_tiling}.tif', time_stack_colors_out, metadata={"axes": "TCYX", "Channel": {"Name": single_channels_names}}, imagej=True)
             # Bigger tiffs
