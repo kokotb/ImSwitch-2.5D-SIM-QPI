@@ -147,7 +147,8 @@ def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, o
         # stack1.append(np.sum(stack[-3:], 0, dtype=np.int16))
         stack1.append(np.sum(stack[-3:], 0)/normalize)
     
-    stack1 = np.array(stack1)
+     # Needs that because doing calculus with np
+    stack1 = np.array(stack1, dtype="uint16")
     dim_len = len(stack1.shape) # [tiles, x, y]
     # tile_num, dimx, dimy = stack1.shape
     
@@ -186,7 +187,6 @@ def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, o
             final_tiling = new_row
         else:
             final_tiling = np.concatenate((final_tiling, new_row), axis=dimy)
-
     return final_tiling
 
 
@@ -232,7 +232,7 @@ name_pattern = "SIM_Stack" # can be wf or something else
 t_pattern = "t_"
 number_of_rows = 5
 number_of_columns = 5
-image_overlay = 0
+image_overlay = 0.12
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run
@@ -309,7 +309,6 @@ if create_tiling:
                 # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
                 tiling = create_tiling_from_tif_XY_stack_to_WF(roi_names_import, number_of_rows, number_of_columns, image_overlay)
-                tiling = np.array(tiling, dtype="uint16")
                 single_chan_time_stack.append(tiling)
                 if single_chan_tiling:
                     tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)

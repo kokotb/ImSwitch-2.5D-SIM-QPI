@@ -83,7 +83,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
     :return: combined image
     """
     all_tifs = tiling_paths
-    stack1 = tifffile.imread(all_tifs[0])
+    stack1 = tifffile.imread(all_tifs)
     
     # stack1 = np.sum(np.array(stack1[-3:]), 0)
     dim_len = len(stack1.shape) # [tiles, x, y]
@@ -98,12 +98,12 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
         else:
             num_list = range(num_columns - 1, -1, -1)
         for count, column in enumerate(num_list):
-            if dim_len != 2:
+            if dim_len != 3:
                 print('wrong number of dimensions!!!')
                 return None
             else:
                 # Import the correct stack at correct position
-                stack = tifffile.imread(all_tifs[row * num_columns + column])
+                stack = stack1[row * num_columns + column]
             if count != (num_columns - 1):
                 shape_x = stack.shape[dimx]
                 cut_off = int(shape_x * (1-overlay))
