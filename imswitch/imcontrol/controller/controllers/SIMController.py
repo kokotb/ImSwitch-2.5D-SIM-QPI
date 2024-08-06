@@ -84,6 +84,7 @@ class SIMController(ImConWidgetController):
         # switch to detect if a recording is in progress
         self.isRecording = False
         self.isReconstruction = False
+        self.isRecordReconstruction = False
 
         # Laser flag
         self.LaserWL = 0
@@ -188,21 +189,26 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_mock.stateChanged.connect(self.toggleMockUse)
         #self._widget.sigPatternID.connect(self.patternIDChanged)
         self._widget.number_dropdown.currentIndexChanged.connect(self.patternIDChanged)
-        #self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleRecording)
+        self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
         # read parameters from the widget
         self._widget.start_timelapse_button.clicked.connect(self.startTimelapse)
         self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self.folder = self._widget.getRecFolder()
 
+    def toggleReconstruction(self):
+        self.isReconstruction = not self.isReconstruction
+        if not self.isReconstruction:
+            self.isActive = False
+    
     def toggleRecording(self):
         self.isRecording = not self.isRecording
         if not self.isRecording:
             self.isActive = False
 
     def toggleRecordReconstruction(self):
-        self.isReconstruction = not self.isReconstruction
-        if not self.isReconstruction:
+        self.isRecordReconstruction = not self.isRecordReconstruction
+        if not self.isRecordReconstruction:
             self.isActive = False
             
     def toggleMockUse(self):
@@ -1253,7 +1259,7 @@ class SIMController(ImConWidgetController):
                     wfImages[k].append(processor.getWFlbf(self.SIMStack))
                     
                     # Activate recording and reconstruction in processor
-                    processor.setRecordingMode(self.isRecording)
+                    processor.setRecordingMode(self.isRecordReconstruction)
                     processor.setReconstructionMode(self.isReconstruction)
                     processor.setWavelength(self.LaserWL, sim_parameters)
                     
@@ -1305,7 +1311,9 @@ class SIMController(ImConWidgetController):
                     # FIXME: Testing threading, this solution below does the 
                     # same thing, takes the same amount of time 
                     # threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                    processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    
+                    if self.isReconstruction:
+                        processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()

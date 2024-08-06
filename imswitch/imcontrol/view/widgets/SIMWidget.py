@@ -96,7 +96,7 @@ class SIMWidget(NapariHybridWidget):
         # Checkboxes
         checkboxes = [
             "Enable Reconstruction", "Enable Record Reconstruction",
-            "Enable Record RAW", "Enable Laser 488", "Enable Laser 635",
+            "EnableRecord  RAW", "Enable Laser 488", "Enable Laser 635",
             "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
             "Selected Path", "D:\\SIM_data\\test_export\\",
             "Mock"
