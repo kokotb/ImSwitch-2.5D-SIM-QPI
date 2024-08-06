@@ -2242,7 +2242,8 @@ class SIMController(ImConWidgetController):
                     # self.detector.stopAcquisitionSIM()
                     
                     # Process the frames and display reconstructions
-                    processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    if self.isReconstruction:
+                        processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
 
                     # reset the per-colour stack to add new frames in the next
                     # imaging series
