@@ -1022,6 +1022,7 @@ class SIMController(ImConWidgetController):
         # Step-size based on overlap info
         x_step = (1 - overlap_xy) * frame_size_x
         y_step = (1 - overlap_xy) * frame_size_y
+
         xy_step = [x_step, y_step]
         
         # Confirm parameters are set correctly
@@ -1035,6 +1036,7 @@ class SIMController(ImConWidgetController):
             print("Grid parameters are not set correct!")
         
         # Generate list of coordinates
+
         positions = []
         y_start = xy_start[1]
         y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
@@ -1146,6 +1148,7 @@ class SIMController(ImConWidgetController):
         
         while self.active and not mock and dic_wl != []:
         # run only once
+        
         # while count == 0:
             wfImages = []
             stackSIM = [] 
@@ -2352,10 +2355,10 @@ class SIMParameters(object):
     wavelength_1 = 0.488
     wavelength_2 = 0.561
     wavelength_3 = 0.640
-    NA = 1.4
-    n = 1.33
-    magnification = 60
-    pixelsize = 6.5
+    NA = 0.8
+    n = 1.0
+    magnification = 22.5
+    pixelsize = 2.74
     eta = 0.6
     alpha = 0.5
     beta = 0.98#
@@ -2480,10 +2483,10 @@ class SIMProcessor(object):
             self.h.kx = self.kx_input
             self.h.ky = self.ky_input
 
-    def getWF(self, mStack):
-        # display the BF image
-        bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}")
+    # def getWF(self, mStack):
+    #     # display the BF image
+    #     bfFrame = np.sum(np.array(mStack[-3:]), 0)
+    #     self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}")
         
     def getWFlbf(self, mStack):
         # display the BF image
