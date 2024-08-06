@@ -232,7 +232,7 @@ name_pattern = "SIM_Stack" # can be wf or something else
 t_pattern = "t_"
 number_of_rows = 5
 number_of_columns = 5
-image_overlay = 0.12
+image_overlay = 0
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run

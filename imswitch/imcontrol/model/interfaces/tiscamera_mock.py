@@ -28,6 +28,9 @@ class MockCameraTIS:
 
     def start_live(self):
         pass
+    
+    def start_liveSIM(self, num_buffers):
+        pass
 
     def stop_live(self):
         pass
@@ -127,6 +130,14 @@ class MockCameraTIS:
         allImages/=np.max(allImages)
         return allImages
 
+    def setCamForLiveView(self):
+        pass
+    
+    def setCamForAcquisition(self, buffer_size):
+        pass
+    
+    def setCamStopAcquisition(self):
+        pass
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.
 #

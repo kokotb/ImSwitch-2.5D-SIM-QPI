@@ -1488,7 +1488,13 @@ class SIMController(ImConWidgetController):
                 # Import our set of images for testing
                 for num, processor in enumerate(processors):
                     # Hardcoded path
-                    path_in = "D:\\SIM_data\\test_export\\test_data_ImSwitch"
+                    path_current_py = os.path.dirname(os.path.realpath(__file__))
+                    # Three parents above to get to imswitch folder
+                    path_parent = os.path.abspath(os.path.join(os.path.abspath(os.path.join(os.path.abspath(os.path.join(path_current_py, os.pardir)), os.pardir)), os.pardir))
+                    # Hardcoded folder but same an all machines
+                    path_child = "_data\\test_data_ImSwitch"
+                    # Create the path
+                    path_in = os.path.join(path_parent, path_child)
                     names_import = glob.glob(f'{path_in}\\*{dic_wl[num]}*.tif*')
                     stack_mock_color = []
                     for name in names_import:
@@ -2548,7 +2554,7 @@ class SIMProcessor(object):
 
             # first we need to reshape the stack to become 3x3xNxxNy
             imRawMCSIM = np.stack((imRaw[0:3,],imRaw[3:6,],imRaw[6:,]),0)
-            imgset = sim.SimImageSet({"pixel_size": self.pixelsize ,
+            imgset = sim.SimImageSet({"pixel_size": self.pixelsize,
                                     "na": self.NA,
                                     "wavelength": self.wavelength*1e-3},
                                     imRawMCSIM,
