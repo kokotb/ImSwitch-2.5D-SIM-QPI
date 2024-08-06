@@ -1651,9 +1651,10 @@ class SIMController(ImConWidgetController):
                     
                     # Process the frames and display reconstructions
                     # FIXME: Testing threading, this solution below does the 
-                    # same thing, takes the same amount of time 
-                    threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                    # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                    # same thing, takes the same amount of time
+                    if self.isReconstruction:
+                        threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
+                        # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
