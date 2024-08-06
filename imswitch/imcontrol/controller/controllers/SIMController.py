@@ -146,13 +146,21 @@ class SIMController(ImConWidgetController):
         # select detectors
         allDetectorNames = self._master.detectorsManager.getAllDeviceNames()
         self.detector = self._master.detectorsManager[allDetectorNames[0]]
+        # Get all detector objects
+        self.detectors = []
+        for detector_name in allDetectorNames:
+            self.detectors.append(self._master.detectorsManager[detector_name])
         if self.detector.model == "CameraPCO":
             # here we can use the buffer mode
             self.isPCO = True
         else:
             # here we need to capture frames consecutively
             self.isPCO = False
-
+            
+        # Pull magnifications from config file
+        for detector in self.detectors:
+            self.magnification = detector._DetectorManager__name
+            
         # select positioner
         # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
         self.positionerName = self._master.positionersManager.getAllDeviceNames()[0]
@@ -480,6 +488,7 @@ class SIMController(ImConWidgetController):
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
         self.overlap = float(parameter_dict['overlap'])
+        
         # self.exposure = float(parameter_dict['exposure'])
 
     def getParameterValue(self, detector, parameter_name):
@@ -993,7 +1002,7 @@ class SIMController(ImConWidgetController):
         image_pix_x = image_pix_common[0]
         image_pix_y = image_pix_common[1]
         magnification = sim_parameters.magnification
-        pixel_size_on_cam = sim_parameters.pixelsize # in um
+        pixel_size_on_cam = 2.74 #sim_parameters.pixelsize # in um
         # TODO: remove once development is done. 
         # pix_size = 0.123 # um 
         pix_size = pixel_size_on_cam/magnification
@@ -2013,7 +2022,7 @@ class SIMController(ImConWidgetController):
         image_pix_x = image_pix_common[0]
         image_pix_y = image_pix_common[1]
         magnification = sim_parameters.magnification
-        pixel_size_on_cam = sim_parameters.pixelsize # in um
+        pixel_size_on_cam = 2.74 #sim_parameters.pixelsize # in um
         # TODO: remove once development is done. 
         # pix_size = 0.123 # um 
         pix_size = pixel_size_on_cam/magnification
