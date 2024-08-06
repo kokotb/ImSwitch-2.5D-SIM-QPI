@@ -72,7 +72,7 @@ def create_tiling_from_tif_TZYX(tiling_paths, num_columns, num_rows, overlay):
     return final_tiling
 
 
-def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
+def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay, is_sim_stack):
     """
     Creates tiling from tifs that were acquired in a snake shape (alphabetic order should be the same as the acquisition).
     It is adjusted for a two-dimensional stack.
@@ -83,7 +83,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
     :return: combined image
     """
     all_tifs = tiling_paths
-    stack1 = tifffile.imread(all_tifs[0])
+    stack1 = tifffile.imread(all_tifs)
     
     dim_len = len(stack1.shape) # [tiles, x, y]
     # dimx, dimy = stack1.shape
@@ -97,7 +97,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
         else:
             num_list = range(num_columns - 1, -1, -1)
         for count, column in enumerate(num_list):
-            if dim_len != 2:
+            if dim_len != 3:
                 print('wrong number of dimensions!!!')
                 return None
             else:
@@ -126,7 +126,7 @@ def create_tiling_from_tif_XY(tiling_paths, num_columns, num_rows, overlay):
     return final_tiling
 
 
-def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, overlay):
+def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, overlay, is_sim_stack):
     """
     Creates tiling from tifs that were acquired in a snake shape (alphabetic order should be the same as the acquisition).
     It is adjusted for a two-dimensional stack.
@@ -138,17 +138,21 @@ def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, o
     """
     all_tifs = tiling_paths
     
-    stack1_in = tifffile.imread(all_tifs)
     
-    # FIXME: Remove when actual SIM data, in just for Arduino simulator
-    normalize = np.shape(stack1_in)[0]
-    stack1 = []
-    for stack in stack1_in:
-        # stack1.append(np.sum(stack[-3:], 0, dtype=np.int16))
-        stack1.append(np.sum(stack[-3:], 0)/normalize)
     
-     # Needs that because doing calculus with np
-    stack1 = np.array(stack1, dtype="uint16")
+    if is_sim_stack:
+        stack1_in = tifffile.imread(all_tifs)
+        # FIXME: Remove when actual SIM data, in just for Arduino simulator
+        normalize = np.shape(stack1_in)[0]
+        stack1 = []
+        for stack in stack1_in:
+            # stack1.append(np.sum(stack[-3:], 0, dtype=np.int16))
+            stack1.append(np.sum(stack[-3:], 0)/normalize)
+    
+        # Needs that because doing calculus with np
+        stack1 = np.array(stack1, dtype="uint16")
+    else:
+        stack1 = tifffile.imread(all_tifs)
     dim_len = len(stack1.shape) # [tiles, x, y]
     # tile_num, dimx, dimy = stack1.shape
     
@@ -222,17 +226,27 @@ def getNamesByPattern(file_names, pattern):
 ##############################
 #      SET PARAMETERS        #
 ##############################
-input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
-# input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p3overlap"
+input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p5overlap"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_Neg0p5overlap"
+
 # Set if you want to run tiling from folder
 # input_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
-exp_names = ["2024_08_02-15-08-10"]
-single_channels_names = ['488nm', '561nm', '640nm']
+exp_names = ["2024_08_"]
 name_pattern = "SIM_Stack" # can be wf or something else
 t_pattern = "t_"
+
+# input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
+# exp_names = ["2024_07_"]
+# name_pattern = "Reconstruction"
+# t_pattern = "frame_"
+
+single_channels_names = ['488nm', '561nm', '640nm']
 number_of_rows = 5
 number_of_columns = 5
-image_overlay = 0
+image_overlay = 0.58
+# image_overlay = 0
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run
@@ -240,6 +254,7 @@ create_tiling = True                                   # can be True or False
 combine_timepoints = True
 combine_timepoints_colors_separate = False
 single_chan_tiling = False
+is_sim_stack = True # True for SIM_stack, false for Reconstructed images
 # reorder_stack = True
 
 ##############################
@@ -308,7 +323,7 @@ if create_tiling:
                 print(f'----Time {num_time+1} out of {num_times}----')
                 # Get all ROI names for this chan and this time point
                 roi_names_import = glob.glob(f'{input_dir}\\{name_time}*{ch}*.tif')
-                tiling = create_tiling_from_tif_XY_stack_to_WF(roi_names_import, number_of_rows, number_of_columns, image_overlay)
+                tiling = create_tiling_from_tif_XY_stack_to_WF(roi_names_import, number_of_rows, number_of_columns, image_overlay, is_sim_stack)
                 single_chan_time_stack.append(tiling)
                 if single_chan_tiling:
                     tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}.tif', tiling, metadata={"axes": "YX", "Channel": {"Name": ch}}, imagej=True)
