@@ -159,7 +159,8 @@ class SIMController(ImConWidgetController):
             
         # Pull magnifications from config file
         for detector in self.detectors:
-            self.magnification = detector._DetectorManager__name
+            magnification_key = 'exposure' # Just for testing, change to mag once implemented
+            self.magnification = detector.setupInfo[magnification_key]
             
         # select positioner
         # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
