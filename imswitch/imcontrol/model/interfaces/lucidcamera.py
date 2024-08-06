@@ -83,7 +83,7 @@ class CameraTIS:
 ##Sets ExposureAuto to Off on the camera. There is propably a better place to do this.
         self.nodes['ExposureAuto'].value = 'Off'
         self.nodes['AcquisitionFrameRateEnable'].value = True
-        self.nodes['AcquisitionFrameRate'].value = 25.0
+        self.nodes['AcquisitionFrameRate'].value = 45.0
 
         # Get all current cam parameters
         self.parameters = {}
@@ -587,14 +587,15 @@ class CameraTIS:
         # exposure_time = 2000.0 
         exposure_time = float(self.getPropertyValue('exposure'))
         pixel_format = 'Mono8'
+        bit_depth = 'Bits8'
         frame_rate_enable = True
         # Could not implement it by query. Max frame rate does not query.
         frame_rate = 45.0 # <45 Hz at full frame size
         buffer_mode = "NewestOnly"
 
-        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
 
-        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode,'ADC_bit_depth':bit_depth}
 
         for parameter_name in parameter_names:
             # print(self.getPropertyValue(parameter_name))

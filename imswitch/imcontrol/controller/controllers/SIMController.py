@@ -509,6 +509,7 @@ class SIMController(ImConWidgetController):
 
         # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
+        bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
         frame_rate_enable = True
         frame_rate = 50.0 # > 50Hz
         buffer_mode = "OldestFirst"
@@ -522,9 +523,9 @@ class SIMController(ImConWidgetController):
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
         
         # Set cam parameters
-        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode'}
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
 
-        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode,'ADC_bit_depth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in parameter_names:
@@ -535,6 +536,8 @@ class SIMController(ImConWidgetController):
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamAfterExperiment(self, detector):
+        # FIXME: Does not really work if run from here, works if run form 
+        # FIXME: lucidcamera.py
         detector.stopAcquisitionSIM()
         # self.getExperimentSettings()
         # detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
@@ -549,15 +552,16 @@ class SIMController(ImConWidgetController):
         exposure_time = self.getParameterValue(detector, 'exposure')
         # exposure_time = 2000.0 # anything < 19 ms
         pixel_format = 'Mono8'
+        bit_depth = 'Bits8'
         frame_rate_enable = True
-        frame_rate = 50.0 # > 50Hz
+        frame_rate = 45.0 # > 50Hz
         buffer_mode = "NewestOnly"
         # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
         
         # Set cam parameters
-        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate', 'buffer_mode'}
+        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
 
-        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode}
+        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode,'ADC_bit_depth':bit_depth}
 
         # for detector in detectors:
             # FIXME: stop_live has that, stopSIM does it on each detector
