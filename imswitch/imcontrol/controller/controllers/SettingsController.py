@@ -582,8 +582,7 @@ class SettingsController(ImConWidgetController):
         """ Sets the specified detector-specific parameter to the specified
         value. """
 
-        if (parameterName in ['TriggerSource'] and
-                self.getCurrentParams().allDetectorsFrame.value()):
+        if parameterName == 'TriggerMode':
             # Special case for certain parameters that will follow the "update all detectors" option
             execFunc = self._master.detectorsManager.execOnAll
         else:

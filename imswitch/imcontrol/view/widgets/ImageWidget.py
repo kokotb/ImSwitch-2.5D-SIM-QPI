@@ -13,11 +13,11 @@ class ImageWidget(QtWidgets.QWidget):
 
         naparitools.addNapariGrayclipColormap()
         self.napariViewer = naparitools.EmbeddedNapari()
-        self.updateLevelsWidget = naparitools.NapariUpdateLevelsWidget.addToViewer(
-            self.napariViewer
-        )
-        self.NapariResetViewWidget = naparitools.NapariResetViewWidget.addToViewer(self.napariViewer, 'right')
-        self.NapariShiftWidget = naparitools.NapariShiftWidget.addToViewer(self.napariViewer)
+        # self.updateLevelsWidget = naparitools.NapariUpdateLevelsWidget.addToViewer(
+        #     self.napariViewer
+        # )
+        # self.NapariResetViewWidget = naparitools.NapariResetViewWidget.addToViewer(self.napariViewer, 'right')
+        # self.NapariShiftWidget = naparitools.NapariShiftWidget.addToViewer(self.napariViewer)
         self.imgLayers = {}
 
         self.viewCtrlLayout = QtWidgets.QVBoxLayout()
