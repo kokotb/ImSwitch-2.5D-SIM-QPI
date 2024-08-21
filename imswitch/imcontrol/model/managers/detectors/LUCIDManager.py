@@ -224,7 +224,7 @@ class LUCIDManager(DetectorManager):
             # print(camera)
         except Exception:
             self.__logger.warning(f'Failed to initialize Lucid camera {cameraId}, loading mocker')
-            from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS
+            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import MockCameraTIS
             camera = MockCameraTIS()
             print(camera)
 

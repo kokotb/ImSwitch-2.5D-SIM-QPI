@@ -139,7 +139,7 @@ class ThorcamManager(DetectorManager):
         except Exception as e:
             self.__logger.debug(e)
             self.__logger.warning(f'Failed to initialize ThorCamera {cameraId}, loading TIS mocker')
-            from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS
+            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import MockCameraTIS
             camera = MockCameraTIS()
 
         self.__logger.info(f'Initialized camera, model: {camera.model}')

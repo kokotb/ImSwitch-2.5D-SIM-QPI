@@ -166,7 +166,7 @@ class BaslerManager(DetectorManager):
         except Exception as e:
             print(e)
             self.__logger.warning(f'Failed to initialize basler camera {cameraId}, loading TIS mocker')
-            from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS
+            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import MockCameraTIS
             camera = MockCameraTIS()
 
         self.__logger.info(f'Initialized camera, model: {camera.model}')

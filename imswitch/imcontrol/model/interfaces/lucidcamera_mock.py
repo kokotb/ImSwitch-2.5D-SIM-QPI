@@ -7,16 +7,18 @@ import time
 class MockCameraTIS:
     def __init__(self):
         self.properties = {
-            'image_height': 1024,
-            'image_width': 1024,
+            'Height': 1024,
+            'Width': 1024,
+            'OffsetX': 0,
+            'OffsetY': 0,
             'subarray_vpos': 0,
             'subarray_hpos': 0,
-            'exposure_time': 0.1,
+            'ExposureTime': 0.1,
             'subarray_vsize': 1024,
             'subarray_hsize': 1024,
-            'SensorHeight': 4600,
-            'SensorWidth': 5320,
-            'buffer_mode': "NewestOnly"
+            'HeightMax': 4600,
+            'WidthMax': 5320,
+            'StreamBufferHandlingMode': "NewestOnly"
         }
         self.exposure = 100
         self.gain = 1
@@ -46,6 +48,39 @@ class MockCameraTIS:
 
     def setBinning(self, binning):
         pass
+
+    def forceValidROI(self, hpos, vpos, hsize, vsize):
+
+        #OffsetX(hpos) and Width(hsize) must be in multiples of 8, with Width minimum >=32.
+        #OffsetY(vpos) and Height(hsize) must be even, with Height minimum >=32.
+        xmod = 8
+        ymod = 2
+        integer, decimal = divmod(hpos/xmod,1)
+        if decimal < 0.5:
+            hpos_new = int(xmod*integer)
+        else:
+            hpos_new = int(xmod*(integer+1))
+        integer, decimal = divmod(vpos/ymod,1)
+        if decimal < 0.5:
+            vpos_new = int(ymod*integer)
+        else:
+            vpos_new = int(ymod*(integer+1))
+
+        integer, decimal = divmod(hsize/xmod,1)
+        if decimal < 0.5:
+            hsize_new = int(xmod*integer)
+        else:
+            hsize_new = int(xmod*(integer+1))
+        integer, decimal = divmod(vsize/ymod,1)
+        if decimal < 0.5:
+            vsize_new = int(ymod*integer)
+        else:
+            vsize_new = int(ymod*(integer+1))
+        
+        hsize_new = max(hsize_new, 32)  # minimum ROI size (32 for Lucid cam)
+        vsize_new = max(vsize_new, 32)  # minimum ROI size (32 for Lucid cam)
+
+        return hpos_new, vpos_new, hsize_new, vsize_new
 
     def grabFrame(self, **kwargs):
         mocktype = "random_peak"
@@ -80,6 +115,13 @@ class MockCameraTIS:
 
     def getLast(self, is_resize=False):
         return self.grabFrame()
+    
+    def getROIValue(self, property_name):
+
+        try:
+            return self.properties[property_name]
+        except Exception as e:
+            return 0
     
     def getLastChunk(self):
         return np.expand_dims(self.grabFrame(),0)
@@ -130,7 +172,7 @@ class MockCameraTIS:
         allImages/=np.max(allImages)
         return allImages
 
-    def setCamForLiveView(self):
+    def setCamForLiveView(self, trigBool=False):
         pass
     
     def setCamForAcquisition(self, buffer_size):

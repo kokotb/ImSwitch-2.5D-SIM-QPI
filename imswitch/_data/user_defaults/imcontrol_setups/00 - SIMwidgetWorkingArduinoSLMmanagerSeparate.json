@@ -44,7 +44,7 @@
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 65,
+        "cameraListIndex": 63,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
@@ -70,7 +70,7 @@
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 66,
+        "cameraListIndex": 64,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
@@ -96,7 +96,7 @@
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 55,
+        "cameraListIndex": 53,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {

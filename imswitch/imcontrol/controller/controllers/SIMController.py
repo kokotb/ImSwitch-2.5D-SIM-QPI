@@ -1704,6 +1704,8 @@ class SIMController(ImConWidgetController):
             time_whole_total = time_whole_end-time_whole_start
             
             self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+
+            time_whole_start = time.time()
         ##################################################
         # -----------------Mocker end----------------- #
         ##################################################

@@ -164,7 +164,7 @@ class PiCamManager(DetectorManager):
             camera = CameraPiCam(host, port)
         except Exception as e:
             self.__logger.warning(f'Failed to initialize PiCamera {e}, loading TIS mocker')
-            from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS
+            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import MockCameraTIS
             camera = MockCameraTIS()
 
         self.__logger.info(f'Initialized camera, model: {camera.model}')
