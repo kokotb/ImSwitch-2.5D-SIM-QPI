@@ -217,48 +217,9 @@ class SettingsController(ImConWidgetController):
         hsize = binning * width
         vsize = binning * height
 
-        hmodulus = 8
-        vmodulus = 8
-
-        integer, decimal = divmod(hpos/hmodulus,1)
-        if decimal < 0.5:
-            hpos = int(hmodulus*integer)
-        else:
-            hpos = int(hmodulus*(integer+1))
-        integer, decimal = divmod(vpos/vmodulus,1)
-        if decimal < 0.5:
-            vpos = int(vmodulus*integer)
-        else:
-            vpos = int(vmodulus*(integer+1))
-
-        integer, decimal = divmod(hsize/hmodulus,1)
-        if decimal < 0.5:
-            hsize = int(hmodulus*integer)
-        else:
-            hsize = int(hmodulus*(integer+1))
-        integer, decimal = divmod(vsize/vmodulus,1)
-        if decimal < 0.5:
-            vsize = int(vmodulus*integer)
-        else:
-            vsize = int(vmodulus*(integer+1))
-
-        # Set minimum ROI size for Lucid cam
-        hsize = max(hsize, 32)  # minimum ROI size (32 for Lucid cam)
-        vsize = max(vsize, 32)  # minimum ROI size (32 for Lucid cam)
-
-        # hsize = hsize
-        # vsize = vsize
-
-        # Old implementation
-        # vpos = int(vmodulus * np.ceil(vpos / vmodulus))
-        # hpos = int(hmodulus * np.ceil(hpos / hmodulus))
-        # vsize = int(vmodulus * np.ceil(vsize / vmodulus))
-        # hsize = int(hmodulus * np.ceil(hsize / hmodulus))
-
         detector.crop(hpos, vpos, hsize, vsize)
 
         # Final shape values might differ from the user-specified one because of detector limitation
-        # x128
         if detector.name == self._master.detectorsManager.getCurrentDetectorName():
             self._commChannel.sigAdjustFrame.emit(detector.shape)
             self._widget.hideROI()
@@ -268,16 +229,27 @@ class SettingsController(ImConWidgetController):
 
     def ROIchanged(self):
         """ Update parameters according to ROI. """
+        # frameStart = self._master.detectorsManager.execOnCurrent(lambda c: c.frameStart)
+        # ROI = self._widget.getROIGraphicsItem()
+        # pos = ROI.position
+        # size = ROI.size
+
+        # currentParams = self.getCurrentParams()
+        # currentParams.x0.setValue(frameStart[0] + int(pos[0]))
+        # currentParams.y0.setValue(frameStart[1] + int(pos[1]))
+        # currentParams.width.setValue(size[0])  # [0] is Width
+        # currentParams.height.setValue(size[1])  # [1] is Height
+
         frameStart = self._master.detectorsManager.execOnCurrent(lambda c: c.frameStart)
         ROI = self._widget.getROIGraphicsItem()
         pos = ROI.position
         size = ROI.size
 
         currentParams = self.getCurrentParams()
-        currentParams.x0.setValue(frameStart[0] + int(pos[0]))
-        currentParams.y0.setValue(frameStart[1] + int(pos[1]))
-        currentParams.width.setValue(size[0])  # [0] is Width
-        currentParams.height.setValue(size[1])  # [1] is Height
+        currentParams.x0.setValue(frameStart[0])
+        currentParams.y0.setValue(frameStart[1])
+        currentParams.width.setValue(size[0]) 
+        currentParams.height.setValue(size[1])  
 
     def updateFrameActionButtons(self, *, detector=None):
         """ Shows the frame-related buttons appropriate for the current frame
@@ -299,8 +271,9 @@ class SettingsController(ImConWidgetController):
 
         if params.frameMode.value() == 'Custom':
             params.applyROI.show()
-            params.newROI.show()
-            params.abortROI.show()
+##CTFIX removed these buttons for now as the yellow roi selection is disabled
+            # params.newROI.show()
+            # params.abortROI.show()
             params.saveMode.show()
         elif params.frameMode.value() != 'Full chip':
             params.deleteMode.show()
@@ -400,20 +373,20 @@ class SettingsController(ImConWidgetController):
                 parameterName
             )
             paramInWidget.setValue(parameter.value)
-        # Does not have relative offsets - it breaks ROI selection
+
 
         # Frame
         params.binning.setValue(detector.binning)
         frameStart = detector.frameStart
         shape = detector.shape
-        fullShape = detector.fullShape
+        # fullShape = detector.fullShape
         fullShapeSensor = detector.fullShapeSensor
         params.x0.setValue(frameStart[0])
         params.y0.setValue(frameStart[1])
-        params.width.setValue(shape[1])#CTEDIT BKEDIT kept them
-        params.width.setLimits((1, fullShapeSensor[0]))#CTEDIT BKEDIT swapped them back
-        params.height.setValue(shape[0])#CTEDIT swapped indices
-        params.height.setLimits((1, fullShapeSensor[1]))#CTEDIT
+        params.width.setValue(shape[0])
+        params.width.setLimits((1, fullShapeSensor[0]))#CTNOTE Should the first index be 32?
+        params.height.setValue(shape[1])
+        params.height.setLimits((1, fullShapeSensor[1]))#CTNOTE Should the first index be 32?
 
         # Model
         params.model.setValue(detector.model)
@@ -440,16 +413,17 @@ class SettingsController(ImConWidgetController):
         params.height.show()
         # frameStart = detector.frameStart
         # frameStart = (0,0) # ROIchanged() takes care of centerdeness 
-        fullShape = detector.fullShape
+        fullShapeSensor = detector.fullShapeSensor
 
         if customFrame:
+            shape = detector.shape
             # ROIsize = (64, 64)
             # Grab ROIsize from config file - default ROI size is ROI of initial image
             # Make sense since we do not use full capacity of the sensor
             # FIXME: This is good for development. For final use mayb 1/2 or 1/4 of FOV?
             # FIXME: Might be we need to swap here too
-            ROIsize = (fullShape[1], fullShape[0])
-            
+            # ROIsize = (shape[0], shape[1])
+            ROIpos = (detector.offsetRelative[0],detector.offsetRelative[1])
             # If I want to have ROI at the center of my initial FOV
             # --------New implementation-------
             # ROIcenter = (frameStart[1], frameStart[0])
@@ -458,37 +432,29 @@ class SettingsController(ImConWidgetController):
             # If I want to have a ROI at the center of new ROI
             # Toggle between custom and fullChip sests us back to config center
             
-
+            params.x0.setValue(ROIpos[0])
+            params.y0.setValue(ROIpos[1])
+            params.width.setValue(shape[0])#CTEDIT swapped indices
+            params.height.setValue(shape[1])#CTEDIT
             # --------Old implementation-------
             # Grab center of the current view for ROI center
-            ROIcenter = self._commChannel.getCenterViewbox()
-            ROIpos = (ROIcenter[0] - 0.5 * ROIsize[0],
-                      ROIcenter[1] - 0.5 * ROIsize[1])
+            # ROIcenter = self._commChannel.getCenterViewbox()
+            # ROIpos = (ROIcenter[0] - 0.5 * ROIsize[0],
+            #           ROIcenter[1] - 0.5 * ROIsize[1])
 
-            self.toggleROI(True, ROIpos, ROIsize)
-            self.ROIchanged()
+##CTFIX Got rid of the yellow ROI selector for now
+            # self.toggleROI(True, ROIpos, ROIsize)
+            # self.ROIchanged()
 
         else:
             if frameMode == 'Full chip':
-                fullChipShape = detector.fullShape
-                # frameStart = detector.frameStart
-                # shape = detector.shape
-                # fullShape = detector.fullShape
-                # Sets relative offset taking into account global offset
-                # Good for calibration purposes if we need to re-adjust centerdness on all 
-                # cameras together
-                offsetRelative = detector.offsetRelative
-                
-                params.x0.setValue(offsetRelative[0])#BKEDIT same swap as CTEDIT
-                params.y0.setValue(offsetRelative[1])#BKEDIT
-                # Old implementation recentering to the center of the detector
-                # TODO: Remove this? In our case does not make sense since we are not perfectly 
-                # centered to the cam
-                # params.x0.setValue(0)
-                # params.y0.setValue(0)
-                #BKEDIT - swaped indices back only here, where you set up the cam
-                params.width.setValue(fullChipShape[0])#CTEDIT swapped indices
-                params.height.setValue(fullChipShape[1])#CTEDIT
+
+                fullShapeSensor = detector.fullShapeSensor
+                params.x0.setValue(0)
+                params.y0.setValue(0)
+                params.width.setValue(fullShapeSensor[0])
+                params.height.setValue(fullShapeSensor[1])
+                self.toggleROI(False)
             else:
                 # FIXME: Reading from GUI? Check if we need another swap
                 roiInfo = self._setupInfo.rois[frameMode]
@@ -616,7 +582,7 @@ class SettingsController(ImConWidgetController):
         """ Sets the specified detector-specific parameter to the specified
         value. """
 
-        if (parameterName in ['Trigger source'] and
+        if (parameterName in ['TriggerSource'] and
                 self.getCurrentParams().allDetectorsFrame.value()):
             # Special case for certain parameters that will follow the "update all detectors" option
             execFunc = self._master.detectorsManager.execOnAll

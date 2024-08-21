@@ -19,10 +19,12 @@ class CommunicationChannel(SignalInterface):
     sigAcquisitionStarted = Signal()
     
     sigAcquisitionStopped = Signal()
+
+    # sigTriggerModeToggled = Signal()
     
-    sigRunAcquireSetStarted = Signal()
+    # sigRunAcquireSetStarted = Signal()
     
-    sigRunAcquireSetStopped = Signal()
+    # sigRunAcquireSetStopped = Signal()
 
     sigScriptExecutionFinished = Signal()
 

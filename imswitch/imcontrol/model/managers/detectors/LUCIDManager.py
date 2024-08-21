@@ -1,8 +1,9 @@
 import numpy as np
-
+import time
 from imswitch.imcommon.model import initLogger
 from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter, DetectorListParameter
-
+from imswitch.imcontrol.model.interfaces.lucidcamera import CameraTIS
+from ..ArduinoManager import ArduinoManager
 
 class LUCIDManager(DetectorManager):
     """ DetectorManager that deals with LUCID cameras and the
@@ -18,103 +19,65 @@ class LUCIDManager(DetectorManager):
 
     def __init__(self, detectorInfo, name, **_lowLevelManagers):
         self.__logger = initLogger(self, instanceName=name)
-
-        self._camera = self._getTISObj(detectorInfo.managerProperties['cameraListIndex'])
+        # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
+        self._camera = self._getTISObj(detectorInfo.managerProperties['cameraListIndex']) #Goes to LC.py to create object and set parameters for first time
         
         self._running = False
         self._adjustingParameters = False
-        self._camSet = False
+        self._camSet = False #CTNOTE What exactly does camSet do?
 
-        # FIXME: Make it read out from settings widget
-        self.live_trigger_mode = False
-
-        self.setupInfo = detectorInfo.managerProperties['lucid']
+        #Names and values from config file
+        self.setupInfo = detectorInfo.managerProperties['camProperties']
+        self.roiInfo = detectorInfo.managerProperties['ROI']
         
-        # Get old properties to compare with new for setting of FOV
-        properties_old = {}
-        
-        for propertyName, propertyValue in self.setupInfo.items():
-            properties_old[propertyName] = self._camera.getPropertyValue(propertyName)
-            # properties_new[propertyName] = propertyValue
+        #Properties that will not EVER change, but are also not defult
+        self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014)
 
-        # Set cam parameters in righ order for image height and centerdeness
-        hsize_set = self.setupInfo["image_height"]
-        hsize_old = properties_old["image_height"]
-        hpos_new = self.setupInfo["y0"]
-        vsize_set = self.setupInfo["image_width"]
-        vsize_old = properties_old["image_width"]
-        vpos_new = self.setupInfo["x0"]
-        if hsize_set < hsize_old:
-            # Shrink first then move, if moving sets us of the cam at current image size, cam will
-            # not accept that
-            self._camera.setPropertyValue("image_height", hsize_set)
-            self._camera.setPropertyValue("y0", hpos_new)
-        else:
-            # Move first then enlarge, if larger size is of the cam size at current location cam
-            # will not accept that
-            self._camera.setPropertyValue("y0", hpos_new)
-            self._camera.setPropertyValue("image_height", hsize_set)
-        # Do the same for the other axis
-        if vsize_set < vsize_old:
-            self._camera.setPropertyValue("image_width", vsize_set)
-            self._camera.setPropertyValue("x0", vpos_new)
-        else:
-            self._camera.setPropertyValue("x0", vpos_new)
-            self._camera.setPropertyValue("image_width", vsize_set)
-
+        #Read all camProperties in config file and set on cams. This operation is only for properties, not ROIs
         for propertyName, propertyValue in self.setupInfo.items():
-            # TODO: Remove after develpement is finished
-            # print(self._camera.getPropertyValue(propertyName))
-            # print(f"{propertyName},{propertyValue}")
             self._camera.setPropertyValue(propertyName, propertyValue)
 
         
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
-        fullShape = (self.setupInfo['image_width'] ,self.setupInfo['image_height'])
-        fullShapeSensor = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
+        fullShape = (self.roiInfo['Width'] ,self.roiInfo['Height'])
+        fullShapeSensor = (5320 , 4600)
         frameStartGlobal = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
-        frameStart = (self.setupInfo['x0'], self.setupInfo['y0'])
+        frameStart = (self.roiInfo['OffsetX'], self.roiInfo['OffsetY'])
         # offsetRelative = (self.setupInfo['x0_global'], self.setupInfo['y0_global'])
         offsetRelative = (0,0)
         
-        # FIXME: Remove if obsolete.
-        # self.globalOffset = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
-        # FIXME: When doing actual full chip...Tink if we can implement this smartly
-        # fullShape = (self._camera.getPropertyValue('sensor_width'),self._camera.getPropertyValue('sensor_height'))
-        # offsets = (self.setupInfo['x0'], self.setupInfo['y0'])
-        # self.crop(hpos=offsetRelative[1]+frameStart[1], vpos=offsetRelative[0]+frameStart[0], hsize=fullShape[1], vsize=fullShape[0])
-        # FIXME: Remove this? It makes debug window very confusing.
-        # Just crop, no moving of image on the sensor, do not know yet why this is needed
-        # self.__logger.debug("Currently commented! Setting crop - it is not the same as final setting in the widget!")
-        # self.crop(hpos=0, vpos=0, hsize=fullShape[1], vsize=fullShape[0])
-        
-
-## These parameters are used to populate the detector settings panel.
+        # These parameters are from config file, used to populate the detector settings panel.
         # Initialization parameters
-        exposure_init = self.setupInfo['exposure']
-        gain_init = self.setupInfo['gain']
-        gamma_init = self.setupInfo['gamma']
-        exposureauto_init = self.setupInfo['exposureauto']
-        
+        #CTNOTE: Possible conflicts if not able to be successfully set on cam (cam and config file would be different at that point).
+        exposure_init = self.setupInfo['ExposureTime']
+        gain_init = self.setupInfo['Gain']
+        gamma_init = self.setupInfo['Gamma']
+        exposureauto_init = self.setupInfo['ExposureAuto']
+        trigmode_init = self.setupInfo['TriggerMode']
+        #trigsource_init not needed yet. All triggers on Line2. QPI may change this.
+
         parameters = {
-            'exposure': DetectorNumberParameter(group='Acq. Control', value=exposure_init, valueUnits='us',
+            'ExposureTime': DetectorNumberParameter(group='Acq. Control', value=exposure_init, valueUnits='us',
                                                 editable=True),
-            'gain': DetectorNumberParameter(group='Analog Control', value=gain_init, valueUnits='arb.u.',
+            'Gain': DetectorNumberParameter(group='Analog Control', value=gain_init, valueUnits='arb.u.',
                                             editable=True),
-            'gamma': DetectorNumberParameter(group='Analog Control', value=gamma_init, valueUnits='arb.u.',
+            'Gamma': DetectorNumberParameter(group='Analog Control', value=gamma_init, valueUnits='arb.u.',
                                                   editable=True),
-            'exposureauto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
-                                                editable=True)                    
+            'ExposureAuto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
+                                                editable=True),
+            'TriggerMode': DetectorListParameter(group='Acq. Control', value=trigmode_init, options=['Off','On'],
+                                                editable=True)
+                                                         
         }
 
-        # Prepare actions
-        actions = {
-            'More properties': DetectorAction(group='Misc',
-                                              func=self._camera.openPropertiesGUI)
-        }
+        ## No actions connected yet. If you want to enable, need to add actions=actions to super().__init__ below.
+        # actions = {
+        #     'More properties': DetectorAction(group='Misc',
+        #                                       func=self._camera.openPropertiesGUI)
+        # }
 
         super().__init__(detectorInfo, name, fullShape=fullShape, supportedBinnings=[1],
-                         model=self._camera.model, parameters=parameters, actions=actions, 
+                         model=self._camera.model, parameters=parameters, 
                          croppable=True, frameStart=frameStart, offsetRelative=offsetRelative, 
                          frameStartGlobal=frameStartGlobal, fullShapeSensor=fullShapeSensor)
  
@@ -139,13 +102,17 @@ class LUCIDManager(DetectorManager):
         If the parameter doesn't exist, i.e. the parameters field doesn't
         contain a key with the specified parameter name, an error will be
         raised."""        
-
+        def trigToggle():
+            self._camera.setPropertyValue(name, value)
         super().setParameter(name, value)
 
         if name not in self._DetectorManager__parameters:
             raise AttributeError(f'Non-existent parameter "{name}" specified')
-
-        value = self._camera.setPropertyValue(name, value)
+        if name == 'TriggerMode':
+            self._performSafeCameraAction(trigToggle)
+            value = self._camera.getPropertyValue(name)
+        else:
+            value = self._camera.setPropertyValue(name, value)
         return value
 
     def getParameter(self, name):
@@ -169,12 +136,27 @@ class LUCIDManager(DetectorManager):
     def flushBuffers(self):
         pass
 
+    def startLiveAcquisition(self):
+        if not self._running:
+            trigBool = self.parameters['TriggerMode'].value
+            self._camera.setCamForLiveView(trigBool)
+            self._camSet = False #why is camset false?
+            self._camera.start_live()
+            # print(self._camera)
+            self._running = True
+
     def startAcquisition(self):
         if not self._running:
             self._camera.setCamForLiveView()
-            self._camSet = False
+            self._camSet = False #why is camset false?
             self._camera.start_live()
             # print(self._camera)
+            self._running = True
+
+    def resumeAcquisition(self):
+        if not self._running:
+            self._camSet = False #why is camset false?
+            self._camera.start_live()
             self._running = True
 
     def stopAcquisition(self):
@@ -198,14 +180,7 @@ class LUCIDManager(DetectorManager):
 
     def stopAcquisitionForROIChange(self):
         self._running = False
-        self._camera.stop_live()
-        
-    def acquireSetNow(self):
-        print("acquireSetNow")
-
-    # def getTriggerModeState(self):
-    #     self.trigger_mode_state = self._master.getTriggerModeState()
-
+        self._camera.suspend_live()
 
     @property
     def pixelSizeUm(self):
@@ -214,13 +189,14 @@ class LUCIDManager(DetectorManager):
     def crop(self, hpos, vpos, hsize, vsize):
         def cropAction():
             self._camera.setROI(hpos, vpos, hsize, vsize)
+            
 
         self._performSafeCameraAction(cropAction)
-        # TODO: unsure if frameStart is needed? Try without.
+
         # This should be the only place where self.frameStart is changed
-        self._frameStart = (hpos, vpos)
+        self._frameStart = (self._camera.getROIValue("OffsetX"), self._camera.getROIValue("OffsetY"))
         # Only place self.shapes is changed
-        self._shape = (vsize,hsize)
+        self._shape = (self._camera.getROIValue("Width"),self._camera.getROIValue("Height"))
 
     def _performSafeCameraAction(self, function):
         """ This method is used to change those camera properties that need
@@ -228,10 +204,11 @@ class LUCIDManager(DetectorManager):
         """
         self._adjustingParameters = True
         wasrunning = self._running
-        self.stopAcquisitionForROIChange()
+        if wasrunning:
+            self.stopAcquisitionForROIChange()
         function()
         if wasrunning:
-            self.startAcquisition()
+            self.resumeAcquisition()
         self._adjustingParameters = False
 
     def openPropertiesDialog(self):
@@ -239,12 +216,14 @@ class LUCIDManager(DetectorManager):
 
     def _getTISObj(self, cameraId):
         try:
-            from imswitch.imcontrol.model.interfaces.lucidcamera import CameraTIS
+
 
             camera = CameraTIS(cameraId)
+
+
             # print(camera)
         except Exception:
-            self.__logger.warning(f'Failed to initialize TIS camera {cameraId}, loading mocker')
+            self.__logger.warning(f'Failed to initialize Lucid camera {cameraId}, loading mocker')
             from imswitch.imcontrol.model.interfaces.tiscamera_mock import MockCameraTIS
             camera = MockCameraTIS()
             print(camera)

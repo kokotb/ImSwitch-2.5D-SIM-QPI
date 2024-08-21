@@ -29,18 +29,38 @@ class ArduinoManager(SignalInterface):
         self._rs232manager = lowLevelManagers['rs232sManager'][
             setupInfo.managerProperties['rs232device']
         ]
+
+        # super().__init__(setupInfo)
     
-    def start_sequence(self, running_order):
+    def startOneSequence(self, running_order):
         """Sends a trigger to SLM to start a sequence."""
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'S'+str(running_order)
-        self._rs232manager.write(cmd)
+        response = self._rs232manager.query(cmd)
+        print(response)
+
+    def startOneSequenceWriteOnly(self, running_order):
+        """Sends a trigger to SLM to start a sequence."""
+        # running_order order as a string
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'S'+str(running_order)
+        response = self._rs232manager.write(cmd)
+        print(response)
+
+    def startContSequence(self, running_order):
+        """Sends a trigger to SLM to start a sequence."""
+        # running_order order as a string
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'C'+str(running_order)
+        response = self._rs232manager.query(cmd)
+        print(response)
         
-    def stop_sequence(self):
+    def stopSequence(self):
         """Sends loop termination signal."""
-        cmd = 'CE'
-        self._rs232manager.write(cmd)
+        cmd = 'Q'
+        response = self._rs232manager.query(cmd)
+        print(response)
     
     # FIXME: Remove all obsolete functions
     # Currently set up, to set running order and start a sequence through two 

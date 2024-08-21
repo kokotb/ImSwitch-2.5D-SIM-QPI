@@ -24,8 +24,8 @@ class CamParamTree(ParameterTree):
                   {'name': 'Image frame', 'type': 'group', 'children': [
                       {'name': 'Binning', 'type': 'list', 'value': 1,
                        'values': supportedBinnings, 'tip': BinTip},
-                      {'name': 'Mode', 'type': 'list', 'value': 'Full chip',
-                       'values': ['Full chip'] + list(roiInfos.keys()) + ['Custom']},
+                      {'name': 'Mode', 'type': 'list', 'value': 'Custom',
+                       'values': ['Custom'] + ['Full chip'] + list(roiInfos.keys())},
                       {'name': 'X0', 'type': 'int', 'value': 0, 'limits': (0, 65535)},
                       {'name': 'Y0', 'type': 'int', 'value': 0, 'limits': (0, 65535)},
                       {'name': 'Width', 'type': 'int', 'value': 1, 'limits': (1, 65535)},

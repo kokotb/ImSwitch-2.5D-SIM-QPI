@@ -163,8 +163,8 @@ class SIMWidget(NapariHybridWidget):
         params = [
             ("Wavelength 1", "0.488"), ("Wavelength 2", "0.561"), ("Wavelength 3", "0.640"), ("NA", "0.8"),
             ("n", "1.0"),
-            ("Pixelsize", "2.73"), ("Alpha", "0.5"), ("Beta", "0.98"),
-            ("w", "0.2"), ("eta", "0.6"), ("Magnification", "22.5")
+            ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
+            ("w", "0.2"), ("eta", "0.6"), ("Magnification", "22.22")
         ]
         checkboxes = ["Calibrate each run"]
         

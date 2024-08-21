@@ -47,22 +47,20 @@
         "cameraListIndex": 65,
         "x0_global": 0,
         "y0_global": 0,
-        "lucid": {
-          "exposure": 500.0,
-          "exposureauto": "Off",
-          "gain": 0.0, 
-          "gamma": 1.0,
-          "pixel_format": "Mono8",
-          "ADC_bit_depth": "Bits8",
-          "acqframerateenable": true,
-          "acqframerate":50.0,
-          "x0": 2320,
-          "y0": 2040,
-          "image_width": 512,
-          "image_height": 512,
-          "sensor_width": 5320,
-          "sensor_height": 4600,
-          "buffer_mode":"NewestOnly"
+        "camProperties": {
+          "ExposureTime": 500.0,
+          "ExposureAuto": "Off",
+          "TriggerMode": "Off",
+          "Gain": 0.0, 
+          "Gamma": 1.0,
+          "AcquisitionFrameRateEnable": false,
+          "AcquisitionFrameRate":20.0
+        },
+        "ROI":{
+          "OffsetX": 104,
+          "OffsetY": 104,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -75,22 +73,20 @@
         "cameraListIndex": 66,
         "x0_global": 0,
         "y0_global": 0,
-        "lucid": {
-          "exposure": 500.0,
-          "exposureauto": "Off",
-          "gain": 0.0,
-          "gamma": 1.0,
-          "pixel_format": "Mono8",
-          "ADC_bit_depth": "Bits8",
-          "acqframerateenable": true,
-          "acqframerate":50.0,
-          "x0": 1984,
-          "y0": 2168,
-          "image_width": 512,
-          "image_height": 512,
-          "sensor_width": 5320,
-          "sensor_height": 4600,
-          "buffer_mode":"NewestOnly"
+        "camProperties": {
+          "ExposureTime": 500.0,
+          "ExposureAuto": "Off",
+          "TriggerMode": "Off",
+          "Gain": 0.0, 
+          "Gamma": 1.0,
+          "AcquisitionFrameRateEnable": false,
+          "AcquisitionFrameRate":20.0
+        },
+        "ROI":{
+          "OffsetX": 112,
+          "OffsetY": 112,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -103,22 +99,20 @@
         "cameraListIndex": 55,
         "x0_global": 0,
         "y0_global": 0,
-        "lucid": {
-          "exposure": 500.0,
-          "exposureauto": "Off",
-          "gain": 0.0,
-          "gamma": 1.0,
-          "pixel_format": "Mono8",
-          "ADC_bit_depth": "Bits8",
-          "acqframerateenable": true,
-          "acqframerate":50.0,
-          "x0": 2336,
-          "y0": 1942,
-          "image_width": 512,
-          "image_height": 512,
-          "sensor_width": 5320,
-          "sensor_height": 4600,
-          "buffer_mode":"NewestOnly"
+        "camProperties": {
+          "ExposureTime": 500.0,
+          "ExposureAuto": "Off",
+          "TriggerMode": "Off",
+          "Gain": 0.0, 
+          "Gamma": 1.0,
+          "AcquisitionFrameRateEnable": false,
+          "AcquisitionFrameRate":20.0
+        },
+        "ROI":{
+          "OffsetX": 120,
+          "OffsetY": 120,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true

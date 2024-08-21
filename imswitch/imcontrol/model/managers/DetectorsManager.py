@@ -13,8 +13,9 @@ class DetectorsManager(MultiManager, SignalInterface):
     sigAcquisitionStarted = Signal()
     sigAcquisitionStopped = Signal()
     
-    sigRunAcquireSetStarted = Signal()
-    sigRunAcquireSetStopped = Signal()
+    # sigRunAcquireSetStarted = Signal()
+    # sigRunAcquireSetStopped = Signal()
+    
     
     sigDetectorSwitched = Signal(str, str)  # (newDetectorName, oldDetectorName)
     sigImageUpdated = Signal(
@@ -25,6 +26,8 @@ class DetectorsManager(MultiManager, SignalInterface):
     def __init__(self, detectorInfos, updatePeriod, **lowLevelManagers):
         MultiManager.__init__(self, detectorInfos, 'detectors', **lowLevelManagers)
         SignalInterface.__init__(self)
+
+
 
         self._activeAcqHandles = []
         self._activeAcqLVHandles = []
@@ -116,13 +119,19 @@ class DetectorsManager(MultiManager, SignalInterface):
         finally:
             self._activeAcqsMutex.unlock()
 
+        # print('executetriggeronetime')
+        
+        
+        
         # Do actual enabling
         if enableAcq:
-            self.execOnAll(lambda c: c.startAcquisition(), condition=lambda c: c.forAcquisition)
+            self.execOnAll(lambda c: c.startLiveAcquisition(), condition=lambda c: c.forAcquisition)
             self.sigAcquisitionStarted.emit()
         if enableLV:
-            sleep(0.3)
+            sleep(0.3) #CTNOTE Why is this sleep here?
             self._thread.start()
+            # self._master.arduinoManager.startContSequence(0)
+            ##CAms not running before now
 
         return handle
 
@@ -156,11 +165,14 @@ class DetectorsManager(MultiManager, SignalInterface):
         if disableAcq:
             self.execOnAll(lambda c: c.stopAcquisition(), condition=lambda c: c.forAcquisition)
             self.sigAcquisitionStopped.emit()
+        
+        # self._master.arduinoManager.stopSequence()
+        
 
-    def runAcquireSet(self):
-        self.sigRunAcquireSetStarted.emit()
-        self.execOnAll(lambda c: c.acquireSetNow(), condition=lambda c: c.forAcquisition)
-        self.sigRunAcquireSetStopped.emit()
+    # def runAcquireSet(self):
+    #     self.sigRunAcquireSetStarted.emit()
+    #     self.execOnAll(lambda c: c.acquireSetNow(), condition=lambda c: c.forAcquisition)
+    #     self.sigRunAcquireSetStopped.emit()
     
     def setUpdatePeriod(self, updatePeriod):
         self._lvWorker.setUpdatePeriod(updatePeriod)

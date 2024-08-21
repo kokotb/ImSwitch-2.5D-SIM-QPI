@@ -20,7 +20,7 @@ class PositionerWidget(Widget):
         self.setLayout(self.grid)
 
     def addPositioner(self, positionerName, axes, speed):
-        axisInitialValues = {  "X": "1",  "Y": "1",  "Z": "0.2"}
+        axisInitialValues = {  "X": "10",  "Y": "10",  "Z": "0.2"}
         for i in range(len(axes)):
             axis = axes[i]
             initialValue = axisInitialValues[axis]
@@ -71,19 +71,19 @@ class PositionerWidget(Widget):
                 lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
             )
 
-            self.pars['Speed' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Speed</strong>')
-            self.pars['Speed' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['ButtonSpeedEnter' + parNameSuffix] = guitools.BetterPushButton('SetSpeed')
-            self.pars['SpeedEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-            self.pars['SpeedUnit' + parNameSuffix] = QtWidgets.QLabel(' µm/s?')
-            self.grid.addWidget(self.pars['SpeedEdit' + parNameSuffix], self.numPositioners, 13)
-            self.grid.addWidget(self.pars['SpeedUnit' + parNameSuffix], self.numPositioners, 14)
-            self.grid.addWidget(self.pars['ButtonSpeedEnter' + parNameSuffix], self.numPositioners, 15)
-            self.grid.addWidget(self.pars['Speed' + parNameSuffix], self.numPositioners, 12)
+            # self.pars['Speed' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Speed</strong>')
+            # self.pars['Speed' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+            # self.pars['ButtonSpeedEnter' + parNameSuffix] = guitools.BetterPushButton('SetSpeed')
+            # self.pars['SpeedEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+            # self.pars['SpeedUnit' + parNameSuffix] = QtWidgets.QLabel(' µm/s?')
+            # self.grid.addWidget(self.pars['SpeedEdit' + parNameSuffix], self.numPositioners, 13)
+            # self.grid.addWidget(self.pars['SpeedUnit' + parNameSuffix], self.numPositioners, 14)
+            # self.grid.addWidget(self.pars['ButtonSpeedEnter' + parNameSuffix], self.numPositioners, 15)
+            # self.grid.addWidget(self.pars['Speed' + parNameSuffix], self.numPositioners, 12)
 
-            self.pars['ButtonSpeedEnter'+ parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigsetPositionerSpeedClicked.emit(positionerName, axis)
-            )
+            # self.pars['ButtonSpeedEnter'+ parNameSuffix].clicked.connect(
+            #     lambda *args, axis=axis: self.sigsetPositionerSpeedClicked.emit(positionerName, axis)
+            # )
 
             self.numPositioners += 1
 

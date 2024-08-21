@@ -76,6 +76,7 @@ class SIMController(ImConWidgetController):
 
     sigImageReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
@@ -159,7 +160,7 @@ class SIMController(ImConWidgetController):
             
         # Pull magnifications from config file
         for detector in self.detectors:
-            magnification_key = 'exposure' # Just for testing, change to mag once implemented
+            magnification_key = 'ExposureTime' # Just for testing, change to mag once implemented
             self.magnification = detector.setupInfo[magnification_key]
             
         # select positioner
@@ -495,7 +496,7 @@ class SIMController(ImConWidgetController):
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name
         shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
-        if parameter_name == 'exposure':
+        if parameter_name == 'ExposureTime':
             value = float(shared_attributes[('Detector', detector_name, 'Param', parameter_name)])
         else:
             self._logger.warning("Debuging needed.")
@@ -509,13 +510,13 @@ class SIMController(ImConWidgetController):
         # for det_name in detector_names_connected:
         #     detectors.append(self._master.detectorsManager[det_name]._camera)
         # Hardcoded parameters at the moment
-        packet_size = 9000
+
         trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'
         # FIXME: There must be a neater, better, more stable way to do this
         # Pull the exposure time from settings widget
-        exposure_time = self.getParameterValue(detector, 'exposure')
+        exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
         # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
@@ -533,16 +534,14 @@ class SIMController(ImConWidgetController):
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
         
         # Set cam parameters
-        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
-
-        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode,'ADC_bit_depth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
-        for parameter_name in parameter_names:
+        for parameter_name in dic_parameters:
             # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
             # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamAfterExperiment(self, detector):
@@ -559,7 +558,7 @@ class SIMController(ImConWidgetController):
         trigger_source = 'Line0'
         trigger_mode = 'Off'
         exposure_auto = 'Off'
-        exposure_time = self.getParameterValue(detector, 'exposure')
+        exposure_time = self.getParameterValue(detector, 'ExposureTime')
         # exposure_time = 2000.0 # anything < 19 ms
         pixel_format = 'Mono8'
         bit_depth = 'Bits8'
@@ -569,9 +568,9 @@ class SIMController(ImConWidgetController):
         # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
         
         # Set cam parameters
-        parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
+        # parameter_names = {'streampacketsize', 'trigger_source', 'trigger_mode', 'exposureauto', 'exposure', 'pixel_format', 'acqframerateenable', 'acqframerate','buffer_mode', 'ADC_bit_depth'}
 
-        dic_parameters = {'streampacketsize':packet_size, 'trigger_source':trigger_source, 'trigger_mode':trigger_mode, 'exposureauto':exposure_auto, 'exposure':exposure_time, 'pixel_format':pixel_format, 'acqframerateenable':frame_rate_enable, 'acqframerate':frame_rate, 'buffer_mode':buffer_mode,'ADC_bit_depth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
             # FIXME: stop_live has that, stopSIM does it on each detector
@@ -580,11 +579,11 @@ class SIMController(ImConWidgetController):
             # Need to stop streaming
             # self.detector._camera.setCamStopAcquisition()
             # self.detector._camera.device.stop_stream()
-        for parameter_name in parameter_names:
+        for parameter_name in dic_parameters:
             # print(detector.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
                 # print(detector.getPropertyValue(parameter_name))        
-            # detector.t1_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+            # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
  
     #@APIExport(runOnUIThread=True)
     def simPatternByID(self, patternID: int, wavelengthID: int):
@@ -852,15 +851,15 @@ class SIMController(ImConWidgetController):
         time_whole_start = time.time()
         # Newly added, prep for SLM integration
         mock = self.mock
-        laser_wl = 488
-        exposure_ms = 1
+        # laser_wl = 488
+        # exposure_ms = 1
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
         dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
         # TODO: Delete after development is done - here to help get devices 
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-        dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
+        # dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
         dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
         # self.patternID = 0
         self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
@@ -878,7 +877,7 @@ class SIMController(ImConWidgetController):
         # -------------Parameters - old code------------- #
         # self.patternID = 0 # processed above
         self.isReconstructing = False
-        nColour = 1 #[488, 640] # not used in our implementation of mock
+        # nColour = 1 #[488, 640] # not used in our implementation of mock
         # dic_wl = [488, 640] # processed below
         # -------------Parameters - old code------------- #
         
@@ -930,8 +929,8 @@ class SIMController(ImConWidgetController):
         
         # Pulling info from detectors
         self.detectors = []
-        image_sizes_px = []
-        image_pix_common = []
+        image_sizes_px = [] #Desired image size in pixels
+        image_pix_common = [] 
         if det_names != []:
             for det_name in det_names:
                 detector = self._master.detectorsManager[det_name]
@@ -976,18 +975,18 @@ class SIMController(ImConWidgetController):
         
         # TODO: Remove if not in use after development is done.
         # retreive Z-stack parameters
-        zStackParameters = self._widget.getZStackParameters()
-        zMin, zMax, zStep = zStackParameters[0], zStackParameters[1], zStackParameters[2] # if zStep < 0, it will not move in z
-        tDebounce = 0.1 # debounce time between z-steps
+        # zStackParameters = self._widget.getZStackParameters()
+        # zMin, zMax, zStep = zStackParameters[0], zStackParameters[1], zStackParameters[2] # if zStep < 0, it will not move in z
+        # tDebounce = 0.1 # debounce time between z-steps
 
         # retreive timelapse parameters
-        timelapsedParameters = self._widget.getTimelapseParameters()
-        timePeriod, Nframes = timelapsedParameters[0], timelapsedParameters[1] # if NFrames < 0, it will run indefinitely
+        # timelapsedParameters = self._widget.getTimelapseParameters()
+        # timePeriod, Nframes = timelapsedParameters[0], timelapsedParameters[1] # if NFrames < 0, it will run indefinitely
 
         # TODO: Remove once development is done if we decide so.
         # TODO: Implement z-scan the same way they did for our convenience?
         # get current z-position
-        zPosInitially = self.positioner.get_abs()
+        # zPosInitially = self.positioner.get_abs()
         
         # ----------scanning over more FOVs------------
         ##################################################
@@ -1013,7 +1012,7 @@ class SIMController(ImConWidgetController):
         grid_y_num = self.num_grid_y
         overlap_xy = self.overlap
         xy_scan_type = 'square' # or 'quad', not sure what that does yet...
-        count_limit = 9999
+        count_limit = 101
         
         ##################################################
         # ----------------Grid scan info---------------- #
@@ -1037,12 +1036,12 @@ class SIMController(ImConWidgetController):
         x_step = (1 - overlap_xy) * frame_size_x
         y_step = (1 - overlap_xy) * frame_size_y
 
-        xy_step = [x_step, y_step]
+        # xy_step = [x_step, y_step]
         
         # Confirm parameters are set correctly
         assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
         
-        if grid_x_num > 0 and grid_y_num > 0:
+        if grid_x_num > 0 and grid_y_num > 0: #total stage travel
             x_range = grid_x_num * x_step
             y_range = grid_y_num * y_step
             xy_range = [x_range, y_range]
@@ -1121,16 +1120,13 @@ class SIMController(ImConWidgetController):
         # FIXME: Remove - included in setCamsForExperimetn
         # buffer_mode = "OldestFirst"
         # TODO: Test out and set to fixed as temporary solution
-        buffer_size = 300
+        # buffer_size = 300
         total_buffer_size_MB = 380 # in MBs
         for detector in self.detectors:
             image_size = detector.shape
-            image_size_MB = image_size[0]*image_size[1]/max(image_size[0],image_size[1])/1000000
+            image_size_MB = image_size[0]*image_size[1]/1000000*2
             buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            if decimal != 0:
-                buffer_size = int(buffer_size - 1)
-            else:
-                buffer_size = int(buffer_size)
+            # buffer_size = int(buffer_size)
             # FIXME: Automate buffer size calculation based on image size, it did not work before
             buffer_size = 500
             self.setCamForExperiment(detector, buffer_size)
@@ -1166,7 +1162,7 @@ class SIMController(ImConWidgetController):
         # while count == 0:
             wfImages = []
             stackSIM = [] 
-            for k in range(0, len(processors)):
+            for k in range(len(processors)):
                 wfImages.append([])
                 stackSIM.append([]) 
             # TODO: SLM drives laser powers, do lasers really need to be 
@@ -1213,13 +1209,14 @@ class SIMController(ImConWidgetController):
                 time_color_start = time.time()
                 
                 # Trigger SIM set acquisition for all present lasers
-                self._master.arduinoManager.start_sequence(orderID)
+                # self._master.arduinoManager.startOneSequence(orderID)
+                self._master.arduinoManager.startOneSequenceWriteOnly(orderID)
                 # SIMClient.send_start_sequence_trigger()
                 
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 
-                times_color.append([f"{time_color_total*1000}ms","start_sequence"])
+                times_color.append([f"{time_color_total*1000}ms","startOneSequence"])
                 time_color_start = time.time()
                 
                 # ----sub loop start----
@@ -1369,112 +1366,113 @@ class SIMController(ImConWidgetController):
             time_whole_total = time_whole_end-time_whole_start
             
             self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+            time_whole_start = time.time()
+            # if False:
+            #     # ------------Old code---------------
+            #     for iColour in range(nColour):
 
-            if False:
-                # ------------Old code---------------
-                for iColour in range(nColour):
+            #         # select the pattern for the current colour
+            #         self.SIMClient.set_wavelength(dic_wl[iColour])
 
-                    # select the pattern for the current colour
-                    self.SIMClient.set_wavelength(dic_wl[iColour])
+            #         if self.isPCO:
+            #             # display one round of SIM patterns for the right colour
+            #             self.SIMClient.start_viewer_single_loop(1)
 
-                    if self.isPCO:
-                        # display one round of SIM patterns for the right colour
-                        self.SIMClient.start_viewer_single_loop(1)
+            #             # ensure lasers are off to avoid photo damage
+            #             self.lasers[0].setEnabled(False)
+            #             self.lasers[1].setEnabled(False)
+            #             self.lasers[2].setEnabled(False)
 
-                        # ensure lasers are off to avoid photo damage
-                        self.lasers[0].setEnabled(False)
-                        self.lasers[1].setEnabled(False)
-                        self.lasers[2].setEnabled(False)
+            #             # download images from the camera
+            #             self.SIMStack = self.detector.getChunk(); self.detector.flushBuffers()
+            #             if self.SIMStack is None:
+            #                 self._logger.error("No image received")
+            #                 continue
+            #         else:
+            #             # we need to capture images and display patterns one-by-one
+            #             self.SIMStack = []
+            #             try:
+            #                 mExposureTime = self.detector.getParameter("exposure")/1e6 # s^-1
+            #             except:
+            #                 mExposureTime = 0.1
+            #             for iPattern in range(9):
+            #                 self.SIMClient.display_pattern(iPattern)
+            #                 time.sleep(mExposureTime) # make sure we take the next newest frame to avoid motion blur from the pattern change
 
-                        # download images from the camera
-                        self.SIMStack = self.detector.getChunk(); self.detector.flushBuffers()
-                        if self.SIMStack is None:
-                            self._logger.error("No image received")
-                            continue
-                    else:
-                        # we need to capture images and display patterns one-by-one
-                        self.SIMStack = []
-                        try:
-                            mExposureTime = self.detector.getParameter("exposure")/1e6 # s^-1
-                        except:
-                            mExposureTime = 0.1
-                        for iPattern in range(9):
-                            self.SIMClient.display_pattern(iPattern)
-                            time.sleep(mExposureTime) # make sure we take the next newest frame to avoid motion blur from the pattern change
-
-                            # Todo: Need to ensure thatwe have the right pattern displayed and the buffer is free - this heavily depends on the exposure time..
-                            mFrame = None
-                            lastFrameNumber = -1
-                            timeoutFrameRequest = 3 # seconds
-                            cTime = time.time()
-                            frameRequestNumber = 0
-                            while(1):
-                                # something went wrong while capturing the frame
-                                if time.time()-cTime> timeoutFrameRequest:
-                                    break
-                                mFrame, currentFrameNumber = self.detector.getLatestFrame(returnFrameNumber=True)
-                                if currentFrameNumber <= lastFrameNumber:
-                                    time.sleep(0.05)
-                                    continue  
-                                frameRequestNumber += 1
-                                if frameRequestNumber > self.nsimFrameSyncVal:
-                                    print(f"Frame number used for stack: {currentFrameNumber}") 
-                                    break
-                                lastFrameNumber = currentFrameNumber
+            #                 # Todo: Need to ensure thatwe have the right pattern displayed and the buffer is free - this heavily depends on the exposure time..
+            #                 mFrame = None
+            #                 lastFrameNumber = -1
+            #                 timeoutFrameRequest = 3 # seconds
+            #                 cTime = time.time()
+            #                 frameRequestNumber = 0
+            #                 while(1):
+            #                     # something went wrong while capturing the frame
+            #                     if time.time()-cTime> timeoutFrameRequest:
+            #                         break
+            #                     mFrame, currentFrameNumber = self.detector.getLatestFrame(returnFrameNumber=True)
+            #                     if currentFrameNumber <= lastFrameNumber:
+            #                         time.sleep(0.05)
+            #                         continue  
+            #                     frameRequestNumber += 1
+            #                     if frameRequestNumber > self.nsimFrameSyncVal:
+            #                         print(f"Frame number used for stack: {currentFrameNumber}") 
+            #                         break
+            #                     lastFrameNumber = currentFrameNumber
                                 
-                                #mFrame = self.detector.getLatestFrame() # get the next frame after the pattern has been updated
-                            np.append(self.SIMStack, mFrame)
-                            # self.SIMStack.append(mFrame)
-                        if self.SIMStack is None:
-                            self._logger.error("No image received")
-                            continue
+            #                     #mFrame = self.detector.getLatestFrame() # get the next frame after the pattern has been updated
+            #                 np.append(self.SIMStack, mFrame)
+            #                 # self.SIMStack.append(mFrame)
+            #             if self.SIMStack is None:
+            #                 self._logger.error("No image received")
+            #                 continue
                     
                     
-                    # Simulate the stack
-                    self.SIMstack = processor.simSimulator()
-                    self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength))
+            #         # Simulate the stack
+            #         self.SIMstack = processor.simSimulator()
+            #         self.sigImageReceived.emit(np.array(self.SIMStack),"SIMStack"+str(processor.wavelength))
                     
-                    processor.setSIMStack(self.SIMStack)
-                    processor.getWF(self.SIMStack)
+            #         processor.setSIMStack(self.SIMStack)
+            #         processor.getWF(self.SIMStack)
 
-                    # activate recording in processor
-                    processor.setRecordingMode(self.isRecording)
-                    processor.setReconstructionMode(self.isReconstruction)
-                    processor.setWavelength(self.LaserWL,sim_parameters)
+            #         # activate recording in processor
+            #         processor.setRecordingMode(self.isRecording)
+            #         processor.setReconstructionMode(self.isReconstruction)
+            #         processor.setWavelength(self.LaserWL,sim_parameters)
 
 
-                    # store the raw SIM stack
-                    if self.isRecording and self.lasers[iColour].power>0.0:
-                        date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-                        processor.setDate(date)
-                        mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{zPos+zPosInitially}mum.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
-                    # self.detector.stopAcquisitionSIM()
-                    # We will collect N*M images and process them with the SIM processor
+            #         # store the raw SIM stack
+            #         if self.isRecording and self.lasers[iColour].power>0.0:
+            #             date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+            #             processor.setDate(date)
+            #             mFilenameStack = f"{date}_SIM_Stack_{self.LaserWL}nm_{zPos+zPosInitially}mum.tif"
+            #             threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+            #         # self.detector.stopAcquisitionSIM()
+            #         # We will collect N*M images and process them with the SIM processor
 
-                    # process the frames and display
-                    processor.reconstructSIMStack()
+            #         # process the frames and display
+            #         processor.reconstructSIMStack()
 
-                    # reset the per-colour stack to add new frames in the next imaging series
-                    processor.clearStack()
+            #         # reset the per-colour stack to add new frames in the next imaging series
+            #         processor.clearStack()
 
-                # move back to initial position
-                if len(allZPositions)!=1:
-                    self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
-                    time.sleep(tDebounce)
-                count += 1
+            #     # move back to initial position
+            #     if len(allZPositions)!=1:
+            #         self.positioner.move(value=zPosInitially, axis="Z", is_absolute=True, is_blocking=True)
+            #         time.sleep(tDebounce)
+            #     count += 1
 
-                # TODO: Delete this our keep. At least check.
-                # Deactivate indefinite running of the experiment
-                # self.active = False
-                # print(count)
-                # wait for the next round
-                time.sleep(timePeriod)
-                # ------------Old code---------------
+            #     # TODO: Delete this our keep. At least check.
+            #     # Deactivate indefinite running of the experiment
+            #     # self.active = False
+            #     # print(count)
+            #     # wait for the next round
+            #     time.sleep(timePeriod)
+            #     # ------------Old code---------------
 
         # Set cams for live-view mode and close stream to set the settings
-        for detector in self.detectors:
-            self.setCamAfterExperiment(detector)
+        #CTNOTE DEL
+        # for detector in self.detectors:
+        #     self.setCamAfterExperiment(detector)
         
         ##################################################
         # -----------------Mocker start----------------- #
@@ -1710,11 +1708,11 @@ class SIMController(ImConWidgetController):
         # -----------------Mocker end----------------- #
         ##################################################
         
-        # FIXME: Should we even do this?
-        # Set buffer mode back to normal cam operation
-        buffer_mode = "NewestOnly"
-        for detector in self.detectors:
-            detector._camera.setPropertyValue('buffer_mode', buffer_mode)
+        # # FIXME: Should we even do this?
+        # # Set buffer mode back to normal cam operation
+        # buffer_mode = "NewestOnly"
+        # for detector in self.detectors:
+        #     detector._camera.setPropertyValue('StreamBufferHandlingMode', buffer_mode)
 
 
     def performSIMTimelapseThread(self, sim_parameters):
@@ -2379,7 +2377,7 @@ class SIMParameters(object):
     wavelength_3 = 0.640
     NA = 0.8
     n = 1.0
-    magnification = 22.5
+    magnification = 22.22
     pixelsize = 2.74
     eta = 0.6
     alpha = 0.5
@@ -2415,7 +2413,7 @@ class SIMProcessor(object):
         self.use_phases = True
         self.find_carrier = True
         self.isCalibrated = False
-        self.use_gpu = isPytorch
+        self.use_gpu = isPytorch ##Pytorch boolen refernce
         self.stack = []
 
         # processing parameters
@@ -2759,7 +2757,7 @@ class SIMProcessor(object):
             else:
                 imageSIM = self.h.reconstruct_rfftw(rdata)
 
-            return imageSIM
+            return imageSIM #CTNOTE This is returned with negative values
 
         elif self.reconstructionMethod == "mcSIM":
             """

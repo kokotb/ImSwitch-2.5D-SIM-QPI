@@ -15,27 +15,27 @@ class ViewController(ImConWidgetController):
         self._widget.sigGridToggled.connect(self.gridToggle)
         self._widget.sigCrosshairToggled.connect(self.crosshairToggle)
         self._widget.sigLiveviewToggled.connect(self.liveview)
-        self._widget.sigAcquireSetToggled.connect(self.acquireSet)
-        self._widget.sigTriggerModeToggled.connect(self.setLiveTriggerModeState)
+        # self._widget.sigAcquireSetToggled.connect(self.acquireSet)
+        # self._widget.sigTriggerModeToggled.connect(self.setLiveTriggerModeState)
 
     def liveview(self, enabled):
         """ Start liveview and activate detector acquisition. """
         # print(enabled)
         # print(self)
         if enabled and self._acqHandle is None:
-        
+            #CTNOTE TRIGGER ACTIVATION HERE MAYBE
             self._acqHandle = self._master.detectorsManager.startAcquisition(liveView=True)
-         
+            # for heading in self._master.detectorsManager._subManagers:
+            #     trigValue = self._master.detectorsManager._subManagers[{heading}]._DetectorManager__parameters['TriggerMode'].value
+            #     if trigValue == 'On':
+            self._master.arduinoManager.startContSequence(0)
             self._widget.setViewToolsEnabled(True)
         elif not enabled and self._acqHandle is not None:
             self._master.detectorsManager.stopAcquisition(self._acqHandle, liveView=True)
+            self._master.arduinoManager.stopSequence()
             self._acqHandle = None
         # print("liveview")
             
-
-    def acquireSet(self, enabled):
-        """ Start acquire set - send signal to start the acquisition. """
-        self._master.detectorsManager.runAcquireSet()
 
     def gridToggle(self, enabled):
         """ Connect with grid toggle from Image Widget through communication channel. """
@@ -58,14 +58,14 @@ class ViewController(ImConWidgetController):
             print("else if detector name")
             return self._master.detectorsManager[detectorName].getLatestFrame()
     
-    def setLiveTriggerModeState(self):
-        """ Sets trigger mode down to a detector level"""
-        # Check checkbox
-        trigger_mode = self._widget.checkbox_trigerred.isChecked()
-        detector = self._master.detectorsManager.getCurrentDetector()
+    # def setLiveTriggerModeState(self):
+    #     """ Sets trigger mode down to a detector level"""
+    #     # Check checkbox
+    #     trigger_mode = self._widget.checkbox_trigerred.isChecked()
+    #     detector = self._master.detectorsManager.getCurrentDetector()
 
-        # Setting trigger mode to a detector
-        detector.live_trigger_mode = trigger_mode
+    #     # Setting trigger mode to a detector
+    #     detector.live_trigger_mode = trigger_mode
 
 
     @APIExport(runOnUIThread=True)
@@ -83,10 +83,10 @@ class ViewController(ImConWidgetController):
         """ Sets whether the LiveView crosshair is visible. """
         self._widget.setLiveViewCrosshairVisible(visible)
 
-    @APIExport(runOnUIThread=True)
-    def setLiveViewAcquireSet(self, visible: bool) -> None:
-        """ Sets whether the LiveView crosshair is visible. """
-        self._widget.setLiveViewAcquireSet(visible)
+    # @APIExport(runOnUIThread=True)
+    # def setLiveViewAcquireSet(self, visible: bool) -> None:
+    #     """ Sets whether the LiveView crosshair is visible. """
+    #     self._widget.setLiveViewAcquireSet(visible)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
