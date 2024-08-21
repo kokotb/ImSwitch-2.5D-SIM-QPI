@@ -1209,8 +1209,8 @@ class SIMController(ImConWidgetController):
                 time_color_start = time.time()
                 
                 # Trigger SIM set acquisition for all present lasers
-                # self._master.arduinoManager.startOneSequence(orderID)
-                self._master.arduinoManager.startOneSequenceWriteOnly(orderID)
+                self._master.arduinoManager.startOneSequence(orderID)
+                # self._master.arduinoManager.startOneSequenceWriteOnly(orderID)
                 # SIMClient.send_start_sequence_trigger()
                 
                 time_color_end = time.time()

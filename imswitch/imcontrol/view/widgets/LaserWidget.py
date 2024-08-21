@@ -96,9 +96,9 @@ class LaserWidget(Widget):
             initialPower=valueRange[0] if valueRange is not None else 0,
             frequencyRange=frequencyRange
         )
-        control.sigEnableChanged.connect(
-            lambda enabled: self.sigEnableChanged.emit(laserName, enabled)
-        )
+        # control.sigEnableChanged.connect(
+        #     lambda enabled: self.sigEnableChanged.emit(laserName, enabled)
+        # )
         control.sigValueChanged.connect(
             lambda value: self.sigValueChanged.emit(laserName, value)
         )
@@ -257,7 +257,7 @@ class LaserModule(QtWidgets.QWidget):
         self.maxpower = QtWidgets.QLabel()
         self.maxpower.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        self.slider = guitools.FloatSlider(QtCore.Qt.Horizontal, self, allowScrollChanges=False,
+        self.slider = guitools.FloatSlider(QtCore.Qt.Horizontal, self, allowScrollChanges=True,
                                            decimals=valueDecimals)
         self.slider.setFocusPolicy(QtCore.Qt.NoFocus)
 
@@ -353,7 +353,7 @@ class LaserModule(QtWidgets.QWidget):
             sizePolicy.setRetainSizeWhenHidden(True)
             powerFrame.setSizePolicy(sizePolicy)
             powerFrame.hide()
-        self.layout.addWidget(self.enableButton)
+        # self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
 
         # Connect signals
         self.enableButton.toggled.connect(self.sigEnableChanged)

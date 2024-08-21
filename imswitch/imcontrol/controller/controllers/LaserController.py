@@ -23,8 +23,10 @@ class LaserController(ImConWidgetController):
                 lManager.valueRangeStep if lManager.valueRangeStep is not None else None,
                 (lManager.freqRangeMin, lManager.freqRangeMax, lManager.freqRangeInit) if lManager.isModulated else (0, 0, 0)
             )
+
             if not lManager.isBinary:
-                self.valueChanged(lName, lManager.valueRangeMin)
+                # self.valueChanged(lName, lManager.valueRangeMin)
+                self.valueChanged(lName, 10) #CTNOTE CTREMOVE AOTF starts AOTF with 10 power, remove after SLM/SIM testing
 
             self.setSharedAttr(lName, _enabledAttr, self._widget.isLaserActive(lName))
             self.setSharedAttr(lName, _valueAttr, self._widget.getValue(lName))
@@ -265,27 +267,27 @@ class LaserController(ImConWidgetController):
         defaultPreset = self._setupInfo.laserPresets[self._setupInfo.defaultLaserPresetForScan]
         defaultPreset[laserName] = guitools.LaserPresetInfo(value=laserValue)
 
-    @APIExport(runOnUIThread=True)
-    def sendTrigger(self, triggerId: int):
-        """ Sends a trigger puls through external device """
-        #TODo: Very special case, try to move in seperate manager 
-        self._master.rs232sManager["ESP32"]._esp32.sendTrigger(triggerId)
+    # @APIExport(runOnUIThread=True)
+    # def sendTrigger(self, triggerId: int):
+    #     """ Sends a trigger puls through external device """
+    #     #TODo: Very special case, try to move in seperate manager 
+    #     self._master.rs232sManager["ESP32"]._esp32.sendTrigger(triggerId)
 
-    @APIExport(runOnUIThread=True)
-    def post_json(self, path: str, payload: dict) -> str:
-        """ Sends the specified command to the RS232 device and returns a
-        string encoded from the received bytes. """
-        return self._master.rs232sManager["ESP32"]._esp32.post_json(path, payload=payload, headers=None, timeout=1)
+    # @APIExport(runOnUIThread=True)
+    # def post_json(self, path: str, payload: dict) -> str:
+    #     """ Sends the specified command to the RS232 device and returns a
+    #     string encoded from the received bytes. """
+    #     return self._master.rs232sManager["ESP32"]._esp32.post_json(path, payload=payload, headers=None, timeout=1)
 
-    @APIExport(runOnUIThread=True)
-    def send_serial(self, payload: str) -> str:
-        """ Sends the specified command to the RS232 device and returns a
-        string encoded from the received bytes. """
-        self._master.rs232sManager["ESP32"]._esp32.writeSerial(payload)
-        #self.__logger.debug(payload)
-        returnmessage = self._master.rs232sManager["ESP32"]._esp32.readSerial(is_blocking=True, timeout=1)
+    # @APIExport(runOnUIThread=True)
+    # def send_serial(self, payload: str) -> str:
+    #     """ Sends the specified command to the RS232 device and returns a
+    #     string encoded from the received bytes. """
+    #     self._master.rs232sManager["ESP32"]._esp32.writeSerial(payload)
+    #     #self.__logger.debug(payload)
+    #     returnmessage = self._master.rs232sManager["ESP32"]._esp32.readSerial(is_blocking=True, timeout=1)
 
-        return returnmessage
+    #     return returnmessage
 
 
 
