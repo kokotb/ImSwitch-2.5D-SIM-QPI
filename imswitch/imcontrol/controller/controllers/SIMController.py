@@ -1246,6 +1246,7 @@ class SIMController(ImConWidgetController):
                     img_number_per_set = 9
                     self.SIMStack = detector._camera.grabFrameSet(img_number_per_set)
                     
+                    
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
