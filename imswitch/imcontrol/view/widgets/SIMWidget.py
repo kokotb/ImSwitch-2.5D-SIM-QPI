@@ -110,7 +110,7 @@ class SIMWidget(NapariHybridWidget):
         
         # Grid scan settings
         params = [
-            ("N grid X", "1"), ("N grid Y", "1"), ("overlap","0"), ("exposure [us]", "19000")]
+            ("N grid X", "1"), ("N grid Y", "1"), ("overlap","0"), ("exposure [us]", "19000"), ("# recon frame skip", "0")]
         self.numGridX_label = QLabel(params[0][0])
         self.numGridX_textedit = QLineEdit(params[0][1])
         self.numGridY_label = QLabel(params[1][0])
@@ -119,6 +119,8 @@ class SIMWidget(NapariHybridWidget):
         self.overlap_textedit = QLineEdit(params[2][1])
         # self.exposure_label = QLabel(params[3][0])
         # self.exposure_textedit = QLineEdit(params[3][1])
+        self.reconFrameSkip_label = QLabel(params[4][0])
+        self.reconFrameSkip_textedit = QLineEdit(params[4][1])
                 
         # Save folder
         self.path_label = QLabel(checkboxes[8])
@@ -130,22 +132,41 @@ class SIMWidget(NapariHybridWidget):
         # self.checkbox_mock.setChecked(True) # Sets default fo true 
         # self.checkbox_mock.setChecked(False) # Sets default fo true 
         
-        layout.addWidget(self.checkbox_reconstruction)
-        layout.addWidget(self.checkbox_record_reconstruction)
-        layout.addWidget(self.checkbox_record_raw)
-        layout.addWidget(self.numGridX_label)
-        layout.addWidget(self.numGridX_textedit)
-        layout.addWidget(self.numGridY_label)
-        layout.addWidget(self.numGridY_textedit)
-        layout.addWidget(self.overlap_label)
-        layout.addWidget(self.overlap_textedit)
+        # Edit checkbox layout
+        # Column 1
+        checkbox_layout = QtWidgets.QGridLayout()
+        checkbox_layout.addWidget(self.checkbox_reconstruction, 0, 0)
+        checkbox_layout.addWidget(self.checkbox_record_reconstruction, 1, 0)
+        checkbox_layout.addWidget(self.checkbox_record_raw, 2, 0)
+        
+        layout.addLayout(checkbox_layout)
+        
+        parameters_layout = QtWidgets.QGridLayout()
+        row = 0
+        
+        parameters_layout.addWidget(self.numGridX_label, row, 0)
+        parameters_layout.addWidget(self.numGridX_textedit, row, 1)
+        parameters_layout.addWidget(self.numGridY_label, row + 1, 0)
+        parameters_layout.addWidget(self.numGridY_textedit, row + 1, 1)
+        parameters_layout.addWidget(self.overlap_label, row + 2, 0)
+        parameters_layout.addWidget(self.overlap_textedit, row + 2, 1)
+        parameters_layout.addWidget(self.reconFrameSkip_label, row + 3, 0)
+        parameters_layout.addWidget(self.reconFrameSkip_textedit, row + 3, 1)
+        # parameters_layout.addWidget(self.exposure_label, row + 4, 0)
+        # parameters_layout.addWidget(self.exposure_textedit, row + 4)        
+        layout.addLayout(parameters_layout)
+        
+        parameters2_layout = QtWidgets.QGridLayout()
+        row = 0
+        
         # layout.addWidget(self.exposure_label)
         # layout.addWidget(self.exposure_textedit)
-        layout.addWidget(self.path_label)
-        layout.addWidget(self.path_edit)        
-        layout.addWidget(self.openFolderButton)
-        layout.addWidget(self.checkbox_mock)
-
+        parameters2_layout.addWidget(self.path_label, row, 0)
+        parameters2_layout.addWidget(self.path_edit, row, 1)        
+        parameters2_layout.addWidget(self.openFolderButton, row + 1, 0, 1, 2)
+        parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
+        
+        layout.addLayout(parameters2_layout)
         
         tab.setLayout(layout)
         return tab
@@ -345,6 +366,10 @@ class SIMWidget(NapariHybridWidget):
         # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
         parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text()}
         return parameter_dict
+    
+    def getSkipFrames(self):
+        num = int(self.reconFrameSkip_textedit.text())
+        return num
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

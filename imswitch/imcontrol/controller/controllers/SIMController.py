@@ -484,6 +484,7 @@ class SIMController(ImConWidgetController):
     def getExperimentSettings(self):
         parameter_dict = self._widget.getRecParameters()
         
+        
         # Load parameters to object
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
@@ -1328,7 +1329,14 @@ class SIMController(ImConWidgetController):
                     # same thing, takes the same amount of time 
                     # threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
                     
-                    if self.isReconstruction:
+                    num_skip_frames = self._widget.getSkipFrames() + 1
+                    if count == 0:
+                        div_1 = 0
+                    else:                        
+                        int_1, div_1  = divmod(count, num_skip_frames)
+                    
+                    # if self.isReconstruction and div_1 == 0:
+                    if self.isReconstruction and div_1 == 0:
                         processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
                     # FIXME: Remove after development is completed
@@ -1668,11 +1676,13 @@ class SIMController(ImConWidgetController):
                     # same thing, takes the same amount of time
                     
                     # TODO: setting up not every frame is reconstructed
-                    # Currently hardcoded, will be read from widget
+                    # +1, wording of the widget is how many frames to skip
+                    # for skipping 0 frames we need to divide by 1
+                    num_skip_frames = self._widget.getSkipFrames() + 1
                     if count == 0:
                         div_1 = 0
                     else:                        
-                        int_1, div_1  = divmod(count,5)
+                        int_1, div_1  = divmod(count, num_skip_frames)
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
