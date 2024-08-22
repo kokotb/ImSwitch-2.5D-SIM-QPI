@@ -38,9 +38,10 @@ class SIMWidget(NapariHybridWidget):
         self.zstack_settings_tab = self.create_zstack_settings_tab()
         
         
-        self.tabView.addTab(self.manual_control_tab, "Manual Control")
         self.tabView.addTab(self.experiment_tab, "Experiment")
         self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
+        self.tabView.addTab(self.manual_control_tab, "Manual Control")
+
         self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
         self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
         
@@ -103,6 +104,7 @@ class SIMWidget(NapariHybridWidget):
             
         ]
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
+        # self.checkbox_reconstruction.setEnabled(True)
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
         
