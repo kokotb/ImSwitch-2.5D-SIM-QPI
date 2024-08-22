@@ -181,7 +181,10 @@ class SIMController(ImConWidgetController):
         # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
 
-        self.initFastAPISIM(self._master.simManager.fastAPISIMParams)
+        # FIXME: Delete after development - we are not using this 
+        # Commenting this out removed the https time-out error.
+        # Now it is not trying to connect.
+        # self.initFastAPISIM(self._master.simManager.fastAPISIMParams)
 
         # FIXME: imswitch as is currently set up does not contain 
         # IS_HEADLESS attirbute  
