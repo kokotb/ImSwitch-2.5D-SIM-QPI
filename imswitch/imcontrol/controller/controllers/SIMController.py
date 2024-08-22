@@ -314,13 +314,8 @@ class SIMController(ImConWidgetController):
     def stopSIM(self):
         self.active = False
         self.simThread.join()
-        self.lasers[0].setEnabled(False)
-        self.lasers[1].setEnabled(False)
-
-        if self.isPCO:
-            self.detector.setParameter("trigger_source","Internal trigger")
-            self.detector.setParameter("buffer_size",-1)
-            self.detector.flushBuffers()
+        for laser in self.lasers:
+            laser.setEnabled(False)
 
 
     def startSIMoriginal(self):
@@ -1156,6 +1151,10 @@ class SIMController(ImConWidgetController):
         # -----------------SIM acquisition--------------- #
         ###################################################
         
+        if not mock:
+            for ID in laser_ID:
+                self.lasers[ID].setEnabled(True)
+
         while self.active and not mock and dic_wl != []:
         # run only once
         
@@ -1167,8 +1166,7 @@ class SIMController(ImConWidgetController):
                 stackSIM.append([]) 
             # TODO: SLM drives laser powers, do lasers really need to be 
             # enabled?
-            for ID in laser_ID:
-                self.lasers[ID].setEnabled(True)
+
                 
             # Set frame number - prepared for time-lapse
             # frame_num = 0
@@ -1209,8 +1207,8 @@ class SIMController(ImConWidgetController):
                 time_color_start = time.time()
                 
                 # Trigger SIM set acquisition for all present lasers
+                # self._master.arduinoManager.startOneSequence(orderID)
                 self._master.arduinoManager.startOneSequence(orderID)
-                # self._master.arduinoManager.startOneSequenceWriteOnly(orderID)
                 # SIMClient.send_start_sequence_trigger()
                 
                 time_color_end = time.time()

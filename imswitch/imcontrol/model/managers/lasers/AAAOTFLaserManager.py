@@ -33,7 +33,8 @@ class AAAOTFLaserManager(LaserManager):
         else:
             value = 0
         cmd = 'L' + str(self._channel) + 'O' + str(value)
-        self._rs232manager.query(cmd)
+        ans = self._rs232manager.query(cmd)
+        print(ans)
 
     def setValue(self, power):
         """Handles output power.

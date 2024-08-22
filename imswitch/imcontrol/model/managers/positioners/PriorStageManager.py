@@ -47,24 +47,24 @@ class PriorStageManager(PositionerManager):
         if stage:
             self.__logger.warning(f'Failed to initialize {stage}, loading mocker')
             # sys.exit()
-        else:
-            print(f"Ok initialising {stage}")
+        # else:
+        #     print(f"Ok initialising {stage}")
         
         #Initialize communication sessionID
         sessionID = SDKPrior.PriorScientificSDK_OpenNewSession()
         if sessionID < 0:
             print(f"Error getting sessionID {stage}")
             # sys.exit()
-        else:
-            print(f"SessionID = {sessionID}")
+        # else:
+        #     print(f"SessionID = {sessionID}")
         
         # Check if connection works
-        ret = SDKPrior.PriorScientificSDK_cmd(
+        SDKPrior.PriorScientificSDK_cmd(
         sessionID, create_string_buffer(b"dll.apitest 33 goodresponse"), self.rx)
-        print(f"api response {ret}, rx = {self.rx.value.decode()}")
-        ret = SDKPrior.PriorScientificSDK_cmd(
+        # print(f"api response {ret}, rx = {self.rx.value.decode()}")
+        SDKPrior.PriorScientificSDK_cmd(
         sessionID, create_string_buffer(b"dll.apitest -300 stillgoodresponse"), self.rx)
-        print(f"api response {ret}, rx = {self.rx.value.decode()}")
+
         
         # Try to initialize stage
         
@@ -79,7 +79,7 @@ class PriorStageManager(PositionerManager):
             from . import MockSDKPriorDLL
             SDKPrior = MockSDKPriorDLL.MockSDKPriorDLL
             SDKPriorMock = True       
-        
+
         return SDKPrior, SDKPriorMock, stage, sessionID
     
     
