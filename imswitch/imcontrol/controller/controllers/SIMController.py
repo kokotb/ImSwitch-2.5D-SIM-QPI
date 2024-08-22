@@ -1666,7 +1666,16 @@ class SIMController(ImConWidgetController):
                     # Process the frames and display reconstructions
                     # FIXME: Testing threading, this solution below does the 
                     # same thing, takes the same amount of time
-                    if self.isReconstruction:
+                    
+                    # TODO: setting up not every frame is reconstructed
+                    # Currently hardcoded, will be read from widget
+                    if count == 0:
+                        div_1 = 0
+                    else:                        
+                        int_1, div_1  = divmod(count,5)
+                    
+                    # if self.isReconstruction and div_1 == 0:
+                    if self.isReconstruction and div_1 == 0:
                         threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
                         # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
