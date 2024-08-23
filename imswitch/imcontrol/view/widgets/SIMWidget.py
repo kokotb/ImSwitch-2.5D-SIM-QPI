@@ -34,16 +34,16 @@ class SIMWidget(NapariHybridWidget):
         self.manual_control_tab = self.create_manual_control_tab()
         self.experiment_tab = self.create_experiment_tab()
         self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
-        self.timelapse_settings_tab = self.create_timelapse_settings_tab()
-        self.zstack_settings_tab = self.create_zstack_settings_tab()
+        # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
+        # self.zstack_settings_tab = self.create_zstack_settings_tab()
         
         
         self.tabView.addTab(self.experiment_tab, "Experiment")
         self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
         self.tabView.addTab(self.manual_control_tab, "Manual Control")
 
-        self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
-        self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
+        # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
+        # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
         
         self.layer = None
         
@@ -268,86 +268,86 @@ class SIMWidget(NapariHybridWidget):
         tab.setLayout(layout)
         return tab
 
-    def create_timelapse_settings_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
+    # def create_timelapse_settings_tab(self):
+    #     tab = QWidget()
+    #     layout = QVBoxLayout()
 
-        # Label/textedit pairs
-        settings = [
-            ("Period", "0"), ("Number of frames", "10")
-        ]
+    #     # Label/textedit pairs
+    #     settings = [
+    #         ("Period", "0"), ("Number of frames", "10")
+    #     ]
         
-        # create widget per label
-        self.period_label = QLabel(settings[0][0])
-        self.period_textedit = QLineEdit(settings[0][1])
-        self.period_unit = QLabel("s")
-        self.frames_label = QLabel(settings[1][0])
-        self.frames_textedit = QLineEdit(settings[1][1])
-        row_layout_1 = QHBoxLayout()
-        row_layout_1.addWidget(self.period_label)
-        row_layout_1.addWidget(self.period_textedit)
-        row_layout_1.addWidget(self.period_unit)
-        row_layout_2 = QHBoxLayout()
-        row_layout_2.addWidget(self.frames_label)
-        row_layout_2.addWidget(self.frames_textedit)
-        layout.addLayout(row_layout_1)
-        layout.addLayout(row_layout_2)
+    #     # create widget per label
+    #     self.period_label = QLabel(settings[0][0])
+    #     self.period_textedit = QLineEdit(settings[0][1])
+    #     self.period_unit = QLabel("s")
+    #     self.frames_label = QLabel(settings[1][0])
+    #     self.frames_textedit = QLineEdit(settings[1][1])
+    #     row_layout_1 = QHBoxLayout()
+    #     row_layout_1.addWidget(self.period_label)
+    #     row_layout_1.addWidget(self.period_textedit)
+    #     row_layout_1.addWidget(self.period_unit)
+    #     row_layout_2 = QHBoxLayout()
+    #     row_layout_2.addWidget(self.frames_label)
+    #     row_layout_2.addWidget(self.frames_textedit)
+    #     layout.addLayout(row_layout_1)
+    #     layout.addLayout(row_layout_2)
         
-        layout.addSpacing(20)
+    #     layout.addSpacing(20)
         
-        self.start_timelapse_button = QPushButton("Start TimeLapse")
-        self.stop_timelapse_button = QPushButton("Stop TimeLapse")
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.start_timelapse_button)
-        button_layout.addWidget(self.stop_timelapse_button)
-        layout.addLayout(button_layout)
+    #     self.start_timelapse_button = QPushButton("Start TimeLapse")
+    #     self.stop_timelapse_button = QPushButton("Stop TimeLapse")
+    #     button_layout = QHBoxLayout()
+    #     button_layout.addWidget(self.start_timelapse_button)
+    #     button_layout.addWidget(self.stop_timelapse_button)
+    #     layout.addLayout(button_layout)
 
-        tab.setLayout(layout)
-        return tab
+    #     tab.setLayout(layout)
+    #     return tab
         
 
-    def create_zstack_settings_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
+    # def create_zstack_settings_tab(self):
+    #     tab = QWidget()
+    #     layout = QVBoxLayout()
 
-        # Label/textedit pairs
-        settings = [
-            ("Z-min", "-100"), ("Z-max", "100"), ("NSteps", "0")
-        ]
-        # create widget per label
-        self.zmin_label = QLabel(settings[0][0])
-        self.zmin_textedit = QLineEdit(settings[0][1])
-        self.zmax_label = QLabel(settings[1][0])
-        self.zmax_textedit = QLineEdit(settings[1][1])
-        self.z_unit = QLabel("µm")
-        self.nsteps_label = QLabel(settings[2][0])
-        self.nsteps_textedit = QLineEdit(settings[2][1])
-        row_layout_1 = QHBoxLayout()
-        row_layout_1.addWidget(self.zmin_label)
-        row_layout_1.addWidget(self.zmin_textedit)
-        row_layout_1.addWidget(self.z_unit)
-        row_layout_2 = QHBoxLayout()
-        row_layout_2.addWidget(self.zmax_label)
-        row_layout_2.addWidget(self.zmax_textedit)
-        row_layout_2.addWidget(self.z_unit)
-        row_layout_3 = QHBoxLayout()
-        row_layout_3.addWidget(self.nsteps_label)
-        row_layout_3.addWidget(self.nsteps_textedit)
-        layout.addLayout(row_layout_1)
-        layout.addLayout(row_layout_2)
-        layout.addLayout(row_layout_3)
+    #     # Label/textedit pairs
+    #     settings = [
+    #         ("Z-min", "-100"), ("Z-max", "100"), ("NSteps", "0")
+    #     ]
+    #     # create widget per label
+    #     self.zmin_label = QLabel(settings[0][0])
+    #     self.zmin_textedit = QLineEdit(settings[0][1])
+    #     self.zmax_label = QLabel(settings[1][0])
+    #     self.zmax_textedit = QLineEdit(settings[1][1])
+    #     self.z_unit = QLabel("µm")
+    #     self.nsteps_label = QLabel(settings[2][0])
+    #     self.nsteps_textedit = QLineEdit(settings[2][1])
+    #     row_layout_1 = QHBoxLayout()
+    #     row_layout_1.addWidget(self.zmin_label)
+    #     row_layout_1.addWidget(self.zmin_textedit)
+    #     row_layout_1.addWidget(self.z_unit)
+    #     row_layout_2 = QHBoxLayout()
+    #     row_layout_2.addWidget(self.zmax_label)
+    #     row_layout_2.addWidget(self.zmax_textedit)
+    #     row_layout_2.addWidget(self.z_unit)
+    #     row_layout_3 = QHBoxLayout()
+    #     row_layout_3.addWidget(self.nsteps_label)
+    #     row_layout_3.addWidget(self.nsteps_textedit)
+    #     layout.addLayout(row_layout_1)
+    #     layout.addLayout(row_layout_2)
+    #     layout.addLayout(row_layout_3)
         
-        layout.addSpacing(20)
+    #     layout.addSpacing(20)
         
-        self.start_zstack_button = QPushButton("Start Z-Stack")
-        self.stop_zstack_button = QPushButton("Stop Z-Stack")
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.start_zstack_button)
-        button_layout.addWidget(self.stop_zstack_button)
-        layout.addLayout(button_layout)
+    #     self.start_zstack_button = QPushButton("Start Z-Stack")
+    #     self.stop_zstack_button = QPushButton("Stop Z-Stack")
+    #     button_layout = QHBoxLayout()
+    #     button_layout.addWidget(self.start_zstack_button)
+    #     button_layout.addWidget(self.stop_zstack_button)
+    #     layout.addLayout(button_layout)
 
-        tab.setLayout(layout)
-        return tab
+    #     tab.setLayout(layout)
+    #     return tab
         
         
     def getZStackParameters(self):

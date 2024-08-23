@@ -446,14 +446,21 @@ class CameraTIS:
         # print('Triggers not set yet.')
         
         # Set buffers
-        self.device.stop_stream()    
+        self.device.stop_stream() 
+
+    def clearBuffers(self):
+        waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount'].value
+        if waitingBuffers > 0:
+            buffer_set = self.device.get_buffer(waitingBuffers)
+            self.device.requeue_buffer(buffer_set)
 
     
     def grabFrameSet(self, buffer_size):
         # buffer_size = image number pulled from a cam
         
         buffer_type = "Mono16" #FIXME: do this with getproperty
-        # print(f"---Buffer gra --- on {self.device}")
+        # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
+
         buffer_set = self.device.get_buffer(buffer_size) 
         # buffer = self.device.get_buffer()
         # print(self.device)
@@ -464,7 +471,7 @@ class CameraTIS:
         
         for buffer in buffer_set:        
             items.append(BufferFactory.copy(buffer))
-            self.device.requeue_buffer(buffer)
+        self.device.requeue_buffer(buffer_set)
         # item = BufferFactory.copy(buffer)
         # self.device.requeue_buffer(buffer)
 
