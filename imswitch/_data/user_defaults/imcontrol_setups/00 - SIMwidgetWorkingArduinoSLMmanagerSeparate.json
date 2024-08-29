@@ -39,12 +39,67 @@
   "isMock": false
 },
 "detectors": {
+  "55Camera": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "LUCIDManager",
+    "managerProperties": {
+      "cameraListIndex": 55,
+      "wavelength": 488,
+      "x0_global": 0,
+      "y0_global": 0,
+      "camProperties": {
+        "ExposureTime": 500.0,
+        "ExposureAuto": "Off",
+        "TriggerMode": "Off",
+        "Gain": 0.0, 
+        "Gamma": 1.0,
+        "AcquisitionFrameRateEnable": false,
+        "AcquisitionFrameRate":20.0
+      },
+      "ROI":{
+        "OffsetX": 120,
+        "OffsetY": 120,
+        "Width": 512,
+        "Height": 512
+      }
+    },
+    "forAcquisition": true
+  },
+  "66Camera": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "LUCIDManager",
+    "managerProperties": {
+      "cameraListIndex": 66,
+      "wavelength": 561,
+      "x0_global": 0,
+      "y0_global": 0,
+      "camProperties": {
+        "ExposureTime": 500.0,
+        "ExposureAuto": "Off",
+        "TriggerMode": "Off",
+        "Gain": 0.0, 
+        "Gamma": 1.0,
+        "AcquisitionFrameRateEnable": false,
+        "AcquisitionFrameRate":20.0
+      },
+      "ROI":{
+        "OffsetX": 112,
+        "OffsetY": 112,
+        "Width": 512,
+        "Height": 512
+      }
+    },
+    "forAcquisition": true
+  },
     "65Camera": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 65,
+        "wavelength": 640,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
@@ -64,59 +119,9 @@
         }
       },
       "forAcquisition": true
-    },
-    "66Camera": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "LUCIDManager",
-      "managerProperties": {
-        "cameraListIndex": 66,
-        "x0_global": 0,
-        "y0_global": 0,
-        "camProperties": {
-          "ExposureTime": 500.0,
-          "ExposureAuto": "Off",
-          "TriggerMode": "Off",
-          "Gain": 0.0, 
-          "Gamma": 1.0,
-          "AcquisitionFrameRateEnable": false,
-          "AcquisitionFrameRate":20.0
-        },
-        "ROI":{
-          "OffsetX": 112,
-          "OffsetY": 112,
-          "Width": 512,
-          "Height": 512
-        }
-      },
-      "forAcquisition": true
-    },
-    "55Camera": {
-      "analogChannel": null,
-      "digitalLine": null,
-      "managerName": "LUCIDManager",
-      "managerProperties": {
-        "cameraListIndex": 55,
-        "x0_global": 0,
-        "y0_global": 0,
-        "camProperties": {
-          "ExposureTime": 500.0,
-          "ExposureAuto": "Off",
-          "TriggerMode": "Off",
-          "Gain": 0.0, 
-          "Gamma": 1.0,
-          "AcquisitionFrameRateEnable": false,
-          "AcquisitionFrameRate":20.0
-        },
-        "ROI":{
-          "OffsetX": 120,
-          "OffsetY": 120,
-          "Width": 512,
-          "Height": 512
-        }
-      },
-      "forAcquisition": true
     }
+
+
 }, 
 
 "lasers": {

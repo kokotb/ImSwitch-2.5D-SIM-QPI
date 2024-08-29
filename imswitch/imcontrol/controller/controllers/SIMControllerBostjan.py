@@ -146,17 +146,17 @@ class SIMController(ImConWidgetController):
                 self.lasers.append(dummyLaser("Laser"+str(i), 100))
         # select detectors
         allDetectorNames = self._master.detectorsManager.getAllDeviceNames()
-        # self.detector = self._master.detectorsManager[allDetectorNames[0]]
+        self.detector = self._master.detectorsManager[allDetectorNames[0]]
         # Get all detector objects
         self.detectors = []
         for detector_name in allDetectorNames:
             self.detectors.append(self._master.detectorsManager[detector_name])
-        # if self.detector.model == "CameraPCO":
-        #     # here we can use the buffer mode
-        #     self.isPCO = True
-        # else:
-        #     # here we need to capture frames consecutively
-        #     self.isPCO = False
+        if self.detector.model == "CameraPCO":
+            # here we can use the buffer mode
+            self.isPCO = True
+        else:
+            # here we need to capture frames consecutively
+            self.isPCO = False
             
         # Pull magnifications from config file
         for detector in self.detectors:
@@ -219,19 +219,19 @@ class SIMController(ImConWidgetController):
         time_whole_start = time.time()
         # Newly added, prep for SLM integration
         mock = self.mock
-
-
+        # laser_wl = 488
+        # exposure_ms = 1
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
         dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
         # TODO: Delete after development is done - here to help get devices 
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-
+        # dic_exposure_dev = {0.5:'0' , 1:'1'} # 0.5 ms, 1 ms
         dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
         # self.patternID = 0
         self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
-        # dic_wl_in = [488, 561, 640]
+        dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
@@ -241,9 +241,9 @@ class SIMController(ImConWidgetController):
         dic_wl = []
         laser_ID = []
         # num_lasers = 0            
-        for dic in list(dic_wl_dev):
-            if self.lasers[dic_wl_dev[dic]].power > 0.0:
-                dic_wl.append(dic) #List of wavelengths actually powered
+        for k, dic in enumerate(dic_wl_in):
+            if dic_laser_present[dic] and self.lasers[dic_wl_dev[dic]].power > 0.0:
+                dic_wl.append(dic)
                 laser_ID.append(dic_wl_dev[dic])
                 # num_lasers += 1
         
@@ -345,13 +345,13 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up cams-------------------
 
         # FIXME: Automate buffer size calculation based on image size, it did not work before
-        total_buffer_size_MB = 350 # in MBs
+        total_buffer_size_MB = 380 # in MBs
         for detector in self.detectors:
             image_size = detector.shape
-            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
+            image_size_MB = 2*image_size[0]*image_size[1]/(1024**2)
             buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            # buffer_size = 500
-            self.setCamForExperiment(detector, int(buffer_size))
+            buffer_size = 500
+            self.setCamForExperiment(detector, buffer_size)
         
         if not mock:
             for ID in laser_ID:
@@ -418,7 +418,6 @@ class SIMController(ImConWidgetController):
                 
                 times_color.append([f"{time_color_total*1000}ms","startOneSequence"])
                 time_color_start = time.time()
-                time.sleep(1)
                 
                 # ----sub loop start----
                 for k, processor in enumerate(processors):
@@ -452,11 +451,11 @@ class SIMController(ImConWidgetController):
                     waitingBuffers = 0
                    
                     while waitingBuffers != 9:
-                        time.sleep(.2)
+                        time.sleep(.1)
                         waitingBuffers = detector._camera.tl_stream_nodemap['StreamOutputBufferCount'].value #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
                         waitingBuffersEnd = 0
-                        if waitingBuffers != waitingBuffersEnd:
+                        if waitingBuffers == waitingBuffersEnd:
                             break
                         print(waitingBuffers)
                         
@@ -467,7 +466,7 @@ class SIMController(ImConWidgetController):
                         #         detector._camera.clearBuffers()
                         #     print(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
                         #     broken = True
-                        #     break  
+                        #     break
                  
                     self.SIMStack = detector._camera.grabFrameSet(img_number_per_set)
                     # print(len(self.SIMStack))
@@ -537,8 +536,7 @@ class SIMController(ImConWidgetController):
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                        # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                        processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
                     
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
@@ -895,50 +893,6 @@ class SIMController(ImConWidgetController):
         # buffer_mode = "NewestOnly"
         # for detector in self.detectors:
         #     detector._camera.setPropertyValue('StreamBufferHandlingMode', buffer_mode)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1526,9 +1480,8 @@ class SIMProcessor(object):
         if not self.isReconstructing:  # not
             self.isReconstructing=True
             mStackCopy = np.array(self.stack.copy())
-            # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
-            # self.mReconstructionThread.start()
-            self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame)
+            self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
+            self.mReconstructionThread.start()
 
     def setRecordingMode(self, isRecording):
         self.isRecording = isRecording

@@ -462,7 +462,7 @@ class CameraTIS:
         # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
 
         buffer_set = self.device.get_buffer(buffer_size) 
-        # buffer = self.device.get_buffer()
+        # buffer = self.device.get_buffer() 
         # print(self.device)
         """
         Copy buffer and requeue to avoid running out of buffers
