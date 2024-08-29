@@ -357,6 +357,8 @@ class SIMController(ImConWidgetController):
             for ID in laser_ID:
                 self.lasers[ID].setEnabled(True)
 
+        droppedFrameSets = 0
+
         while self.active and not mock and dic_wl != []:
         # run only once
         
@@ -405,7 +407,7 @@ class SIMController(ImConWidgetController):
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 
-                times_color.append([f"{time_color_total*1000}ms","move stage"])
+                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"move stage"])
                 time_color_start = time.time()
                 
                 # Trigger SIM set acquisition for all present lasers
@@ -416,9 +418,10 @@ class SIMController(ImConWidgetController):
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 
-                times_color.append([f"{time_color_total*1000}ms","startOneSequence"])
+                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"startOneSequence"])
                 time_color_start = time.time()
-                time.sleep(1)
+                
+                # time.sleep(1)
                 
                 # ----sub loop start----
                 for k, processor in enumerate(processors):
@@ -442,7 +445,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","before_stack"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"before_stack"])
                     # if k == 0:
                     #     time.sleep(.25)
                     time_color_start = time.time()
@@ -450,25 +453,42 @@ class SIMController(ImConWidgetController):
                     # 3 angles 3 phases
                     img_number_per_set = 9
                     waitingBuffers = 0
-                   
+                    waitingBuffersEnd = 0
+                    bufferStartTime = time.time()
                     while waitingBuffers != 9:
-                        time.sleep(.2)
+                        time.sleep(.001)
+                        
                         waitingBuffers = detector._camera.tl_stream_nodemap['StreamOutputBufferCount'].value #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
-                        waitingBuffersEnd = 0
                         if waitingBuffers != waitingBuffersEnd:
-                            break
-                        print(waitingBuffers)
-                        
+                            bufferStartTime = time.time()
+                            bufferEndTime = time.time()
+                        else: 
+                            bufferEndTime = time.time()
+
+                        bufferTotalTime = bufferEndTime-bufferStartTime
+
+                        # print(bufferTotalTime)
+                        # print(waitingBuffers)
                         waitingBuffersEnd = waitingBuffers
-                        # if waitingBuffers != 9:
-                   
-                        #     for detector in self.detectors:
-                        #         detector._camera.clearBuffers()
-                        #     print(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
-                        #     broken = True
-                        #     break  
-                 
+                        broken = False
+                        if waitingBuffers != 9 and bufferTotalTime > .1:
+                            for detector in self.detectors:
+                                detector._camera.clearBuffers()
+                            self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
+                            broken = True
+                            break
+                    if broken == True:
+                        droppedFrameSets += 1
+                        # print(f'Number of dropped frame set(s): {droppedFrameSets}')
+                        break
+
+                    time_color_end = time.time()
+                    time_color_total = time_color_end-time_color_start
+                    
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"buffer filling"])
+
+                    time_color_start = time.time()
                     self.SIMStack = detector._camera.grabFrameSet(img_number_per_set)
                     # print(len(self.SIMStack))
                     
@@ -476,7 +496,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","grab_stack"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"grab_stack"])
                     time_color_start = time.time()
                     
                     if self.SIMStack is None:
@@ -506,8 +526,7 @@ class SIMController(ImConWidgetController):
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append([f"{time_color_total*1000}ms","acquire data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"acquire data"])
                     time_color_start = time.time()
                     
 
@@ -521,7 +540,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","save data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"save data"])
                     time_color_start = time.time()
                     
                     # Process the frames and display reconstructions
@@ -544,7 +563,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","reconstruct data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"reconstruct data"])
                     time_color_start = time.time()
                     # reset the per-colour stack to add new frames in the next
                     # imaging series
@@ -555,11 +574,12 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","clear stack"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"clear stack"])
                     # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
             
             # if broken == True:
             #    continue
+            print(f'Number of dropped frame set(s): {droppedFrameSets}')
             self._logger.debug(f"{times_color}")
             
             count += 1
@@ -735,7 +755,7 @@ class SIMController(ImConWidgetController):
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 
-                times_color.append([f"{time_color_total*1000}ms","move stage"])
+                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"move stage"])
                 
                 # Acquire SIM set for all present lasers
                 # ----sub loop start----
@@ -790,7 +810,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","acquire data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"acquire data"])
                     time_color_start = time.time()
                     
                     # Save the raw SIM stack
@@ -827,7 +847,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","save data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"save data"])
                     time_color_start = time.time()
                     
                     # Process the frames and display reconstructions
@@ -852,7 +872,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","reconstruct data"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"reconstruct data"])
                     time_color_start = time.time()
                     # reset the per-colour stack to add new frames in the next
                     # imaging series
@@ -863,7 +883,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append([f"{time_color_total*1000}ms","clear stack"])
+                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"clear stack"])
                     # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
             self._logger.debug(f"{times_color}")
             # TODO: Delete this our keep. At least check.
@@ -1208,12 +1228,12 @@ class SIMController(ImConWidgetController):
         pixel_format = 'Mono16'
         bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
         frame_rate_enable = True
-        frame_rate = 50.0 # > 50Hz
+        frame_rate = 300.0 # Needs to be faster than trigger rate
         buffer_mode = "OldestFirst"
         # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
 
         # Check if exposure is low otherwise set to max value
-        exposure_limit = 19000 # us
+        exposure_limit = 1800 # us
         if exposure_time > exposure_limit:
             exposure_time = exposure_limit
             self.exposure = exposure_time
