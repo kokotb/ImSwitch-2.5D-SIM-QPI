@@ -206,6 +206,18 @@ class SIMController(ImConWidgetController):
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self.folder = self._widget.getRecFolder()
 
+
+
+
+
+
+
+
+
+
+
+
+
     def performSIMExperimentThread(self, sim_parameters):
         """
         Select a sequence on the SLM that will choose laser combination.
@@ -610,67 +622,469 @@ class SIMController(ImConWidgetController):
 
 
 
+    def smallestXYForGridSpacing(self,image_sizes_px):
+        imageLeastCommonSize = [] 
+        # Check if image-sizes on all detectors are the same
+        if image_sizes_px.count(image_sizes_px[0]) == len(image_sizes_px):
+            imageLeastCommonSize = image_sizes_px[0]
+        else:
+            self._logger.debug(f"Check detector settings. Not all colors have same image size on the detectors. Defaulting to smallest size in each dimension.")
+            # size = 0
+            # Set desired
+            image_size_x = image_sizes_px[0][0]
+            image_size_y = image_sizes_px[0][1]
+            for image_size_px in image_sizes_px:
+                if image_size_px[0] < image_size_x:
+                    image_size_x = image_size_px[0]
+                if image_size_px[1] < image_size_y:
+                    image_size_y = image_size_px[1]
+            imageLeastCommonSize = [image_size_x, image_size_y]
+
+        return imageLeastCommonSize
+
+    def createXYGridPositionArray(self, imageLeastCommonSize,projCamPixelSize):
+        imageSizePixelsX, imageSizePixelsY = imageLeastCommonSize
+        #Pulled from SIM GUI
+        grid_x_num = self.num_grid_x
+        grid_y_num = self.num_grid_y
+        overlap_xy = self.overlap
+        xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
+        count_limit = 101
+
+        # Grab starting position that we can return to
+        start_position_x, start_position_y = self.positionerXY.get_abs()
+        x_start, y_start = [float(start_position_x), float(start_position_y)]
+        
+        # Determine stage travel range, stage accepts values in microns
+        frame_size_x = imageSizePixelsX*projCamPixelSize
+        frame_size_y = imageSizePixelsY*projCamPixelSize
+        
+        # Step-size based on overlap info
+        x_step = (1 - overlap_xy) * frame_size_x
+        y_step = (1 - overlap_xy) * frame_size_y
+        assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
+        positions = []
+        y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
+        # ------------Grid scan------------
+        # Generate positions for each row
+        for y in y_list:
+            # Where to start this row
+
+            if xy_scan_type == 'snake':
+                # Generate x coordinates
+                x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
+
+                
+            # Run every other row backwards to minimize stage movement
+            if y_list.index(y) % 2 == 1:
+                x_list.reverse()
+            
+            # Populate the final list
+            for x in x_list:
+                positions.append([x,y])
+                
+            # Truncate the list if the length/the number of created
+            # positions exceeds the specified limit
+            if len(positions) > count_limit:
+                positions = positions[:count_limit]
+                self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
+        return positions
+
+    def toggleReconstruction(self):
+        self.isReconstruction = not self.isReconstruction
+        if not self.isReconstruction:
+            self.isActive = False
+    
+    def toggleRecording(self):
+        self.isRecording = not self.isRecording
+        if not self.isRecording:
+            self.isActive = False
+
+    def toggleRecordReconstruction(self):
+        self.isRecordReconstruction = not self.isRecordReconstruction
+        if not self.isRecordReconstruction:
+            self.isActive = False
+            
+    def toggleMockUse(self):
+        self.mock = self._widget.checkbox_mock.isChecked()
+
+    def openFolder(self):
+        """ Opens current folder in File Explorer. """
+        folder = self._widget.getRecFolder()
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        ostools.openFolderInOS(folder)
+
+
+    def initFastAPISIM(self, params):
+        self.fastAPISIMParams = params
+        self.IS_FASTAPISIM = True
+
+        # Usage example
+        host = self.fastAPISIMParams["host"]
+        port = self.fastAPISIMParams["port"]
+        tWaitSequence = self.fastAPISIMParams["tWaitSquence"]
+
+        if tWaitSequence is None:
+            tWaitSequence = 0.1
+        if host is None:
+            host = "169.254.165.4"
+        if port is None:
+            port = 8000
+
+        # self.SIMClient = SIMClient(URL=host, PORT=port)
+        # self.SIMClient.set_pause(tWaitSequence)
+
+
+
+
+    def __del__(self):
+        pass
+        #self.imageComputationThread.quit()
+        #self.imageComputationThread.wait()
+
+    def toggleSIMDisplay(self, enabled=True):
+        self._widget.setSIMDisplayVisible(enabled)
+
+    def monitorChanged(self, monitor):
+        self._widget.setSIMDisplayMonitor(monitor)
+
+    def patternIDChanged(self, patternID):
+        wl = self.getpatternWavelength()
+        if wl == 'Laser 488nm':
+            laserTag = 0
+        elif wl == 'Laser 561nm':
+            laserTag = 1
+        elif wl == 'Laser 640nm':
+            laserTag = 2
+        else:
+            laserTag = 0
+            self._logger.error("The laser wavelength is not implemented")
+        self.simPatternByID(patternID,laserTag)
+
+    def getpatternWavelength(self):
+        return self._widget.laser_dropdown.currentText()
+
+    def displayMask(self, image):
+        self._widget.updateSIMDisplay(image)
+
+    def setIlluPatternByID(self, iRot, iPhi):
+        self.detector.setIlluPatternByID(iRot, iPhi)
+
+    def displayImage(self, im, name="SIM Reconstruction"):
+        """ Displays the image in the view. """
+        self._widget.setImage(im, name=name)
+    
+    def updateROIsize(self):
+        # FIXME: Make it so calibration of only the modified detector is 
+        # toggled False
+        # Each time size is changed on chip, calibration needs to be reset
+        processors = self.processors
+        if processors != []:
+            for processor in processors:
+                processor.isCalibrated = False
+    
+    def saveParams(self):
+        pass
+
+    def loadParams(self):
+        pass
+
+    def stopSIM(self):
+        self.active = False
+        self.simThread.join()
+        for laser in self.lasers:
+            laser.setEnabled(False)
 
 
 
 
 
+    def startSIM(self):
+
+        # start the background thread
+        self.active = True
+        sim_parameters = self.getSIMParametersFromGUI()
+        #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
+        #sim_parameters["useGPU"] = self.getIsUseGPU()
+        
+        # # Load experiment parameters to object
+        self.getExperimentSettings()
+        mock = self.mock
+        if mock:
+            self.simThread = threading.Thread(target=self.performMockSIMExperimentThread, args=(sim_parameters,), daemon=True)
+            self.simThread.start()
+        else:    
+            self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
+            self.simThread.start()
+
+    # TODO: for timelapse and zstack, check running is still needed also stop
+
+    def updateDisplayImage(self, image):
+        image = np.fliplr(image.transpose())
+        self._widget.img.setImage(image, autoLevels=True, autoDownsample=False)
+        self._widget.updateSIMDisplay(image)
+        # self._logger.debug("Updated displayed image")
+        
+    def getExperimentSettings(self):
+        parameter_dict = self._widget.getRecParameters()
+        
+        # Load parameters to object
+        self.num_grid_x = int(parameter_dict['num_grid_x'])
+        self.num_grid_y = int(parameter_dict['num_grid_y'])
+        self.overlap = float(parameter_dict['overlap'])
+        
+        # self.exposure = float(parameter_dict['exposure'])
+
+    def getParameterValue(self, detector, parameter_name):
+        detector_name = detector._DetectorManager__name
+        shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
+        if parameter_name == 'ExposureTime':
+            value = float(shared_attributes[('Detector', detector_name, 'Param', parameter_name)])
+        else:
+            self._logger.warning("Debuging needed.")
+            self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
+        return value
+    
+    def setCamForExperiment(self, detector, num_buffers):
+        # self.getExperimentSettings()
+        # detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+        # detectors = []
+        # for det_name in detector_names_connected:
+        #     detectors.append(self._master.detectorsManager[det_name]._camera)
+        # Hardcoded parameters at the moment
+
+        trigger_source = 'Line2'
+        trigger_mode = 'On'
+        exposure_auto = 'Off'
+        # FIXME: There must be a neater, better, more stable way to do this
+        # Pull the exposure time from settings widget
+        exposure_time = self.getParameterValue(detector, 'ExposureTime')
+
+        # exposure_time = self.exposure # anything < 19 ms
+        pixel_format = 'Mono16'
+        bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
+        frame_rate_enable = True
+        frame_rate = 300.0 # Needs to be faster than trigger rate
+        buffer_mode = "OldestFirst"
+        # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
+
+        # Check if exposure is low otherwise set to max value
+        exposure_limit = 1800 # us
+        if exposure_time > exposure_limit:
+            exposure_time = exposure_limit
+            self.exposure = exposure_time
+            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
+        
+        # Set cam parameters
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+
+        # for detector in detectors:
+        for parameter_name in dic_parameters:
+            # print(detector._camera.getPropertyValue(parameter_name))
+            detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+            # print(detector._camera.getPropertyValue(parameter_name))
+        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+        detector.startAcquisitionSIM(num_buffers)
+
+    #@APIExport(runOnUIThread=True)
+    def sim_getSnapAPI(self, mystack):
+        mystack.append(self.detector.getLatestFrame())
+        #print(np.shape(mystack))
 
 
+    def saveImageInBackground(self, image, filename = None):
+        if filename is None:
+            date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+            filename = f"{date}_SIM_Stack.tif"
+        try:
+            # self.folder = self._widget.getRecFolder()
+            self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
+            image = np.array(image)
+            tif.imwrite(self.filename, image, imagej=True)
+            self._logger.debug("Saving file: "+self.filename)
+        except  Exception as e:
+            self._logger.error(e)
+
+    def getSIMParametersFromGUI(self):
+        ''' retrieve parameters from the GUI '''
+        sim_parameters = SIMParameters()
 
 
+        # parse textedit fields
+        sim_parameters.pixelsize = np.float32(self._widget.pixelsize_textedit.text())
+        sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
+        sim_parameters.n = np.float32(self._widget.n_textedit.text())
+        sim_parameters.alpha = np.float32(self._widget.alpha_textedit.text())
+        sim_parameters.beta = np.float32(self._widget.beta_textedit.text())
+        sim_parameters.eta = np.float32(self._widget.eta_textedit.text())
+        sim_parameters.wavelength_1 = np.float32(self._widget.wavelength1_textedit.text())
+        sim_parameters.wavelength_2 = np.float32(self._widget.wavelength2_textedit.text())
+        sim_parameters.wavelength_3 = np.float32(self._widget.wavelength3_textedit.text())
+        sim_parameters.magnification = np.float32(self._widget.magnification_textedit.text())
+        sim_parameters.path = self._widget.path_edit.text()
+        return sim_parameters
 
 
+    def getReconstructionMethod(self):
+        return self._widget.SIMReconstructorList.currentText()
+
+    def getIsUseGPU(self):
+        return self._widget.useGPUCheckbox.isChecked()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def performMockSIMExperimentThread(self, sim_parameters):
 
         ##################################################
         # -----------------Mocker start----------------- #
         ##################################################
         # Creating a mocker
-        if mock:
-            print("Activating mocker for our SIM implementation.")
+        print("Activating mocker for our SIM implementation.")
+                ###################################################
+        # -------Parameters - still in development------- #
+        ###################################################
+        time_whole_start = time.time()
+        # Newly added, prep for SLM integration
+        mock = self.mock
+
+
+        dic_wl_dev = {488:0, 561:1, 640:2}
+        # FIXME: Correct for how the cams are wired
+        dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
+        # TODO: Delete after development is done - here to help get devices 
+        # names
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+
+        dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
+        # self.patternID = 0
+        self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
+        # dic_wl_in = [488, 561, 640]
+        dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
+        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
+        self.isReconstructing = False
+        
+        # Check if lasers are set and have power in them select only lasers with powers
+        dic_wl = []
+        laser_ID = []
+        # num_lasers = 0            
+        for dic in list(dic_wl_dev):
+            if self.lasers[dic_wl_dev[dic]].power > 0.0:
+                dic_wl.append(dic) #List of wavelengths actually powered
+                laser_ID.append(dic_wl_dev[dic])
+                # num_lasers += 1
+        
+        # Check if detector is present comparing hardcoded names to connected 
+        # names, detector names are used only for pulling imageSize from the 
+        # detector
+        # FIXME: Check again if this laser checkup makes sense
+        det_names = []
+        if dic_wl != []:
+            for dic in dic_wl:
+                det_name = dic_det_names[dic]
+                if det_name in detector_names_connected:
+                    det_names.append(det_name)
+                else:
+                    self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
+                    if len(dic_wl) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {dic_wl}")
+                    # FIXME: If used for anything else but pixel number 
+                    # readout it should be changed to not continue the code if 
+                    # detector not present
+                    # break
+                    # Defaulting to detector 0 to be still able to run the 
+                    # code with only one detector connected. Probably redundant
+                    # since detectors default to mocker if the right number of 
+                    # detectors is configured in the config file
+                    det_name = detector_names_connected[0]
+                    det_names.append()
+        
+        #Assembling detector list based on active AOTF channels. Pulls current detector shape.
+        self.detectors = []        
+        image_sizes_px = []
+        
+        if det_names != []:
+            for det_name in det_names:
+                detector = self._master.detectorsManager[det_name]
+                self.detectors.append(detector)
+                image_sizes_px.append(detector.shape)
+        else:
+            self._logger.debug(f"Lasers not enabled. Setting image_size_px to default 512x512.")
+            image_sizes_px = [[512,512]]
+
+
+        imageLeastCommonSize = self.smallestXYForGridSpacing(image_sizes_px)
+
+        
+        # Set processors for selected lasers
+        processors = []
+        isLaser = []
+        for wl in dic_wl:
+            if dic_wl != []:
+                processors.append(processors_dic[wl])
+                isLaser.append(dic_laser_present[wl])
+                # Set calibration before each run if selected in GUI
+                if processors_dic[wl].isCalibrated:
+                    # If calibrated it will check in widget if calibrate
+                    # Widget True, calibration needs to be False
+                    processors_dic[wl].isCalibrated = not self._widget.checkbox_calibrate.isChecked()
+        
+        
+        
+        
+        
+        
+        # Make processors object attribute so calibration can be changed when 
+        # detector size is changed.
+        self.processors = processors
+        magnification = sim_parameters.magnification
+        camPixelSize = 2.74
+        projCamPixelSize = camPixelSize/magnification
+                        
+        positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
+
+        # TODO: Check if it affects speed, remove if it does
+        # move to top where all this is handled
+        # Set stacks to be saved into separate folder
+        folder = os.path.join(sim_parameters.path, "astack")
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        self.folder = folder
+        
+        # Creating a unique identifier for experiment name generated 
+        # before a grid scan is acquired
+        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+        # Set file-path read from GUI for each processor
+        for processor in processors:
+            processor.setPath(sim_parameters.path)
+            
+        # Set count for frames to 0
+        count = 0
+        
+        # -------------------Set-up SLM-------------------
+        # Set running order
+        orderID = self.patternID
+        self._master.simslmManager.set_running_order(orderID)
+        # self.SIMClient.set_running_order(orderID)
+        # -------------------Set-up SLM-------------------
+        
+
+        # -------------------Set-up cams-------------------
+
+        # FIXME: Automate buffer size calculation based on image size, it did not work before
+        total_buffer_size_MB = 350 # in MBs
+        for detector in self.detectors:
+            image_size = detector.shape
+            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
+            buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
+            # buffer_size = 500
+            self.setCamForExperiment(detector, int(buffer_size))
+        
+        if not mock:
+            for ID in laser_ID:
+                self.lasers[ID].setEnabled(True)
+
+        droppedFrameSets = 0
         # # If no laser present do nothing
         while self.active and mock and dic_wl != []:
         # TODO: Remove after development is finished.
@@ -916,385 +1330,6 @@ class SIMController(ImConWidgetController):
         # buffer_mode = "NewestOnly"
         # for detector in self.detectors:
         #     detector._camera.setPropertyValue('StreamBufferHandlingMode', buffer_mode)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def smallestXYForGridSpacing(self,image_sizes_px):
-        imageLeastCommonSize = [] 
-        # Check if image-sizes on all detectors are the same
-        if image_sizes_px.count(image_sizes_px[0]) == len(image_sizes_px):
-            imageLeastCommonSize = image_sizes_px[0]
-        else:
-            self._logger.debug(f"Check detector settings. Not all colors have same image size on the detectors. Defaulting to smallest size in each dimension.")
-            # size = 0
-            # Set desired
-            image_size_x = image_sizes_px[0][0]
-            image_size_y = image_sizes_px[0][1]
-            for image_size_px in image_sizes_px:
-                if image_size_px[0] < image_size_x:
-                    image_size_x = image_size_px[0]
-                if image_size_px[1] < image_size_y:
-                    image_size_y = image_size_px[1]
-            imageLeastCommonSize = [image_size_x, image_size_y]
-
-        return imageLeastCommonSize
-
-    def createXYGridPositionArray(self, imageLeastCommonSize,projCamPixelSize):
-        imageSizePixelsX, imageSizePixelsY = imageLeastCommonSize
-        #Pulled from SIM GUI
-        grid_x_num = self.num_grid_x
-        grid_y_num = self.num_grid_y
-        overlap_xy = self.overlap
-        xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
-        count_limit = 101
-
-        # Grab starting position that we can return to
-        start_position_x, start_position_y = self.positionerXY.get_abs()
-        x_start, y_start = [float(start_position_x), float(start_position_y)]
-        
-        # Determine stage travel range, stage accepts values in microns
-        frame_size_x = imageSizePixelsX*projCamPixelSize
-        frame_size_y = imageSizePixelsY*projCamPixelSize
-        
-        # Step-size based on overlap info
-        x_step = (1 - overlap_xy) * frame_size_x
-        y_step = (1 - overlap_xy) * frame_size_y
-        assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
-        positions = []
-        y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
-        # ------------Grid scan------------
-        # Generate positions for each row
-        for y in y_list:
-            # Where to start this row
-
-            if xy_scan_type == 'snake':
-                # Generate x coordinates
-                x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
-
-                
-            # Run every other row backwards to minimize stage movement
-            if y_list.index(y) % 2 == 1:
-                x_list.reverse()
-            
-            # Populate the final list
-            for x in x_list:
-                positions.append([x,y])
-                
-            # Truncate the list if the length/the number of created
-            # positions exceeds the specified limit
-            if len(positions) > count_limit:
-                positions = positions[:count_limit]
-                self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-        return positions
-
-    def toggleReconstruction(self):
-        self.isReconstruction = not self.isReconstruction
-        if not self.isReconstruction:
-            self.isActive = False
-    
-    def toggleRecording(self):
-        self.isRecording = not self.isRecording
-        if not self.isRecording:
-            self.isActive = False
-
-    def toggleRecordReconstruction(self):
-        self.isRecordReconstruction = not self.isRecordReconstruction
-        if not self.isRecordReconstruction:
-            self.isActive = False
-            
-    def toggleMockUse(self):
-        self.mock = self._widget.checkbox_mock.isChecked()
-
-    def openFolder(self):
-        """ Opens current folder in File Explorer. """
-        folder = self._widget.getRecFolder()
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        ostools.openFolderInOS(folder)
-
-
-    def initFastAPISIM(self, params):
-        self.fastAPISIMParams = params
-        self.IS_FASTAPISIM = True
-
-        # Usage example
-        host = self.fastAPISIMParams["host"]
-        port = self.fastAPISIMParams["port"]
-        tWaitSequence = self.fastAPISIMParams["tWaitSquence"]
-
-        if tWaitSequence is None:
-            tWaitSequence = 0.1
-        if host is None:
-            host = "169.254.165.4"
-        if port is None:
-            port = 8000
-
-        # self.SIMClient = SIMClient(URL=host, PORT=port)
-        # self.SIMClient.set_pause(tWaitSequence)
-
-
-
-
-    def __del__(self):
-        pass
-        #self.imageComputationThread.quit()
-        #self.imageComputationThread.wait()
-
-    def toggleSIMDisplay(self, enabled=True):
-        self._widget.setSIMDisplayVisible(enabled)
-
-    def monitorChanged(self, monitor):
-        self._widget.setSIMDisplayMonitor(monitor)
-
-    def patternIDChanged(self, patternID):
-        wl = self.getpatternWavelength()
-        if wl == 'Laser 488nm':
-            laserTag = 0
-        elif wl == 'Laser 561nm':
-            laserTag = 1
-        elif wl == 'Laser 640nm':
-            laserTag = 2
-        else:
-            laserTag = 0
-            self._logger.error("The laser wavelength is not implemented")
-        self.simPatternByID(patternID,laserTag)
-
-    def getpatternWavelength(self):
-        return self._widget.laser_dropdown.currentText()
-
-    def displayMask(self, image):
-        self._widget.updateSIMDisplay(image)
-
-    def setIlluPatternByID(self, iRot, iPhi):
-        self.detector.setIlluPatternByID(iRot, iPhi)
-
-    def displayImage(self, im, name="SIM Reconstruction"):
-        """ Displays the image in the view. """
-        self._widget.setImage(im, name=name)
-    
-    def updateROIsize(self):
-        # FIXME: Make it so calibration of only the modified detector is 
-        # toggled False
-        # Each time size is changed on chip, calibration needs to be reset
-        processors = self.processors
-        if processors != []:
-            for processor in processors:
-                processor.isCalibrated = False
-    
-    def saveParams(self):
-        pass
-
-    def loadParams(self):
-        pass
-
-    def stopSIM(self):
-        self.active = False
-        self.simThread.join()
-        for laser in self.lasers:
-            laser.setEnabled(False)
-
-
-
-
-
-    def startSIM(self):
-
-        # start the background thread
-        self.active = True
-        sim_parameters = self.getSIMParametersFromGUI()
-        #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
-        #sim_parameters["useGPU"] = self.getIsUseGPU()
-        
-        # # Load experiment parameters to object
-        self.getExperimentSettings()
-
-        self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
-        self.simThread.start()
-
-    # TODO: for timelapse and zstack, check running is still needed also stop
-
-    def updateDisplayImage(self, image):
-        image = np.fliplr(image.transpose())
-        self._widget.img.setImage(image, autoLevels=True, autoDownsample=False)
-        self._widget.updateSIMDisplay(image)
-        # self._logger.debug("Updated displayed image")
-        
-    def getExperimentSettings(self):
-        parameter_dict = self._widget.getRecParameters()
-        
-        # Load parameters to object
-        self.num_grid_x = int(parameter_dict['num_grid_x'])
-        self.num_grid_y = int(parameter_dict['num_grid_y'])
-        self.overlap = float(parameter_dict['overlap'])
-        
-        # self.exposure = float(parameter_dict['exposure'])
-
-    def getParameterValue(self, detector, parameter_name):
-        detector_name = detector._DetectorManager__name
-        shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
-        if parameter_name == 'ExposureTime':
-            value = float(shared_attributes[('Detector', detector_name, 'Param', parameter_name)])
-        else:
-            self._logger.warning("Debuging needed.")
-            self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
-        return value
-    
-    def setCamForExperiment(self, detector, num_buffers):
-        # self.getExperimentSettings()
-        # detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-        # detectors = []
-        # for det_name in detector_names_connected:
-        #     detectors.append(self._master.detectorsManager[det_name]._camera)
-        # Hardcoded parameters at the moment
-
-        trigger_source = 'Line2'
-        trigger_mode = 'On'
-        exposure_auto = 'Off'
-        # FIXME: There must be a neater, better, more stable way to do this
-        # Pull the exposure time from settings widget
-        exposure_time = self.getParameterValue(detector, 'ExposureTime')
-
-        # exposure_time = self.exposure # anything < 19 ms
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
-        frame_rate_enable = True
-        frame_rate = 300.0 # Needs to be faster than trigger rate
-        buffer_mode = "OldestFirst"
-        # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
-
-        # Check if exposure is low otherwise set to max value
-        exposure_limit = 1800 # us
-        if exposure_time > exposure_limit:
-            exposure_time = exposure_limit
-            self.exposure = exposure_time
-            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
-        
-        # Set cam parameters
-        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
-
-        # for detector in detectors:
-        for parameter_name in dic_parameters:
-            # print(detector._camera.getPropertyValue(parameter_name))
-            detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
-        detector.startAcquisitionSIM(num_buffers)
-
-    #@APIExport(runOnUIThread=True)
-    def sim_getSnapAPI(self, mystack):
-        mystack.append(self.detector.getLatestFrame())
-        #print(np.shape(mystack))
-
-
-    def saveImageInBackground(self, image, filename = None):
-        if filename is None:
-            date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-            filename = f"{date}_SIM_Stack.tif"
-        try:
-            # self.folder = self._widget.getRecFolder()
-            self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
-            image = np.array(image)
-            tif.imwrite(self.filename, image, imagej=True)
-            self._logger.debug("Saving file: "+self.filename)
-        except  Exception as e:
-            self._logger.error(e)
-
-    def getSIMParametersFromGUI(self):
-        ''' retrieve parameters from the GUI '''
-        sim_parameters = SIMParameters()
-
-
-        # parse textedit fields
-        sim_parameters.pixelsize = np.float32(self._widget.pixelsize_textedit.text())
-        sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
-        sim_parameters.n = np.float32(self._widget.n_textedit.text())
-        sim_parameters.alpha = np.float32(self._widget.alpha_textedit.text())
-        sim_parameters.beta = np.float32(self._widget.beta_textedit.text())
-        sim_parameters.eta = np.float32(self._widget.eta_textedit.text())
-        sim_parameters.wavelength_1 = np.float32(self._widget.wavelength1_textedit.text())
-        sim_parameters.wavelength_2 = np.float32(self._widget.wavelength2_textedit.text())
-        sim_parameters.wavelength_3 = np.float32(self._widget.wavelength3_textedit.text())
-        sim_parameters.magnification = np.float32(self._widget.magnification_textedit.text())
-        sim_parameters.path = self._widget.path_edit.text()
-        return sim_parameters
-
-
-    def getReconstructionMethod(self):
-        return self._widget.SIMReconstructorList.currentText()
-
-    def getIsUseGPU(self):
-        return self._widget.useGPUCheckbox.isChecked()
 
 
 class SIMParameters(object):
