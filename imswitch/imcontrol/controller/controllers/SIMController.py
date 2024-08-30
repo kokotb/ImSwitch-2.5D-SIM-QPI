@@ -357,6 +357,7 @@ class SIMController(ImConWidgetController):
 
         droppedFrameSets = 0
         time_whole_start = time.time()
+        self._master.arduinoManager.activateSLM()
         while self.active and not mock and dic_wl != []:
 
         
@@ -404,7 +405,7 @@ class SIMController(ImConWidgetController):
                                 
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
-                self._master.arduinoManager.startOneSequenceWriteOnly(orderID)            
+                self._master.arduinoManager.trigOneSequenceWriteOnly(orderID)            
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
@@ -730,6 +731,7 @@ class SIMController(ImConWidgetController):
         self.simThread.join()
         for laser in self.lasers:
             laser.setEnabled(False)
+        self._master.arduinoManager.deactivateSLM()
 
 
 
