@@ -377,7 +377,7 @@ class SIMController(ImConWidgetController):
             frame_num = count
             dt_export_string = "" # no time duration between frames is needed
             
-            times_color = []
+            
             # Generate time_step
             if count == 0:
                 dt_export = 0.0
@@ -392,6 +392,7 @@ class SIMController(ImConWidgetController):
             for j, pos in enumerate(positions):
                 
                 # FIXME: Remove after development is completed
+                times_color = []
                 time_color_start = time.time()
                 
                 # Move stage
@@ -577,18 +578,18 @@ class SIMController(ImConWidgetController):
                     times_color.append(["{:0.2f} ms".format(time_color_total*1000),"clear stack"])
                     # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
             
-            # if broken == True:
-            #    continue
-            print(f'Number of dropped frame set(s): {droppedFrameSets}')
-            self._logger.debug(f"{times_color}")
-            
-            count += 1
-            # Timing of the process for testing purposes
-            time_whole_end = time.time()
-            time_whole_total = time_whole_end-time_whole_start
-            
-            self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
-            time_whole_start = time.time()
+                # if broken == True:
+                #    continue
+                print(f'Number of dropped frame set(s): {droppedFrameSets}')
+                self._logger.debug(f"{times_color}")
+                
+                count += 1
+                # Timing of the process for testing purposes
+                time_whole_end = time.time()
+                time_whole_total = time_whole_end-time_whole_start
+                
+                self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+                time_whole_start = time.time()
 
 
 
