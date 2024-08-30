@@ -80,16 +80,12 @@ class SIMController(ImConWidgetController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        self.IS_FASTAPISIM=False
-        self.IS_HAMAMATSU=False
+        # self.IS_FASTAPISIM=False
+        # self.IS_HAMAMATSU=False
         # switch to detect if a recording is in progress
-        self.isRecording = False
+        self.isRecordingRaw = False
         self.isReconstruction = False
-        self.isRecordReconstruction = False
-
-        # Laser flag
-        self.LaserWL = 0
-
+        self.isRecordRecon = False
         self.simFrameVal = 0
         self.nsimFrameSyncVal = 3
 
@@ -158,10 +154,10 @@ class SIMController(ImConWidgetController):
         #     # here we need to capture frames consecutively
         #     self.isPCO = False
             
-        # Pull magnifications from config file
-        for detector in self.detectors:
-            magnification_key = 'ExposureTime' # Just for testing, change to mag once implemented
-            self.magnification = detector.setupInfo[magnification_key]
+        # # Pull magnifications from config file
+        # for detector in self.detectors:
+        #     magnification_key = 'ExposureTime' # Just for testing, change to mag once implemented
+        #     self.magnification = detector.setupInfo[magnification_key]
             
         # select positioner
         # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
@@ -181,16 +177,6 @@ class SIMController(ImConWidgetController):
         # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
 
-        # FIXME: Delete after development - we are not using this 
-        # Commenting this out removed the https time-out error.
-        # Now it is not trying to connect.
-        # self.initFastAPISIM(self._master.simManager.fastAPISIMParams)
-
-        # FIXME: imswitch as is currently set up does not contain 
-        # IS_HEADLESS attirbute  
-        # if imswitch.IS_HEADLESS:
-        #     return
-        # return
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
 
@@ -228,7 +214,7 @@ class SIMController(ImConWidgetController):
         ###################################################
         # -------Parameters - still in development------- #
         ###################################################
-        time_whole_start = time.time()
+        
         # Newly added, prep for SLM integration
         mock = self.mock
 
@@ -370,9 +356,9 @@ class SIMController(ImConWidgetController):
                 self.lasers[ID].setEnabled(True)
 
         droppedFrameSets = 0
-
+        time_whole_start = time.time()
         while self.active and not mock and dic_wl != []:
-        # run only once
+
         
         # while count == 0:
             wfImages = []
@@ -406,65 +392,41 @@ class SIMController(ImConWidgetController):
                 # FIXME: Remove after development is completed
                 times_color = []
                 time_color_start = time.time()
-                
                 # Move stage
                 x_set = pos[0]
                 y_set = pos[1]
                 # tDebounceXY = 0 # prepared in case we need it
                 self.positionerXY.setPositionXY(x_set, y_set)
                 # time.sleep(tDebounceXY) # prepared in case we need it
-                # For development purposes
-                # print(f"Move to x = {x_set}, y = {y_set}")
-                
-                # FIXME: Remove after development is completed
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
-                
-                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"move stage"])
-                time_color_start = time.time()
-                
+                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"move stage"])
+                                
                 # Trigger SIM set acquisition for all present lasers
-                # self._master.arduinoManager.startOneSequence(orderID)
-                self._master.arduinoManager.startOneSequenceWriteOnly(orderID)
-                # SIMClient.send_start_sequence_trigger()
-                
+                time_color_start = time.time()
+                self._master.arduinoManager.startOneSequenceWriteOnly(orderID)            
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
-                
-                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"startOneSequence"])
-                time_color_start = time.time()
-                
-                # time.sleep(1)
-                
-                # ----sub loop start----
+                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
+             
+                # Loop over channels
                 for k, processor in enumerate(processors):
-                #     if j != 0:
-                #         break
-                    # -----loop start-----
-                    # print(k)
                     # Setting a reconstruction processor for current laser
                     processor.setParameters(sim_parameters)
                     self.LaserWL = processor.wavelength
                     
-                    # Grab a stack from cam
+                    # Set current detector being used
                     detector = self.detectors[k]
                     
-                    # FIXME: Remove soon - create cam option to grab a set of 
-                    # 9 from buffer
-                    # Just for now
-                    # stack = []
-
                     # FIXME: Remove after development is completed
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"before_stack"])
-                    # if k == 0:
-                    #     time.sleep(.25)
+
+
                     time_color_start = time.time()
                     
                     # 3 angles 3 phases
-                    img_number_per_set = 9
+                    framesPerDetector = 9
+
+
                     waitingBuffers = 0
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
@@ -491,6 +453,7 @@ class SIMController(ImConWidgetController):
                             self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
                             broken = True
                             break
+
                     if broken == True:
                         droppedFrameSets += 1
                         # print(f'Number of dropped frame set(s): {droppedFrameSets}')
@@ -498,25 +461,16 @@ class SIMController(ImConWidgetController):
 
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"buffer filling"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"buffer filling"])
 
                     time_color_start = time.time()
-                    self.SIMStack = detector._camera.grabFrameSet(img_number_per_set)
-                    # print(len(self.SIMStack))
-                    
-                    # FIXME: Remove after development is completed
+                    self.SIMStack = detector._camera.grabFrameSet(framesPerDetector)
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"grab_stack"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"grab_stack"])
+
                     time_color_start = time.time()
-                    
-                    if self.SIMStack is None:
-                        self._logger.error("No image received")
-                        continue
-                    
-                    
+
                     # TODO: remove after development is done, kept for testing
                     # Push all colors into one array - export disabled below
                     # Enable below if you need this
@@ -532,35 +486,26 @@ class SIMController(ImConWidgetController):
                     wfImages[k].append(processor.getWFlbf(self.SIMStack))
                     
                     # Activate recording and reconstruction in processor
-                    processor.setRecordingMode(self.isRecordReconstruction)
+                    processor.setRecordingMode(self.isRecordRecon)
                     processor.setReconstructionMode(self.isReconstruction)
                     processor.setWavelength(self.LaserWL, sim_parameters)
                     
                     # FIXME: Remove after development is completed
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"acquire data"])
-                    time_color_start = time.time()
-                    
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"acquire data"])
 
-                    if self.isRecording:
+                    time_color_start = time.time()
+                    if self.isRecordingRaw:
                         date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
-
-                    
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"save data"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
+
                     time_color_start = time.time()
-                    
-                    # Process the frames and display reconstructions
-                    # FIXME: Testing threading, this solution below does the 
-                    # same thing, takes the same amount of time 
-                    # threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                    
                     num_skip_frames = self._widget.getSkipFrames() + 1
                     if count == 0:
                         div_1 = 0
@@ -571,27 +516,14 @@ class SIMController(ImConWidgetController):
                     if self.isReconstruction and div_1 == 0:
                         threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
                         # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
-                    
-                    # FIXME: Remove after development is completed
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"reconstruct data"])
-                    time_color_start = time.time()
-                    # reset the per-colour stack to add new frames in the next
-                    # imaging series
-                    processor.clearStack()
-                    # ----sub loop end----
-                    
-                    # Timing of the process for testing purposes
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"clear stack"])
-                    # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
-            
-                # if broken == True:
-                #    continue
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"reconstruct data"])
+
+                    processor.clearStack()                    
+
+
+
                 print(f'Number of dropped frame set(s): {droppedFrameSets}')
                 self._logger.debug(f"{times_color}")
                 
@@ -600,7 +532,7 @@ class SIMController(ImConWidgetController):
                 time_whole_end = time.time()
                 time_whole_total = time_whole_end-time_whole_start
                 
-                self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+                self._logger.debug('Done!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
                 time_whole_start = time.time()
 
 
@@ -618,9 +550,12 @@ class SIMController(ImConWidgetController):
 
 
 
-
-
-
+    # def timeMe(self, timedList, function):
+    #         time_color_start = time.time()
+    #         function         
+    #         time_color_total = time.time()-time_color_start
+    #         timedList.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
+    #         return timedList
 
     def smallestXYForGridSpacing(self,image_sizes_px):
         imageLeastCommonSize = [] 
@@ -696,13 +631,13 @@ class SIMController(ImConWidgetController):
             self.isActive = False
     
     def toggleRecording(self):
-        self.isRecording = not self.isRecording
-        if not self.isRecording:
+        self.isRecordingRaw = not self.isRecordingRaw
+        if not self.isRecordingRaw:
             self.isActive = False
 
     def toggleRecordReconstruction(self):
-        self.isRecordReconstruction = not self.isRecordReconstruction
-        if not self.isRecordReconstruction:
+        self.isRecordRecon = not self.isRecordRecon
+        if not self.isRecordRecon:
             self.isActive = False
             
     def toggleMockUse(self):
@@ -716,24 +651,24 @@ class SIMController(ImConWidgetController):
         ostools.openFolderInOS(folder)
 
 
-    def initFastAPISIM(self, params):
-        self.fastAPISIMParams = params
-        self.IS_FASTAPISIM = True
+    # def initFastAPISIM(self, params):
+    #     self.fastAPISIMParams = params
+    #     self.IS_FASTAPISIM = True
 
-        # Usage example
-        host = self.fastAPISIMParams["host"]
-        port = self.fastAPISIMParams["port"]
-        tWaitSequence = self.fastAPISIMParams["tWaitSquence"]
+    #     # Usage example
+    #     host = self.fastAPISIMParams["host"]
+    #     port = self.fastAPISIMParams["port"]
+    #     tWaitSequence = self.fastAPISIMParams["tWaitSquence"]
 
-        if tWaitSequence is None:
-            tWaitSequence = 0.1
-        if host is None:
-            host = "169.254.165.4"
-        if port is None:
-            port = 8000
+    #     if tWaitSequence is None:
+    #         tWaitSequence = 0.1
+    #     if host is None:
+    #         host = "169.254.165.4"
+    #     if port is None:
+    #         port = 8000
 
-        # self.SIMClient = SIMClient(URL=host, PORT=port)
-        # self.SIMClient.set_pause(tWaitSequence)
+    #     # self.SIMClient = SIMClient(URL=host, PORT=port)
+    #     # self.SIMClient.set_pause(tWaitSequence)
 
 
 
@@ -1170,7 +1105,7 @@ class SIMController(ImConWidgetController):
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 
-                times_color.append(["{:0.2f} ms".format(time_color_total*1000),"move stage"])
+                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"move stage"])
                 
                 # Acquire SIM set for all present lasers
                 # ----sub loop start----
@@ -1217,7 +1152,7 @@ class SIMController(ImConWidgetController):
                     wfImages[k].append(processor.getWFlbf(self.SIMStack))
                     
                     # Activate recording and reconstruction in processor
-                    processor.setRecordingMode(self.isRecording)
+                    processor.setRecordingMode(self.isRecordingRaw)
                     processor.setReconstructionMode(self.isReconstruction)
                     processor.setWavelength(self.LaserWL, sim_parameters)
                     
@@ -1225,7 +1160,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"acquire data"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"acquire data"])
                     time_color_start = time.time()
                     
                     # Save the raw SIM stack
@@ -1238,7 +1173,7 @@ class SIMController(ImConWidgetController):
                     # way we could make it work reliably)
                     # Sets the date in processor for saving file
                     # processor.setDate(date) 
-                    if self.isRecording:
+                    if self.isRecordingRaw:
                         date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
@@ -1262,7 +1197,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"save data"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
                     time_color_start = time.time()
                     
                     # Process the frames and display reconstructions
@@ -1287,7 +1222,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"reconstruct data"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"reconstruct data"])
                     time_color_start = time.time()
                     # reset the per-colour stack to add new frames in the next
                     # imaging series
@@ -1298,7 +1233,7 @@ class SIMController(ImConWidgetController):
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     
-                    times_color.append(["{:0.2f} ms".format(time_color_total*1000),"clear stack"])
+                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"clear stack"])
                     # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
             self._logger.debug(f"{times_color}")
             # TODO: Delete this our keep. At least check.
@@ -1318,7 +1253,7 @@ class SIMController(ImConWidgetController):
             time_whole_end = time.time()
             time_whole_total = time_whole_end-time_whole_start
             
-            self._logger.debug('--\nDone!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+            self._logger.debug('--\nDone! It took: {:.2f} sec\n--'.format(time_whole_total))
 
             time_whole_start = time.time()
         ##################################################
