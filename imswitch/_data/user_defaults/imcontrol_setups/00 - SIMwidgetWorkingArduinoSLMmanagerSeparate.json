@@ -1,11 +1,11 @@
 { "SIMslm":{
+  "path": "dlls\\SLM4DD\\lib\\R4CommLib-1.7-x64.dll",
+  "port": "COM4",
   "width":1080,
   "height":1920,
   "pixelSize":13.62,
-  "managerName": "SIMslmManager",
-  "managerProperties": {
-    "rs232device": "simslm"
-  }
+  "managerName": "SIMslmManager"
+
 },
 "Arduino":{
   "width":1080,
@@ -213,22 +213,6 @@
       "managerName": "RS232Manager",
       "managerProperties": {
         "port": "ASRLCOM6",
-        "encoding": "ascii",
-        "recv_termination": "\r",
-        "send_termination": "\r",
-        "baudrate": 9600,
-        "bytesize": 8,
-        "parity": "none",
-        "stopbits": 1,
-        "rtscts": "false",
-        "dsrdtr": "false",
-        "xonxoff": "false"
-      }
-    },
-    "simslm": {
-      "managerName": "RS232Manager",
-      "managerProperties": {
-        "port": "ASRLCOM9",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",

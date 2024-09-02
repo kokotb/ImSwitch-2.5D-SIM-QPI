@@ -327,6 +327,10 @@ class SIMInfo:
 
 @dataclass(frozen=True)
 class SIMslmInfo:
+    path: str
+
+    port: str
+
     width: int
     """ Width of SLM, in pixels. """
 

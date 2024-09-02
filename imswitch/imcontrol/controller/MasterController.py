@@ -52,9 +52,9 @@ class MasterController:
         #                                      **lowLevelManagers)
             
         self.simManager = SIMManager(self.__setupInfo.sim)
+        
         if self.__setupInfo.SIMslm:
-            self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm,
-                                             **lowLevelManagers)
+            self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,

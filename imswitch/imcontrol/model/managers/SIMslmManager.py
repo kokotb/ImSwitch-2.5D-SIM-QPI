@@ -1,149 +1,341 @@
-import enum
-import glob
-import cv2
-import os
-import re
+
 import numpy as np
 from PIL import Image
 from scipy import signal as sg
 from imswitch.imcontrol.view.guitools.ViewSetupInfo import ViewSetupInfo as SetupInfo
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
-import requests
+
+
+
+from ctypes import *
+import ctypes
+from pathlib import Path
+import logging
+
 
 
 class SIMslmManager(SignalInterface):
-    """ 
-    Set running order directly on the SXGA ForthDD display.
-    """
-    def __init__(self,  setupInfo, **lowLevelManagers):
-        
-        # TODO: Remove after development. Handled in MasterController.
-        # the same way StandManager is handled
-        # That is how they handled this in SLMManager.py
-        # if setupInfo is None:
-        #     self._rs232manager = None
-        #     return
-        
-        # FIXME: Check in config file that the baudrate is set right
-        self._rs232manager = lowLevelManagers['rs232sManager'][
-            setupInfo.managerProperties['rs232device']
-        ]
     
-    # FIXME: Remove all obsolete functions
-    # Currently set up, to set running order and start a sequence through two 
-    # different devices
-    # def start_sequence(self):
-    #     """Sends a trigger to SLM to start a sequence."""
-    #     # FIXME: Needs to be synced with our commands on Arduino
-    #     cmd = 'S'
+# SLM returns code for ERROR in integer form. This is ERROR dictionary used to
+# decode errors in following functions.
+    def __init__(self, SIMSLMInfo):
+
+        self.ERROR_Dictionary = {
+            0 : "FDD_SUCCESS",
+            1 : "FDD_MEM_INDEX_OUT_OF_BOUNDS",
+            2 : "FDD_MEM_NULL_POINTER",
+            3 : "FDD_MEM_ALLOC_FAILED",
+            4 : "FDD_DEV_SET_TIMEOUT_FAILED",
+            5 : "FDD_DEV_SET_BAUDRATE_FAILED",
+            6 : "FDD_DEV_OPEN_FAILED",
+            7 : "FDD_DEV_NOT_OPEN",
+            8 : "FDD_DEV_ALREADY_OPEN",
+            9 : "FDD_DEV_NOT_FOUND",
+            10 : "FDD_DEV_ACCESS_DENIED",
+            11 : "FDD_DEV_READ_FAILED ",
+            12 : "FDD_DEV_WRITE_FAILED",
+            13 : "FDD_DEV_TIMEOUT",
+            14 : "FDD_DEV_RESYNC_FAILED",
+            15 : "FDD_SLAVE_INVALID_PACKET",
+            16 : "FDD_SLAVE_UNEXPECTED_PACKET ",
+            17 : "FDD_SLAVE_ERROR ",
+            18 : "FDD_SLAVE_EXCEPTION",
+        }
+
+        path = SIMSLMInfo.path
+        port = SIMSLMInfo.port
+        slmDLL = self.getSLMDLL(path)
+        self.openSLM(slmDLL,port)
+        self.nameListROs = self.getAllRONames(slmDLL)
+        self.currentRO = self.getRunningOrder(slmDLL)
+        self.repIDName = self.getRepertoireUniqueId(slmDLL)
+        print(self.nameListROs)
+        print(self.currentRO)
+        print(self.repIDName)
+    # Opens SLMDLL library ===========================================================
+    def getSLMDLL(self, path):
+        slmDLL = WinDLL(path)
+        return slmDLL
+
+    # ==============================================================================
+
+
+
+    # ================================================================================
+    #  All following functions return an answer in tuple form (answer, return string),
+    #  where return string informs user about success of the operation and identifies
+    #  type of error if neccessary.
+    # ================================================================================
+
+    def openSLM(self, slmDLL, port):
+        #Port input in form of COMX
+        openComPort = slmDLL.FDD_DevOpenComPort
+        portb = port.encode('utf-8')
+        ret = openComPort(portb,250,115200,True)
+
+        if ret == 0:
+            retBool = True
+            retStr = 'SLM connected? ' + str(retBool)
+            
+        else:
+            retBool = False
+            retStr = 'SLM connected? ' + str(retBool) + " : " + self.ERROR_Dictionary[ret]
+        print(retStr)
+        return retBool, retStr
+
+
+    def closeSLM(self,slmDLL):
+        closeComPort = slmDLL.FDD_DevClose
+        ret = closeComPort()
+        if ret == 0:
+            retBool = True
+            retStr = 'SLM closed? ' + str(retBool)
+        else:
+            retBool = False
+            retStr = 'SLM closed? ' + str(retBool) + " : " + self.ERROR_Dictionary[ret]
+
+        return retBool, retStr
+
+
+    def getRunningOrder(self,slmDLL):
+
+        ROgetselected = slmDLL.R4_RpcRoGetSelected
+        ptr_getRO = ctypes.pointer(ctypes.c_int16())
+        ret = ROgetselected(ptr_getRO)
+
+        if ret == 0:
+            retRO = ptr_getRO.contents.value
+            retStr = 'Current RO: ' + str(retRO)
+        else:
+            retStr = "Failed to read RO: " + self.ERROR_Dictionary[ret]
+            retRO = None
+
+        return (retRO)
+
+
+    def setRunningOrder(self,slmDLL, setROValue):
+        getROCountVal = self.getROCount(slmDLL)[0]
+        if setROValue >= 0 and setROValue < getROCountVal:
+            ROsetselected = slmDLL.R4_RpcRoSetSelected
+            # ptr_setRO = ctypes.pointer(ctypes.c_int16())
+            ret = ROsetselected(setROValue)
+            
+            if ret == 0:
+                newRO = self.getRunningOrder(slmDLL)[0]
+                if newRO == setROValue:
+                    setROBool = True
+                    retStr = ('Successfully set selected RO to ' + str(setROValue))
+            else:
+                setROBool = False
+                retStr = "Failed to set RO to " + str(setROValue) + " : " + self.ERROR_Dictionary[ret]
+        else:
+            retStr = 'Desired RO out of bounds. Valid entries are 0:' + str(getROCountVal-1)
+            setROBool = False
+
+        return (setROBool, retStr)
+
+
+    def getROCount(self,slmDLL):
+        getROCountFunc = slmDLL.R4_RpcRoGetCount
+        ptr_getROCount = ctypes.pointer(ctypes.c_int16())
+        ret = getROCountFunc(ptr_getROCount)
+        if ret == 0:
+            retROCount = ptr_getROCount.contents.value
+            retStr = 'Number of ROs on device: ' + str(retROCount)
+        else:
+            retStr = "Failed to count ROs: " + self.ERROR_Dictionary[ret]
+            retROCount = None
+
+        return (retROCount, retStr)
+
+
+    def slmActivate(self,slmDLL):
+        slmActivate = slmDLL.R4_RpcRoActivate
+        ret = slmActivate()
+        if ret == 0:
+            slmActivateBool = True
+            retStr = 'SLM Activated'
+        else:
+            slmActivateBool = False
+            retStr = 'SLM not activated: ' + self.ERROR_Dictionary[ret]
+        return slmActivateBool, retStr
+
+
+    def slmDeactivate(self,slmDLL):
+        slmDeactivate = slmDLL.R4_RpcRoDeactivate
+        ret = slmDeactivate()
+        if ret == 0:
+            slmDeactivateBool = True
+            retStr = 'SLM Deactivated'
+        else:
+            slmDeactivateBool = False
+            retStr = 'SLM not deactivated: ' + self.ERROR_Dictionary[ret]
+        return slmDeactivateBool, retStr
+
+
+    def slmRestart(self,slmDLL):
+        slmRestart = slmDLL.R4_RpcSysReboot
+        ret = slmRestart()
+        if ret == 0:
+            slmRestartBool = True
+            retStr = 'SLM restarting. Process may take up to 10 seconds.'
+        else:
+            slmRestartBool = False
+            retStr = 'SLM not restarting: ' + self.ERROR_Dictionary[ret]
+        return slmRestartBool, retStr
+
+
+    def setDefaultRO(self,slmDLL, defaultRO):
+
+        setDefaultRO = slmDLL.R4_RpcRoSetDefault
+        ret = setDefaultRO(defaultRO)
+
+        if ret == 0:
+            retBool = True
+            retStr = 'Default RO set to: ' + str(defaultRO)
+        else:
+            retStr = "Failed to set default RO: " + self.ERROR_Dictionary[ret]
+            retBool = False
+
+        return (retBool, retStr)
+
+
+    def getROName(self,slmDLL, ROIndex):
+        getROName = slmDLL.R4_RpcRoGetName
+        varArray = (ctypes.c_char*50)()
+        ptr_getROName = ctypes.pointer(varArray)
+        ret = getROName(ROIndex, ptr_getROName, 50)
+        ROName = ptr_getROName.contents.value
+        if ret == 0:
+            retStr = "RO name identified successfully"
+        else:
+            retStr = "Failed ti identify RO name: "  + self.ERROR_Dictionary[ret]
+        return (ROName, retStr)
+
+
+    def getRepertoireUniqueId(self,slmDLL):
+        getRepUnIdFunc = slmDLL.R4_RpcSysGetRepertoireUniqueId
+        varArray = (ctypes.c_char*50)()
+        ptr_getRepUnId = ctypes.pointer(varArray)
+        ret = getRepUnIdFunc(ptr_getRepUnId, 50)
+        repUnId = ptr_getRepUnId.contents.value
+        repUnId = repUnId.decode("utf-8")
+        if ret == 0:
+            retStr = "Reprtoire unique Id identified succesfully: " + repUnId
+        else:
+            retStr = "Failed to identify repertoire unique Id: " + self.ERROR_Dictionary[ret]
+        return (repUnId)
+
+
+    # def getProgress(slmDLL):
+    #     getProgressPercentageFunc = slmDLL.R4_DevGetProgress
+    #     ptr_getProgress = ctypes.pointer(ctypes.c_uint8())
+    #     ret = getProgressPercentageFunc(ptr_getProgress)
+    #     progressPct = ptr_getProgress.contents.value
+    #     #print(self.ERROR_Dictionary[getProgressPct])
+    #     if ret == 0:
+    #         retStr = "Progress percentage identified succesfully. Progress = " + str(progressPct) + "%"
+    #     else:
+    #         retStr = "Failed to identify progress percentage: " + self.ERROR_Dictionary[ret]
+    #     return (progressPct, retStr)
+
+
+    def getActState(self,slmDLL):
+        getActivationStateFunc = slmDLL.R4_RpcRoGetActivationState
+        ptr_ActState = ctypes.pointer(ctypes.c_uint8())
+        #ptr_ActState = ctypes.pointer(ctypes.c_char_p())
+        ret = getActivationStateFunc(ptr_ActState)
+        actState = ptr_ActState.contents.value
+        State_Dictionary = {
+        80 : "Repertoire loading",
+        81 : "Starting",
+        82 : "Maintenance – Software deactivated",
+        83 : "Maintenance – Hardware and Software deactivated",
+        84 : "Maintenance – Hardware deactivated ",
+        85 : "Activating",
+        86 : "Active",
+        87 : "No Repertoire available",
+        }
+        state = State_Dictionary[actState]
+        if ret == 0:
+            retStr = "Activation state identified successfully: " + state
+        else:
+            retStr = "Failed to identify activation state: " + self.ERROR_Dictionary[ret]
+        return state, retStr
+
+
+    def getAllRONames(self,slmDLL):
+        totalROCount = self.getROCount(slmDLL)[0]
+        RONameDict = {}
+        if totalROCount == None:
+            logging.error('RO count failed')
+        else:
+            for i in range (totalROCount):
+                roName = self.getROName(slmDLL, i)[0]
+                RONameDict[i] = roName.decode("utf-8")
+
+        return RONameDict
+
+
+
+
+
+
+
+    # openSLMBool, openSLMStr = openSLM(slmDLL,'COM4')
+    # print(openSLMStr)
+    # getROVal,getROStr = getRunningOrder(slmDLL)
+    # setROBool, setROStr = setRunningOrder(slmDLL, 5)
+
+    # activationState = getActState(slmDLL)
+    # print(activationState)
+
+    # closeBool, closeSLMStr = closeSLM(slmDLL)
+
+
+    # print(getROStr)
+    # print(setROBool)
+    # print(setROStr)
+
+    # print(closeSLMStr)
+
+
+    
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # def set_running_order(self, orderID):
+    #     """Sets running order on the SLM. """
+    #     cmd = "RO "+str(orderID)
     #     self._rs232manager.query(cmd)
-        
-    # def stop_sequence(self):
-    #     """Sends loop termination signal."""
-    #     cmd = 'CE'
-    #     self._rs232manager.query(cmd)
-        
-    def set_running_order(self, orderID):
-        """Sets running order on the SLM. """
-        cmd = "RO "+str(orderID)
-        self._rs232manager.query(cmd)
     
-    # # Structure copied over from SIMclient
-    #     self.commands = {
-    #         "start": "/start_viewer/",
-    #         "single_run": "/start_viewer_single_loop/",
-    #         "pattern_compeleted": "/wait_for_viewer_completion/",
-    #         "pause_time": "/set_wait_time/",
-    #         "stop_loop": "/stop_viewer/",
-    #         "pattern_wl": "/change_wavelength/",
-    #         "display_pattern": "/display_pattern/",
-    #     }
-    #     self.iseq = 60
-    #     self.itime = 120
-    #     self.laser_power = (400, 250)
-
-    # def get_request(self, url, timeout=0.3):
-    #     try:
-    #         response = requests.get(url, timeout=timeout)
-    #         return response.json()
-    #     except Exception as e:
-    #         print(e)
-    #         return -1
-
-    # def start_viewer(self):
-    #     url = self.base_url + self.commands["start"]
-    #     return self.get_request(url)
-
-    # def start_viewer_single_loop(self, number_of_runs, timeout=2):
-    #     url = f"{self.base_url}{self.commands['single_run']}{number_of_runs}"
-    #     return self.get_request(url, timeout=timeout)
-
-    # def wait_for_viewer_completion(self):
-    #     url = self.base_url + self.commands["pattern_compeleted"]
-    #     self.get_request(url)
-
-    # def set_pause(self, period):
-    #     url = f"{self.base_url}{self.commands['pause_time']}{period}"
-    #     self.get_request(url)
-
-    # def stop_loop(self):
-    #     url = self.base_url + self.commands["stop_loop"]
-    #     self.get_request(url)
-
-    # def set_wavelength(self, wavelength):
-    #     url = f"{self.base_url}{self.commands['pattern_wl']}{wavelength}"
-    #     self.get_request(url)
-
-    # def display_pattern(self, iPattern):
-    #     url = f"{self.base_url}{self.commands['display_pattern']}{iPattern}"
-    #     self.get_request(url)
-
-    
-    # sigSIMMaskUpdated = Signal(object)  # (maskCombined)
-
-    # def __init__(self, simInfo, *args, **kwargs):
-    #         sigSIMMaskUpdated = Signal(object)  # (maskCombined)
-
-    # def __init__(self, simInfo, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.__logger = initLogger(self)
-
-    #     if simInfo is None:
-    #         return
-
-    #     self.__simInfo = simInfo
-    #     self.__wavelength = self.__simInfo.wavelength
-    #     self.__pixelsize = self.__simInfo.pixelSize
-    #     self.__angleMount = self.__simInfo.angleMount
-    #     self.__simSize = (self.__simInfo.width, self.__simInfo.height)
-    #     self.__patternsDir = self.__simInfo.patternsDir
-    #     self.nRotations = self.__simInfo.nRotations
-    #     self.nPhases = self.__simInfo.nPhases
-    #     self.simMagnefication = self.__simInfo.nPhases
-    #     self.isFastAPISIM = self.__simInfo.isFastAPISIM
-    #     self.simPixelsize = self.__simInfo.simPixelsize
-    #     self.simNA = self.__simInfo.simNA
-    #     self.simN = self.__simInfo.simN # refr
-    #     self.simETA = self.__simInfo.simETA
-
-    #     # Load all patterns
-    #     if type(self.__patternsDir) is not list:
-    #         self.__patternsDir = [self.__patternsDir]
-
-    #     # define paramerters for fastAPI (optional)
-    #     fastAPISIM_host = self.__simInfo.fastAPISIM_host
-    #     fastAPISIM_port = self.__simInfo.fastAPISIM_port
-    #     fastAPISIM_tWaitSequence = self.__simInfo.tWaitSequence
-    #     self.fastAPISIMParams = {"host":fastAPISIM_host,
-    #                              "port":fastAPISIM_port,
-    #                              "tWaitSquence":fastAPISIM_tWaitSequence}
-
-    #     self.isFastAPISIM = self.__simInfo.isFastAPISIM
-
-
-    # def update(self):
-    #     pass
 
 # Copyright (C) 2020-2024 ImSwitch developers
 # This file is part of ImSwitch.

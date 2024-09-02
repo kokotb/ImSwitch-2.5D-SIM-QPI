@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from imswitch.imcommon.model import dirtools, initLogger
-from imswitch.imcontrol.model.managers.SLMManager import MaskMode, Direction
+from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 
 

@@ -5,7 +5,7 @@ from .MultiManager import MultiManager
 from .PositionersManager import PositionersManager
 from .RS232sManager import RS232sManager
 from .RecordingManager import RecordingManager, RecMode, SaveMode, SaveFormat
-from .SLMManager import SLMManager
+from .SLM25DManager import SLMManager
 # from .ScanManagerPointScan import ScanManagerPointScan
 # from .ScanManagerBase import ScanManagerBase
 # from .ScanManagerMoNaLISA import ScanManagerMoNaLISA
