@@ -335,7 +335,8 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up SLM-------------------
         # Set running order
         orderID = self.patternID
-        self._master.simslmManager.set_running_order(orderID)
+        orderID = 9
+        self._master.simslmManager.setRunningOrder(orderID)
         # self.SIMClient.set_running_order(orderID)
         # -------------------Set-up SLM-------------------
         
@@ -405,7 +406,7 @@ class SIMController(ImConWidgetController):
                                 
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
-                self._master.arduinoManager.trigOneSequenceWriteOnly(orderID)            
+                self._master.arduinoManager.trigOneSequenceWriteOnly()            
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
@@ -432,7 +433,7 @@ class SIMController(ImConWidgetController):
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
                     while waitingBuffers != 9:
-                        time.sleep(.001)
+                        time.sleep(.02)
                         
                         waitingBuffers = detector._camera.tl_stream_nodemap['StreamOutputBufferCount'].value #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
@@ -755,6 +756,8 @@ class SIMController(ImConWidgetController):
             self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
             self.simThread.start()
 
+
+
     # TODO: for timelapse and zstack, check running is still needed also stop
 
     def updateDisplayImage(self, image):
@@ -802,14 +805,14 @@ class SIMController(ImConWidgetController):
         pixel_format = 'Mono16'
         bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
         frame_rate_enable = True
-        frame_rate = 300.0 # Needs to be faster than trigger rate
+        frame_rate = 190.0 # Needs to be faster than trigger rate
         buffer_mode = "OldestFirst"
         # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
 
         # Check if exposure is low otherwise set to max value
-        exposure_limit = 1800 # us
+        exposure_limit = 5000 # us
         if exposure_time > exposure_limit:
-            exposure_time = exposure_limit
+            exposure_time = float(exposure_limit)
             self.exposure = exposure_time
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
         

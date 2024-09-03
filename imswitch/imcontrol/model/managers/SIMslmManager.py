@@ -45,11 +45,12 @@ class SIMslmManager(SignalInterface):
 
         path = SIMSLMInfo.path
         port = SIMSLMInfo.port
-        slmDLL = self.getSLMDLL(path)
-        self.openSLM(slmDLL,port)
-        self.nameListROs = self.getAllRONames(slmDLL)
-        self.currentRO = self.getRunningOrder(slmDLL)
-        self.repIDName = self.getRepertoireUniqueId(slmDLL)
+        self.slmDLL = self.getSLMDLL(path)
+        self.openSLM(port)
+
+        self.nameListROs = self.getAllRONames()
+        self.currentRO = self.getRunningOrder()
+        self.repIDName = self.getRepertoireUniqueId()
         print(self.nameListROs)
         print(self.currentRO)
         print(self.repIDName)
@@ -68,9 +69,9 @@ class SIMslmManager(SignalInterface):
     #  type of error if neccessary.
     # ================================================================================
 
-    def openSLM(self, slmDLL, port):
+    def openSLM(self, port):
         #Port input in form of COMX
-        openComPort = slmDLL.FDD_DevOpenComPort
+        openComPort = self.slmDLL.FDD_DevOpenComPort
         portb = port.encode('utf-8')
         ret = openComPort(portb,250,115200,True)
 
@@ -85,8 +86,8 @@ class SIMslmManager(SignalInterface):
         return retBool, retStr
 
 
-    def closeSLM(self,slmDLL):
-        closeComPort = slmDLL.FDD_DevClose
+    def closeSLM(self):
+        closeComPort = self.slmDLL.FDD_DevClose
         ret = closeComPort()
         if ret == 0:
             retBool = True
@@ -98,9 +99,9 @@ class SIMslmManager(SignalInterface):
         return retBool, retStr
 
 
-    def getRunningOrder(self,slmDLL):
+    def getRunningOrder(self):
 
-        ROgetselected = slmDLL.R4_RpcRoGetSelected
+        ROgetselected = self.slmDLL.R4_RpcRoGetSelected
         ptr_getRO = ctypes.pointer(ctypes.c_int16())
         ret = ROgetselected(ptr_getRO)
 
@@ -114,15 +115,15 @@ class SIMslmManager(SignalInterface):
         return (retRO)
 
 
-    def setRunningOrder(self,slmDLL, setROValue):
-        getROCountVal = self.getROCount(slmDLL)[0]
+    def setRunningOrder(self,setROValue):
+        getROCountVal = self.getROCount()[0]
         if setROValue >= 0 and setROValue < getROCountVal:
-            ROsetselected = slmDLL.R4_RpcRoSetSelected
+            ROsetselected = self.slmDLL.R4_RpcRoSetSelected
             # ptr_setRO = ctypes.pointer(ctypes.c_int16())
             ret = ROsetselected(setROValue)
             
             if ret == 0:
-                newRO = self.getRunningOrder(slmDLL)[0]
+                newRO = self.getRunningOrder()
                 if newRO == setROValue:
                     setROBool = True
                     retStr = ('Successfully set selected RO to ' + str(setROValue))
@@ -132,12 +133,13 @@ class SIMslmManager(SignalInterface):
         else:
             retStr = 'Desired RO out of bounds. Valid entries are 0:' + str(getROCountVal-1)
             setROBool = False
+        print(retStr)    
 
         return (setROBool, retStr)
 
 
-    def getROCount(self,slmDLL):
-        getROCountFunc = slmDLL.R4_RpcRoGetCount
+    def getROCount(self):
+        getROCountFunc = self.slmDLL.R4_RpcRoGetCount
         ptr_getROCount = ctypes.pointer(ctypes.c_int16())
         ret = getROCountFunc(ptr_getROCount)
         if ret == 0:
@@ -150,8 +152,8 @@ class SIMslmManager(SignalInterface):
         return (retROCount, retStr)
 
 
-    def slmActivate(self,slmDLL):
-        slmActivate = slmDLL.R4_RpcRoActivate
+    def slmActivate(self):
+        slmActivate = self.slmDLL.R4_RpcRoActivate
         ret = slmActivate()
         if ret == 0:
             slmActivateBool = True
@@ -162,8 +164,8 @@ class SIMslmManager(SignalInterface):
         return slmActivateBool, retStr
 
 
-    def slmDeactivate(self,slmDLL):
-        slmDeactivate = slmDLL.R4_RpcRoDeactivate
+    def slmDeactivate(self):
+        slmDeactivate = self.slmDLL.R4_RpcRoDeactivate
         ret = slmDeactivate()
         if ret == 0:
             slmDeactivateBool = True
@@ -174,8 +176,8 @@ class SIMslmManager(SignalInterface):
         return slmDeactivateBool, retStr
 
 
-    def slmRestart(self,slmDLL):
-        slmRestart = slmDLL.R4_RpcSysReboot
+    def slmRestart(self):
+        slmRestart = self.slmDLL.R4_RpcSysReboot
         ret = slmRestart()
         if ret == 0:
             slmRestartBool = True
@@ -186,9 +188,9 @@ class SIMslmManager(SignalInterface):
         return slmRestartBool, retStr
 
 
-    def setDefaultRO(self,slmDLL, defaultRO):
+    def setDefaultRO(self, defaultRO):
 
-        setDefaultRO = slmDLL.R4_RpcRoSetDefault
+        setDefaultRO = self.slmDLL.R4_RpcRoSetDefault
         ret = setDefaultRO(defaultRO)
 
         if ret == 0:
@@ -201,8 +203,8 @@ class SIMslmManager(SignalInterface):
         return (retBool, retStr)
 
 
-    def getROName(self,slmDLL, ROIndex):
-        getROName = slmDLL.R4_RpcRoGetName
+    def getROName(self, ROIndex):
+        getROName = self.slmDLL.R4_RpcRoGetName
         varArray = (ctypes.c_char*50)()
         ptr_getROName = ctypes.pointer(varArray)
         ret = getROName(ROIndex, ptr_getROName, 50)
@@ -214,8 +216,8 @@ class SIMslmManager(SignalInterface):
         return (ROName, retStr)
 
 
-    def getRepertoireUniqueId(self,slmDLL):
-        getRepUnIdFunc = slmDLL.R4_RpcSysGetRepertoireUniqueId
+    def getRepertoireUniqueId(self):
+        getRepUnIdFunc = self.slmDLL.R4_RpcSysGetRepertoireUniqueId
         varArray = (ctypes.c_char*50)()
         ptr_getRepUnId = ctypes.pointer(varArray)
         ret = getRepUnIdFunc(ptr_getRepUnId, 50)
@@ -241,8 +243,8 @@ class SIMslmManager(SignalInterface):
     #     return (progressPct, retStr)
 
 
-    def getActState(self,slmDLL):
-        getActivationStateFunc = slmDLL.R4_RpcRoGetActivationState
+    def getActState(self):
+        getActivationStateFunc = self.slmDLL.R4_RpcRoGetActivationState
         ptr_ActState = ctypes.pointer(ctypes.c_uint8())
         #ptr_ActState = ctypes.pointer(ctypes.c_char_p())
         ret = getActivationStateFunc(ptr_ActState)
@@ -265,14 +267,14 @@ class SIMslmManager(SignalInterface):
         return state, retStr
 
 
-    def getAllRONames(self,slmDLL):
-        totalROCount = self.getROCount(slmDLL)[0]
+    def getAllRONames(self):
+        totalROCount = self.getROCount()[0]
         RONameDict = {}
         if totalROCount == None:
             logging.error('RO count failed')
         else:
             for i in range (totalROCount):
-                roName = self.getROName(slmDLL, i)[0]
+                roName = self.getROName(i)[0]
                 RONameDict[i] = roName.decode("utf-8")
 
         return RONameDict

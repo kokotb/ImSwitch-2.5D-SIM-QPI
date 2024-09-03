@@ -49,17 +49,17 @@
       "x0_global": 0,
       "y0_global": 0,
       "camProperties": {
+        "ExposureTime": 1000.0,
         "ExposureAuto": "Off",
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":190.0,
-        "ExposureTime": 4000.0
+        "AcquisitionFrameRateEnable": false,
+        "AcquisitionFrameRate":20.0
       },
       "ROI":{
-        "OffsetX": 2632,
-        "OffsetY": 2056,
+        "OffsetX": 120,
+        "OffsetY": 120,
         "Width": 512,
         "Height": 512
       }
@@ -76,17 +76,17 @@
       "x0_global": 0,
       "y0_global": 0,
       "camProperties": {
+        "ExposureTime": 1000.0,
         "ExposureAuto": "Off",
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":190.0,
-        "ExposureTime": 2500.0
+        "AcquisitionFrameRateEnable": false,
+        "AcquisitionFrameRate":20.0
       },
       "ROI":{
-        "OffsetX": 2352,
-        "OffsetY": 2224,
+        "OffsetX": 112,
+        "OffsetY": 112,
         "Width": 512,
         "Height": 512
       }
@@ -103,17 +103,17 @@
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
+          "ExposureTime": 1000.0,
           "ExposureAuto": "Off",
           "TriggerMode": "Off",
           "Gain": 0.0, 
           "Gamma": 1.0,
-          "AcquisitionFrameRateEnable": true,
-          "AcquisitionFrameRate":190.0,
-          "ExposureTime": 2000.0
+          "AcquisitionFrameRateEnable": false,
+          "AcquisitionFrameRate":20.0
         },
         "ROI":{
-          "OffsetX": 2576,
-          "OffsetY": 2082,
+          "OffsetX": 104,
+          "OffsetY": 104,
           "Width": 512,
           "Height": 512
         }
