@@ -298,7 +298,7 @@ class CameraTIS:
              if maxAcqFrameRate >= property_value:
                   pass
              else:
-                  property_value = int(maxAcqFrameRate)
+                  property_value = float(maxAcqFrameRate)
              self.propNodes[property_name].value = property_value
             
         elif self.propNodes[property_name].is_writable:

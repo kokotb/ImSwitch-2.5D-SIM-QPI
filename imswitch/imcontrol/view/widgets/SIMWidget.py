@@ -96,21 +96,23 @@ class SIMWidget(NapariHybridWidget):
         
         # Checkboxes
         checkboxes = [
-            "Enable Reconstruction", "Enable Record Reconstruction",
-            "EnableRecord  RAW", "Enable Laser 488", "Enable Laser 635",
+            "Live Reconstruction", "Save Reconstruction",
+            "Save Raw Data", "Enable Laser 488", "Enable Laser 635",
             "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
             "Selected Path", "D:\\SIM_data\\test_export\\",
             "Mock"
             
         ]
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
-        # self.checkbox_reconstruction.setEnabled(True)
+        self.checkbox_reconstruction.setEnabled(True)
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
         
         # Grid scan settings
         params = [
-            ("N grid X", "1"), ("N grid Y", "1"), ("overlap","0"), ("exposure [us]", "19000"), ("# recon frame skip", "0")]
+            ("Steps - X", "1"), ("Steps - Y", "1"), ("Overlap","0"), ("Exposure [us]", "19000"), ("Recon Frames to Skips", "0")]
+        # self.gridScanBoxLabel = QLabel('<h2><strong>Grid Scan Settings</strong></h2>')
+        self.gridScanBoxLabel = QLabel('<h2><strong>Grid Scan Settings</strong></h2>')
         self.numGridX_label = QLabel(params[0][0])
         self.numGridX_textedit = QLineEdit(params[0][1])
         self.numGridY_label = QLabel(params[1][0])
@@ -141,17 +143,33 @@ class SIMWidget(NapariHybridWidget):
         
         layout.addLayout(checkbox_layout)
         
+        self.roSelectLayout = QtWidgets.QGridLayout()
+        self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
+        self.roSelectList = QtWidgets.QComboBox()
+        # self.nextDetectorButton = guitools.BetterPushButton('Next')
+        # self.nextDetectorButton.hide()
+        self.roSelectLayout.addWidget(self.roSelectLabel, 0 ,0)
+        self.roSelectLayout.addWidget(self.roSelectList, 0 ,1)
+        layout.addLayout(self.roSelectLayout)
+        # self.roSelect.addWidget(self.nextDetectorButton)
+
+
+
+
+
+
+
         parameters_layout = QtWidgets.QGridLayout()
         row = 0
-        
-        parameters_layout.addWidget(self.numGridX_label, row, 0)
-        parameters_layout.addWidget(self.numGridX_textedit, row, 1)
-        parameters_layout.addWidget(self.numGridY_label, row + 1, 0)
-        parameters_layout.addWidget(self.numGridY_textedit, row + 1, 1)
-        parameters_layout.addWidget(self.overlap_label, row + 2, 0)
-        parameters_layout.addWidget(self.overlap_textedit, row + 2, 1)
-        parameters_layout.addWidget(self.reconFrameSkip_label, row + 3, 0)
-        parameters_layout.addWidget(self.reconFrameSkip_textedit, row + 3, 1)
+        parameters_layout.addWidget(self.gridScanBoxLabel, row, 0)
+        parameters_layout.addWidget(self.numGridX_label, row+1, 0)
+        parameters_layout.addWidget(self.numGridX_textedit, row+1, 1)
+        parameters_layout.addWidget(self.numGridY_label, row + 2, 0)
+        parameters_layout.addWidget(self.numGridY_textedit, row + 2, 1)
+        parameters_layout.addWidget(self.overlap_label, row + 3, 0)
+        parameters_layout.addWidget(self.overlap_textedit, row + 3, 1)
+        parameters_layout.addWidget(self.reconFrameSkip_label, row + 4, 0)
+        parameters_layout.addWidget(self.reconFrameSkip_textedit, row + 4, 1)
         # parameters_layout.addWidget(self.exposure_label, row + 4, 0)
         # parameters_layout.addWidget(self.exposure_textedit, row + 4)        
         layout.addLayout(parameters_layout)
@@ -170,6 +188,15 @@ class SIMWidget(NapariHybridWidget):
         
         tab.setLayout(layout)
         return tab
+    
+    def addROName(self, roIndex, roName):
+        self.roSelectList.addItem(f'{roIndex}:{roName}', roIndex)
+
+    def getSelectedRO(self):
+        selectedRO = str(self.roSelectList.currentText())
+        roIndex = selectedRO.split(":")
+        roIndex = int(roIndex[0])
+        return roIndex
 
     def create_reconstruction_parameters_tab(self):
         tab = QWidget()
@@ -370,6 +397,8 @@ class SIMWidget(NapariHybridWidget):
     def getSkipFrames(self):
         num = int(self.reconFrameSkip_textedit.text())
         return num
+    
+
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

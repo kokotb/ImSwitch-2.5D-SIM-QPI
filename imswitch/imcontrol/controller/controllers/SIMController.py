@@ -184,7 +184,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_mock.stateChanged.connect(self.toggleMockUse)
         #self._widget.sigPatternID.connect(self.patternIDChanged)
-        self._widget.number_dropdown.currentIndexChanged.connect(self.patternIDChanged)
+        # self._widget.number_dropdown.currentIndexChanged.connect(self.patternIDChanged)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
         # read parameters from the widget
         # self._widget.start_timelapse_button.clicked.connect(self.startTimelapse)
@@ -193,6 +193,10 @@ class SIMController(ImConWidgetController):
         self.folder = self._widget.getRecFolder()
 
 
+        #Get RO names from SIMslmManager and send values to widget function to populate RO list.
+        roNameList = self._master.simslmManager.getAllRONames()
+        for i in range(len(roNameList)):
+            self._widget.addROName(i,roNameList[i])
 
 
 
@@ -226,9 +230,6 @@ class SIMController(ImConWidgetController):
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
 
-        dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
-        # self.patternID = 0
-        self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
         # dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
@@ -334,10 +335,10 @@ class SIMController(ImConWidgetController):
         
         # -------------------Set-up SLM-------------------
         # Set running order
-        orderID = self.patternID
-        orderID = 9
-        self._master.simslmManager.setRunningOrder(orderID)
-        # self.SIMClient.set_running_order(orderID)
+
+
+        roID = self._widget.getSelectedRO()
+        self._master.simslmManager.setRunningOrder(roID)
         # -------------------Set-up SLM-------------------
         
 
@@ -686,18 +687,18 @@ class SIMController(ImConWidgetController):
     def monitorChanged(self, monitor):
         self._widget.setSIMDisplayMonitor(monitor)
 
-    def patternIDChanged(self, patternID):
-        wl = self.getpatternWavelength()
-        if wl == 'Laser 488nm':
-            laserTag = 0
-        elif wl == 'Laser 561nm':
-            laserTag = 1
-        elif wl == 'Laser 640nm':
-            laserTag = 2
-        else:
-            laserTag = 0
-            self._logger.error("The laser wavelength is not implemented")
-        self.simPatternByID(patternID,laserTag)
+    # def patternIDChanged(self, patternID):
+    #     wl = self.getpatternWavelength()
+    #     if wl == 'Laser 488nm':
+    #         laserTag = 0
+    #     elif wl == 'Laser 561nm':
+    #         laserTag = 1
+    #     elif wl == 'Laser 640nm':
+    #         laserTag = 2
+    #     else:
+    #         laserTag = 0
+    #         self._logger.error("The laser wavelength is not implemented")
+    #     self.simPatternByID(patternID,laserTag)
 
     def getpatternWavelength(self):
         return self._widget.laser_dropdown.currentText()
@@ -895,9 +896,7 @@ class SIMController(ImConWidgetController):
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
 
-        dic_patternID = {'00':0,'01':1, '02':2, '10':3, '11':4, '12':5}
-        # self.patternID = 0
-        self.patternID = dic_patternID['00'] # dic_patternID[str(dic_wl_dev[laser_wl])+dic_exposure_dev[exposure_ms]]
+
         # dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
@@ -1003,9 +1002,9 @@ class SIMController(ImConWidgetController):
         
         # -------------------Set-up SLM-------------------
         # Set running order
-        orderID = self.patternID
+        orderID = 0
         self._master.simslmManager.set_running_order(orderID)
-        # self.SIMClient.set_running_order(orderID)
+
         # -------------------Set-up SLM-------------------
         
 
