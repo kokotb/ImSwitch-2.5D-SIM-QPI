@@ -1,12 +1,12 @@
 from imswitch.imcommon.model import VFileItem, initLogger
 # from imswitch.imcontrol.model import (
 #     DetectorsManager, LasersManager, MultiManager, NidaqManager, PositionersManager, RecordingManager, RS232sManager, 
-#     ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SIMslmManager, ArduinoManager
+#     ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SLM4DDManager, ArduinoManager
 # )
 
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, PositionersManager, RecordingManager, RS232sManager, 
-     SLMManager, SIMManager, SIMslmManager, ArduinoManager
+     SLMManager, SIMManager, SLM4DDManager, ArduinoManager
 )
 
 
@@ -54,7 +54,7 @@ class MasterController:
         self.simManager = SIMManager(self.__setupInfo.sim)
         
         if self.__setupInfo.SIMslm:
-            self.simslmManager = SIMslmManager(self.__setupInfo.SIMslm)
+            self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,

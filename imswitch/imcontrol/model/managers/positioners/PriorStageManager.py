@@ -73,7 +73,7 @@ class PriorStageManager(PositionerManager):
         msg = "controller.connect " + port
         if self.query_initial(msg, SDKPrior, sessionID)[0]==0:
             SDKPriorMock = False
-            print("Stage initialized")
+            print("XY stage initialized")
         else:
             # Could not connect, load mock PriorSDK DLL
             from . import MockSDKPriorDLL

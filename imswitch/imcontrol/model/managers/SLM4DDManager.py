@@ -15,7 +15,7 @@ import logging
 
 
 
-class SIMslmManager(SignalInterface):
+class SLM4DDManager(SignalInterface):
     
 # SLM returns code for ERROR in integer form. This is ERROR dictionary used to
 # decode errors in following functions.
@@ -51,9 +51,7 @@ class SIMslmManager(SignalInterface):
         self.nameListROs = self.getAllRONames()
         self.currentRO = self.getRunningOrder()
         self.repIDName = self.getRepertoireUniqueId()
-        print(self.nameListROs)
-        print(self.currentRO)
-        print(self.repIDName)
+
     # Opens SLMDLL library ===========================================================
     def getSLMDLL(self, path):
         slmDLL = WinDLL(path)

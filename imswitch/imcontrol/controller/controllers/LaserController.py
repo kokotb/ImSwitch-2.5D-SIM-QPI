@@ -26,7 +26,8 @@ class LaserController(ImConWidgetController):
 
             if not lManager.isBinary:
                 # self.valueChanged(lName, lManager.valueRangeMin)
-                self.valueChanged(lName, 10) #CTNOTE CTREMOVE AOTF starts AOTF with 10 power, remove after SLM/SIM testing
+                power = lManager._LaserManager__valueInit
+                self.valueChanged(lName, power)
 
             self.setSharedAttr(lName, _enabledAttr, self._widget.isLaserActive(lName))
             self.setSharedAttr(lName, _valueAttr, self._widget.getValue(lName))

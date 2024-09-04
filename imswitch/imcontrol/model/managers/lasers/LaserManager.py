@@ -28,6 +28,7 @@ class LaserManager(ABC):
         self.__valueRangeMin = laserInfo.valueRangeMin
         self.__valueRangeMax = laserInfo.valueRangeMax
         self.__valueRangeStep = laserInfo.valueRangeStep
+        self.__valueInit = laserInfo.valueInit
         self.__valueUnits = valueUnits
         self.__valueDecimals = valueDecimals
         self.__isModulated = isModulated

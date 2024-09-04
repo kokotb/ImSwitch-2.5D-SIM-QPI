@@ -21,7 +21,7 @@ import sys
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
-# from imswitch.imcontrol.model import SIMslmManager as SIMclient
+# from imswitch.imcontrol.model import SLM4DDManager as SIMclient
 
 import imswitch
 
@@ -1104,7 +1104,7 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up SLM-------------------
         # Set running order
         orderID = self.patternID
-        self._master.simslmManager.set_running_order(orderID)
+        self._master.SLM4DDManager.set_running_order(orderID)
         # self.SIMClient.set_running_order(orderID)
         # -------------------Set-up SLM-------------------
         
@@ -2750,15 +2750,15 @@ class SIMClient:
     # Cannot do it this way, because SIMClient does not inhert _master
     # def send_start_sequence_trigger(self):
     #     # A trigger to the SLM will be sent from here.
-    #     self._master.simslmManager.start_seqeunce()
+    #     self._master.SLM4DDManager.start_seqeunce()
     
     # def send_stop_sequence_trigger(self):
     #     # A trigger to the SLM will be sent from here.
-    #     self._master.simslmManager.stop_seqeunce()
+    #     self._master.SLM4DDManager.stop_seqeunce()
     
     # def set_running_order(self, orderID):
     #     # Running order selection is performed through this
-    #     self._master.simslmManager.set_running_order(orderID)
+    #     self._master.SLM4DDManager.set_running_order(orderID)
     #     pass
 
 

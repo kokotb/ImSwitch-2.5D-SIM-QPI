@@ -12,5 +12,5 @@ from .SLM25DManager import SLMManager
 # from .StandManager import StandManager
 # from .RotatorsManager import RotatorsManager
 from .SIMManager import SIMManager 
-from .SIMslmManager import SIMslmManager
+from .SLM4DDManager import SLM4DDManager
 from .ArduinoManager import ArduinoManager

@@ -21,7 +21,7 @@ import sys
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
-# from imswitch.imcontrol.model import SIMslmManager as SIMclient
+# from imswitch.imcontrol.model import SLM4DDManager as SIMclient
 
 import imswitch
 
@@ -337,7 +337,7 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up SLM-------------------
         # Set running order
         orderID = self.patternID
-        self._master.simslmManager.set_running_order(orderID)
+        self._master.SLM4DDManager.set_running_order(orderID)
         # self.SIMClient.set_running_order(orderID)
         # -------------------Set-up SLM-------------------
         

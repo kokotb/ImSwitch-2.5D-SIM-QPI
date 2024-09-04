@@ -4,7 +4,7 @@
   "width":1080,
   "height":1920,
   "pixelSize":13.62,
-  "managerName": "SIMslmManager"
+  "managerName": "SLM4DDManager"
 
 },
 "Arduino":{
@@ -136,7 +136,8 @@
       "wavelength": 488,
       "valueRangeMin": 0,
       "valueRangeMax": 1023,
-      "valueRangeStep": 10
+      "valueRangeStep": 10,
+      "valueInit": 1023
       },
   "561AOTF": {
     "analogChannel": null,
@@ -149,7 +150,8 @@
     "wavelength": 561,
     "valueRangeMin": 0,
     "valueRangeMax": 1023,
-    "valueRangeStep": 10
+    "valueRangeStep": 10,
+    "valueInit": 1023
     },
   "640AOTF": {
     "analogChannel": null,
@@ -162,7 +164,8 @@
     "wavelength": 640,
     "valueRangeMin": 0,
     "valueRangeMax": 1023,
-    "valueRangeStep": 10
+    "valueRangeStep": 10,
+    "valueInit": 1023
     }
     
 },

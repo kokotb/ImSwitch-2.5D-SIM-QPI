@@ -55,6 +55,9 @@ class LaserInfo(DeviceInfo):
     valueRangeMax: Optional[Union[int, float]]
     """ maximum value of the laser. ``null`` if laser doesn't setting a value.
     """
+    valueInit: Optional[Union[int, float]]
+    """ maximum value of the laser. ``null`` if laser doesn't setting a value.
+    """
 
     wavelength: Union[int, float]
     """ Laser wavelength in nanometres. """

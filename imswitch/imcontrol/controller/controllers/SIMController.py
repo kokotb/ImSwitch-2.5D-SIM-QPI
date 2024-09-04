@@ -21,7 +21,7 @@ import sys
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
-# from imswitch.imcontrol.model import SIMslmManager as SIMclient
+# from imswitch.imcontrol.model import SLM4DDManager as SIMclient
 
 import imswitch
 
@@ -193,8 +193,8 @@ class SIMController(ImConWidgetController):
         self.folder = self._widget.getRecFolder()
 
 
-        #Get RO names from SIMslmManager and send values to widget function to populate RO list.
-        roNameList = self._master.simslmManager.getAllRONames()
+        #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
+        roNameList = self._master.SLM4DDManager.getAllRONames()
         for i in range(len(roNameList)):
             self._widget.addROName(i,roNameList[i])
 
@@ -333,13 +333,11 @@ class SIMController(ImConWidgetController):
         # Set count for frames to 0
         count = 0
         
-        # -------------------Set-up SLM-------------------
-        # Set running order
 
-
+        # Set running order on SLM
         roID = self._widget.getSelectedRO()
-        self._master.simslmManager.setRunningOrder(roID)
-        # -------------------Set-up SLM-------------------
+        self._master.SLM4DDManager.setRunningOrder(roID)
+
         
 
         # -------------------Set-up cams-------------------
@@ -1003,7 +1001,7 @@ class SIMController(ImConWidgetController):
         # -------------------Set-up SLM-------------------
         # Set running order
         orderID = 0
-        self._master.simslmManager.set_running_order(orderID)
+        self._master.SLM4DDManager.set_running_order(orderID)
 
         # -------------------Set-up SLM-------------------
         

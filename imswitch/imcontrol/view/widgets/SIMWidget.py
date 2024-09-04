@@ -104,7 +104,7 @@ class SIMWidget(NapariHybridWidget):
             
         ]
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
-        self.checkbox_reconstruction.setEnabled(True)
+        self.checkbox_reconstruction.setChecked(True)
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
         

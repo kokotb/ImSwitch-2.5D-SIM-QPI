@@ -2,7 +2,7 @@
   "width":1080,
   "height":1920,
   "pixelSize":13.62,
-  "managerName": "SIMslmManager",
+  "managerName": "SLM4DDManager",
   "managerProperties": {
     "rs232device": "simslm"
   }

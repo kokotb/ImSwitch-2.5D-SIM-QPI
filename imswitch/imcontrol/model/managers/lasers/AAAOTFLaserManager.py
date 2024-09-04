@@ -18,12 +18,9 @@ class AAAOTFLaserManager(LaserManager):
         self._rs232manager = lowLevelManagers['rs232sManager'][
             laserInfo.managerProperties['rs232device']
         ]
-
-        # self.blankingOn()
+        
+        self.power = laserInfo.valueInit
         self.externalControl()
-        self.power = 10
-
-
         super().__init__(laserInfo, name, isBinary=False, valueUnits='arb', valueDecimals=0)
 
     def setEnabled(self, enabled):
@@ -43,7 +40,8 @@ class AAAOTFLaserManager(LaserManager):
         self.power = power
         valueaotf = round(power)  # assuming input value is [0,1023]
         cmd = 'L' + str(self._channel) + 'P' + str(valueaotf)
-        self._rs232manager.query(cmd)
+        ans = self._rs232manager.query(cmd)
+        print(ans)
 
     def blankingOn(self):
         """Switch on the blanking of all the channels"""
@@ -56,7 +54,7 @@ class AAAOTFLaserManager(LaserManager):
         """Switch the channel to external control""" 
         cmd = 'L' + str(self._channel) + 'I1' #1=external, 0=internal
         ans = self._rs232manager.query(cmd)
-        print(ans)
+        # print(ans)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
