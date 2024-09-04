@@ -84,7 +84,8 @@ class SIMController(ImConWidgetController):
         # self.IS_HAMAMATSU=False
         # switch to detect if a recording is in progress
         self.isRecordingRaw = False
-        self.isReconstruction = False
+        self.isReconstruction = self._widget.getReconCheckState()
+
         self.isRecordRecon = False
         self.simFrameVal = 0
         self.nsimFrameSyncVal = 3
@@ -197,6 +198,8 @@ class SIMController(ImConWidgetController):
         roNameList = self._master.SLM4DDManager.getAllRONames()
         for i in range(len(roNameList)):
             self._widget.addROName(i,roNameList[i])
+        roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
+        self._widget.setSelectedRO(roSelectedOnSLM)
 
 
 
@@ -351,9 +354,9 @@ class SIMController(ImConWidgetController):
             # buffer_size = 500
             self.setCamForExperiment(detector, int(buffer_size))
         
-        if not mock:
-            for ID in laser_ID:
-                self.lasers[ID].setEnabled(True)
+        # if not mock:
+        #     for ID in laser_ID:
+        #         self.lasers[ID].setEnabled(True)
 
         droppedFrameSets = 0
         time_whole_start = time.time()
@@ -393,12 +396,16 @@ class SIMController(ImConWidgetController):
                 # FIXME: Remove after development is completed
                 times_color = []
                 time_color_start = time.time()
-                # Move stage
-                x_set = pos[0]
-                y_set = pos[1]
-                # tDebounceXY = 0 # prepared in case we need it
-                self.positionerXY.setPositionXY(x_set, y_set)
-                # time.sleep(tDebounceXY) # prepared in case we need it
+
+
+                # Move stage only if grid positions is greater than 1
+                if len(positions)==1:
+                    pass
+                else:
+                    self.positionerXY.setPositionXY(pos[0], pos[1])
+
+
+
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"move stage"])

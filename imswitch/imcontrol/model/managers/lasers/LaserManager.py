@@ -53,6 +53,12 @@ class LaserManager(ABC):
         return self.__isBinary
 
     @property
+    def valueInit(self) -> int:
+        """ Whether the laser can only be turned on and off, and its value
+        cannot be changed. """
+        return self.__valueInit
+
+    @property
     def wavelength(self) -> int:
         """ The wavelength of the laser. """
         return self.__wavelength

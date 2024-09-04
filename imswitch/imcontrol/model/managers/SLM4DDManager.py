@@ -47,11 +47,6 @@ class SLM4DDManager(SignalInterface):
         port = SIMSLMInfo.port
         self.slmDLL = self.getSLMDLL(path)
         self.openSLM(port)
-
-        self.nameListROs = self.getAllRONames()
-        self.currentRO = self.getRunningOrder()
-        self.repIDName = self.getRepertoireUniqueId()
-
     # Opens SLMDLL library ===========================================================
     def getSLMDLL(self, path):
         slmDLL = WinDLL(path)

@@ -105,6 +105,7 @@ class SIMWidget(NapariHybridWidget):
         ]
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
         self.checkbox_reconstruction.setChecked(True)
+
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
         
@@ -190,13 +191,25 @@ class SIMWidget(NapariHybridWidget):
         return tab
     
     def addROName(self, roIndex, roName):
-        self.roSelectList.addItem(f'{roIndex}:{roName}', roIndex)
+        self.roSelectList.addItem(f'{roName}', roIndex)
 
     def getSelectedRO(self):
-        selectedRO = str(self.roSelectList.currentText())
+        selectedRO = str(self.roSelectList.currentIndex())
         roIndex = selectedRO.split(":")
         roIndex = int(roIndex[0])
         return roIndex
+    
+    def setSelectedRO(self, currentROIndex):
+        self.roSelectList.setCurrentIndex(currentROIndex)
+
+    def getReconCheckState(self):
+        reconState = self.checkbox_reconstruction.checkState()
+        if reconState == 0:
+            reconStateBool = False
+        elif reconState == 2:
+            reconStateBool = True
+        return reconStateBool
+
 
     def create_reconstruction_parameters_tab(self):
         tab = QWidget()

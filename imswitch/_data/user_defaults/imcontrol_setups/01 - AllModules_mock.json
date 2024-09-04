@@ -49,17 +49,17 @@
       "x0_global": 0,
       "y0_global": 0,
       "camProperties": {
-        "ExposureTime": 1000.0,
         "ExposureAuto": "Off",
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "AcquisitionFrameRateEnable": false,
-        "AcquisitionFrameRate":20.0
+        "AcquisitionFrameRateEnable": true,
+        "AcquisitionFrameRate":190.0,
+        "ExposureTime": 4000.0
       },
       "ROI":{
-        "OffsetX": 120,
-        "OffsetY": 120,
+        "OffsetX": 2632,
+        "OffsetY": 2056,
         "Width": 512,
         "Height": 512
       }
@@ -76,17 +76,17 @@
       "x0_global": 0,
       "y0_global": 0,
       "camProperties": {
-        "ExposureTime": 1000.0,
         "ExposureAuto": "Off",
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "AcquisitionFrameRateEnable": false,
-        "AcquisitionFrameRate":20.0
+        "AcquisitionFrameRateEnable": true,
+        "AcquisitionFrameRate":190.0,
+        "ExposureTime": 2500.0
       },
       "ROI":{
-        "OffsetX": 112,
-        "OffsetY": 112,
+        "OffsetX": 2352,
+        "OffsetY": 2224,
         "Width": 512,
         "Height": 512
       }
@@ -103,17 +103,17 @@
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
-          "ExposureTime": 1000.0,
           "ExposureAuto": "Off",
           "TriggerMode": "Off",
           "Gain": 0.0, 
           "Gamma": 1.0,
-          "AcquisitionFrameRateEnable": false,
-          "AcquisitionFrameRate":20.0
+          "AcquisitionFrameRateEnable": true,
+          "AcquisitionFrameRate":190.0,
+          "ExposureTime": 2000.0
         },
         "ROI":{
-          "OffsetX": 104,
-          "OffsetY": 104,
+          "OffsetX": 2576,
+          "OffsetY": 2082,
           "Width": 512,
           "Height": 512
         }
@@ -136,7 +136,8 @@
       "wavelength": 488,
       "valueRangeMin": 0,
       "valueRangeMax": 1023,
-      "valueRangeStep": 10
+      "valueRangeStep": 10,
+      "valueInit": 1023
       },
   "561AOTF": {
     "analogChannel": null,
@@ -149,7 +150,8 @@
     "wavelength": 561,
     "valueRangeMin": 0,
     "valueRangeMax": 1023,
-    "valueRangeStep": 10
+    "valueRangeStep": 10,
+    "valueInit": 1023
     },
   "640AOTF": {
     "analogChannel": null,
@@ -162,7 +164,8 @@
     "wavelength": 640,
     "valueRangeMin": 0,
     "valueRangeMax": 1023,
-    "valueRangeStep": 10
+    "valueRangeStep": 10,
+    "valueInit": 1023
     }
     
 },
@@ -196,7 +199,7 @@
     "aaaotf": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM3",
+        "port": "ASRLCOM30",
         "encoding": "ascii",
         "recv_termination": "\n\r",
         "send_termination": "\r",
@@ -212,7 +215,7 @@
     "zpiezo": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM6",
+        "port": "ASRLCOM60",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",
@@ -228,7 +231,7 @@
     "arduino": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM7",
+        "port": "ASRLCOM70",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",
