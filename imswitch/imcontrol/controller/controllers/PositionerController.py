@@ -23,10 +23,11 @@ class PositionerController(ImConWidgetController):
             speed = hasattr(pManager, 'speed')
             self._widget.addPositioner(pName, pManager.axes, speed)###
             for axis in pManager.axes:
+                self.updatePosition(pName, axis)
                 self.setSharedAttr(pName, axis, _positionAttr, pManager.position[axis])
                 if speed:
                     self.setSharedAttr(pName, axis, _positionAttr, pManager.speed)
-
+  
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         # self._commChannel.sigSetSpeed.connect(lambda absPos: self.setAbsPosGUI(speed)) #commented when changing speed function to AbsPos
@@ -112,7 +113,8 @@ class PositionerController(ImConWidgetController):
     
     def updatePosition(self, positionerName, axis):
         newPos = self._master.positionersManager[positionerName].position[axis]
-        self._widget.updatePosition(positionerName, axis, newPos)
+        newPositions = self.getPos()
+        self._widget.updatePosition(positionerName, axis, float(newPositions[positionerName][axis]))
         self.setSharedAttr(positionerName, axis, _positionAttr, newPos)
 
 

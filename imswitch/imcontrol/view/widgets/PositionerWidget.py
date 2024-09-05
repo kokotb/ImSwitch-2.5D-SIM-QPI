@@ -126,7 +126,7 @@ class PositionerWidget(Widget):
     def updatePosition(self, positionerName, axis, position):
 
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
-        self.pars['Position' + parNameSuffix].setText(f'<strong>{position:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix].setText(f'<strong>{position:.2f} µm</strong>') #Sets value on left side of positioner widget
         # Updates entry window for absolute position
         self.updateAbsPos(positionerName, axis, position)
 

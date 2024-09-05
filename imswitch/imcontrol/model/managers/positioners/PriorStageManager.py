@@ -30,7 +30,10 @@ class PriorStageManager(PositionerManager):
         if self.zeroOnStartup:
             for axis in self.axes: 
                 self.setPosition(self._position[axis], axis)
-
+        else:
+            for j, axis in enumerate(self.axes):
+                startPos = self.get_abs()
+                self.setPosition(startPos[j], axis)
 
     def initialize_all(self):
         """Initialize the stage and go to mock if not present."""
