@@ -359,11 +359,13 @@ class SIMController(ImConWidgetController):
         #         self.lasers[ID].setEnabled(True)
 
         droppedFrameSets = 0
-        time_whole_start = time.time()
-        self._master.arduinoManager.activateSLM()
+        time_global_start = time.time()
+        time_whole_start = time_global_start
+        self._master.arduinoManager.activateSLMWriteOnly()
+        time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
         while self.active and not mock and dic_wl != []:
 
-        
+
         # while count == 0:
             wfImages = []
             stackSIM = [] 
@@ -412,12 +414,17 @@ class SIMController(ImConWidgetController):
                                 
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
-                self._master.arduinoManager.trigOneSequenceWriteOnly()            
+                # for detector in self.detectors:
+                #     detector._camera.clearBuffers()
+
+                self._master.arduinoManager.trigOneSequenceWriteOnly()
+                
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
              
                 # Loop over channels
+
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
                     processor.setParameters(sim_parameters)
@@ -439,8 +446,8 @@ class SIMController(ImConWidgetController):
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
                     while waitingBuffers != 9:
-                        time.sleep(.02)
                         
+                        time.sleep(.01)
                         waitingBuffers = detector._camera.tl_stream_nodemap['StreamOutputBufferCount'].value #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
                         if waitingBuffers != waitingBuffersEnd:
@@ -455,12 +462,14 @@ class SIMController(ImConWidgetController):
                         # print(waitingBuffers)
                         waitingBuffersEnd = waitingBuffers
                         broken = False
-                        if waitingBuffers != 9 and bufferTotalTime > .1:
+                        # print(waitingBuffers,bufferTotalTime)
+                        if waitingBuffers != 9 and bufferTotalTime > .08:
                             for detector in self.detectors:
                                 detector._camera.clearBuffers()
                             self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
                             broken = True
                             break
+                        
 
                     if broken == True:
                         droppedFrameSets += 1
@@ -538,11 +547,13 @@ class SIMController(ImConWidgetController):
                 count += 1
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
-                time_whole_total = time_whole_end-time_whole_start
-                
-                self._logger.debug('Done!\nIt took: {:.2f} sec\n--'.format(time_whole_total))
+                time_whole_total = time_whole_end-time_whole_start                
                 time_whole_start = time.time()
-
+                time_global_total = time_whole_end-time_global_start
+                droppedFrameRate = droppedFrameSets/(time_global_total/60)
+                self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
+                self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
+                self._logger.debug('Drop rate: {:.2f} frames/min'.format(droppedFrameRate))
 
 
 
@@ -738,7 +749,7 @@ class SIMController(ImConWidgetController):
         self.simThread.join()
         for laser in self.lasers:
             laser.setEnabled(False)
-        self._master.arduinoManager.deactivateSLM()
+        self._master.arduinoManager.deactivateSLMWriteOnly()
 
 
 

@@ -32,11 +32,11 @@ class ArduinoManager(SignalInterface):
 
         # super().__init__(setupInfo)
     
-    def trigOneSequence(self, running_order):
+    def trigOneSequence(self):
         """Sends a trigger to SLM to start a sequence."""
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
-        cmd = 'S'+str(running_order)
+        cmd = 'S'+str(0)
         response = self._rs232manager.query(cmd)
         print(response)
 
@@ -45,16 +45,32 @@ class ArduinoManager(SignalInterface):
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'S'+str(0)
-        response = self._rs232manager.write(cmd)
-        print(response)
+        self._rs232manager.write(cmd)
+
+
+    def activateSLMWriteOnly(self):
+        """Sends a trigger to SLM to put SPO0 high, activating the SLM. Ready for a trigger."""
+        # running_order order as a string
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'A'
+        self._rs232manager.write(cmd)
+
 
     def activateSLM(self):
         """Sends a trigger to SLM to put SPO0 high, activating the SLM. Ready for a trigger."""
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'A'
-        response = self._rs232manager.write(cmd)
+        response = self._rs232manager.query(cmd)
         print(response)
+
+    def deactivateSLMWriteOnly(self):
+        """Sends a trigger to SLM to put SPO0 low, deactivating the SLM."""
+        # running_order order as a string
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'Q'
+        self._rs232manager.write(cmd)
+
 
     def deactivateSLM(self):
         """Sends a trigger to SLM to put SPO0 low, deactivating the SLM."""
