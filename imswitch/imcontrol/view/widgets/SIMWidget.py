@@ -16,6 +16,8 @@ class SIMWidget(NapariHybridWidget):
 
     sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
+    # sigCalibrateToggled = QtCore.Signal(bool)
+
 
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
@@ -44,7 +46,7 @@ class SIMWidget(NapariHybridWidget):
 
         # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
         # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
-        
+        # self.calibrateButton.toggled.connect(self.sigCalibrateToggled)
         self.layer = None
         
         
@@ -77,119 +79,86 @@ class SIMWidget(NapariHybridWidget):
 
     def create_experiment_tab(self):
         tab = QWidget()
-        layout = QVBoxLayout()
+        vertLayout = QVBoxLayout()
 
-        # Buttons
+        # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
+        self.calibrateButton = QPushButton("Calibrate") #Not connected to anything yet
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.stop_button)
-        layout.addLayout(button_layout)
+        button_layout.addWidget(self.calibrateButton)
+        vertLayout.addLayout(button_layout)
 
-        # Select reconstructor
-        '''
-        ProcessorLabel = QtWidgets.QLabel('<strong>SIM Processor:</strong>')
-        self.SIMReconstructorList = QtWidgets.QComboBox()
-        self.SIMReconstructorList.addItems(['napari', 'mcsim'])
-        '''
-        
-        # Checkboxes
-        checkboxes = [
-            "Live Reconstruction", "Save Reconstruction",
-            "Save Raw Data", "Enable Laser 488", "Enable Laser 635",
-            "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
-            "Selected Path", "D:\\SIM_data\\test_export\\",
-            "Mock","Calibrate each run"
-        ]
-
-        self.checkbox_reconstruction = QCheckBox(checkboxes[0])
+        # Checkbox options
+        self.checkbox_reconstruction = QCheckBox('Live Reconstruction')
         self.checkbox_reconstruction.setChecked(True)
-
-        self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
-        self.checkbox_record_raw = QCheckBox(checkboxes[2])
-        # self.checkbox_calibrate = QCheckBox(checkboxes[11])
+        self.checkbox_record_reconstruction = QCheckBox('Save Reconstruction')
+        self.checkbox_record_raw = QCheckBox('Save Raw Data')
+        checkbox_layout = QtWidgets.QVBoxLayout()
+        checkbox_layout.addWidget(self.checkbox_reconstruction)
+        checkbox_layout.addWidget(self.checkbox_record_reconstruction)
+        checkbox_layout.addWidget(self.checkbox_record_raw)
+        vertLayout.addLayout(checkbox_layout)
         
-        # Grid scan settings
-        params = [
-            ("Steps - X", "1"), ("Steps - Y", "1"), ("Overlap","0"), ("Exposure [us]", "19000"), ("Recon Frames to Skips", "0")]
-        # self.gridScanBoxLabel = QLabel('<h2><strong>Grid Scan Settings</strong></h2>')
-        self.gridScanBoxLabel = QLabel('<h2><strong>Grid Scan Settings</strong></h2>')
-        self.numGridX_label = QLabel(params[0][0])
-        self.numGridX_textedit = QLineEdit(params[0][1])
-        self.numGridY_label = QLabel(params[1][0])
-        self.numGridY_textedit = QLineEdit(params[1][1])
-        self.overlap_label = QLabel(params[2][0])
-        self.overlap_textedit = QLineEdit(params[2][1])
-        # self.exposure_label = QLabel(params[3][0])
-        # self.exposure_textedit = QLineEdit(params[3][1])
-        self.reconFrameSkip_label = QLabel(params[4][0])
-        self.reconFrameSkip_textedit = QLineEdit(params[4][1])
-                
-        # Save folder
-        self.path_label = QLabel(checkboxes[8])
-        self.path_edit = QLineEdit(checkboxes[9])
-        self.openFolderButton = guitools.BetterPushButton('Open')
-        self.checkbox_mock = QCheckBox(checkboxes[10])
-        # TODO: change after development is over
-        # Set in config file
-        # self.checkbox_mock.setChecked(True) # Sets default fo true 
-        # self.checkbox_mock.setChecked(False) # Sets default fo true 
-        
-        # Edit checkbox layout
-        # Column 1
-        checkbox_layout = QtWidgets.QGridLayout()
-        checkbox_layout.addWidget(self.checkbox_reconstruction, 0, 0)
-        checkbox_layout.addWidget(self.checkbox_record_reconstruction, 1, 0)
-        checkbox_layout.addWidget(self.checkbox_record_raw, 2, 0)
-        # checkbox_layout.addWidget(self.checkbox_calibrate, 3, 0)
-        
-        layout.addLayout(checkbox_layout)
-        
-        self.roSelectLayout = QtWidgets.QGridLayout()
+        #RO selection on 4DD sLM
+        self.roSelectLayout = QtWidgets.QHBoxLayout()
         self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
         self.roSelectList = QtWidgets.QComboBox()
-        # self.nextDetectorButton = guitools.BetterPushButton('Next')
-        # self.nextDetectorButton.hide()
-        self.roSelectLayout.addWidget(self.roSelectLabel, 0 ,0)
-        self.roSelectLayout.addWidget(self.roSelectList, 0 ,1)
-        layout.addLayout(self.roSelectLayout)
-        # self.roSelect.addWidget(self.nextDetectorButton)
+        self.roSelectLayout.addWidget(self.roSelectLabel)
+        self.roSelectLayout.addWidget(self.roSelectList)
+        vertLayout.addLayout(self.roSelectLayout)
 
 
 
+        # Grid scan settings
+        self.gridScanLabelBox = QtWidgets.QHBoxLayout()
+        self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
+        self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
+        # vertLayout.addLayout(self.gridScanLabelBox)
 
+        gridScanLayout = QtWidgets.QGridLayout()
+        self.numGridX_label = QLabel("Steps - X")
+        self.numGridX_textedit = QLineEdit("1")
+        self.numGridY_label = QLabel("Steps - Y")
+        self.numGridY_textedit = QLineEdit("1")
+        self.overlap_label = QLabel("Overlap")
+        self.overlap_textedit = QLineEdit("0")
+        self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
+        self.reconFrameSkip_textedit = QLineEdit("0")
 
-
-
-        parameters_layout = QtWidgets.QGridLayout()
         row = 0
-        parameters_layout.addWidget(self.gridScanBoxLabel, row, 0)
-        parameters_layout.addWidget(self.numGridX_label, row+1, 0)
-        parameters_layout.addWidget(self.numGridX_textedit, row+1, 1)
-        parameters_layout.addWidget(self.numGridY_label, row + 2, 0)
-        parameters_layout.addWidget(self.numGridY_textedit, row + 2, 1)
-        parameters_layout.addWidget(self.overlap_label, row + 3, 0)
-        parameters_layout.addWidget(self.overlap_textedit, row + 3, 1)
-        parameters_layout.addWidget(self.reconFrameSkip_label, row + 4, 0)
-        parameters_layout.addWidget(self.reconFrameSkip_textedit, row + 4, 1)
-        # parameters_layout.addWidget(self.exposure_label, row + 4, 0)
-        # parameters_layout.addWidget(self.exposure_textedit, row + 4)        
-        layout.addLayout(parameters_layout)
-        
+        # gridScanLayout.addWidget(self.gridScanBoxLabel,row,0)
+        # gridScanLayout.addWidget(QtWidgets.QLabel(""),row,1)
+        gridScanLayout.addWidget(self.numGridX_label, row, 0)
+        gridScanLayout.addWidget(self.numGridX_textedit, row, 1)
+        gridScanLayout.addWidget(self.numGridY_label, row+1, 0)
+        gridScanLayout.addWidget(self.numGridY_textedit, row+1, 1)
+        gridScanLayout.addWidget(self.overlap_label, row+2, 0)
+        gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
+        gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
+        gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
+             
+        vertLayout.addLayout(gridScanLayout)
+
+
+        # Save folder
         parameters2_layout = QtWidgets.QGridLayout()
+        self.path_label = QLabel("Selected Path")
+        self.path_edit = QLineEdit("D:\\SIM_data\\test_export\\")
+        self.openFolderButton = guitools.BetterPushButton('Open')
+        self.checkbox_mock = QCheckBox("Mock")
         row = 0
-        
-        # layout.addWidget(self.exposure_label)
-        # layout.addWidget(self.exposure_textedit)
         parameters2_layout.addWidget(self.path_label, row, 0)
         parameters2_layout.addWidget(self.path_edit, row, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 1, 0, 1, 2)
         parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
+        vertLayout.addLayout(parameters2_layout)
         
-        layout.addLayout(parameters2_layout)
-        
-        tab.setLayout(layout)
+
+
+        tab.setLayout(vertLayout)
         return tab
     
     def addROName(self, roIndex, roName):

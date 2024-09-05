@@ -83,6 +83,9 @@ class SIMController(ImConWidgetController):
         # self.IS_FASTAPISIM=False
         # self.IS_HAMAMATSU=False
         # switch to detect if a recording is in progress
+
+
+        
         self.isRecordingRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
 
@@ -191,6 +194,7 @@ class SIMController(ImConWidgetController):
         # self._widget.start_timelapse_button.clicked.connect(self.startTimelapse)
         # self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
+        self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self.folder = self._widget.getRecFolder()
 
 
@@ -357,8 +361,7 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activateSLMWriteOnly()
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
         while self.active and not mock and dic_wl != []:
-
-
+            
         # while count == 0:
             wfImages = []
             stackSIM = [] 
@@ -416,8 +419,10 @@ class SIMController(ImConWidgetController):
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
              
-                # Loop over channels
 
+
+
+                # Loop over channels
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
                     processor.setParameters(sim_parameters)
@@ -492,7 +497,7 @@ class SIMController(ImConWidgetController):
                     # self.stack in SIMProcessor class
                     processor.setSIMStack(self.SIMStack)
                     
-                    # Push all wide fields into one array
+                    # Push all wide fields into one array.
                     wfImages[k].append(processor.getWFlbf(self.SIMStack))
                     
                     # Activate recording and reconstruction in processor
@@ -551,16 +556,9 @@ class SIMController(ImConWidgetController):
 
 
 
-
-
-
-
-
-
-
-
-
-
+    def calibrateToggled(self):
+        for processor in self.processors:
+            processor.isCalibrated = False
 
     # def timeMe(self, timedList, function):
     #         time_color_start = time.time()
@@ -1290,7 +1288,7 @@ class SIMParameters(object):
     pixelsize = 2.74
     eta = 0.6
     alpha = 0.5
-    beta = 0.98#
+    beta = 0.98
     path = 'D:\\SIM_data\\test_export\\'
 
 
@@ -1418,7 +1416,7 @@ class SIMProcessor(object):
     def getWFlbf(self, mStack):
         # display the BF image
         bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}")
+        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}") #CTNOTE WF DISPLAYED
         return bfFrame
         
     def setSIMStack(self, stack):
