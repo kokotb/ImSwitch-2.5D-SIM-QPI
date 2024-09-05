@@ -100,14 +100,15 @@ class SIMWidget(NapariHybridWidget):
             "Save Raw Data", "Enable Laser 488", "Enable Laser 635",
             "Enable TimeLapse", "Enable Z-stack", "Use GPU?",
             "Selected Path", "D:\\SIM_data\\test_export\\",
-            "Mock"
-            
+            "Mock","Calibrate each run"
         ]
+
         self.checkbox_reconstruction = QCheckBox(checkboxes[0])
         self.checkbox_reconstruction.setChecked(True)
 
         self.checkbox_record_reconstruction = QCheckBox(checkboxes[1])
         self.checkbox_record_raw = QCheckBox(checkboxes[2])
+        # self.checkbox_calibrate = QCheckBox(checkboxes[11])
         
         # Grid scan settings
         params = [
@@ -141,6 +142,7 @@ class SIMWidget(NapariHybridWidget):
         checkbox_layout.addWidget(self.checkbox_reconstruction, 0, 0)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction, 1, 0)
         checkbox_layout.addWidget(self.checkbox_record_raw, 2, 0)
+        # checkbox_layout.addWidget(self.checkbox_calibrate, 3, 0)
         
         layout.addLayout(checkbox_layout)
         
@@ -229,7 +231,7 @@ class SIMWidget(NapariHybridWidget):
             ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
             ("w", "0.2"), ("eta", "0.6"), ("Magnification", "22.22")
         ]
-        checkboxes = ["Calibrate each run"]
+        
         
         # create widget per label
         self.wavelength1_label = QLabel(params[0][0])
@@ -288,8 +290,8 @@ class SIMWidget(NapariHybridWidget):
         row_layout_11.addWidget(self.magnification_label)
         row_layout_11.addWidget(self.magnification_textedit)
         
-        # Create checkboxes
-        self.checkbox_calibrate = QCheckBox(checkboxes[0])
+
+
         
         layout.addLayout(row_layout_1)
         layout.addLayout(row_layout_2)
@@ -302,7 +304,7 @@ class SIMWidget(NapariHybridWidget):
         layout.addLayout(row_layout_9)
         layout.addLayout(row_layout_10)
         layout.addLayout(row_layout_11)
-        layout.addWidget(self.checkbox_calibrate)
+
         
 
         tab.setLayout(layout)

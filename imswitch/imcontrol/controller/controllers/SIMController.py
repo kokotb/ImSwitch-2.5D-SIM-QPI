@@ -294,21 +294,14 @@ class SIMController(ImConWidgetController):
         # Set processors for selected lasers
         processors = []
         isLaser = []
+
         for wl in dic_wl:
             if dic_wl != []:
                 processors.append(processors_dic[wl])
                 isLaser.append(dic_laser_present[wl])
-                # Set calibration before each run if selected in GUI
-                if processors_dic[wl].isCalibrated:
-                    # If calibrated it will check in widget if calibrate
-                    # Widget True, calibration needs to be False
-                    processors_dic[wl].isCalibrated = not self._widget.checkbox_calibrate.isChecked()
-        
-        
-        
-        
-        
-        
+                processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
+
+
         # Make processors object attribute so calibration can be changed when 
         # detector size is changed.
         self.processors = processors
@@ -1568,36 +1561,36 @@ class SIMProcessor(object):
         elif self.LaserWL == 640:
             self.h.wavelength = sim_parameters.wavelength_2
 
-    def reconstructSIMStackBackground(self, mStack):
-        '''
-        reconstruct the image stack asychronously
-        the stack is a list of 9 images (3 angles, 3 phases)
-        '''
-        # compute image
-        # initialize the model
+    # def reconstructSIMStackBackground(self, mStack):
+    #     '''
+    #     reconstruct the image stack asychronously
+    #     the stack is a list of 9 images (3 angles, 3 phases)
+    #     '''
+    #     # compute image
+    #     # initialize the model
 
-        self._logger.debug("Processing frames")
-        if not self.getIsCalibrated():
-            self.setReconstructor()
-            self.calibrate(mStack)
-        SIMReconstruction = self.reconstruct(mStack)
+    #     self._logger.debug("Processing frames")
+    #     if not self.getIsCalibrated():
+    #         self.setReconstructor()
+    #         self.calibrate(mStack)
+    #     SIMReconstruction = self.reconstruct(mStack)
 
-        # save images eventually
-        if self.isRecording:
-            def saveImageInBackground(image, filename = None):
-                try:
-                    self.folder = SIMParameters.path
-                    self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
-                    tif.imwrite(self.filename, image)
-                    self._logger.debug("Saving file: "+self.filename)
-                except  Exception as e:
-                    self._logger.error(e)
-            mFilenameRecon = f"{self.date}_SIM_Reconstruction_{self.LaserWL}nm.tif"
-            threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
+    #     # save images eventually
+    #     if self.isRecording:
+    #         def saveImageInBackground(image, filename = None):
+    #             try:
+    #                 self.folder = SIMParameters.path
+    #                 self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
+    #                 tif.imwrite(self.filename, image)
+    #                 self._logger.debug("Saving file: "+self.filename)
+    #             except  Exception as e:
+    #                 self._logger.error(e)
+    #         mFilenameRecon = f"{self.date}_SIM_Reconstruction_{self.LaserWL}nm.tif"
+    #         threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
+    #     self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
         
-        self.isReconstructing = False
+    #     self.isReconstructing = False
         
     def reconstructSIMStackBackgroundLBF(self, mStack, date, frame_num, pos_num, dt_frame):
         '''
