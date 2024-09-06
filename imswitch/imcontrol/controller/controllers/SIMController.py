@@ -1443,7 +1443,8 @@ class SIMProcessor(object):
         
     def getWFlbf(self, mStack):
         # display the BF image
-        bfFrame = np.sum(np.array(mStack[-3:]), 0)
+        # bfFrame = np.sum(np.array(mStack[-3:]), 0)
+        bfFrame = np.round(np.mean(np.array(mStack), 0))
         self.parent.sigWFImageComputed.emit(bfFrame, f"{int(self.wavelength*1000):03} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
