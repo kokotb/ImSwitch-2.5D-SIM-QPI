@@ -74,8 +74,9 @@ isDEBUG = False
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
 
-    sigImageReceived = Signal(np.ndarray, str)
+    sigRawStackReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
+    sigWFImageComputed = Signal(np.ndarray, str)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,7 +122,7 @@ class SIMController(ImConWidgetController):
         self._widget.setMockValue(self.mock)
 
         # connect live update  https://github.com/napari/napari/issues/1110
-        self.sigImageReceived.connect(self.displayImage)
+        self.sigRawStackReceived.connect(self.displayImage)
 
         # select lasers
         allLaserNames = self._master.lasersManager.getAllDeviceNames()
@@ -178,6 +179,7 @@ class SIMController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         self.sigSIMProcessorImageComputed.connect(self.displayImage)
+        self.sigWFImageComputed.connect(self.displayImage)
         # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
 
@@ -232,7 +234,7 @@ class SIMController(ImConWidgetController):
 
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
-        dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
+        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
         # TODO: Delete after development is done - here to help get devices 
         # names
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
@@ -331,7 +333,7 @@ class SIMController(ImConWidgetController):
             processor.setPath(sim_parameters.path)
             
         # Set count for frames to 0
-        count = 0
+        frameSetCount = 0
         
 
         # Set running order on SLM
@@ -363,10 +365,10 @@ class SIMController(ImConWidgetController):
         while self.active and not mock and dic_wl != []:
             
         # while count == 0:
-            wfImages = []
+            # wfImages = []
             stackSIM = [] 
             for k in range(len(processors)):
-                wfImages.append([])
+                # wfImages.append([])
                 stackSIM.append([]) 
             # TODO: SLM drives laser powers, do lasers really need to be 
             # enabled?
@@ -374,12 +376,12 @@ class SIMController(ImConWidgetController):
                 
             # Set frame number - prepared for time-lapse
             # frame_num = 0
-            frame_num = count
+            frame_num = frameSetCount
             dt_export_string = "" # no time duration between frames is needed
             
             
             # Generate time_step
-            if count == 0:
+            if frameSetCount == 0:
                 dt_export = 0.0
             else:
                 dt_export = time.time() - self.timelapse_old
@@ -479,7 +481,7 @@ class SIMController(ImConWidgetController):
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"buffer filling"])
 
                     time_color_start = time.time()
-                    self.SIMStack = detector._camera.grabFrameSet(framesPerDetector)
+                    self.rawStack = detector._camera.grabFrameSet(framesPerDetector)
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"grab_stack"])
@@ -491,14 +493,15 @@ class SIMController(ImConWidgetController):
                     # Enable below if you need this
                     # stackSIM[k].append(self.SIMStack)
                     
-                    self.sigImageReceived.emit(np.array(self.SIMStack),f"SIMStack{int(processor.wavelength*1000):03}")
+                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{int(processor.wavelength*1000):03} Raw")
                     
                     # Set sim stack for processing all functions work on 
                     # self.stack in SIMProcessor class
-                    processor.setSIMStack(self.SIMStack)
+                    processor.setSIMStack(self.rawStack)
                     
                     # Push all wide fields into one array.
-                    wfImages[k].append(processor.getWFlbf(self.SIMStack))
+                    # wfImages[k].append(processor.getWFlbf(self.rawStack)) #CTBOS Note
+                    processor.getWFlbf(self.rawStack)
                     
                     # Activate recording and reconstruction in processor
                     processor.setRecordingMode(self.isRecordRecon)
@@ -515,17 +518,17 @@ class SIMController(ImConWidgetController):
                         date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+                        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack, mFilenameStack,), daemon=True).start()
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
 
                     time_color_start = time.time()
                     num_skip_frames = self._widget.getSkipFrames() + 1
-                    if count == 0:
+                    if frameSetCount == 0:
                         div_1 = 0
                     else:                        
-                        int_1, div_1  = divmod(count, num_skip_frames)
+                        int_1, div_1  = divmod(frameSetCount, num_skip_frames)
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
@@ -537,21 +540,51 @@ class SIMController(ImConWidgetController):
 
                     processor.clearStack()                    
 
+                    print(k)
 
-
-                print(f'Number of dropped frame set(s): {droppedFrameSets}')
+                
                 self._logger.debug(f"{times_color}")
                 
-                count += 1
+                frameSetCount += 1
+                print(frameSetCount)
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
                 time_whole_total = time_whole_end-time_whole_start                
                 time_whole_start = time.time()
                 time_global_total = time_whole_end-time_global_start
-                droppedFrameRate = droppedFrameSets/(time_global_total/60)
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
-                self._logger.debug('Drop rate: {:.2f} frames/min'.format(droppedFrameRate))
+                self._logger.debug('Dropped frames: {:.2f}%'.format(droppedFrameSets))
+                self._logger.debug('Total frames: {:.2f}%'.format(frameSetCount))
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -716,7 +749,7 @@ class SIMController(ImConWidgetController):
     def setIlluPatternByID(self, iRot, iPhi):
         self.detector.setIlluPatternByID(iRot, iPhi)
 
-    def displayImage(self, im, name="SIM Reconstruction"):
+    def displayImage(self, im, name):
         """ Displays the image in the view. """
         self._widget.setImage(im, name=name)
     
@@ -1146,21 +1179,21 @@ class SIMController(ImConWidgetController):
                     # self._logger.debug('--Simulation took: {:.2f} sec\n--'.format(time_simu_total))
                     
                     # Choose pre-simulated image - testing code is 4x faster
-                    self.SIMStack = color_stacks_simulated[k]
+                    self.rawStack = color_stacks_simulated[k]
                     
                     # TODO: remove after development is done, kept for testing
                     # Push all colors into one array - export disabled below
                     # Enable below if you need this
                     # stackSIM[k].append(self.SIMStack)
                     
-                    self.sigImageReceived.emit(np.array(self.SIMStack),f"SIMStack{int(processor.wavelength*1000):03}")
+                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"SIMStack{int(processor.wavelength*1000):03}")
                     
                     # Set sim stack for processing all functions work on 
                     # self.stack in SIMProcessor class
-                    processor.setSIMStack(self.SIMStack)
+                    processor.setSIMStack(self.rawStack)
                     
                     # Push all wide fields into one array
-                    wfImages[k].append(processor.getWFlbf(self.SIMStack))
+                    wfImages[k].append(processor.getWFlbf(self.rawStack))
                     
                     # Activate recording and reconstruction in processor
                     processor.setRecordingMode(self.isRecordingRaw)
@@ -1188,7 +1221,7 @@ class SIMController(ImConWidgetController):
                         date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
                         processor.setDate(date)
                         mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.SIMStack, mFilenameStack,), daemon=True).start()
+                        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack, mFilenameStack,), daemon=True).start()
                         # TODO: Keep this just in case?
                         # if k == len(processors)-1:
                         #     # Save WF three color
@@ -1407,16 +1440,11 @@ class SIMProcessor(object):
         if not self.find_carrier:
             self.h.kx = self.kx_input
             self.h.ky = self.ky_input
-
-    # def getWF(self, mStack):
-    #     # display the BF image
-    #     bfFrame = np.sum(np.array(mStack[-3:]), 0)
-    #     self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}")
         
     def getWFlbf(self, mStack):
         # display the BF image
         bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        self.parent.sigSIMProcessorImageComputed.emit(bfFrame, f"Widefield SUM{int(self.wavelength*1000):03}") #CTNOTE WF DISPLAYED
+        self.parent.sigWFImageComputed.emit(bfFrame, f"{int(self.wavelength*1000):03} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
     def setSIMStack(self, stack):
@@ -1630,7 +1658,7 @@ class SIMProcessor(object):
             mFilenameRecon = f"{date_out}_pos_{pos_num:03}_SIM_Reconstruction_{int(self.LaserWL*1000):03}nm-{dt_frame}.tif"
             threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), f"SIM Reconstruction{int(self.LaserWL*1000):03}")
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
         
         self.isReconstructing = False
 
