@@ -116,6 +116,7 @@ class DetectorManager(SignalInterface):
                              ' DetectorInfo.')
 
         self.setBinning(supportedBinnings[0])
+        # self.scale = [2,2]
 
     def updateLatestFrame(self, init):
         """ :meta private: """

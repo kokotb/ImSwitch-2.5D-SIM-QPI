@@ -51,7 +51,7 @@ class ImageWidget(QtWidgets.QWidget):
 
 
                 try:
-                    addImage(name, self.laserColormaps[name[:3]])
+                    addImage(name, self.laserColormaps[name[:3]]) 
                 except KeyError:
                     addImage(name, 'grayclip')
 
@@ -73,6 +73,7 @@ class ImageWidget(QtWidgets.QWidget):
 
     def setImage(self, name, im, scale):
         self.imgLayers[name].data = im
+        scale=[2,2]
         self.imgLayers[name].scale = tuple(scale)
 
     def clearImage(self, name):
