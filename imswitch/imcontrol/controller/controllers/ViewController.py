@@ -17,6 +17,15 @@ class ViewController(ImConWidgetController):
         self._widget.sigLiveviewToggled.connect(self.liveview)
         # self._widget.sigAcquireSetToggled.connect(self.acquireSet)
         # self._widget.sigTriggerModeToggled.connect(self.setLiveTriggerModeState)
+        self._commChannel.sigSIMAcqToggled.connect(self.simStarted)
+
+    def simStarted(self, enabled):
+        if enabled:
+            # self.liveview(False)
+            self._widget.setLiveViewActive(not enabled)
+            self._widget.setLiveViewEnabled(not enabled)
+        if not enabled:
+            self._widget.setLiveViewEnabled(not enabled)
 
     def liveview(self, enabled):
         """ Start liveview and activate detector acquisition. """

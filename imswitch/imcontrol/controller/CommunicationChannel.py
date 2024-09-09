@@ -20,6 +20,8 @@ class CommunicationChannel(SignalInterface):
     
     sigAcquisitionStopped = Signal()
 
+    sigSIMAcqToggled = Signal(bool)
+
     # sigTriggerModeToggled = Signal()
     
     # sigRunAcquireSetStarted = Signal()

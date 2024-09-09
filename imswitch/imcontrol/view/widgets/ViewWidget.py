@@ -74,6 +74,10 @@ class ViewWidget(Widget):
         """ Sets whether the LiveView is active. """
         self.liveviewButton.setChecked(active)
 
+    def setLiveViewEnabled(self, enabled):
+        """ Sets whether the LiveView is active. """
+        self.liveviewButton.setEnabled(enabled)
+
     def setLiveViewGridVisible(self, visible):
         """ Sets whether the LiveView grid is visible. """
         self.crosshairButton.setChecked(visible)

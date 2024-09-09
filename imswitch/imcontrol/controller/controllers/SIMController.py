@@ -85,6 +85,7 @@ class SIMController(ImConWidgetController):
         # self.IS_HAMAMATSU=False
         # switch to detect if a recording is in progress
 
+        
 
         
         self.isRecordingRaw = False
@@ -182,7 +183,7 @@ class SIMController(ImConWidgetController):
         self.sigWFImageComputed.connect(self.displayWFRawImage)
         # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
-
+        # self._widget.sigSIMAcqStarted.connect(self.emitStopLiveview)
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
 
@@ -586,9 +587,6 @@ class SIMController(ImConWidgetController):
 
 
 
-
-
-
     def calibrateToggled(self):
         for processor in self.processors:
             processor.isCalibrated = False
@@ -773,6 +771,7 @@ class SIMController(ImConWidgetController):
         pass
 
     def stopSIM(self):
+        self._commChannel.sigSIMAcqToggled.emit(False)
         self.active = False
         self.simThread.join()
         for laser in self.lasers:
@@ -791,6 +790,7 @@ class SIMController(ImConWidgetController):
         # start the background thread
         # for detector in self.detectors:
         #     detector.stopAcquisition()
+        self._commChannel.sigSIMAcqToggled.emit(True)
         self.active = True
         sim_parameters = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()

@@ -17,6 +17,7 @@ class SIMWidget(NapariHybridWidget):
     sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
+    sigSIMAcqToggled = QtCore.Signal(bool)
 
 
     def __post_init__(self):
@@ -162,6 +163,8 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.openFolderButton, row + 1, 0, 1, 2)
         parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
         vertLayout.addLayout(parameters2_layout)
+
+        self.start_button.toggled.connect(self.sigSIMAcqToggled)
         
 
 
