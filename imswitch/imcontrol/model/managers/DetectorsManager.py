@@ -99,7 +99,7 @@ class DetectorsManager(MultiManager, SignalInterface):
 
     def startAcquisition(self, liveView=False):
         """ Starts detector acquisition if it is not already started. If
-        liveView is True, sigImageUpdated will be emitted for every new frame.
+        liveView is True, sigImageUpdated will be emitted for  every new frame.
         Returns a handle that can be passed to stopAcquisition when the
         detector data is no longer needed. """
 
