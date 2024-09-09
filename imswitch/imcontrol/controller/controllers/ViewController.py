@@ -20,15 +20,15 @@ class ViewController(ImConWidgetController):
 
     def liveview(self, enabled):
         """ Start liveview and activate detector acquisition. """
-        # print(enabled)
-        # print(self)
+        self._commChannel.sigLiveviewToggled.emit(enabled)
+
         if enabled and self._acqHandle is None:
             #CTNOTE TRIGGER ACTIVATION HERE MAYBE
             self._acqHandle = self._master.detectorsManager.startAcquisition(liveView=True)
             # for heading in self._master.detectorsManager._subManagers:
             #     trigValue = self._master.detectorsManager._subManagers[{heading}]._DetectorManager__parameters['TriggerMode'].value
             #     if trigValue == 'On':
-            self._master.arduinoManager.startContSequence(0)
+            # self._master.arduinoManager.startContSequence(0)
             self._widget.setViewToolsEnabled(True)
         elif not enabled and self._acqHandle is not None:
             self._master.detectorsManager.stopAcquisition(self._acqHandle, liveView=True)

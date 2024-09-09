@@ -92,6 +92,8 @@ class CommunicationChannel(SignalInterface):
 
     sigSaveFocus = Signal()
 
+    sigLiveviewToggled = Signal(bool)
+
     sigScanFrameFinished = Signal()  # TODO: emit this signal when a scanning frame finished, maybe in scanController if possible? Otherwise in APDManager for now, even if that is not general if you want to do camera-based experiments. Could also create a signal specifically for this from the scan curve generator perhaps, specifically for the rotation experiments, would that be smarter?
     
     sigUpdateRotatorPosition = Signal(str)  # (rotatorName)

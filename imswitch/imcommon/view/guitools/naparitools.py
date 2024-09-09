@@ -85,6 +85,7 @@ class NapariBaseWidget(QtWidgets.QWidget):
     def __init__(self, napariViewer):
         super().__init__()
         self.viewer = napariViewer
+        self.viewer.grid.shape = (3,3) #CTNOTE Napari
 
     @classmethod
     def addToViewer(cls, napariViewer, position='left'):

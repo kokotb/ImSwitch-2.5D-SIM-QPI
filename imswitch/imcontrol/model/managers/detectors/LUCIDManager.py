@@ -177,6 +177,7 @@ class LUCIDManager(DetectorManager):
             self._running = False
             self._camSet = False
             self._camera.suspend_live()
+            
 
     def stopAcquisitionForROIChange(self):
         self._running = False

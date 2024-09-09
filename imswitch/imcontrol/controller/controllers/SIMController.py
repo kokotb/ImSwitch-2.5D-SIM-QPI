@@ -122,7 +122,7 @@ class SIMController(ImConWidgetController):
         self._widget.setMockValue(self.mock)
 
         # connect live update  https://github.com/napari/napari/issues/1110
-        self.sigRawStackReceived.connect(self.displayImage)
+        self.sigRawStackReceived.connect(self.displayWFRawImage)
 
         # select lasers
         allLaserNames = self._master.lasersManager.getAllDeviceNames()
@@ -178,8 +178,8 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser3 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_3)
 
         # Connect CommunicationChannel signals
-        self.sigSIMProcessorImageComputed.connect(self.displayImage)
-        self.sigWFImageComputed.connect(self.displayImage)
+        self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
+        self.sigWFImageComputed.connect(self.displayWFRawImage)
         # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
 
@@ -540,13 +540,13 @@ class SIMController(ImConWidgetController):
 
                     processor.clearStack()                    
 
-                    print(k)
+                    
 
                 
                 self._logger.debug(f"{times_color}")
                 
                 frameSetCount += 1
-                print(frameSetCount)
+                
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
                 time_whole_total = time_whole_end-time_whole_start                
@@ -554,8 +554,8 @@ class SIMController(ImConWidgetController):
                 time_global_total = time_whole_end-time_global_start
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
-                self._logger.debug('Dropped frames: {:.2f}%'.format(droppedFrameSets))
-                self._logger.debug('Total frames: {:.2f}%'.format(frameSetCount))
+                self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
+                self._logger.debug('Total frames: {:.2f}'.format(frameSetCount))
                 
 
 
@@ -749,9 +749,13 @@ class SIMController(ImConWidgetController):
     def setIlluPatternByID(self, iRot, iPhi):
         self.detector.setIlluPatternByID(iRot, iPhi)
 
-    def displayImage(self, im, name):
+    def displaySIMImage(self, im, name):
         """ Displays the image in the view. """
-        self._widget.setImage(im, name=name)
+        self._widget.setSIMImage(im, name=name)
+
+    def displayWFRawImage(self, im, name):
+        """ Displays the image in the view. """
+        self._widget.setWFRawImage(im, name=name)
     
     def updateROIsize(self):
         # FIXME: Make it so calibration of only the modified detector is 
@@ -774,6 +778,9 @@ class SIMController(ImConWidgetController):
         for laser in self.lasers:
             laser.setEnabled(False)
         self._master.arduinoManager.deactivateSLMWriteOnly()
+        for detector in self.detectors:
+            detector.stopAcquisitionSIM()
+
 
 
 
@@ -782,6 +789,8 @@ class SIMController(ImConWidgetController):
     def startSIM(self):
 
         # start the background thread
+        # for detector in self.detectors:
+        #     detector.stopAcquisition()
         self.active = True
         sim_parameters = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
@@ -834,7 +843,7 @@ class SIMController(ImConWidgetController):
         # for det_name in detector_names_connected:
         #     detectors.append(self._master.detectorsManager[det_name]._camera)
         # Hardcoded parameters at the moment
-
+        # detector.stopAcquisition()
         trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'

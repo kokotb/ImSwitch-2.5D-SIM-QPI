@@ -17,19 +17,28 @@ class ImageController(LiveUpdatedController):
         self._lastShape = self._master.detectorsManager.execOnCurrent(lambda c: c.shape)
         self._shouldResetView = False
 
-        self._widget.setLiveViewLayers(
-            self._master.detectorsManager.getAllDeviceNames(lambda c: c.forAcquisition)
-        )
+
 
         # Connect CommunicationChannel signals
         self._commChannel.sigUpdateImage.connect(self.update)
         self._commChannel.sigAdjustFrame.connect(self.adjustFrame)
         self._commChannel.sigGridToggled.connect(self.gridToggle)
+        self._commChannel.sigLiveviewToggled.connect(self.liveviewToggled)
         self._commChannel.sigCrosshairToggled.connect(self.crosshairToggle)
         self._commChannel.sigAddItemToVb.connect(self.addItemToVb)
         self._commChannel.sigRemoveItemFromVb.connect(self.removeItemFromVb)
         self._commChannel.sigMemorySnapAvailable.connect(self.memorySnapAvailable)
         self._commChannel.sigSetExposure.connect(lambda t: self.setExposure(t))
+
+    def liveviewToggled(self, enabled):
+        if enabled:
+            self._widget.setLiveViewLayers(
+                self._master.detectorsManager.getAllDeviceNames(lambda c: c.forAcquisition)
+            )
+        if not enabled:
+            self._widget.removeLiveViewLayers(
+                self._master.detectorsManager.getAllDeviceNames(lambda c: c.forAcquisition)
+            )
 
     def autoLevels(self, detectorNames=None, im=None):
         """ Set histogram levels automatically with current detector image."""

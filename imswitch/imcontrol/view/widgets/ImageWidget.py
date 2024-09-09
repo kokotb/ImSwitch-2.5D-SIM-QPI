@@ -33,22 +33,29 @@ class ImageWidget(QtWidgets.QWidget):
         self.addItem(self.crosshair)
 
     def setLiveViewLayers(self, names):
-        for name, img in self.imgLayers.items():
-            if name not in names:
-                self.napariViewer.layers.remove(img, force=True)
+        # for name, img in self.imgLayers.items():
+            # if name not in names:
+            #     self.napariViewer.layers.remove(img)
 
         def addImage(name, colormap=None):
             self.imgLayers[name] = self.napariViewer.add_image(
                 np.zeros((1, 1)), rgb=False, name=f'Live: {name}', blending='additive',
-                colormap=colormap, protected=True
+                colormap=colormap, protected=False
             )
-
+        
         for name in names:
             if name not in self.napariViewer.layers:
                 try:
                     addImage(name, name.lower())
                 except KeyError:
                     addImage(name, 'grayclip')
+
+    def removeLiveViewLayers(self, names):
+        # pass
+        for name, img in self.imgLayers.items():
+            if name in names:
+                self.napariViewer.layers.remove(img)
+        # self.napariViewer.layers.clear()
 
     def addStaticLayer(self, name, im):
         self.napariViewer.add_image(im, rgb=False, name=name, blending='additive')
