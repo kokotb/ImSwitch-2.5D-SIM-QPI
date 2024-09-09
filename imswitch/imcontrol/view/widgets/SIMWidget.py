@@ -49,6 +49,7 @@ class SIMWidget(NapariHybridWidget):
         # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
         # self.calibrateButton.toggled.connect(self.sigCalibrateToggled)
         self.layer = None
+        self.laserColormaps = {'488':'blue','561':'green','640':'red'}
         
         
     def getImage(self):
@@ -57,13 +58,15 @@ class SIMWidget(NapariHybridWidget):
         
     def setSIMImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            self.layer = self.viewer.add_image(im, rgb=False, name=name, blending='additive')
+            colormap = self.laserColormaps[name[:3]]
+            self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
         else:
             self.viewer.layers[name].data = im
 
     def setWFRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            self.layer = self.viewer.add_image(im, rgb=False, name=name, blending='additive')
+            colormap = self.laserColormaps[name[:3]]
+            self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = [2,2]
         else:
             self.viewer.layers[name].data = im

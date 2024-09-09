@@ -31,6 +31,7 @@ class ImageWidget(QtWidgets.QWidget):
         self.crosshair = naparitools.VispyCrosshairVisual(color='yellow')
         self.crosshair.hide()
         self.addItem(self.crosshair)
+        self.laserColormaps = {'488':'blue','561':'green','640':'red'}
 
     def setLiveViewLayers(self, names):
         # for name, img in self.imgLayers.items():
@@ -39,14 +40,18 @@ class ImageWidget(QtWidgets.QWidget):
 
         def addImage(name, colormap=None):
             self.imgLayers[name] = self.napariViewer.add_image(
-                np.zeros((1, 1)), rgb=False, name=f'Live: {name}', blending='additive',
+                np.zeros((1, 1)), rgb=False, name=name, blending='additive',
                 colormap=colormap, protected=False
             )
+            # self.napariViewer.layers[name].scale = [5,5]
         
         for name in names:
             if name not in self.napariViewer.layers:
+                
+
+
                 try:
-                    addImage(name, name.lower())
+                    addImage(name, self.laserColormaps[name[:3]])
                 except KeyError:
                     addImage(name, 'grayclip')
 
