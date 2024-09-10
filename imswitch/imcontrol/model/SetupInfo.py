@@ -328,6 +328,8 @@ class SIMInfo:
     
     isMock: bool
 
+    saveDir: str
+
 @dataclass(frozen=True)
 class SIMslmInfo:
     path: str

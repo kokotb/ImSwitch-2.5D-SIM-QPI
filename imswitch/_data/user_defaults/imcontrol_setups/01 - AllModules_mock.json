@@ -25,6 +25,7 @@
   "angleMount": 0,
   "patternsDirWin": "C:\\Users\\Bostjan Kokot\\Documents\\ImSwitchConfig\\imcontrol_slm\\488\\",
   "patternsDir": "/Users/Bostjan Kokot/Documents/ImSwitchConfig/imcontrol_sim/488",
+  "saveDir": "D:\\SIM_Data\\",
   "isSimulation": 0,
   "nRotations": 3,
   "nPhases": 3,

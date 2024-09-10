@@ -157,7 +157,7 @@ class SIMWidget(NapariHybridWidget):
         # Save folder
         parameters2_layout = QtWidgets.QGridLayout()
         self.path_label = QLabel("Selected Path")
-        self.path_edit = QLineEdit("D:\\SIM_data\\test_export\\")
+        self.path_edit = QLineEdit("")
         self.openFolderButton = guitools.BetterPushButton('Open')
         self.checkbox_mock = QCheckBox("Mock")
         row = 0
@@ -193,6 +193,10 @@ class SIMWidget(NapariHybridWidget):
         elif reconState == 2:
             reconStateBool = True
         return reconStateBool
+
+    def setDefaultSaveDir(self, saveDir):
+        self.path_edit.setText(saveDir)
+
 
 
     def create_reconstruction_parameters_tab(self):

@@ -105,11 +105,6 @@ class SIMController(ImConWidgetController):
         # we can switch between mcSIM and napari
         self.reconstructionMethod = "napari" # or "mcSIM"
 
-        # save directory of the reconstructed frames
-        self.simDir = os.path.join(dirtools.UserFileDirs.Root, 'imcontrol_sim')
-        if not os.path.exists(self.simDir):
-            os.makedirs(self.simDir)
-
         # load config file
         if self._setupInfo.sim is None:
             self._widget.replaceWithError('SIM is not configured in your setup file.')
@@ -198,15 +193,15 @@ class SIMController(ImConWidgetController):
         # self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
-        self.folder = self._widget.getRecFolder()
+        
 
 
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
-        roNameList = self._master.SLM4DDManager.getAllRONames()
-        for i in range(len(roNameList)):
-            self._widget.addROName(i,roNameList[i])
-        roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
-        self._widget.setSelectedRO(roSelectedOnSLM)
+        self.populateAndSelectROList()
+        #Get save directory root from config file and populate text box in SIM widget.
+        self.setSaveDirFromConfig()
+
+
 
 
 
@@ -231,7 +226,7 @@ class SIMController(ImConWidgetController):
         
         # Newly added, prep for SLM integration
         mock = self.mock
-
+        self.folder = self._widget.getRecFolder()
 
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
@@ -581,15 +576,21 @@ class SIMController(ImConWidgetController):
 
 
 
+    def populateAndSelectROList(self):
+        roNameList = self._master.SLM4DDManager.getAllRONames()
+        for i in range(len(roNameList)):
+            self._widget.addROName(i,roNameList[i])
+        roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
+        self._widget.setSelectedRO(roSelectedOnSLM)
 
-
-
-
-
+    def setSaveDirFromConfig(self):
+        initSaveDir = self.setupInfo.saveDir
+        self._widget.setDefaultSaveDir(initSaveDir)
 
     def calibrateToggled(self):
         for processor in self.processors:
             processor.isCalibrated = False
+            print('yo yo')
 
     # def timeMe(self, timedList, function):
     #         time_color_start = time.time()
