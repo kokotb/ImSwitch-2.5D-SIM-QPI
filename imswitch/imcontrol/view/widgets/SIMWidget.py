@@ -156,15 +156,23 @@ class SIMWidget(NapariHybridWidget):
 
         # Save folder
         parameters2_layout = QtWidgets.QGridLayout()
-        self.path_label = QLabel("Selected Path")
+        self.path_label = QLabel("Root Path")
         self.path_edit = QLineEdit("")
+        self.user_label = QLabel("User Name")
+        self.user_edit = QLineEdit("")
+        self.expt_label = QLabel("Experiment Name")
+        self.expt_edit = QLineEdit("")
         self.openFolderButton = guitools.BetterPushButton('Open')
-        self.checkbox_mock = QCheckBox("Mock")
+        # self.checkbox_mock = QCheckBox("Mock")
         row = 0
-        parameters2_layout.addWidget(self.path_label, row, 0)
-        parameters2_layout.addWidget(self.path_edit, row, 1)        
-        parameters2_layout.addWidget(self.openFolderButton, row + 1, 0, 1, 2)
-        parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
+        parameters2_layout.addWidget(self.user_label, row, 0)
+        parameters2_layout.addWidget(self.user_edit, row, 1)
+        parameters2_layout.addWidget(self.expt_label, row+1, 0)
+        parameters2_layout.addWidget(self.expt_edit, row+1, 1)
+        parameters2_layout.addWidget(self.path_label, row+2, 0)
+        parameters2_layout.addWidget(self.path_edit, row+2, 1)        
+        parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
+        # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
         vertLayout.addLayout(parameters2_layout)
 
         self.start_button.toggled.connect(self.sigSIMAcqToggled)
@@ -183,6 +191,12 @@ class SIMWidget(NapariHybridWidget):
         roIndex = int(roIndex[0])
         return roIndex
     
+    def getUserName(self):
+        return self.user_edit.text()
+    
+    def getExptName(self):
+        return self.expt_edit.text()
+
     def setSelectedRO(self, currentROIndex):
         self.roSelectList.setCurrentIndex(currentROIndex)
 
@@ -387,8 +401,8 @@ class SIMWidget(NapariHybridWidget):
     def getRecFolder(self):
         return self.path_edit.text()
     
-    def setMockValue(self, mock):
-            self.checkbox_mock.setChecked(mock)
+    # def setMockValue(self, mock):
+    #         self.checkbox_mock.setChecked(mock)
     
     def getRecParameters(self):
         # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
