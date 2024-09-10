@@ -13,7 +13,7 @@ from arena_api.enums import PixelFormat
 from arena_api.__future__.save import Writer
 from datetime import datetime
 
-class CameraTIS:
+class LucidCam:
     def __init__(self, cameraNo):
         super().__init__()
         
@@ -214,7 +214,7 @@ class CameraTIS:
 
 
         return hpos_new, vpos_new, hsize_new, vsize_new
-
+    
     def setROI(self, hpos, vpos, hsize, vsize):
         # v-vertical, h-horizontal
 
@@ -455,6 +455,12 @@ class CameraTIS:
             self.device.requeue_buffer(buffer_set)
 
     
+    def getBufferValue(self):
+        # FIXME: Check if this works alright
+        value = self.tl_stream_nodemap['StreamOutputBufferCount'].value
+        return value
+    
+
     def grabFrameSet(self, buffer_size):
         # buffer_size = image number pulled from a cam
         

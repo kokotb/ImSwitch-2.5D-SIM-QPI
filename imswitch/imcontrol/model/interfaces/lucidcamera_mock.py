@@ -1,10 +1,14 @@
+import os
+import glob
+
 import numpy as np
 from scipy.stats import multivariate_normal
 
 import time
+import tifffile as tif
 
 
-class MockCameraTIS:
+class LucidCamMock:
     def __init__(self):
         self.properties = {
             'Height': 1024,
@@ -24,9 +28,10 @@ class MockCameraTIS:
         self.gain = 1
         self.brightness = 1
         self.model = 'mock'
-        self.SensorHeight = 1024
-        self.SensorWidth = 1024
+        self.SensorHeight = 512
+        self.SensorWidth = 512
         self.shape = (self.SensorHeight,self.SensorWidth)
+        self.tl_stream_nodemap = []
 
     def start_live(self):
         pass
@@ -147,29 +152,53 @@ class MockCameraTIS:
     def flushBuffer(self):
         pass 
     
+    def getBufferValue(self):
+        value = 9
+        return value
+    
     def setCamForAcquisition(self, buffer_size):
         pass
     
     def grabFrameSet(self, buffer_size):
-        # Simulate SIM set 
-        # Nx = 1024
-        # Ny = 1024
-        import NanoImagingPack as nip
-        Nx, Ny = self.shape
-        Nrot = 3
-        Nphi = 3
-        Isample = np.zeros((Nx,Ny))
-        Isample[np.random.random(Isample.shape)>0.999]=1
+        #if False:
+        if True:
+            allImages = []
+            # Hardcoded path
+            path_current_py = os.path.dirname(os.path.realpath(__file__))
+            # Three parents above to get to imswitch folder
+            path_parent = os.path.abspath(os.path.join(os.path.abspath(os.path.join(os.path.abspath(os.path.join(path_current_py, os.pardir)), os.pardir)), os.pardir))
+            print(path_parent)
+            # Hardcoded folder but same an all machines
+            path_child = "_data\\test_data_ImSwitch"
+            # Create the path
+            path_in = os.path.join(path_parent, path_child)
+            # names_import = glob.glob(f'{path_in}\\*{dic_wl[num]}*.tif*')
+            names_import = glob.glob(f'{path_in}\\*{488}*.tif*')
+            stack_mock_color = []
+            for name in names_import:
+                stack_mock_color.append(tif.imread(name))
+            #allImages.append(stack_mock_color)
+            allImages = np.array(stack_mock_color)
+        else:
+            # Simulate SIM set 
+            # Nx = 1024
+            # Ny = 1024
+            import NanoImagingPack as nip
+            Nx, Ny = self.shape
+            Nrot = 3
+            Nphi = 3
+            Isample = np.zeros((Nx,Ny))
+            Isample[np.random.random(Isample.shape)>0.999]=1
 
-        allImages = []
-        for iRot in range(Nrot):
-            for iPhi in range(Nphi):
-                IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
-                allImages.append(nip.gaussf(IGrating*Isample,3))
+            allImages = []
+            for iRot in range(Nrot):
+                for iPhi in range(Nphi):
+                    IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
+                    allImages.append(nip.gaussf(IGrating*Isample,3))
 
-        allImages=np.array(allImages)
-        allImages-=np.min(allImages)
-        allImages/=np.max(allImages)
+            allImages=np.array(allImages)
+            allImages-=np.min(allImages)
+            allImages/=np.max(allImages)
         return allImages
 
     def setCamForLiveView(self, trigBool=False):
@@ -195,3 +224,11 @@ class MockCameraTIS:
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+"""path_current_py = os.path.dirname(os.path.realpath(__file__))
+path_parent = os.path.abspath(os.path.join(os.path.abspath(os.path.join(os.path.abspath(os.path.join(path_current_py, os.pardir)), os.pardir)), os.pardir))
+print(path_parent)
+path_child = "_data\\test_data_ImSwitch"
+path_in = os.path.join(path_parent, path_child)
+print(path_in)"""

@@ -279,7 +279,7 @@ class SIMController(ImConWidgetController):
                     # since detectors default to mocker if the right number of 
                     # detectors is configured in the config file
                     det_name = detector_names_connected[0]
-                    det_names.append()
+                    #det_names.append()
         
         #Assembling detector list based on active AOTF channels. Pulls current detector shape.
         self.detectors = []        

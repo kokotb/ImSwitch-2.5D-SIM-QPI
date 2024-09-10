@@ -332,6 +332,8 @@ class SIMInfo:
 class SIMslmInfo:
     path: str
 
+    mock: bool
+
     port: str
 
     width: int
