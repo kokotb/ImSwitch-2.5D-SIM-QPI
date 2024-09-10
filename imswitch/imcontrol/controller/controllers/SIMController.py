@@ -11,8 +11,8 @@ import tifffile as tif
 import os
 import time
 import numpy as np
-from datetime import datetime
 
+from decimal import Decimal
 import math
 import logging
 import sys
@@ -366,11 +366,12 @@ class SIMController(ImConWidgetController):
                 exptTimeElapsed = 0.0
             else:
                 exptTimeElapsed = time.time() - time_global_start
-            
-            integer, decimal = divmod(exptTimeElapsed,1) # *1000 in ms
-            exptTimeElapsedStr = f"{int(integer):04}p{int(decimal*10000):04}s"
+
 
             
+            exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+
+
             # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
                 
@@ -500,7 +501,7 @@ class SIMController(ImConWidgetController):
                         rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
                         if not os.path.exists(rawSavePath):
                             os.makedirs(rawSavePath)
-                        rawFilenames = f"f{frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_t{exptTimeElapsedStr}.tif"
+                        rawFilenames = f"f{frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
 
@@ -557,7 +558,20 @@ class SIMController(ImConWidgetController):
 
 
 
+    def getElapsedTimeString(self, seconds):
+        ss, ms = divmod(seconds,1)
 
+        mm, ss = divmod(ss,60)
+        hh, mm = divmod(mm,60)
+        dd, hh = divmod(hh,24)
+        ss = "{:02d}".format(int(ss))
+        mm = "{:02d}".format(int(mm))
+        hh = "{:02d}".format(int(hh))
+        dd = "{:01d}".format(int(dd))
+        ms = str(round(Decimal(ms),3))[2:5]
+
+        elapsedStr = f"{dd}d{hh}h{mm}m{ss}s{ms}ms"
+        return elapsedStr
 
 
     def makeExptFolderStr(self, date_in):
@@ -1212,7 +1226,7 @@ class SIMProcessor(object):
         # save images eventually
         if self.isRecording:
             reconSavePath = os.path.join(exptPath, "Recon")
-            reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_t{exptTimeElapsedStr}.tif"
+            reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
             threading.Thread(target=self.saveImageInBackground, args=(SIMReconstruction, reconSavePath,reconFilenames ,)).start()
 
         self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit

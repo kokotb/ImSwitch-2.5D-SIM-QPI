@@ -1,0 +1,25 @@
+from decimal import Decimal
+
+exptTimeElapsed = 102564.23423
+
+
+
+ss, ms = divmod(exptTimeElapsed,1)
+
+mm, ss = divmod(ss,60)
+hh, mm = divmod(mm,60)
+dd, hh = divmod(hh,24)
+
+
+
+# hh = "{:02d}".format(int(hh))
+ss = "{:02d}".format(int(ss))
+mm = "{:02d}".format(int(mm))
+hh = "{:02d}".format(int(hh))
+dd = "{:01d}".format(int(dd))
+ms = str(round(Decimal(ms),3))[2:5]
+
+elapsedStr = f"{dd}d{hh}h{mm}m{ss}s{ms}ms"
+print(elapsedStr)
+# return elapsedStr
+
