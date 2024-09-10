@@ -449,7 +449,7 @@ class SIMController(ImConWidgetController):
                     while waitingBuffers != 9:
                         
                         time.sleep(.01)
-                        waitingBuffers = detector._camera.tl_stream_nodemap['StreamOutputBufferCount'].value #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
+                        waitingBuffers = detector._camera.getBufferValue() #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
                         if waitingBuffers != waitingBuffersEnd:
                             bufferStartTime = time.time()
@@ -1331,7 +1331,7 @@ class SIMParameters(object):
     eta = 0.6
     alpha = 0.5
     beta = 0.98
-    path = 'D:\\SIM_data\\test_export\\'
+    path = 'E:\\SIM_data\\test_export\\'
 
 
 
