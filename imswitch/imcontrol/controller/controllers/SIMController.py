@@ -193,6 +193,7 @@ class SIMController(ImConWidgetController):
         # self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
+        self._widget.saveOneReconRawButton.clicked.connect(self.saveOneReconRaw)
         
 
 
@@ -317,7 +318,7 @@ class SIMController(ImConWidgetController):
             processor.setPath(sim_parameters.path)
             
         # Set count for frames to 0
-        frameSetCount = 0
+        self.frameSetCount = 0
         
 
         # Set running order on SLM
@@ -362,14 +363,14 @@ class SIMController(ImConWidgetController):
          
             
             # Generate time_step
-            if frameSetCount == 0:
+            if self.frameSetCount == 0:
                 exptTimeElapsed = 0.0
             else:
                 exptTimeElapsed = time.time() - time_global_start
 
 
             
-            exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+            self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
 
 
             # Scan over all positions generated for grid
@@ -498,10 +499,11 @@ class SIMController(ImConWidgetController):
                     time_color_start = time.time()
 
                     if self.isRecordingRaw:
+
                         rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
                         if not os.path.exists(rawSavePath):
                             os.makedirs(rawSavePath)
-                        rawFilenames = f"f{frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
+                        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
                         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
 
@@ -511,14 +513,14 @@ class SIMController(ImConWidgetController):
 
                     time_color_start = time.time()
                     num_skip_frames = self._widget.getSkipFrames() + 1
-                    if frameSetCount == 0:
+                    if self.frameSetCount == 0:
                         div_1 = 0
                     else:                        
-                        int_1, div_1  = divmod(frameSetCount, num_skip_frames)
+                        div_1  = divmod(self.frameSetCount, num_skip_frames)[1]
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,frameSetCount, j, exptTimeElapsedStr), args=(frameSetCount, j, exptTimeElapsedStr, ), daemon=True).start()
+                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr), args=(self.frameSetCount, j, self.exptTimeElapsedStr, ), daemon=True).start()
 
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
@@ -531,7 +533,7 @@ class SIMController(ImConWidgetController):
                 
                 self._logger.debug(f"{times_color}")
                 
-                frameSetCount += 1
+                self.frameSetCount += 1
                 
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
@@ -541,7 +543,7 @@ class SIMController(ImConWidgetController):
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
                 self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
-                self._logger.debug('Total frames: {:.2f}'.format(frameSetCount))
+                self._logger.debug('Total frames: {:.2f}'.format(self.frameSetCount))
                 
 
 
@@ -602,6 +604,9 @@ class SIMController(ImConWidgetController):
     def calibrateToggled(self):
         for processor in self.processors:
             processor.isCalibrated = False
+
+    def saveOneReconRaw(self):
+        print('fucker')
 
 
     # def timeMe(self, timedList, function):

@@ -95,11 +95,13 @@ class SIMWidget(NapariHybridWidget):
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.calibrateButton = QPushButton("Calibrate") #Not connected to anything yet
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
-        button_layout.addWidget(self.calibrateButton)
+        self.calibrateButton = QPushButton("Calibrate")
+        self.saveOneReconRawButton = QPushButton("Save One Recon/Raw Set")
+        button_layout = QtWidgets.QGridLayout()
+        button_layout.addWidget(self.start_button,0,0)
+        button_layout.addWidget(self.stop_button,0,1)
+        button_layout.addWidget(self.calibrateButton,1,0)
+        button_layout.addWidget(self.saveOneReconRawButton,1,1)
         vertLayout.addLayout(button_layout)
 
         # Checkbox options
