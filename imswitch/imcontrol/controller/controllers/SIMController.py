@@ -319,6 +319,8 @@ class SIMController(ImConWidgetController):
             
         # Set count for frames to 0
         self.frameSetCount = 0
+        self.saveOneTime = False
+        self.saveOneStarted = False
         
 
         # Set running order on SLM
@@ -498,13 +500,16 @@ class SIMController(ImConWidgetController):
 
                     time_color_start = time.time()
 
+                    if k == 0 and self.saveOneTime:
+                        self.saveOneStarted = True
+                    if self.saveOneStarted:
+                        self.recordOneRawFunc(j)
+
+
+
                     if self.isRecordingRaw:
 
-                        rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
-                        if not os.path.exists(rawSavePath):
-                            os.makedirs(rawSavePath)
-                        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+                        self.recordRawFunc(j)
 
 
                     time_color_end = time.time()
@@ -520,7 +525,8 @@ class SIMController(ImConWidgetController):
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr), args=(self.frameSetCount, j, self.exptTimeElapsedStr, ), daemon=True).start()
+                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneStarted), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneStarted, ), daemon=True).start()
+
 
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
@@ -528,11 +534,13 @@ class SIMController(ImConWidgetController):
 
                     processor.clearStack()                    
 
-                    
-
+               
+                    if k==(len(processors)-1) and self.saveOneStarted and self.saveOneTime:
+                        self.saveOneStarted = False
+                        self.saveOneTime = False
                 
                 self._logger.debug(f"{times_color}")
-                
+
                 self.frameSetCount += 1
                 
                 # Timing of the process for testing purposes
@@ -547,14 +555,28 @@ class SIMController(ImConWidgetController):
                 
 
 
+                
+
+          
+            
 
 
 
 
 
+    def recordOneRawFunc(self,j):
+        rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(rawSavePath):
+            os.makedirs(rawSavePath)
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
-
-
+    def recordRawFunc(self,j):
+        rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
+        if not os.path.exists(rawSavePath):
+            os.makedirs(rawSavePath)
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
 
 
@@ -606,7 +628,7 @@ class SIMController(ImConWidgetController):
             processor.isCalibrated = False
 
     def saveOneReconRaw(self):
-        print('fucker')
+        self.saveOneTime = True
 
 
     # def timeMe(self, timedList, function):
@@ -1175,7 +1197,7 @@ class SIMProcessor(object):
 
 
     
-    def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr):
+    def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr, saveOne):
         '''
         reconstruct the image stack asychronously
         '''
@@ -1186,7 +1208,7 @@ class SIMProcessor(object):
             mStackCopy = np.array(self.stack.copy())
             # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
             # self.mReconstructionThread.start()
-            self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr)
+            self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne)
 
     def setRecordingMode(self, isRecording):
         self.isRecording = isRecording
@@ -1215,7 +1237,7 @@ class SIMProcessor(object):
         elif self.LaserWL == 640:
             self.h.wavelength = sim_parameters.wavelength_2
         
-    def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr):
+    def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
         '''
         reconstruct the image stack asychronously
         the stack is a list of 9 images (3 angles, 3 phases)
@@ -1226,18 +1248,28 @@ class SIMProcessor(object):
         if not self.getIsCalibrated():
             self.setReconstructor()
             self.calibrate(mStack)
-        SIMReconstruction = self.reconstruct(mStack)
+        self.SIMReconstruction = self.reconstruct(mStack)
 
         # save images eventually
         if self.isRecording:
-            reconSavePath = os.path.join(exptPath, "Recon")
-            reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
-            threading.Thread(target=self.saveImageInBackground, args=(SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+            self.recordSIMFunc(exptPath, frameSetCount,pos_num, exptTimeElapsedStr)
+        if saveOne:
+            exptPathOne = os.path.join(exptPath, "Snapshot")
+            self.recordSIMOneFunc(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
         
         self.isReconstructing = False
 
+    def recordSIMFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+        reconSavePath = os.path.join(exptPath, "Recon")
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+
+    def recordSIMOneFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+        reconSavePath = exptPath
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}_recon.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
 
     def saveImageInBackground(self, image, savePath, saveName ):
         try:
