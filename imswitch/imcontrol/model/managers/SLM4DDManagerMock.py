@@ -99,7 +99,7 @@ class SLM4DDManagerMock(SignalInterface):
         return (2)
 
 
-    def setRunningOrder(self,setROValue):
+    def setRunningOrder(self, setROValue):
         return (True, "Set RO Mock")
 
 
@@ -130,7 +130,7 @@ class SLM4DDManagerMock(SignalInterface):
 
     def getRepertoireUniqueId(self):
         retStr = "RepUnId name identified successfully (Mocker)"
-        return ("repUnId", retstr)
+        return ("repUnId", retStr)
 
 
     # def getProgress(slmDLL):
@@ -147,6 +147,7 @@ class SLM4DDManagerMock(SignalInterface):
 
 
     def getActState(self):
+        retStr = "RepUnId name identified successfully (Mocker)"
         return ("state", retStr)
 
 
