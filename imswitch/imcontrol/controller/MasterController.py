@@ -51,7 +51,7 @@ class MasterController:
         #     self.standManager = StandManager(self.__setupInfo.microscopeStand,
         #                                      **lowLevelManagers)
             
-        self.simManager = SIMManager(self.__setupInfo.sim)
+        # self.simManager = SIMManager(self.__setupInfo.sim)
         
         if self.__setupInfo.SIMslm:
             self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)

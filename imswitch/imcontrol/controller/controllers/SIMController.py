@@ -85,15 +85,15 @@ class SIMController(ImConWidgetController):
         # self.IS_HAMAMATSU=False
         # switch to detect if a recording is in progress
 
-        
+
+
 
         
         self.isRecordingRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
-
         self.isRecordRecon = False
-        self.simFrameVal = 0
-        self.nsimFrameSyncVal = 3
+        # self.simFrameVal = 0
+        # self.nsimFrameSyncVal = 3
 
         # Choose which laser will be recorded
         self.is488 = True
@@ -111,6 +111,13 @@ class SIMController(ImConWidgetController):
             return
         
         self.setupInfo = self._setupInfo.sim
+
+        setupInfoKeyList = [a for a in dir(self.setupInfo) if not a.startswith('__') and not callable(getattr(self.setupInfo, a))]
+        self.setupValueList = []
+        for item in setupInfoKeyList:
+            self.setupValueList.append(getattr(self.setupInfo,item))
+        setupInfoDict = dict(zip(setupInfoKeyList,self.setupValueList))
+        self._widget.setSIMWidgetFromConfig(setupInfoDict)
         
         # Set if mock is present or not
         self.mock = self.setupInfo.isMock
@@ -128,19 +135,19 @@ class SIMController(ImConWidgetController):
                 self.lasers.append(self._master.lasersManager[iDevice])
         if len(self.lasers) == 0:
             self._logger.error("No laser found")
-            # add a dummy laser
-            class dummyLaser():
-                def __init__(self, name, power):
-                    self.power = 0.0
-                    self.setEnabled = lambda x: x
-                    self.name = name
-                    self.power = power
-                def setPower(self,power):
-                    self.power = power
-                def setEnabled(self,enabled):
-                    self.enabled = enabled
-            for i in range(2):
-                self.lasers.append(dummyLaser("Laser"+str(i), 100))
+            # # add a dummy laser
+            # class dummyLaser():
+            #     def __init__(self, name, power):
+            #         self.power = 0.0
+            #         self.setEnabled = lambda x: x
+            #         self.name = name
+            #         self.power = power
+            #     def setPower(self,power):
+            #         self.power = power
+            #     def setEnabled(self,enabled):
+            #         self.enabled = enabled
+            # for i in range(2):
+            #     self.lasers.append(dummyLaser("Laser"+str(i), 100))
         # select detectors
         allDetectorNames = self._master.detectorsManager.getAllDeviceNames()
         # self.detector = self._master.detectorsManager[allDetectorNames[0]]
@@ -320,7 +327,7 @@ class SIMController(ImConWidgetController):
         # Set count for frames to 0
         self.frameSetCount = 0
         self.saveOneTime = False
-        self.saveOneStarted = False
+        self.saveOneSetRaw = False
         
 
         # Set running order on SLM
@@ -501,12 +508,9 @@ class SIMController(ImConWidgetController):
                     time_color_start = time.time()
 
                     if k == 0 and self.saveOneTime:
-                        self.saveOneStarted = True
-                    if self.saveOneStarted:
-                        self.recordOneRawFunc(j)
-
-
-
+                        self.saveOneSetRaw = True
+                    if self.saveOneSetRaw:
+                        self.recordOneSetRaw(j)
                     if self.isRecordingRaw:
 
                         self.recordRawFunc(j)
@@ -525,7 +529,7 @@ class SIMController(ImConWidgetController):
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneStarted), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneStarted, ), daemon=True).start()
+                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
 
 
                     time_color_end = time.time()
@@ -535,8 +539,8 @@ class SIMController(ImConWidgetController):
                     processor.clearStack()                    
 
                
-                    if k==(len(processors)-1) and self.saveOneStarted and self.saveOneTime:
-                        self.saveOneStarted = False
+                    if k==(len(processors)-1) and self.saveOneSetRaw and self.saveOneTime:
+                        self.saveOneSetRaw = False
                         self.saveOneTime = False
                 
                 self._logger.debug(f"{times_color}")
@@ -564,7 +568,7 @@ class SIMController(ImConWidgetController):
 
 
 
-    def recordOneRawFunc(self,j):
+    def recordOneSetRaw(self,j):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
@@ -1002,6 +1006,8 @@ class SIMProcessor(object):
         self.isCalibrated = False
         self.use_gpu = isPytorch ##Pytorch boolen refernce
         self.stack = []
+        self._nsteps = self.angles_number * self.phases_number
+        self._nbands = self.angles_number
 
         # processing parameters
         self.isRecording = False
@@ -1086,6 +1092,9 @@ class SIMProcessor(object):
         self.h.beta = self.beta
         self.h.w = self.w
         self.h.eta = self.eta
+        self.h._nsteps = self._nsteps
+        self.h._nbands = self._nbands
+
         if not self.find_carrier:
             self.h.kx = self.kx_input
             self.h.ky = self.ky_input
@@ -1149,6 +1158,8 @@ class SIMProcessor(object):
                 self.p_input = self.h.p
                 self.ampl_input = self.h.ampl
             self._logger.debug("Done calibrating the stack")
+
+
         elif self.reconstructionMethod == "mcsim":
             """
             test running SIM reconstruction at full speed on GPU
@@ -1255,7 +1266,7 @@ class SIMProcessor(object):
             self.recordSIMFunc(exptPath, frameSetCount,pos_num, exptTimeElapsedStr)
         if saveOne:
             exptPathOne = os.path.join(exptPath, "Snapshot")
-            self.recordSIMOneFunc(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
+            self.recordOneSetSIM(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
 
         self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
         
@@ -1266,7 +1277,7 @@ class SIMProcessor(object):
         reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
 
-    def recordSIMOneFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+    def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
         reconSavePath = exptPath
         reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}_recon.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
@@ -1339,18 +1350,17 @@ class SIMProcessor(object):
             imageSIM = imgset_next.sim_sr.compute()
             return imageSIM
 
-    def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
-        Isample = np.zeros((Nx,Ny))
-        Isample[np.random.random(Isample.shape)>0.999]=1
+    # def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
+    #     Isample = np.zeros((Nx,Ny))
+    #     Isample[np.random.random(Isample.shape)>0.999]=1
 
-        allImages = []
-        for iRot in range(Nrot):
-            for iPhi in range(Nphi):
-                IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
-                allImages.append(nip.gaussf(IGrating*Isample,3))
+    #     allImages = []
+    #     for iRot in range(Nrot):
+    #         for iPhi in range(Nphi):
+    #             IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
+    #             allImages.append(nip.gaussf(IGrating*Isample,3))
 
-        allImages=np.array(allImages)
-        allImages-=np.min(allImages)
-        allImages/=np.max(allImages)
-        return allImages
-
+    #     allImages=np.array(allImages)
+    #     allImages-=np.min(allImages)
+    #     allImages/=np.max(allImages)
+    #     return allImages
