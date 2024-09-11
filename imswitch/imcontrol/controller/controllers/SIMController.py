@@ -78,7 +78,7 @@ class SIMController(ImConWidgetController):
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
         # self.IS_FASTAPISIM=False
@@ -174,11 +174,15 @@ class SIMController(ImConWidgetController):
         self.positionerNameXY = self._master.positionersManager.getAllDeviceNames()[1]
         self.positionerXY = self._master.positionersManager[self.positionerNameXY]
 
-        # setup the SIM processors
-        sim_parameters = SIMParameters()
-        self.SimProcessorLaser1 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_1)
-        self.SimProcessorLaser2 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_2)
-        self.SimProcessorLaser3 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_3)
+
+        # Initializes a class object that we append the correct values to. The values of the actualy class stay empty.
+        self.sim_parameters = SIMParameters()
+        for key in setupInfoDict:
+            setattr(self.sim_parameters,key,setupInfoDict[key])
+
+        self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength1)
+        self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength2)
+        self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength3)
 
         # Connect CommunicationChannel signals
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
@@ -223,6 +227,7 @@ class SIMController(ImConWidgetController):
         
         # Newly added, prep for SLM integration
         mock = self.mock
+        self.sim_parameters = sim_parameters
 
         dic_wl_dev = {488:0, 561:1, 640:2}
         # FIXME: Correct for how the cams are wired
@@ -234,6 +239,10 @@ class SIMController(ImConWidgetController):
         # dic_wl_in = [488, 561, 640]
         dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
+        self.SimProcessorLaser1.handle = 488
+        self.SimProcessorLaser2.handle = 561
+        self.SimProcessorLaser3.handle = 640
+
         
         self.isReconstructing = False
         
@@ -303,8 +312,8 @@ class SIMController(ImConWidgetController):
         # Make processors object attribute so calibration can be changed when 
         # detector size is changed.
         self.processors = processors
-        magnification = sim_parameters.magnification
-        camPixelSize = 2.74
+        magnification = sim_parameters.Magnification
+        camPixelSize = sim_parameters.Pixelsize
         projCamPixelSize = camPixelSize/magnification
                         
         positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
@@ -321,8 +330,8 @@ class SIMController(ImConWidgetController):
         # before a grid scan is acquired
 
         # Set file-path read from GUI for each processor
-        for processor in processors:
-            processor.setPath(sim_parameters.path)
+        self.updateProcessorParameters()
+
             
         # Set count for frames to 0
         self.frameSetCount = 0
@@ -357,9 +366,7 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activateSLMWriteOnly()
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
         while self.active and not mock and dic_wl != []:
-            
-        # while count == 0:
-            # wfImages = []
+
             stackSIM = [] 
             for k in range(len(processors)):
                 # wfImages.append([])
@@ -380,7 +387,9 @@ class SIMController(ImConWidgetController):
 
             
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
-
+            # for processor in self.processors:
+            #     if processor.isCalibrated == False:
+            #         print('fuckyou')
 
             # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
@@ -419,7 +428,7 @@ class SIMController(ImConWidgetController):
                 # Loop over channels
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
-                    processor.setParameters(sim_parameters)
+
                     self.LaserWL = processor.wavelength
                     
                     # Set current detector being used
@@ -485,7 +494,7 @@ class SIMController(ImConWidgetController):
                     # Enable below if you need this
                     # stackSIM[k].append(self.SIMStack)
                     
-                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{int(processor.wavelength*1000):03} Raw")
+                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
                     
                     # Set sim stack for processing all functions work on 
                     # self.stack in SIMProcessor class
@@ -562,7 +571,16 @@ class SIMController(ImConWidgetController):
                 
 
           
-            
+    def updateProcessorParameters(self):
+        self.sim_parameters = self.getSIMParametersFromGUI()
+        for processor in self.processors:
+
+            processor.setParameters(self.sim_parameters)
+
+        self.SimProcessorLaser1.wavelength = self.sim_parameters.Wavelength1
+        self.SimProcessorLaser2.wavelength = self.sim_parameters.Wavelength2
+        self.SimProcessorLaser3.wavelength = self.sim_parameters.Wavelength3
+
 
 
 
@@ -628,6 +646,7 @@ class SIMController(ImConWidgetController):
         self._widget.setDefaultSaveDir(initSaveDir)
 
     def calibrateToggled(self):
+        self.updateProcessorParameters()
         for processor in self.processors:
             processor.isCalibrated = False
 
@@ -797,7 +816,7 @@ class SIMController(ImConWidgetController):
 
     def displayWFRawImage(self, im, name):
         """ Displays the image in the view. """
-        self._widget.setWFRawImage(im, name=name)
+        self._widget.setWFRawImage(im, name)
     
     def updateROIsize(self):
         # FIXME: Make it so calibration of only the modified detector is 
@@ -836,19 +855,19 @@ class SIMController(ImConWidgetController):
         #     detector.stopAcquisition()
         self._commChannel.sigSIMAcqToggled.emit(True)
         self.active = True
-        sim_parameters = self.getSIMParametersFromGUI()
+        simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
         
         # # Load experiment parameters to object
         self.getExperimentSettings()
-        mock = self.mock
-        if mock:
-            self.simThread = threading.Thread(target=self.performMockSIMExperimentThread, args=(sim_parameters,), daemon=True)
-            self.simThread.start()
-        else:    
-            self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
-            self.simThread.start()
+        # mock = self.mock
+        # if mock:
+        #     self.simThread = threading.Thread(target=self.performMockSIMExperimentThread, args=(sim_parameters,), daemon=True)
+        #     self.simThread.start()
+        # else:    
+        self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
+        self.simThread.start()
 
 
 
@@ -939,21 +958,22 @@ class SIMController(ImConWidgetController):
 
     def getSIMParametersFromGUI(self):
         ''' retrieve parameters from the GUI '''
-        sim_parameters = SIMParameters()
+        sim_parameters = self.sim_parameters
 
 
-        # parse textedit fields
-        sim_parameters.pixelsize = np.float32(self._widget.pixelsize_textedit.text())
+        # Copies current widget values to the SIMParameters object
+        sim_parameters.Wavelength1 = np.float32(self._widget.wavelength1_textedit.text())/1000
+        sim_parameters.Wavelength2 = np.float32(self._widget.wavelength2_textedit.text())/1000
+        sim_parameters.Wavelength3 = np.float32(self._widget.wavelength3_textedit.text())/1000
+        sim_parameters.Pixelsize = np.float32(self._widget.pixelsize_textedit.text())
         sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
-        sim_parameters.n = np.float32(self._widget.n_textedit.text())
-        sim_parameters.alpha = np.float32(self._widget.alpha_textedit.text())
-        sim_parameters.beta = np.float32(self._widget.beta_textedit.text())
+        sim_parameters.Alpha = np.float32(self._widget.alpha_textedit.text())
+        sim_parameters.Beta = np.float32(self._widget.beta_textedit.text())
+        sim_parameters.w = np.float32(self._widget.eta_textedit.text())
         sim_parameters.eta = np.float32(self._widget.eta_textedit.text())
-        sim_parameters.wavelength_1 = np.float32(self._widget.wavelength1_textedit.text())
-        sim_parameters.wavelength_2 = np.float32(self._widget.wavelength2_textedit.text())
-        sim_parameters.wavelength_3 = np.float32(self._widget.wavelength3_textedit.text())
-        sim_parameters.magnification = np.float32(self._widget.magnification_textedit.text())
-        sim_parameters.path = self._widget.path_edit.text()
+        sim_parameters.n = np.float32(self._widget.n_textedit.text())
+        sim_parameters.Magnification = np.float32(self._widget.magnification_textedit.text())
+        sim_parameters.saveDir = self._widget.path_edit.text()
         return sim_parameters
 
 
@@ -965,41 +985,34 @@ class SIMController(ImConWidgetController):
 
 
 class SIMParameters(object):
-    wavelength_1 = 0.488
-    wavelength_2 = 0.561
-    wavelength_3 = 0.640
-    NA = 0.8
-    n = 1.0
-    magnification = 22.22
-    pixelsize = 2.74
-    eta = 0.6
-    alpha = 0.5
-    beta = 0.98
-    path = ""
+    def __init__(self):
 
+        self.placeHolder = ""
 
 
 class SIMProcessor(object):
 
-    def __init__(self, parent, simParameters, wavelength=488):
+    def __init__(self, parent, simParameters, wavelength):
         '''
         setup parameters
         '''
         #current parameters is setting for 60x objective 488nm illumination
         self.parent = parent
-        self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
-        self.phases_number = 3
-        self.angles_number = 3
+        # self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
+
         self.NA = simParameters.NA
         self.n = simParameters.n
-        self.wavelength = wavelength
-        self.pixelsize = simParameters.pixelsize
-        self.magnification = simParameters.magnification
-        self.dz= 0.55
-        self.alpha = 0.5
-        self.beta = 0.98
-        self.w = 0.2
+        self.wavelength = wavelength/1000
+        self.pixelsize = simParameters.Pixelsize
+        self.magnification = simParameters.Magnification
+        self.alpha = simParameters.Alpha
+        self.beta = simParameters.Beta
+        self.w = simParameters.w
         self.eta = simParameters.eta
+
+        self.phases_number = 3
+        self.angles_number = 3
+        self.dz= 0.55
         self.group = 30
         self.use_phases = True
         self.find_carrier = True
@@ -1030,7 +1043,7 @@ class SIMProcessor(object):
 
         # setup
         self.h.debug = False
-        self.setReconstructor()
+        self.setReconstructorInit()
         self.kx_input = np.zeros(self.k_shape, dtype=np.single)
         self.ky_input = np.zeros(self.k_shape, dtype=np.single)
         self.p_input = np.zeros(self.k_shape, dtype=np.single)
@@ -1064,13 +1077,17 @@ class SIMProcessor(object):
 
     def setParameters(self, sim_parameters):
         # uses parameters from GUI
-        self.pixelsize= sim_parameters.pixelsize
+        self.pixelsize= sim_parameters.Pixelsize
         self.NA= sim_parameters.NA
         self.n= sim_parameters.n
         self.reconstructionMethod = "napari" # sim_parameters["reconstructionMethod"]
         #self.use_gpu = False #sim_parameters["useGPU"]
         self.eta =  sim_parameters.eta
-        self.magnification = sim_parameters.magnification
+        self.magnification = sim_parameters.Magnification
+        self.path = sim_parameters.saveDir
+        self.alpha = sim_parameters.Alpha
+        self.beta = sim_parameters.Beta
+        self.w = sim_parameters.w
 
     def setReconstructionMethod(self, method):
         self.reconstructionMethod = method
@@ -1085,7 +1102,30 @@ class SIMProcessor(object):
         self.h.magnification = self.magnification
         self.h.NA = self.NA
         self.h.n = self.n
-        #self.h.wavelength = self.wavelength
+        self.h.wavelength = self.wavelength
+        self.h.pixelsize = self.pixelsize
+        self.h.alpha = self.alpha
+        self.h.beta = self.beta
+        self.h.w = self.w
+        self.h.eta = self.eta
+        self.h._nsteps = self._nsteps
+        self.h._nbands = self._nbands
+
+        if not self.find_carrier:
+            self.h.kx = self.kx_input
+            self.h.ky = self.ky_input
+
+    def setReconstructorInit(self):
+        '''
+        Sets the attributes of the Processor
+        Executed frequently, upon update of several settings
+        '''
+
+        self.h.usePhases = self.use_phases
+        self.h.magnification = self.magnification
+        self.h.NA = self.NA
+        self.h.n = self.n
+        self.h.wavelength = self.wavelength
         #self.h.wavelength = 0.52
         self.h.pixelsize = self.pixelsize
         self.h.alpha = self.alpha
@@ -1103,7 +1143,7 @@ class SIMProcessor(object):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
         bfFrame = np.round(np.mean(np.array(mStack), 0))
-        self.parent.sigWFImageComputed.emit(bfFrame, f"{int(self.wavelength*1000):03} WF") #CTNOTE WF DISPLAYED
+        self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
     def setSIMStack(self, stack):
@@ -1230,8 +1270,8 @@ class SIMProcessor(object):
     # def setDate(self, date):
     #     self.date = date
         
-    def setPath(self, path):
-        self.path = path
+    # def setPath(self, path):
+    #     self.path = path
         
     def setFrameNum(self, frame_num):
         self.frame_num = frame_num
@@ -1257,6 +1297,7 @@ class SIMProcessor(object):
         # initialize the model
         self._logger.debug("Processing frames")
         if not self.getIsCalibrated():
+            
             self.setReconstructor()
             self.calibrate(mStack)
         self.SIMReconstruction = self.reconstruct(mStack)
@@ -1268,7 +1309,7 @@ class SIMProcessor(object):
             exptPathOne = os.path.join(exptPath, "Snapshot")
             self.recordOneSetSIM(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
         
         self.isReconstructing = False
 
