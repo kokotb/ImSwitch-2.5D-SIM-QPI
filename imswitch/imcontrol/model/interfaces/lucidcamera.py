@@ -489,8 +489,13 @@ class LucidCam:
             nparrays = []
             nparray = []
             for item in items:
+                # Cast 12bit data to 16 bit format for further processing
                 nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
                 nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
+                #BKnote FIXME: check if this is good on real system
+                # Normalize data back to real count, casting makes them multiples of 16
+                new_array = nparrays/16
+                nparrays = new_array.astype(np.uint16)
             # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
             # array = np.ctypeslib.as_array(array, (item.height, item.width))
             sim_set = nparrays

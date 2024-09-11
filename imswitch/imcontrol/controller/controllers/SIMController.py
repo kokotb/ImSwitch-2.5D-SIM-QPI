@@ -1331,7 +1331,7 @@ class SIMParameters(object):
     eta = 0.6
     alpha = 0.5
     beta = 0.98
-    path = 'E:\\SIM_data\\test_export\\'
+    path = 'D:\\SIM_data\\test_export\\'
 
 
 
