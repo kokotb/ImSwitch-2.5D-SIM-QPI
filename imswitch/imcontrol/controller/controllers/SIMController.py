@@ -135,7 +135,7 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
-        processorList = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
+        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
 
 
         # Signals originating from SIMController.py
@@ -254,8 +254,7 @@ class SIMController(ImConWidgetController):
         # TODO: Check if it affects speed, remove if it does
         # move to top where all this is handled
         # Set stacks to be saved into separate folder
-        date_in = datetime.now().strftime("%y%m%d%H%M%S")
-        self.exptFolderPath = self.makeExptFolderStr(date_in)
+        self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
 
  
         
@@ -344,8 +343,6 @@ class SIMController(ImConWidgetController):
                                 
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
-                # for detector in self.detectors:
-                #     detector._camera.clearBuffers()
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
                 
@@ -405,7 +402,7 @@ class SIMController(ImConWidgetController):
 
                     if broken == True:
                         droppedFrameSets += 1
-                        # print(f'Number of dropped frame set(s): {droppedFrameSets}')
+                        
                         break
 
                     time_color_end = time.time()
