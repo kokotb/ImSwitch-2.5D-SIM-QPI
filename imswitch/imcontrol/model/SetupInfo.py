@@ -282,51 +282,39 @@ class SIMInfo:
     height: int
     """ Height of SLM, in pixels. """
 
-    wavelength: int
+    Wavelength1: int
     """ Wavelength of the laser line used with the SLM. """
 
-    pixelSize: float
+    Wavelength2: int
+    """ Wavelength of the laser line used with the SLM. """
+
+    Wavelength3: int
+    """ Wavelength of the laser line used with the SLM. """
+
+    NA: float
+
+    Pixelsize: float
     """ Pixel size or pixel pitch of the SLM, in millimetres. """
 
-    angleMount: float
-    """ The angle of incidence and reflection of the laser line that is shaped
-    by the SLM, in radians. For adding a blazed grating to create off-axis
-    holography. """
+    Alpha: float
 
-    patternsDir: str
-    """ Directory of .bmp images provided by Hamamatsu for flatness correction
-    at various wavelengths. A combination will be chosen based on the
-    wavelength. """
+    Beta: float
 
-    isSimulation: bool
+    w: float
 
-    isHamamatsuSLM: bool
+    eta: float
 
-    fastAPISIM_host: str
-
-    fastAPISIM_port: str
-
-    isFastAPISIM: bool
+    n: float
 
     nRotations: int
 
     nPhases: int
 
-    simMagnefication: float
-    
-    isFastAPISIM: bool
+    Magnification: float
 
-    simPixelsize: float
-
-    simNA: float
-
-    simETA: float
-
-    simN: float
-    
-    tWaitSequence: float
-    
     isMock: bool
+
+    saveDir: str
 
 @dataclass(frozen=True)
 class SIMslmInfo:

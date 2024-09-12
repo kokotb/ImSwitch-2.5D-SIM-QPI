@@ -34,7 +34,7 @@ class SIMWidget(NapariHybridWidget):
         
 
         # Add tabs
-        self.manual_control_tab = self.create_manual_control_tab()
+        # self.manual_control_tab = self.create_manual_control_tab()
         self.experiment_tab = self.create_experiment_tab()
         self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
         # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
@@ -43,7 +43,7 @@ class SIMWidget(NapariHybridWidget):
         
         self.tabView.addTab(self.experiment_tab, "Experiment")
         self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
-        self.tabView.addTab(self.manual_control_tab, "Manual Control")
+        # self.tabView.addTab(self.manual_control_tab, "Manual Control")
 
         # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
         # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
@@ -63,7 +63,15 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-    def setWFRawImage(self, im, name):
+    def setRawImage(self, im, name):
+        if self.layer is None or name not in self.viewer.layers:
+            colormap = 'grayclip'
+            self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.viewer.layers[name].scale = [2,2]
+        else:
+            self.viewer.layers[name].data = im
+
+    def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
@@ -71,36 +79,22 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-    def create_manual_control_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
-
-        # Laser dropdown
-        self.laser_dropdown = QComboBox()
-        self.laser_dropdown.addItems(["Laser 488nm", "Laser 635nm"])
-        layout.addWidget(self.laser_dropdown)
-
-        # Number dropdown
-        self.number_dropdown = QComboBox()
-        self.number_dropdown.addItems([str(i) for i in range(9)])
-        layout.addWidget(self.number_dropdown)
-
-        tab.setLayout(layout)
-        return tab
 
     def create_experiment_tab(self):
         tab = QWidget()
-        vertLayout = QVBoxLayout()
+        wholeTabVertLayout = QVBoxLayout()
 
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.calibrateButton = QPushButton("Calibrate") #Not connected to anything yet
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
-        button_layout.addWidget(self.calibrateButton)
-        vertLayout.addLayout(button_layout)
+        self.calibrateButton = QPushButton("Calibrate")
+        self.saveOneReconRawButton = QPushButton("Save One Recon/Raw Set")
+        button_layout = QtWidgets.QGridLayout()
+        button_layout.addWidget(self.start_button,0,0)
+        button_layout.addWidget(self.stop_button,0,1)
+        button_layout.addWidget(self.calibrateButton,1,0)
+        button_layout.addWidget(self.saveOneReconRawButton,1,1)
+        wholeTabVertLayout.addLayout(button_layout)
 
         # Checkbox options
         self.checkbox_reconstruction = QCheckBox('Live Reconstruction')
@@ -111,7 +105,7 @@ class SIMWidget(NapariHybridWidget):
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
-        vertLayout.addLayout(checkbox_layout)
+        wholeTabVertLayout.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
         self.roSelectLayout = QtWidgets.QHBoxLayout()
@@ -119,7 +113,7 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectList = QtWidgets.QComboBox()
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
-        vertLayout.addLayout(self.roSelectLayout)
+        wholeTabVertLayout.addLayout(self.roSelectLayout)
 
 
 
@@ -151,27 +145,35 @@ class SIMWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
         gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
              
-        vertLayout.addLayout(gridScanLayout)
+        wholeTabVertLayout.addLayout(gridScanLayout)
 
 
         # Save folder
         parameters2_layout = QtWidgets.QGridLayout()
-        self.path_label = QLabel("Selected Path")
-        self.path_edit = QLineEdit("D:\\SIM_data\\test_export\\")
+        self.path_label = QLabel("Root Path")
+        self.path_edit = QLineEdit("")
+        self.user_label = QLabel("User Name")
+        self.user_edit = QLineEdit("")
+        self.expt_label = QLabel("Experiment Name")
+        self.expt_edit = QLineEdit("")
         self.openFolderButton = guitools.BetterPushButton('Open')
-        self.checkbox_mock = QCheckBox("Mock")
+        # self.checkbox_mock = QCheckBox("Mock")
         row = 0
-        parameters2_layout.addWidget(self.path_label, row, 0)
-        parameters2_layout.addWidget(self.path_edit, row, 1)        
-        parameters2_layout.addWidget(self.openFolderButton, row + 1, 0, 1, 2)
-        parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
-        vertLayout.addLayout(parameters2_layout)
+        parameters2_layout.addWidget(self.user_label, row, 0)
+        parameters2_layout.addWidget(self.user_edit, row, 1)
+        parameters2_layout.addWidget(self.expt_label, row+1, 0)
+        parameters2_layout.addWidget(self.expt_edit, row+1, 1)
+        parameters2_layout.addWidget(self.path_label, row+2, 0)
+        parameters2_layout.addWidget(self.path_edit, row+2, 1)        
+        parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
+        # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
+        wholeTabVertLayout.addLayout(parameters2_layout)
 
         self.start_button.toggled.connect(self.sigSIMAcqToggled)
         
 
 
-        tab.setLayout(vertLayout)
+        tab.setLayout(wholeTabVertLayout)
         return tab
     
     def addROName(self, roIndex, roName):
@@ -183,6 +185,12 @@ class SIMWidget(NapariHybridWidget):
         roIndex = int(roIndex[0])
         return roIndex
     
+    def getUserName(self):
+        return self.user_edit.text()
+    
+    def getExptName(self):
+        return self.expt_edit.text()
+
     def setSelectedRO(self, currentROIndex):
         self.roSelectList.setCurrentIndex(currentROIndex)
 
@@ -194,50 +202,42 @@ class SIMWidget(NapariHybridWidget):
             reconStateBool = True
         return reconStateBool
 
+    def setDefaultSaveDir(self, saveDir):
+        self.path_edit.setText(saveDir)
+
+
 
     def create_reconstruction_parameters_tab(self):
         tab = QWidget()
         layout = QVBoxLayout()
-
-        # Label/textedit pairs
-        # params = [
-        #     ("Wavelength 1", "0.57"), ("Wavelength 2", "0.65"), ("NA", "0.8"),
-        #     ("n", "1"),
-        #     ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
-        #     ("w", "1"), ("eta", "0.6"), ("Magnification", "22.5")
-        # ]
+        # print(self.setupInfoDict)
         
-        params = [
-            ("Wavelength 1", "0.488"), ("Wavelength 2", "0.561"), ("Wavelength 3", "0.640"), ("NA", "0.8"),
-            ("n", "1.0"),
-            ("Pixelsize", "2.74"), ("Alpha", "0.5"), ("Beta", "0.98"),
-            ("w", "0.2"), ("eta", "0.6"), ("Magnification", "22.22")
-        ]
+
         
         
         # create widget per label
-        self.wavelength1_label = QLabel(params[0][0])
-        self.wavelength1_textedit = QLineEdit(params[0][1])
-        self.wavelength2_label = QLabel(params[1][0])
-        self.wavelength2_textedit = QLineEdit(params[1][1])
-        self.wavelength3_label = QLabel(params[2][0])
-        self.wavelength3_textedit = QLineEdit(params[2][1])
-        self.NA_label = QLabel(params[3][0])
-        self.NA_textedit = QLineEdit(params[3][1])
-        self.n_label = QLabel(params[4][0])
-        self.n_textedit = QLineEdit(params[4][1])
-        self.pixelsize_label = QLabel(params[5][0])
-        self.pixelsize_textedit = QLineEdit(params[5][1])
-        self.alpha_label = QLabel(params[6][0])
-        self.alpha_textedit = QLineEdit(params[6][1])
-        self.beta_label = QLabel(params[7][0])
-        self.beta_textedit = QLineEdit(params[7][1])
-        self.w_label = QLabel(params[8][0])
-        self.w_textedit = QLineEdit(params[8][1])
-        self.eta_label = QLabel(params[9][0])
-        self.eta_textedit = QLineEdit(params[9][1])
-        self.magnification_label = QLabel(params[10][0])
-        self.magnification_textedit = QLineEdit(params[10][1])
+        self.wavelength1_label = QLabel("")
+        self.wavelength1_textedit = QLineEdit("")
+        self.wavelength2_label = QLabel("")
+        self.wavelength2_textedit = QLineEdit("")
+        self.wavelength3_label = QLabel("")
+        self.wavelength3_textedit = QLineEdit("")
+        self.NA_label = QLabel("")
+        self.NA_textedit = QLineEdit("")
+        self.pixelsize_label = QLabel("")
+        self.pixelsize_textedit = QLineEdit("")
+        self.alpha_label = QLabel("")
+        self.alpha_textedit = QLineEdit("")
+        self.beta_label = QLabel("")
+        self.beta_textedit = QLineEdit("")
+        self.w_label = QLabel("")
+        self.w_textedit = QLineEdit("")
+        self.eta_label = QLabel("")
+        self.eta_textedit = QLineEdit("")
+        self.n_label = QLabel("")
+        self.n_textedit = QLineEdit("")
+        self.magnification_label = QLabel("")
+        self.magnification_textedit = QLineEdit("")
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.wavelength1_label)
         row_layout_1.addWidget(self.wavelength1_textedit)
@@ -292,88 +292,36 @@ class SIMWidget(NapariHybridWidget):
         tab.setLayout(layout)
         return tab
 
-    # def create_timelapse_settings_tab(self):
-    #     tab = QWidget()
-    #     layout = QVBoxLayout()
+        
+    def setSIMWidgetFromConfig(self,setupInfoDict):
 
-    #     # Label/textedit pairs
-    #     settings = [
-    #         ("Period", "0"), ("Number of frames", "10")
-    #     ]
-        
-    #     # create widget per label
-    #     self.period_label = QLabel(settings[0][0])
-    #     self.period_textedit = QLineEdit(settings[0][1])
-    #     self.period_unit = QLabel("s")
-    #     self.frames_label = QLabel(settings[1][0])
-    #     self.frames_textedit = QLineEdit(settings[1][1])
-    #     row_layout_1 = QHBoxLayout()
-    #     row_layout_1.addWidget(self.period_label)
-    #     row_layout_1.addWidget(self.period_textedit)
-    #     row_layout_1.addWidget(self.period_unit)
-    #     row_layout_2 = QHBoxLayout()
-    #     row_layout_2.addWidget(self.frames_label)
-    #     row_layout_2.addWidget(self.frames_textedit)
-    #     layout.addLayout(row_layout_1)
-    #     layout.addLayout(row_layout_2)
-        
-    #     layout.addSpacing(20)
-        
-    #     self.start_timelapse_button = QPushButton("Start TimeLapse")
-    #     self.stop_timelapse_button = QPushButton("Stop TimeLapse")
-    #     button_layout = QHBoxLayout()
-    #     button_layout.addWidget(self.start_timelapse_button)
-    #     button_layout.addWidget(self.stop_timelapse_button)
-    #     layout.addLayout(button_layout)
+        params = [
+            "Wavelength1", "Wavelength2", "Wavelength3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
+        ]
+        self.wavelength1_label.setText(params[0])
+        self.wavelength1_textedit.setText(str(setupInfoDict[params[0]]))
+        self.wavelength2_label.setText(params[1])
+        self.wavelength2_textedit.setText(str(setupInfoDict[params[1]]))
+        self.wavelength3_label.setText(params[2])
+        self.wavelength3_textedit.setText(str(setupInfoDict[params[2]]))
+        self.NA_label.setText(params[3])
+        self.NA_textedit.setText(str(setupInfoDict[params[3]]))
+        self.pixelsize_label.setText(params[4])
+        self.pixelsize_textedit.setText(str(setupInfoDict[params[4]]))
+        self.alpha_label.setText(params[5])
+        self.alpha_textedit.setText(str(setupInfoDict[params[5]]))
+        self.beta_label.setText(params[6])
+        self.beta_textedit.setText(str(setupInfoDict[params[6]]))
+        self.w_label.setText(params[7])
+        self.w_textedit.setText(str(setupInfoDict[params[7]]))
+        self.eta_label.setText(params[8])
+        self.eta_textedit.setText(str(setupInfoDict[params[8]]))
+        self.n_label.setText(params[9])
+        self.n_textedit.setText(str(setupInfoDict[params[9]]))
+        self.magnification_label.setText(params[10])
+        self.magnification_textedit.setText(str(setupInfoDict[params[10]]))
 
-    #     tab.setLayout(layout)
-    #     return tab
-        
 
-    # def create_zstack_settings_tab(self):
-    #     tab = QWidget()
-    #     layout = QVBoxLayout()
-
-    #     # Label/textedit pairs
-    #     settings = [
-    #         ("Z-min", "-100"), ("Z-max", "100"), ("NSteps", "0")
-    #     ]
-    #     # create widget per label
-    #     self.zmin_label = QLabel(settings[0][0])
-    #     self.zmin_textedit = QLineEdit(settings[0][1])
-    #     self.zmax_label = QLabel(settings[1][0])
-    #     self.zmax_textedit = QLineEdit(settings[1][1])
-    #     self.z_unit = QLabel("µm")
-    #     self.nsteps_label = QLabel(settings[2][0])
-    #     self.nsteps_textedit = QLineEdit(settings[2][1])
-    #     row_layout_1 = QHBoxLayout()
-    #     row_layout_1.addWidget(self.zmin_label)
-    #     row_layout_1.addWidget(self.zmin_textedit)
-    #     row_layout_1.addWidget(self.z_unit)
-    #     row_layout_2 = QHBoxLayout()
-    #     row_layout_2.addWidget(self.zmax_label)
-    #     row_layout_2.addWidget(self.zmax_textedit)
-    #     row_layout_2.addWidget(self.z_unit)
-    #     row_layout_3 = QHBoxLayout()
-    #     row_layout_3.addWidget(self.nsteps_label)
-    #     row_layout_3.addWidget(self.nsteps_textedit)
-    #     layout.addLayout(row_layout_1)
-    #     layout.addLayout(row_layout_2)
-    #     layout.addLayout(row_layout_3)
-        
-    #     layout.addSpacing(20)
-        
-    #     self.start_zstack_button = QPushButton("Start Z-Stack")
-    #     self.stop_zstack_button = QPushButton("Stop Z-Stack")
-    #     button_layout = QHBoxLayout()
-    #     button_layout.addWidget(self.start_zstack_button)
-    #     button_layout.addWidget(self.stop_zstack_button)
-    #     layout.addLayout(button_layout)
-
-    #     tab.setLayout(layout)
-    #     return tab
-        
-        
     def getZStackParameters(self):
         return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))
     
@@ -383,8 +331,8 @@ class SIMWidget(NapariHybridWidget):
     def getRecFolder(self):
         return self.path_edit.text()
     
-    def setMockValue(self, mock):
-            self.checkbox_mock.setChecked(mock)
+    # def setMockValue(self, mock):
+    #         self.checkbox_mock.setChecked(mock)
     
     def getRecParameters(self):
         # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}

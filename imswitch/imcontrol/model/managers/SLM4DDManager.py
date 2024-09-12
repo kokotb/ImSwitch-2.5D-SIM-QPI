@@ -47,6 +47,9 @@ class SLM4DDManager(SignalInterface):
         port = SIMSLMInfo.port
         self.slmDLL = self.getSLMDLL(path)
         self.openSLM(port)
+
+        self.initialROOnTime = self.currentROOnTime()
+
     # Opens SLMDLL library ===========================================================
     def getSLMDLL(self, path):
         slmDLL = WinDLL(path)
@@ -61,6 +64,11 @@ class SLM4DDManager(SignalInterface):
     #  where return string informs user about success of the operation and identifies
     #  type of error if neccessary.
     # ================================================================================
+
+    def currentROOnTime(self):
+        currentROName = self.getROName(self.getRunningOrder())[0].decode()
+        currentROOnTime = currentROName.split("ms")[0]
+        return currentROOnTime
 
     def openSLM(self, port):
         #Port input in form of COMX

@@ -11,8 +11,8 @@ import tifffile as tif
 import os
 import time
 import numpy as np
-from datetime import datetime
 
+from decimal import Decimal
 import math
 import logging
 import sys
@@ -78,144 +78,87 @@ class SIMController(ImConWidgetController):
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        # self.IS_FASTAPISIM=False
-        # self.IS_HAMAMATSU=False
-        # switch to detect if a recording is in progress
 
-        
-
-        
+        #Setup state variables
         self.isRecordingRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
-
         self.isRecordRecon = False
-        self.simFrameVal = 0
-        self.nsimFrameSyncVal = 3
 
-        # Choose which laser will be recorded
-        self.is488 = True
-        self.is561 = True
-        self.is640 = True
-        self.processors = []
+        # self.processors = []
         
-
-        # we can switch between mcSIM and napari
+        # Only napari implemented as of 12/9/24
         self.reconstructionMethod = "napari" # or "mcSIM"
 
-        # save directory of the reconstructed frames
-        self.simDir = os.path.join(dirtools.UserFileDirs.Root, 'imcontrol_sim')
-        if not os.path.exists(self.simDir):
-            os.makedirs(self.simDir)
-
-        # load config file
+        # Load SIM section of config file. Used to populate 'reconstrution settings' tab
         if self._setupInfo.sim is None:
             self._widget.replaceWithError('SIM is not configured in your setup file.')
             return
         
         self.setupInfo = self._setupInfo.sim
+        setupInfoKeyList = [a for a in dir(self.setupInfo) if not a.startswith('__') and not callable(getattr(self.setupInfo, a))] #Pulls all attribute names from class not dunder (__) and not functions.
+        self.setupValueList = []
+        for item in setupInfoKeyList:
+            self.setupValueList.append(getattr(self.setupInfo,item)) #Pulls values of the attributes.
+        setupInfoDict = dict(zip(setupInfoKeyList,self.setupValueList)) #Put names, values in a dict.
+        self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
         
-        # Set if mock is present or not
-        self.mock = self.setupInfo.isMock
-        # Set mock value in widget
-        self._widget.setMockValue(self.mock)
-
-        # connect live update  https://github.com/napari/napari/issues/1110
-        self.sigRawStackReceived.connect(self.displayWFRawImage)
-
-        # select lasers
-        allLaserNames = self._master.lasersManager.getAllDeviceNames()
-        self.lasers = []
-        for iDevice in allLaserNames:
-            if iDevice.lower().find("laser")>=0 or iDevice.lower().find("led"):
-                self.lasers.append(self._master.lasersManager[iDevice])
+        #Create list of available laser objects from config file.
+        # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
+        self.lasers = list(self._master.lasersManager._subManagers.values()) #List of just the laser object handles
         if len(self.lasers) == 0:
             self._logger.error("No laser found")
-            # add a dummy laser
-            class dummyLaser():
-                def __init__(self, name, power):
-                    self.power = 0.0
-                    self.setEnabled = lambda x: x
-                    self.name = name
-                    self.power = power
-                def setPower(self,power):
-                    self.power = power
-                def setEnabled(self,enabled):
-                    self.enabled = enabled
-            for i in range(2):
-                self.lasers.append(dummyLaser("Laser"+str(i), 100))
-        # select detectors
-        allDetectorNames = self._master.detectorsManager.getAllDeviceNames()
-        # self.detector = self._master.detectorsManager[allDetectorNames[0]]
-        # Get all detector objects
-        self.detectors = []
-        for detector_name in allDetectorNames:
-            self.detectors.append(self._master.detectorsManager[detector_name])
-        # if self.detector.model == "CameraPCO":
-        #     # here we can use the buffer mode
-        #     self.isPCO = True
-        # else:
-        #     # here we need to capture frames consecutively
-        #     self.isPCO = False
-            
-        # # Pull magnifications from config file
-        # for detector in self.detectors:
-        #     magnification_key = 'ExposureTime' # Just for testing, change to mag once implemented
-        #     self.magnification = detector.setupInfo[magnification_key]
-            
-        # select positioner
-        # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
-        self.positionerName = self._master.positionersManager.getAllDeviceNames()[0]
-        self.positioner = self._master.positionersManager[self.positionerName]
-        self.positionerNameXY = self._master.positionersManager.getAllDeviceNames()[1]
-        self.positionerXY = self._master.positionersManager[self.positionerNameXY]
 
-        # setup the SIM processors
-        sim_parameters = SIMParameters()
-        self.SimProcessorLaser1 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_1)
-        self.SimProcessorLaser2 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_2)
-        self.SimProcessorLaser3 = SIMProcessor(self, sim_parameters, wavelength=sim_parameters.wavelength_3)
+        # Create list of detectors objects
+        self.detectors = list(self._master.detectorsManager._subManagers.values())
+            
+        # Create positioner objects -- Positioner must have axis 'Z' or axis 'XY' listed in config file to be added correctly.
+        for key in self._master.positionersManager._subManagers:
+            if self._master.positionersManager._subManagers[key].axes == ['Z']:
+                self.positioner = self._master.positionersManager._subManagers[key]
+            elif self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
+                self.positionerXY = self._master.positionersManager._subManagers[key]
+            else:
+                self._logger.error(f"Positioner {self._master.positionersManager._subManagers[key].name} in config file does not have axes defined correctly")
 
-        # Connect CommunicationChannel signals
+        # Initializes a class object that we append the correct values to. The values of the actually class stay empty. Can change to be namespace and get rid of SIMParameters() objcet all together.
+        self.sim_parameters = SIMParameters()
+        for key in setupInfoDict:
+            setattr(self.sim_parameters,key,setupInfoDict[key])
+
+        # Create class objects for each channel.
+        self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength1)
+        self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength2)
+        self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength3)
+        self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
+        self.SimProcessorLaser2.handle = 561
+        self.SimProcessorLaser3.handle = 640
+        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
+
+
+        # Signals originating from SIMController.py
+        self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
-        self.sigWFImageComputed.connect(self.displayWFRawImage)
-        # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
-        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
-        # self._widget.sigSIMAcqStarted.connect(self.emitStopLiveview)
+        self.sigWFImageComputed.connect(self.displayWFImage)
+        # Signals connecting SIMWidget actions with functions in SIMController
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
-
         self._widget.checkbox_record_raw.stateChanged.connect(self.toggleRecording)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
-        self._widget.checkbox_mock.stateChanged.connect(self.toggleMockUse)
-        #self._widget.sigPatternID.connect(self.patternIDChanged)
-        # self._widget.number_dropdown.currentIndexChanged.connect(self.patternIDChanged)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
-        # read parameters from the widget
-        # self._widget.start_timelapse_button.clicked.connect(self.startTimelapse)
-        # self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
-        self.folder = self._widget.getRecFolder()
-
-
+        self._widget.saveOneReconRawButton.clicked.connect(self.saveOneReconRaw)
+        # Communication channels signls (signals sent elsewhere in the program)
+        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
+        
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
-        roNameList = self._master.SLM4DDManager.getAllRONames()
-        for i in range(len(roNameList)):
-            self._widget.addROName(i,roNameList[i])
-        roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
-        self._widget.setSelectedRO(roSelectedOnSLM)
+        self.populateAndSelectROList()
 
-
-
-
-
-
-
-
-
+        #Get save directory root from config file and populate text box in SIM widget.
+        self._widget.setDefaultSaveDir(setupInfoDict['saveDir'])
 
 
     def performSIMExperimentThread(self, sim_parameters):
@@ -225,51 +168,39 @@ class SIMController(ImConWidgetController):
         Run continuous on a single frame. 
         Run snake scan for larger FOVs.
         """
-        ###################################################
-        # -------Parameters - still in development------- #
-        ###################################################
-        
-        # Newly added, prep for SLM integration
-        mock = self.mock
 
-
-        dic_wl_dev = {488:0, 561:1, 640:2}
-        # FIXME: Correct for how the cams are wired
-        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
-        # TODO: Delete after development is done - here to help get devices 
-        # names
-        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-
-        # dic_wl_in = [488, 561, 640]
-        dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
-        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
-        
         self.isReconstructing = False
         
+        # Newly added, prep for SLM integration
+        self.sim_parameters = sim_parameters
+
+        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+
+
+        dic_laser_present = {488:True, 561:True, 640:True}
+        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
+
         # Check if lasers are set and have power in them select only lasers with powers
-        dic_wl = []
-        laser_ID = []
-        # num_lasers = 0            
-        for dic in list(dic_wl_dev):
-            if self.lasers[dic_wl_dev[dic]].power > 0.0:
-                dic_wl.append(dic) #List of wavelengths actually powered
-                laser_ID.append(dic_wl_dev[dic])
-                # num_lasers += 1
+        poweredLasers = []
+        for laser in self.lasers:
+            if laser.power > 0:
+                poweredLasers.append(laser.wavelength)
         
         # Check if detector is present comparing hardcoded names to connected 
         # names, detector names are used only for pulling imageSize from the 
         # detector
         # FIXME: Check again if this laser checkup makes sense
         det_names = []
-        if dic_wl != []:
-            for dic in dic_wl:
+        if poweredLasers != []:
+            for dic in poweredLasers:
                 det_name = dic_det_names[dic]
                 if det_name in detector_names_connected:
                     det_names.append(det_name)
                 else:
                     self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(dic_wl) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {dic_wl}")
+                    if len(poweredLasers) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {poweredLasers}")
                     # FIXME: If used for anything else but pixel number 
                     # readout it should be changed to not continue the code if 
                     # detector not present
@@ -279,7 +210,9 @@ class SIMController(ImConWidgetController):
                     # since detectors default to mocker if the right number of 
                     # detectors is configured in the config file
                     det_name = detector_names_connected[0]
-                    #det_names.append()
+                    det_names.append()
+    
+        
         
         #Assembling detector list based on active AOTF channels. Pulls current detector shape.
         self.detectors = []        
@@ -302,8 +235,8 @@ class SIMController(ImConWidgetController):
         processors = []
         isLaser = []
 
-        for wl in dic_wl:
-            if dic_wl != []:
+        for wl in poweredLasers:
+            if poweredLasers != []:
                 processors.append(processors_dic[wl])
                 isLaser.append(dic_laser_present[wl])
                 processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
@@ -312,8 +245,8 @@ class SIMController(ImConWidgetController):
         # Make processors object attribute so calibration can be changed when 
         # detector size is changed.
         self.processors = processors
-        magnification = sim_parameters.magnification
-        camPixelSize = 2.74
+        magnification = sim_parameters.Magnification
+        camPixelSize = sim_parameters.Pixelsize
         projCamPixelSize = camPixelSize/magnification
                         
         positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
@@ -321,20 +254,21 @@ class SIMController(ImConWidgetController):
         # TODO: Check if it affects speed, remove if it does
         # move to top where all this is handled
         # Set stacks to be saved into separate folder
-        folder = os.path.join(sim_parameters.path, "astack")
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        self.folder = folder
+        self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
+
+ 
         
         # Creating a unique identifier for experiment name generated 
         # before a grid scan is acquired
-        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
+
         # Set file-path read from GUI for each processor
-        for processor in processors:
-            processor.setPath(sim_parameters.path)
+        self.updateProcessorParameters()
+
             
         # Set count for frames to 0
-        frameSetCount = 0
+        self.frameSetCount = 0
+        self.saveOneTime = False
+        self.saveOneSetRaw = False
         
 
         # Set running order on SLM
@@ -354,19 +288,15 @@ class SIMController(ImConWidgetController):
             # buffer_size = 500
             self.setCamForExperiment(detector, int(buffer_size))
         
-        # if not mock:
-        #     for ID in laser_ID:
-        #         self.lasers[ID].setEnabled(True)
+
 
         droppedFrameSets = 0
         time_global_start = time.time()
         time_whole_start = time_global_start
         self._master.arduinoManager.activateSLMWriteOnly()
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
-        while self.active and not mock and dic_wl != []:
-            
-        # while count == 0:
-            # wfImages = []
+        while self.active and poweredLasers != []:
+
             stackSIM = [] 
             for k in range(len(processors)):
                 # wfImages.append([])
@@ -376,21 +306,21 @@ class SIMController(ImConWidgetController):
 
                 
             # Set frame number - prepared for time-lapse
-            # frame_num = 0
-            frame_num = frameSetCount
-            dt_export_string = "" # no time duration between frames is needed
-            
+         
             
             # Generate time_step
-            if frameSetCount == 0:
-                dt_export = 0.0
+            if self.frameSetCount == 0:
+                exptTimeElapsed = 0.0
             else:
-                dt_export = time.time() - self.timelapse_old
+                exptTimeElapsed = time.time() - time_global_start
+
+
             
-            integer, decimal = divmod(dt_export,1) # *1000 in ms
-            dt_export_string = f"{int(integer):04}p{int(decimal*10000):04}s"
-            self.timelapse_old = time.time()
-            
+            self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+            # for processor in self.processors:
+            #     if processor.isCalibrated == False:
+            #         print('fuckyou')
+
             # Scan over all positions generated for grid
             for j, pos in enumerate(positions):
                 
@@ -413,8 +343,6 @@ class SIMController(ImConWidgetController):
                                 
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
-                # for detector in self.detectors:
-                #     detector._camera.clearBuffers()
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
                 
@@ -428,7 +356,7 @@ class SIMController(ImConWidgetController):
                 # Loop over channels
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
-                    processor.setParameters(sim_parameters)
+
                     self.LaserWL = processor.wavelength
                     
                     # Set current detector being used
@@ -474,7 +402,7 @@ class SIMController(ImConWidgetController):
 
                     if broken == True:
                         droppedFrameSets += 1
-                        # print(f'Number of dropped frame set(s): {droppedFrameSets}')
+                        
                         break
 
                     time_color_end = time.time()
@@ -494,7 +422,7 @@ class SIMController(ImConWidgetController):
                     # Enable below if you need this
                     # stackSIM[k].append(self.SIMStack)
                     
-                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{int(processor.wavelength*1000):03} Raw")
+                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
                     
                     # Set sim stack for processing all functions work on 
                     # self.stack in SIMProcessor class
@@ -515,38 +443,46 @@ class SIMController(ImConWidgetController):
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"acquire data"])
 
                     time_color_start = time.time()
+
+                    if k == 0 and self.saveOneTime:
+                        self.saveOneSetRaw = True
+                    if self.saveOneSetRaw:
+                        self.recordOneSetRaw(j)
                     if self.isRecordingRaw:
-                        date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
-                        processor.setDate(date)
-                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack, mFilenameStack,), daemon=True).start()
+
+                        self.recordRawFunc(j)
+
+
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
 
                     time_color_start = time.time()
                     num_skip_frames = self._widget.getSkipFrames() + 1
-                    if frameSetCount == 0:
+                    if self.frameSetCount == 0:
                         div_1 = 0
                     else:                        
-                        int_1, div_1  = divmod(frameSetCount, num_skip_frames)
+                        div_1  = divmod(self.frameSetCount, num_skip_frames)[1]
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                        # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
+                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
+
+
                     time_color_end = time.time()
                     time_color_total = time_color_end-time_color_start
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"reconstruct data"])
 
                     processor.clearStack()                    
 
-                    
-
+               
+                    if k==(len(processors)-1) and self.saveOneSetRaw and self.saveOneTime:
+                        self.saveOneSetRaw = False
+                        self.saveOneTime = False
                 
                 self._logger.debug(f"{times_color}")
-                
-                frameSetCount += 1
+
+                self.frameSetCount += 1
                 
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
@@ -556,40 +492,91 @@ class SIMController(ImConWidgetController):
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
                 self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
-                self._logger.debug('Total frames: {:.2f}'.format(frameSetCount))
+                self._logger.debug('Total frames: {:.2f}'.format(self.frameSetCount))
                 
 
 
+                
+
+          
+    def updateProcessorParameters(self):
+        self.sim_parameters = self.getSIMParametersFromGUI()
+        for processor in self.processors:
+
+            processor.setParameters(self.sim_parameters)
+
+        self.SimProcessorLaser1.wavelength = self.sim_parameters.Wavelength1
+        self.SimProcessorLaser2.wavelength = self.sim_parameters.Wavelength2
+        self.SimProcessorLaser3.wavelength = self.sim_parameters.Wavelength3
 
 
 
 
 
 
+    def recordOneSetRaw(self,j):
+        rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(rawSavePath):
+            os.makedirs(rawSavePath)
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+
+    def recordRawFunc(self,j):
+        rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
+        if not os.path.exists(rawSavePath):
+            os.makedirs(rawSavePath)
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
 
 
 
 
+    def getElapsedTimeString(self, seconds):
+        ss, ms = divmod(seconds,1)
+
+        mm, ss = divmod(ss,60)
+        hh, mm = divmod(mm,60)
+        dd, hh = divmod(hh,24)
+        ss = "{:02d}".format(int(ss))
+        mm = "{:02d}".format(int(mm))
+        hh = "{:02d}".format(int(hh))
+        dd = "{:01d}".format(int(dd))
+        ms = str(round(Decimal(ms),3))[2:5]
+
+        elapsedStr = f"{dd}d{hh}h{mm}m{ss}s{ms}ms"
+        return elapsedStr
+
+
+    def makeExptFolderStr(self, date_in):
+        userName = self._widget.getUserName()
+        exptName = self._widget.getExptName()
+        if not userName:
+            userName = 'username'
+        if not exptName:
+            exptName = 'exptname'
+        exptFolderName = "_".join((date_in,userName,exptName))
+        self.exptFolderPath = os.path.join(self._widget.getRecFolder(), exptFolderName)
+        return self.exptFolderPath      
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+    def populateAndSelectROList(self):
+        roNameList = self._master.SLM4DDManager.getAllRONames()
+        for i in range(len(roNameList)):
+            self._widget.addROName(i,roNameList[i])
+        roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
+        self._widget.setSelectedRO(roSelectedOnSLM)
 
     def calibrateToggled(self):
+        self.updateProcessorParameters()
         for processor in self.processors:
             processor.isCalibrated = False
+
+    def saveOneReconRaw(self):
+        self.saveOneTime = True
+
 
     # def timeMe(self, timedList, function):
     #         time_color_start = time.time()
@@ -680,9 +667,6 @@ class SIMController(ImConWidgetController):
         self.isRecordRecon = not self.isRecordRecon
         if not self.isRecordRecon:
             self.isActive = False
-            
-    def toggleMockUse(self):
-        self.mock = self._widget.checkbox_mock.isChecked()
 
     def openFolder(self):
         """ Opens current folder in File Explorer. """
@@ -751,9 +735,13 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setSIMImage(im, name=name)
 
-    def displayWFRawImage(self, im, name):
+    def displayRawImage(self, im, name):
         """ Displays the image in the view. """
-        self._widget.setWFRawImage(im, name=name)
+        self._widget.setRawImage(im, name)
+
+    def displayWFImage(self, im, name):
+        """ Displays the image in the view. """
+        self._widget.setWFImage(im, name)
     
     def updateROIsize(self):
         # FIXME: Make it so calibration of only the modified detector is 
@@ -792,19 +780,15 @@ class SIMController(ImConWidgetController):
         #     detector.stopAcquisition()
         self._commChannel.sigSIMAcqToggled.emit(True)
         self.active = True
-        sim_parameters = self.getSIMParametersFromGUI()
+        simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
         
         # # Load experiment parameters to object
         self.getExperimentSettings()
-        mock = self.mock
-        if mock:
-            self.simThread = threading.Thread(target=self.performMockSIMExperimentThread, args=(sim_parameters,), daemon=True)
-            self.simThread.start()
-        else:    
-            self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(sim_parameters,), daemon=True)
-            self.simThread.start()
+
+        self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
+        self.simThread.start()
 
 
 
@@ -883,36 +867,34 @@ class SIMController(ImConWidgetController):
         #print(np.shape(mystack))
 
 
-    def saveImageInBackground(self, image, filename = None):
-        if filename is None:
-            date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-            filename = f"{date}_SIM_Stack.tif"
+    def saveImageInBackground(self, image, path, filename):
         try:
             # self.folder = self._widget.getRecFolder()
-            self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
+            filename = os.path.join(path,filename) #FIXME: Remove hardcoded path
             image = np.array(image)
-            tif.imwrite(self.filename, image, imagej=True)
-            self._logger.debug("Saving file: "+self.filename)
+            tif.imwrite(filename, image, imagej=True)
+            self._logger.debug("Saving file: "+filename)
         except  Exception as e:
             self._logger.error(e)
 
     def getSIMParametersFromGUI(self):
         ''' retrieve parameters from the GUI '''
-        sim_parameters = SIMParameters()
+        sim_parameters = self.sim_parameters
 
 
-        # parse textedit fields
-        sim_parameters.pixelsize = np.float32(self._widget.pixelsize_textedit.text())
+        # Copies current widget values to the SIMParameters object
+        sim_parameters.Wavelength1 = np.float32(self._widget.wavelength1_textedit.text())/1000
+        sim_parameters.Wavelength2 = np.float32(self._widget.wavelength2_textedit.text())/1000
+        sim_parameters.Wavelength3 = np.float32(self._widget.wavelength3_textedit.text())/1000
+        sim_parameters.Pixelsize = np.float32(self._widget.pixelsize_textedit.text())
         sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
-        sim_parameters.n = np.float32(self._widget.n_textedit.text())
-        sim_parameters.alpha = np.float32(self._widget.alpha_textedit.text())
-        sim_parameters.beta = np.float32(self._widget.beta_textedit.text())
+        sim_parameters.Alpha = np.float32(self._widget.alpha_textedit.text())
+        sim_parameters.Beta = np.float32(self._widget.beta_textedit.text())
+        sim_parameters.w = np.float32(self._widget.eta_textedit.text())
         sim_parameters.eta = np.float32(self._widget.eta_textedit.text())
-        sim_parameters.wavelength_1 = np.float32(self._widget.wavelength1_textedit.text())
-        sim_parameters.wavelength_2 = np.float32(self._widget.wavelength2_textedit.text())
-        sim_parameters.wavelength_3 = np.float32(self._widget.wavelength3_textedit.text())
-        sim_parameters.magnification = np.float32(self._widget.magnification_textedit.text())
-        sim_parameters.path = self._widget.path_edit.text()
+        sim_parameters.n = np.float32(self._widget.n_textedit.text())
+        sim_parameters.Magnification = np.float32(self._widget.magnification_textedit.text())
+        sim_parameters.saveDir = self._widget.path_edit.text()
         return sim_parameters
 
 
@@ -923,445 +905,43 @@ class SIMController(ImConWidgetController):
         return self._widget.useGPUCheckbox.isChecked()
 
 
-    def performMockSIMExperimentThread(self, sim_parameters):
-
-        ##################################################
-        # -----------------Mocker start----------------- #
-        ##################################################
-        # Creating a mocker
-        print("Activating mocker for our SIM implementation.")
-                ###################################################
-        # -------Parameters - still in development------- #
-        ###################################################
-        time_whole_start = time.time()
-        # Newly added, prep for SLM integration
-        mock = self.mock
-
-
-        dic_wl_dev = {488:0, 561:1, 640:2}
-        # FIXME: Correct for how the cams are wired
-        dic_det_names = {488:'55Camera', 561:'66Camera', 640:'65Camera'} 
-        # TODO: Delete after development is done - here to help get devices 
-        # names
-        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-
-
-        # dic_wl_in = [488, 561, 640]
-        dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
-        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
-        
-        self.isReconstructing = False
-        
-        # Check if lasers are set and have power in them select only lasers with powers
-        dic_wl = []
-        laser_ID = []
-        # num_lasers = 0            
-        for dic in list(dic_wl_dev):
-            if self.lasers[dic_wl_dev[dic]].power > 0.0:
-                dic_wl.append(dic) #List of wavelengths actually powered
-                laser_ID.append(dic_wl_dev[dic])
-                # num_lasers += 1
-        
-        # Check if detector is present comparing hardcoded names to connected 
-        # names, detector names are used only for pulling imageSize from the 
-        # detector
-        # FIXME: Check again if this laser checkup makes sense
-        det_names = []
-        if dic_wl != []:
-            for dic in dic_wl:
-                det_name = dic_det_names[dic]
-                if det_name in detector_names_connected:
-                    det_names.append(det_name)
-                else:
-                    self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(dic_wl) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {dic_wl}")
-                    # FIXME: If used for anything else but pixel number 
-                    # readout it should be changed to not continue the code if 
-                    # detector not present
-                    # break
-                    # Defaulting to detector 0 to be still able to run the 
-                    # code with only one detector connected. Probably redundant
-                    # since detectors default to mocker if the right number of 
-                    # detectors is configured in the config file
-                    det_name = detector_names_connected[0]
-                    det_names.append()
-        
-        #Assembling detector list based on active AOTF channels. Pulls current detector shape.
-        self.detectors = []        
-        image_sizes_px = []
-        
-        if det_names != []:
-            for det_name in det_names:
-                detector = self._master.detectorsManager[det_name]
-                self.detectors.append(detector)
-                image_sizes_px.append(detector.shape)
-        else:
-            self._logger.debug(f"Lasers not enabled. Setting image_size_px to default 512x512.")
-            image_sizes_px = [[512,512]]
-
-
-        imageLeastCommonSize = self.smallestXYForGridSpacing(image_sizes_px)
-
-        
-        # Set processors for selected lasers
-        processors = []
-        isLaser = []
-        for wl in dic_wl:
-            if dic_wl != []:
-                processors.append(processors_dic[wl])
-                isLaser.append(dic_laser_present[wl])
-                # Set calibration before each run if selected in GUI
-                if processors_dic[wl].isCalibrated:
-                    # If calibrated it will check in widget if calibrate
-                    # Widget True, calibration needs to be False
-                    processors_dic[wl].isCalibrated = not self._widget.checkbox_calibrate.isChecked()
-        
-        
-        
-        
-        
-        
-        # Make processors object attribute so calibration can be changed when 
-        # detector size is changed.
-        self.processors = processors
-        magnification = sim_parameters.magnification
-        camPixelSize = 2.74
-        projCamPixelSize = camPixelSize/magnification
-                        
-        positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
-
-        # TODO: Check if it affects speed, remove if it does
-        # move to top where all this is handled
-        # Set stacks to be saved into separate folder
-        folder = os.path.join(sim_parameters.path, "astack")
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        self.folder = folder
-        
-        # Creating a unique identifier for experiment name generated 
-        # before a grid scan is acquired
-        date_in = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-        # Set file-path read from GUI for each processor
-        for processor in processors:
-            processor.setPath(sim_parameters.path)
-            
-        # Set count for frames to 0
-        count = 0
-        
-        # -------------------Set-up SLM-------------------
-        # Set running order
-        orderID = 0
-        self._master.SLM4DDManager.set_running_order(orderID)
-
-        # -------------------Set-up SLM-------------------
-        
-
-        # -------------------Set-up cams-------------------
-
-        # FIXME: Automate buffer size calculation based on image size, it did not work before
-        total_buffer_size_MB = 350 # in MBs
-        for detector in self.detectors:
-            image_size = detector.shape
-            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            # buffer_size = 500
-            self.setCamForExperiment(detector, int(buffer_size))
-        
-        if not mock:
-            for ID in laser_ID:
-                self.lasers[ID].setEnabled(True)
-
-        droppedFrameSets = 0
-        # # If no laser present do nothing
-        while self.active and mock and dic_wl != []:
-        # TODO: Remove after development is finished.
-        # run only once
-        # while count == 0:
-            ##################################################
-            # ------Import mock data or generate data------- #
-            ##################################################
-            
-            # Generate empty vectors to save data
-            # TODO: check if some of this are redundant or obsolete and delete
-            wfImages = []
-            stackSIM = []  
-            for k in range(0, len(processors)):
-                wfImages.append([])
-                stackSIM.append([])
-            
-            color_stacks_simulated = []
-            import_simu_switch = 1
-            if import_simu_switch == 0:
-            # Generate one image for each color to make testing code faster
-            # Simulation takes 0.33 s for 512x512 image - the default of 
-            # simSimulator (hardcoded in the simulator)
-                for processor in processors:
-                    stack_simulated = processor.simSimulator(imageSizePixelsX, imageSizePixelsY)
-                    color_stacks_simulated.append(stack_simulated)
-            elif import_simu_switch == 1:
-                # Import our set of images for testing
-                for num, processor in enumerate(processors):
-                    # Hardcoded path
-                    path_current_py = os.path.dirname(os.path.realpath(__file__))
-                    # Three parents above to get to imswitch folder
-                    path_parent = os.path.abspath(os.path.join(os.path.abspath(os.path.join(os.path.abspath(os.path.join(path_current_py, os.pardir)), os.pardir)), os.pardir))
-                    # Hardcoded folder but same an all machines
-                    path_child = "_data\\test_data_ImSwitch"
-                    # Create the path
-                    path_in = os.path.join(path_parent, path_child)
-                    names_import = glob.glob(f'{path_in}\\*{dic_wl[num]}*.tif*')
-                    stack_mock_color = []
-                    for name in names_import:
-                        stack_mock_color.append(tif.imread(name))
-                    color_stacks_simulated.append(stack_mock_color)
-            else:
-                self.logger.debug("Simulation switch not set right! Check hardcoded import_simu_switch.")
-                break
-            
-            ##################################################
-            # ------Import mock data or generate data------- #
-            ##################################################
-            
-            # Set frame number - prepared for time-lapse
-            # frame_num = 0
-            frame_num = count
-            dt_export_string = "" # no time duration between frames is needed
-            
-            times_color = []
-            # Generate time_step
-            if count == 0:
-                dt_export = 0.0
-            else:
-                dt_export = time.time() - self.timelapse_old
-            
-            integer, decimal = divmod(dt_export,1) # *1000 in ms
-            dt_export_string = f"{int(integer):04}p{int(decimal*10000):04}s"
-            self.timelapse_old = time.time()
-            
-            # Scan over all positions generated for grid
-            for j, pos in enumerate(positions):
-                
-                # FIXME: Remove after development is completed
-                time_color_start = time.time()
-                
-                # Move stage
-                x_set = pos[0]
-                y_set = pos[1]
-                # tDebounceXY = 0 # prepared in case we need it
-                self.positionerXY.setPositionXY(x_set, y_set)
-                # time.sleep(tDebounceXY) # prepared in case we need it
-                # For development purposes
-                # print(f"Move to x = {x_set}, y = {y_set}")
-                
-                # FIXME: Remove after development is completed
-                time_color_end = time.time()
-                time_color_total = time_color_end-time_color_start
-                
-                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"move stage"])
-                
-                # Acquire SIM set for all present lasers
-                # ----sub loop start----
-                for k, processor in enumerate(processors):
-                    # -----loop start-----
-                    
-                    # TODO: see if lasers need to be enabled to take an image
-                    # using our SLM. The reasons the comment below is kept here
-                    # Toggle laser
-                    # Enable lasers
-                    # self.lasers[0].setEnabled(True)
-                    # self.lasers[1].setEnabled(True)
-                    # self.lasers[2].setEnabled(True)
-                    # self._logger.debug(f"Enabling all lasers {self.lasers[0].name}, {self.lasers[1].name}, {self.lasers[2].name}"+)
-                    
-                    # Setting a reconstruction processor for current laser
-                    processor.setParameters(sim_parameters)
-                    self.LaserWL = processor.wavelength
-                    
-                    # Simulate the stack
-                    # Simulation takes 0.38 sec, so I decided to pre-generate
-                    # three images and go with that.
-                    # time_simu_start = time.time()
-                    # self.SIMStack = processor.simSimulator()
-                    # time_simu_end = time.time()
-                    # time_simu_total  = time_simu_end - time_simu_start
-                    # self._logger.debug('--Simulation took: {:.2f} sec\n--'.format(time_simu_total))
-                    
-                    # Choose pre-simulated image - testing code is 4x faster
-                    self.rawStack = color_stacks_simulated[k]
-                    
-                    # TODO: remove after development is done, kept for testing
-                    # Push all colors into one array - export disabled below
-                    # Enable below if you need this
-                    # stackSIM[k].append(self.SIMStack)
-                    
-                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"SIMStack{int(processor.wavelength*1000):03}")
-                    
-                    # Set sim stack for processing all functions work on 
-                    # self.stack in SIMProcessor class
-                    processor.setSIMStack(self.rawStack)
-                    
-                    # Push all wide fields into one array
-                    wfImages[k].append(processor.getWFlbf(self.rawStack))
-                    
-                    # Activate recording and reconstruction in processor
-                    processor.setRecordingMode(self.isRecordingRaw)
-                    processor.setReconstructionMode(self.isReconstruction)
-                    processor.setWavelength(self.LaserWL, sim_parameters)
-                    
-                    # FIXME: Remove after development is completed
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"acquire data"])
-                    time_color_start = time.time()
-                    
-                    # Save the raw SIM stack
-                    # TODO: Remove if obsolete, or move to before the loop?
-                    # Maybe include in accompanying log file (exact times) 
-                    # after recording is finished?
-                    # date = datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-                    # TODO: Remove? Our implementation feeds frame number and 
-                    # position direct into the processor function (the only 
-                    # way we could make it work reliably)
-                    # Sets the date in processor for saving file
-                    # processor.setDate(date) 
-                    if self.isRecordingRaw:
-                        date = f"{date_in}_t_{frame_num:004}" # prepped for timelapse
-                        processor.setDate(date)
-                        mFilenameStack = f"{date}_pos_{j:03}_SIM_Stack_{int(self.LaserWL*1000):03}nm-{dt_export_string}.tif"
-                        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack, mFilenameStack,), daemon=True).start()
-                        # TODO: Keep this just in case?
-                        # if k == len(processors)-1:
-                        #     # Save WF three color
-                        #     mFilenameStack1 = f"{date}_pos_{j:03}_SIM_Stack_{'_'.join(map(str,dic_wl))}_wf.tif"
-                        #     threading.Thread(target=self.saveImageInBackground, args=(wfImages, mFilenameStack1,), daemon=True).start()
-                            
-                            # TODO: Delete this, just for development purposes
-                            # Export a stack for all three lasers in one file
-                            # Did not seem very useful for further data
-                            # processing
-                            # mFilenameStack2 = f"{date}_SIM_Stack_pos_{j:03}_{'_'.join(map(str,dic_wl))}.tif"
-                            # threading.Thread(target=self.saveImageInBackground, args=(stackSIM, mFilenameStack2,), daemon=True).start()
-                    # -----loop end-----
-                    # TODO: Remove this? Kept commented from original code.
-                    # self.detector.stopAcquisitionSIM()
-                    
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
-                    time_color_start = time.time()
-                    
-                    # Process the frames and display reconstructions
-                    # FIXME: Testing threading, this solution below does the 
-                    # same thing, takes the same amount of time
-                    
-                    # TODO: setting up not every frame is reconstructed
-                    # +1, wording of the widget is how many frames to skip
-                    # for skipping 0 frames we need to divide by 1
-                    num_skip_frames = self._widget.getSkipFrames() + 1
-                    if count == 0:
-                        div_1 = 0
-                    else:                        
-                        int_1, div_1  = divmod(count, num_skip_frames)
-                    
-                    # if self.isReconstruction and div_1 == 0:
-                    if self.isReconstruction and div_1 == 0:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string), args=(date_in, frame_num, j, dt_export_string, ), daemon=True).start()
-                        # processor.reconstructSIMStackLBF(date_in, frame_num, j, dt_export_string)
-                    
-                    # FIXME: Remove after development is completed
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"reconstruct data"])
-                    time_color_start = time.time()
-                    # reset the per-colour stack to add new frames in the next
-                    # imaging series
-                    processor.clearStack()
-                    # ----sub loop end----
-                    
-                    # Timing of the process for testing purposes
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"clear stack"])
-                    # self._logger.debug('--Frame took: {:.2f} sec\n--'.format(time_color_total))
-            self._logger.debug(f"{times_color}")
-            # TODO: Delete this our keep. At least check.
-            # Deactivate indefinite running of the experiment
-            # self.active = False
-            # print(count)
-            # TODO: Remove this (left from openUC2 implementation)
-            # Maybe good idea for longer time-lapse movies to do a "snapshot"
-            # every couple of images and program this section to grab only one 
-            # set of images on trigger - time-lapse to in two ways, snap-shot 
-            # with wait times and continuous trigger mode (as fast as possible)
-            # wait for the next round
-            # time.sleep(timePeriod)
-            
-            count += 1
-            # Timing of the process for testing purposes
-            time_whole_end = time.time()
-            time_whole_total = time_whole_end-time_whole_start
-            
-            self._logger.debug('--\nDone! It took: {:.2f} sec\n--'.format(time_whole_total))
-
-            time_whole_start = time.time()
-        ##################################################
-        # -----------------Mocker end----------------- #
-        ##################################################
-        
-        # # FIXME: Should we even do this?
-        # # Set buffer mode back to normal cam operation
-        # buffer_mode = "NewestOnly"
-        # for detector in self.detectors:
-        #     detector._camera.setPropertyValue('StreamBufferHandlingMode', buffer_mode)
-
-
 class SIMParameters(object):
-    wavelength_1 = 0.488
-    wavelength_2 = 0.561
-    wavelength_3 = 0.640
-    NA = 0.8
-    n = 1.0
-    magnification = 22.22
-    pixelsize = 2.74
-    eta = 0.6
-    alpha = 0.5
-    beta = 0.98
-    path = 'D:\\SIM_data\\test_export\\'
+    def __init__(self):
 
+        self.placeHolder = ""
 
 
 class SIMProcessor(object):
 
-    def __init__(self, parent, simParameters, wavelength=488):
+    def __init__(self, parent, simParameters, wavelength):
         '''
         setup parameters
         '''
         #current parameters is setting for 60x objective 488nm illumination
         self.parent = parent
-        self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
-        self.phases_number = 3
-        self.angles_number = 3
+        # self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
+
         self.NA = simParameters.NA
         self.n = simParameters.n
-        self.wavelength = wavelength
-        self.pixelsize = simParameters.pixelsize
-        self.magnification = simParameters.magnification
-        self.dz= 0.55
-        self.alpha = 0.5
-        self.beta = 0.98
-        self.w = 0.2
+        self.wavelength = wavelength/1000
+        self.pixelsize = simParameters.Pixelsize
+        self.magnification = simParameters.Magnification
+        self.alpha = simParameters.Alpha
+        self.beta = simParameters.Beta
+        self.w = simParameters.w
         self.eta = simParameters.eta
+
+        self.phases_number = 3
+        self.angles_number = 3
+        self.dz= 0.55
         self.group = 30
         self.use_phases = True
         self.find_carrier = True
         self.isCalibrated = False
         self.use_gpu = isPytorch ##Pytorch boolen refernce
         self.stack = []
+        self._nsteps = self.angles_number * self.phases_number
+        self._nbands = self.angles_number
 
         # processing parameters
         self.isRecording = False
@@ -1384,7 +964,7 @@ class SIMProcessor(object):
 
         # setup
         self.h.debug = False
-        self.setReconstructor()
+        self.setReconstructorInit()
         self.kx_input = np.zeros(self.k_shape, dtype=np.single)
         self.ky_input = np.zeros(self.k_shape, dtype=np.single)
         self.p_input = np.zeros(self.k_shape, dtype=np.single)
@@ -1418,13 +998,17 @@ class SIMProcessor(object):
 
     def setParameters(self, sim_parameters):
         # uses parameters from GUI
-        self.pixelsize= sim_parameters.pixelsize
+        self.pixelsize= sim_parameters.Pixelsize
         self.NA= sim_parameters.NA
         self.n= sim_parameters.n
         self.reconstructionMethod = "napari" # sim_parameters["reconstructionMethod"]
         #self.use_gpu = False #sim_parameters["useGPU"]
         self.eta =  sim_parameters.eta
-        self.magnification = sim_parameters.magnification
+        self.magnification = sim_parameters.Magnification
+        self.path = sim_parameters.saveDir
+        self.alpha = sim_parameters.Alpha
+        self.beta = sim_parameters.Beta
+        self.w = sim_parameters.w
 
     def setReconstructionMethod(self, method):
         self.reconstructionMethod = method
@@ -1439,13 +1023,39 @@ class SIMProcessor(object):
         self.h.magnification = self.magnification
         self.h.NA = self.NA
         self.h.n = self.n
-        #self.h.wavelength = self.wavelength
+        self.h.wavelength = self.wavelength
+        self.h.pixelsize = self.pixelsize
+        self.h.alpha = self.alpha
+        self.h.beta = self.beta
+        self.h.w = self.w
+        self.h.eta = self.eta
+        self.h._nsteps = self._nsteps
+        self.h._nbands = self._nbands
+
+        if not self.find_carrier:
+            self.h.kx = self.kx_input
+            self.h.ky = self.ky_input
+
+    def setReconstructorInit(self):
+        '''
+        Sets the attributes of the Processor
+        Executed frequently, upon update of several settings
+        '''
+
+        self.h.usePhases = self.use_phases
+        self.h.magnification = self.magnification
+        self.h.NA = self.NA
+        self.h.n = self.n
+        self.h.wavelength = self.wavelength
         #self.h.wavelength = 0.52
         self.h.pixelsize = self.pixelsize
         self.h.alpha = self.alpha
         self.h.beta = self.beta
         self.h.w = self.w
         self.h.eta = self.eta
+        self.h._nsteps = self._nsteps
+        self.h._nbands = self._nbands
+
         if not self.find_carrier:
             self.h.kx = self.kx_input
             self.h.ky = self.ky_input
@@ -1454,7 +1064,7 @@ class SIMProcessor(object):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
         bfFrame = np.round(np.mean(np.array(mStack), 0))
-        self.parent.sigWFImageComputed.emit(bfFrame, f"{int(self.wavelength*1000):03} WF") #CTNOTE WF DISPLAYED
+        self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
     def setSIMStack(self, stack):
@@ -1509,6 +1119,8 @@ class SIMProcessor(object):
                 self.p_input = self.h.p
                 self.ampl_input = self.h.ampl
             self._logger.debug("Done calibrating the stack")
+
+
         elif self.reconstructionMethod == "mcsim":
             """
             test running SIM reconstruction at full speed on GPU
@@ -1557,7 +1169,7 @@ class SIMProcessor(object):
 
 
     
-    def reconstructSIMStackLBF(self, date, frame_num, pos_num, dt_frame):
+    def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr, saveOne):
         '''
         reconstruct the image stack asychronously
         '''
@@ -1568,7 +1180,7 @@ class SIMProcessor(object):
             mStackCopy = np.array(self.stack.copy())
             # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
             # self.mReconstructionThread.start()
-            self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame)
+            self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne)
 
     def setRecordingMode(self, isRecording):
         self.isRecording = isRecording
@@ -1576,11 +1188,11 @@ class SIMProcessor(object):
     def setReconstructionMode(self, isReconstruction):
         self.isReconstruction = isReconstruction
 
-    def setDate(self, date):
-        self.date = date
+    # def setDate(self, date):
+    #     self.date = date
         
-    def setPath(self, path):
-        self.path = path
+    # def setPath(self, path):
+    #     self.path = path
         
     def setFrameNum(self, frame_num):
         self.frame_num = frame_num
@@ -1596,39 +1208,8 @@ class SIMProcessor(object):
             self.h.wavelength = sim_parameters.wavelength_3
         elif self.LaserWL == 640:
             self.h.wavelength = sim_parameters.wavelength_2
-
-    # def reconstructSIMStackBackground(self, mStack):
-    #     '''
-    #     reconstruct the image stack asychronously
-    #     the stack is a list of 9 images (3 angles, 3 phases)
-    #     '''
-    #     # compute image
-    #     # initialize the model
-
-    #     self._logger.debug("Processing frames")
-    #     if not self.getIsCalibrated():
-    #         self.setReconstructor()
-    #         self.calibrate(mStack)
-    #     SIMReconstruction = self.reconstruct(mStack)
-
-    #     # save images eventually
-    #     if self.isRecording:
-    #         def saveImageInBackground(image, filename = None):
-    #             try:
-    #                 self.folder = SIMParameters.path
-    #                 self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
-    #                 tif.imwrite(self.filename, image)
-    #                 self._logger.debug("Saving file: "+self.filename)
-    #             except  Exception as e:
-    #                 self._logger.error(e)
-    #         mFilenameRecon = f"{self.date}_SIM_Reconstruction_{self.LaserWL}nm.tif"
-    #         threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
-
-    #     self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), "SIM Reconstruction"+f"{self.LaserWL}"[2:])
         
-    #     self.isReconstructing = False
-        
-    def reconstructSIMStackBackgroundLBF(self, mStack, date, frame_num, pos_num, dt_frame):
+    def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
         '''
         reconstruct the image stack asychronously
         the stack is a list of 9 images (3 angles, 3 phases)
@@ -1637,41 +1218,43 @@ class SIMProcessor(object):
         # initialize the model
         self._logger.debug("Processing frames")
         if not self.getIsCalibrated():
+            
             self.setReconstructor()
             self.calibrate(mStack)
-        SIMReconstruction = self.reconstruct(mStack)
+        self.SIMReconstruction = self.reconstruct(mStack)
 
         # save images eventually
         if self.isRecording:
-            def saveImageInBackground(image, filename = None):
-                try:
-                    # TODO: Remove if not in use
-                    # self.folder = SIMparameters.path
-                    # TODO: Check if speed is affected, delete if it is
-                    # Dedicated reconstruction folder
-                    folder = os.path.join(self.path, "arecon")
-                    if not os.path.exists(folder):
-                        os.makedirs(folder)
-                    self.folder = folder
-                    
-                    # self.folder = self.path
-                    self.filename = os.path.join(self.folder,filename) #FIXME: Remove hardcoded path
-                    tif.imwrite(self.filename, image)
-                    self._logger.debug("Saving file: "+self.filename)
-                except  Exception as e:
-                    self._logger.error(e)
-            # TODO: Revert back to date
-            # date = self.date
-            # date = f"frame_{self.frame_num:004}"
-            date_out = f"{date}_t_{frame_num:004}"
-            # pos_num = self.pos_num # don't really work, not unique, changes to quick
-            mFilenameRecon = f"{date_out}_pos_{pos_num:03}_SIM_Reconstruction_{int(self.LaserWL*1000):03}nm-{dt_frame}.tif"
-            threading.Thread(target=saveImageInBackground, args=(SIMReconstruction, mFilenameRecon,)).start()
+            self.recordSIMFunc(exptPath, frameSetCount,pos_num, exptTimeElapsedStr)
+        if saveOne:
+            exptPathOne = os.path.join(exptPath, "Snapshot")
+            self.recordOneSetSIM(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
 
-        self.parent.sigSIMProcessorImageComputed.emit(np.array(SIMReconstruction), f"{int(self.LaserWL*1000):03} Recon") #Reconstruction emit
+        self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
         
         self.isReconstructing = False
 
+    def recordSIMFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+        reconSavePath = os.path.join(exptPath, "Recon")
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+
+    def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+        reconSavePath = exptPath
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}_recon.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+
+    def saveImageInBackground(self, image, savePath, saveName ):
+        try:
+            if not os.path.exists(savePath):
+                os.makedirs(savePath)
+            
+            # self.folder = self.path
+            filePath = os.path.join(savePath,saveName) #FIXME: Remove hardcoded path
+            tif.imwrite(filePath, image)
+            self._logger.debug("Saving file: "+filePath)
+        except  Exception as e:
+            self._logger.error(e)
 
     def reconstruct(self, currentImage):
         '''
@@ -1729,18 +1312,17 @@ class SIMProcessor(object):
             imageSIM = imgset_next.sim_sr.compute()
             return imageSIM
 
-    def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
-        Isample = np.zeros((Nx,Ny))
-        Isample[np.random.random(Isample.shape)>0.999]=1
+    # def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
+    #     Isample = np.zeros((Nx,Ny))
+    #     Isample[np.random.random(Isample.shape)>0.999]=1
 
-        allImages = []
-        for iRot in range(Nrot):
-            for iPhi in range(Nphi):
-                IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
-                allImages.append(nip.gaussf(IGrating*Isample,3))
+    #     allImages = []
+    #     for iRot in range(Nrot):
+    #         for iPhi in range(Nphi):
+    #             IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
+    #             allImages.append(nip.gaussf(IGrating*Isample,3))
 
-        allImages=np.array(allImages)
-        allImages-=np.min(allImages)
-        allImages/=np.max(allImages)
-        return allImages
-
+    #     allImages=np.array(allImages)
+    #     allImages-=np.min(allImages)
+    #     allImages/=np.max(allImages)
+    #     return allImages
