@@ -82,7 +82,7 @@ class SIMWidget(NapariHybridWidget):
 
     def create_experiment_tab(self):
         tab = QWidget()
-        vertLayout = QVBoxLayout()
+        wholeTabVertLayout = QVBoxLayout()
 
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
@@ -94,7 +94,7 @@ class SIMWidget(NapariHybridWidget):
         button_layout.addWidget(self.stop_button,0,1)
         button_layout.addWidget(self.calibrateButton,1,0)
         button_layout.addWidget(self.saveOneReconRawButton,1,1)
-        vertLayout.addLayout(button_layout)
+        wholeTabVertLayout.addLayout(button_layout)
 
         # Checkbox options
         self.checkbox_reconstruction = QCheckBox('Live Reconstruction')
@@ -105,7 +105,7 @@ class SIMWidget(NapariHybridWidget):
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
-        vertLayout.addLayout(checkbox_layout)
+        wholeTabVertLayout.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
         self.roSelectLayout = QtWidgets.QHBoxLayout()
@@ -113,7 +113,7 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectList = QtWidgets.QComboBox()
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
-        vertLayout.addLayout(self.roSelectLayout)
+        wholeTabVertLayout.addLayout(self.roSelectLayout)
 
 
 
@@ -145,7 +145,7 @@ class SIMWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
         gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
              
-        vertLayout.addLayout(gridScanLayout)
+        wholeTabVertLayout.addLayout(gridScanLayout)
 
 
         # Save folder
@@ -167,13 +167,13 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
         # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
-        vertLayout.addLayout(parameters2_layout)
+        wholeTabVertLayout.addLayout(parameters2_layout)
 
         self.start_button.toggled.connect(self.sigSIMAcqToggled)
         
 
 
-        tab.setLayout(vertLayout)
+        tab.setLayout(wholeTabVertLayout)
         return tab
     
     def addROName(self, roIndex, roName):
