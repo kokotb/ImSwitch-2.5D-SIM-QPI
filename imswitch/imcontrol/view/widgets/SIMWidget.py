@@ -63,7 +63,7 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-    def setWFRawImage(self, im, name):
+    def setRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
@@ -71,22 +71,14 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-    # def create_manual_control_tab(self):
-    #     tab = QWidget()
-    #     layout = QVBoxLayout()
+    def setWFImage(self, im, name):
+        if self.layer is None or name not in self.viewer.layers:
+            colormap = self.laserColormaps[name[:3]]
+            self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.viewer.layers[name].scale = [2,2]
+        else:
+            self.viewer.layers[name].data = im
 
-    #     # Laser dropdown
-    #     self.laser_dropdown = QComboBox()
-    #     self.laser_dropdown.addItems(["Laser 488nm", "Laser 635nm"])
-    #     layout.addWidget(self.laser_dropdown)
-
-    #     # Number dropdown
-    #     self.number_dropdown = QComboBox()
-    #     self.number_dropdown.addItems([str(i) for i in range(9)])
-    #     layout.addWidget(self.number_dropdown)
-
-    #     tab.setLayout(layout)
-    #     return tab
 
     def create_experiment_tab(self):
         tab = QWidget()

@@ -139,9 +139,9 @@ class SIMController(ImConWidgetController):
 
 
         # Signals originating from SIMController.py
-        self.sigRawStackReceived.connect(self.displayWFRawImage)
+        self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
-        self.sigWFImageComputed.connect(self.displayWFRawImage)
+        self.sigWFImageComputed.connect(self.displayWFImage)
         # Signals connecting SIMWidget actions with functions in SIMController
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
@@ -735,9 +735,13 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setSIMImage(im, name=name)
 
-    def displayWFRawImage(self, im, name):
+    def displayRawImage(self, im, name):
         """ Displays the image in the view. """
-        self._widget.setWFRawImage(im, name)
+        self._widget.setRawImage(im, name)
+
+    def displayWFImage(self, im, name):
+        """ Displays the image in the view. """
+        self._widget.setWFImage(im, name)
     
     def updateROIsize(self):
         # FIXME: Make it so calibration of only the modified detector is 
