@@ -188,7 +188,7 @@
         "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
-      "axes": ["X", "Y"],
+      "axes": ["X","Y"],
       "forPositioning": true,
       "forScanning": true
     }

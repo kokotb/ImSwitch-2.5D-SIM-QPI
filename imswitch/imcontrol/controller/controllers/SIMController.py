@@ -81,137 +81,84 @@ class SIMController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        # self.IS_FASTAPISIM=False
-        # self.IS_HAMAMATSU=False
-        # switch to detect if a recording is in progress
 
-
-
-
-        
+        #Setup state variables
         self.isRecordingRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
         self.isRecordRecon = False
-        # self.simFrameVal = 0
-        # self.nsimFrameSyncVal = 3
 
-        # Choose which laser will be recorded
-        self.is488 = True
-        self.is561 = True
-        self.is640 = True
-        self.processors = []
+        # self.processors = []
         
-
-        # we can switch between mcSIM and napari
+        # Only napari implemented as of 12/9/24
         self.reconstructionMethod = "napari" # or "mcSIM"
 
-        # load config file
+        # Load SIM section of config file. Used to populate 'reconstrution settings' tab
         if self._setupInfo.sim is None:
             self._widget.replaceWithError('SIM is not configured in your setup file.')
             return
         
         self.setupInfo = self._setupInfo.sim
-
-        setupInfoKeyList = [a for a in dir(self.setupInfo) if not a.startswith('__') and not callable(getattr(self.setupInfo, a))]
+        setupInfoKeyList = [a for a in dir(self.setupInfo) if not a.startswith('__') and not callable(getattr(self.setupInfo, a))] #Pulls all attribute names from class not dunder (__) and not functions.
         self.setupValueList = []
         for item in setupInfoKeyList:
-            self.setupValueList.append(getattr(self.setupInfo,item))
-        setupInfoDict = dict(zip(setupInfoKeyList,self.setupValueList))
-        self._widget.setSIMWidgetFromConfig(setupInfoDict)
+            self.setupValueList.append(getattr(self.setupInfo,item)) #Pulls values of the attributes.
+        setupInfoDict = dict(zip(setupInfoKeyList,self.setupValueList)) #Put names, values in a dict.
+        self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
         
-        # Set if mock is present or not
-        self.mock = self.setupInfo.isMock
-        # Set mock value in widget
-        # self._widget.setMockValue(self.mock)
-
-        # connect live update  https://github.com/napari/napari/issues/1110
-        self.sigRawStackReceived.connect(self.displayWFRawImage)
-
-        # select lasers
-        allLaserNames = self._master.lasersManager.getAllDeviceNames()
-        self.lasers = []
-        for iDevice in allLaserNames:
-            if iDevice.lower().find("laser")>=0 or iDevice.lower().find("led"):
-                self.lasers.append(self._master.lasersManager[iDevice])
+        #Create list of available laser objects from config file.
+        # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
+        self.lasers = list(self._master.lasersManager._subManagers.values()) #List of just the laser object handles
         if len(self.lasers) == 0:
             self._logger.error("No laser found")
-            # # add a dummy laser
-            # class dummyLaser():
-            #     def __init__(self, name, power):
-            #         self.power = 0.0
-            #         self.setEnabled = lambda x: x
-            #         self.name = name
-            #         self.power = power
-            #     def setPower(self,power):
-            #         self.power = power
-            #     def setEnabled(self,enabled):
-            #         self.enabled = enabled
-            # for i in range(2):
-            #     self.lasers.append(dummyLaser("Laser"+str(i), 100))
-        # select detectors
-        allDetectorNames = self._master.detectorsManager.getAllDeviceNames()
-        # self.detector = self._master.detectorsManager[allDetectorNames[0]]
-        # Get all detector objects
-        self.detectors = []
-        for detector_name in allDetectorNames:
-            self.detectors.append(self._master.detectorsManager[detector_name])
-        # if self.detector.model == "CameraPCO":
-        #     # here we can use the buffer mode
-        #     self.isPCO = True
-        # else:
-        #     # here we need to capture frames consecutively
-        #     self.isPCO = False
-            
-        # # Pull magnifications from config file
-        # for detector in self.detectors:
-        #     magnification_key = 'ExposureTime' # Just for testing, change to mag once implemented
-        #     self.magnification = detector.setupInfo[magnification_key]
-            
-        # select positioner
-        # FIXME: Hardcoded position of positioner, dependent on .xml configuration of positioners, maybe go to by-positioner-name positioner selection and throwing an error if it does not match
-        self.positionerName = self._master.positionersManager.getAllDeviceNames()[0]
-        self.positioner = self._master.positionersManager[self.positionerName]
-        self.positionerNameXY = self._master.positionersManager.getAllDeviceNames()[1]
-        self.positionerXY = self._master.positionersManager[self.positionerNameXY]
 
+        # Create list of detectors objects
+        self.detectors = list(self._master.detectorsManager._subManagers.values())
+            
+        # Create positioner objects -- Positioner must have axis 'Z' or axis 'XY' listed in config file to be added correctly.
+        for key in self._master.positionersManager._subManagers:
+            if self._master.positionersManager._subManagers[key].axes == ['Z']:
+                self.positioner = self._master.positionersManager._subManagers[key]
+            elif self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
+                self.positionerXY = self._master.positionersManager._subManagers[key]
+            else:
+                self._logger.error(f"Positioner {self._master.positionersManager._subManagers[key].name} in config file does not have axes defined correctly")
 
-        # Initializes a class object that we append the correct values to. The values of the actualy class stay empty.
+        # Initializes a class object that we append the correct values to. The values of the actually class stay empty. Can change to be namespace and get rid of SIMParameters() objcet all together.
         self.sim_parameters = SIMParameters()
         for key in setupInfoDict:
             setattr(self.sim_parameters,key,setupInfoDict[key])
 
+        # Create class objects for each channel.
         self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength1)
         self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength2)
         self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength3)
+        self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
+        self.SimProcessorLaser2.handle = 561
+        self.SimProcessorLaser3.handle = 640
+        processorList = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
 
-        # Connect CommunicationChannel signals
+
+        # Signals originating from SIMController.py
+        self.sigRawStackReceived.connect(self.displayWFRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFRawImage)
-        # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
-        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
-        # self._widget.sigSIMAcqStarted.connect(self.emitStopLiveview)
+        # Signals connecting SIMWidget actions with functions in SIMController
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
-
         self._widget.checkbox_record_raw.stateChanged.connect(self.toggleRecording)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
-        # self._widget.checkbox_mock.stateChanged.connect(self.toggleMockUse)
-        #self._widget.sigPatternID.connect(self.patternIDChanged)
-        # self._widget.number_dropdown.currentIndexChanged.connect(self.patternIDChanged)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
-        # read parameters from the widget
-        # self._widget.start_timelapse_button.clicked.connect(self.startTimelapse)
-        # self._widget.start_zstack_button.clicked.connect(self.startZstack)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneReconRawButton.clicked.connect(self.saveOneReconRaw)
+        # Communication channels signls (signals sent elsewhere in the program)
+        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         
-
-
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
         self.populateAndSelectROList()
+
         #Get save directory root from config file and populate text box in SIM widget.
-        self.setSaveDirFromConfig()
+        self._widget.setDefaultSaveDir(setupInfoDict['saveDir'])
 
 
     def performSIMExperimentThread(self, sim_parameters):
@@ -221,55 +168,39 @@ class SIMController(ImConWidgetController):
         Run continuous on a single frame. 
         Run snake scan for larger FOVs.
         """
-        ###################################################
-        # -------Parameters - still in development------- #
-        ###################################################
-        
-        # Newly added, prep for SLM integration
-        mock = self.mock
-        self.sim_parameters = sim_parameters
 
-        dic_wl_dev = {488:0, 561:1, 640:2}
-        # FIXME: Correct for how the cams are wired
-        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
-        # TODO: Delete after development is done - here to help get devices 
-        # names
-        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-
-        # dic_wl_in = [488, 561, 640]
-        dic_laser_present = {488:self.is488, 561:self.is561, 640:self.is640}
-        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
-        self.SimProcessorLaser1.handle = 488
-        self.SimProcessorLaser2.handle = 561
-        self.SimProcessorLaser3.handle = 640
-
-        
         self.isReconstructing = False
         
+        # Newly added, prep for SLM integration
+        self.sim_parameters = sim_parameters
+
+        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
+        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
+
+
+        dic_laser_present = {488:True, 561:True, 640:True}
+        processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
+
         # Check if lasers are set and have power in them select only lasers with powers
-        dic_wl = []
-        laser_ID = []
-        # num_lasers = 0            
-        for dic in list(dic_wl_dev):
-            if self.lasers[dic_wl_dev[dic]].power > 0.0:
-                dic_wl.append(dic) #List of wavelengths actually powered
-                laser_ID.append(dic_wl_dev[dic])
-                # num_lasers += 1
+        poweredLasers = []
+        for laser in self.lasers:
+            if laser.power > 0:
+                poweredLasers.append(laser.wavelength)
         
         # Check if detector is present comparing hardcoded names to connected 
         # names, detector names are used only for pulling imageSize from the 
         # detector
         # FIXME: Check again if this laser checkup makes sense
         det_names = []
-        if dic_wl != []:
-            for dic in dic_wl:
+        if poweredLasers != []:
+            for dic in poweredLasers:
                 det_name = dic_det_names[dic]
                 if det_name in detector_names_connected:
                     det_names.append(det_name)
                 else:
                     self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(dic_wl) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {dic_wl}")
+                    if len(poweredLasers) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {poweredLasers}")
                     # FIXME: If used for anything else but pixel number 
                     # readout it should be changed to not continue the code if 
                     # detector not present
@@ -280,6 +211,8 @@ class SIMController(ImConWidgetController):
                     # detectors is configured in the config file
                     det_name = detector_names_connected[0]
                     det_names.append()
+    
+        
         
         #Assembling detector list based on active AOTF channels. Pulls current detector shape.
         self.detectors = []        
@@ -302,8 +235,8 @@ class SIMController(ImConWidgetController):
         processors = []
         isLaser = []
 
-        for wl in dic_wl:
-            if dic_wl != []:
+        for wl in poweredLasers:
+            if poweredLasers != []:
                 processors.append(processors_dic[wl])
                 isLaser.append(dic_laser_present[wl])
                 processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
@@ -324,7 +257,7 @@ class SIMController(ImConWidgetController):
         date_in = datetime.now().strftime("%y%m%d%H%M%S")
         self.exptFolderPath = self.makeExptFolderStr(date_in)
 
-
+ 
         
         # Creating a unique identifier for experiment name generated 
         # before a grid scan is acquired
@@ -356,16 +289,14 @@ class SIMController(ImConWidgetController):
             # buffer_size = 500
             self.setCamForExperiment(detector, int(buffer_size))
         
-        # if not mock:
-        #     for ID in laser_ID:
-        #         self.lasers[ID].setEnabled(True)
+
 
         droppedFrameSets = 0
         time_global_start = time.time()
         time_whole_start = time_global_start
         self._master.arduinoManager.activateSLMWriteOnly()
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
-        while self.active and not mock and dic_wl != []:
+        while self.active and poweredLasers != []:
 
             stackSIM = [] 
             for k in range(len(processors)):
@@ -641,10 +572,6 @@ class SIMController(ImConWidgetController):
         roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
         self._widget.setSelectedRO(roSelectedOnSLM)
 
-    def setSaveDirFromConfig(self):
-        initSaveDir = self.setupInfo.saveDir
-        self._widget.setDefaultSaveDir(initSaveDir)
-
     def calibrateToggled(self):
         self.updateProcessorParameters()
         for processor in self.processors:
@@ -743,9 +670,6 @@ class SIMController(ImConWidgetController):
         self.isRecordRecon = not self.isRecordRecon
         if not self.isRecordRecon:
             self.isActive = False
-            
-    # def toggleMockUse(self):
-    #     self.mock = self._widget.checkbox_mock.isChecked()
 
     def openFolder(self):
         """ Opens current folder in File Explorer. """
@@ -861,11 +785,7 @@ class SIMController(ImConWidgetController):
         
         # # Load experiment parameters to object
         self.getExperimentSettings()
-        # mock = self.mock
-        # if mock:
-        #     self.simThread = threading.Thread(target=self.performMockSIMExperimentThread, args=(sim_parameters,), daemon=True)
-        #     self.simThread.start()
-        # else:    
+
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()
 
