@@ -34,7 +34,7 @@ class SIMWidget(NapariHybridWidget):
         
 
         # Add tabs
-        self.manual_control_tab = self.create_manual_control_tab()
+        # self.manual_control_tab = self.create_manual_control_tab()
         self.experiment_tab = self.create_experiment_tab()
         self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
         # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
@@ -43,7 +43,7 @@ class SIMWidget(NapariHybridWidget):
         
         self.tabView.addTab(self.experiment_tab, "Experiment")
         self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
-        self.tabView.addTab(self.manual_control_tab, "Manual Control")
+        # self.tabView.addTab(self.manual_control_tab, "Manual Control")
 
         # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
         # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
@@ -71,22 +71,22 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-    def create_manual_control_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
+    # def create_manual_control_tab(self):
+    #     tab = QWidget()
+    #     layout = QVBoxLayout()
 
-        # Laser dropdown
-        self.laser_dropdown = QComboBox()
-        self.laser_dropdown.addItems(["Laser 488nm", "Laser 635nm"])
-        layout.addWidget(self.laser_dropdown)
+    #     # Laser dropdown
+    #     self.laser_dropdown = QComboBox()
+    #     self.laser_dropdown.addItems(["Laser 488nm", "Laser 635nm"])
+    #     layout.addWidget(self.laser_dropdown)
 
-        # Number dropdown
-        self.number_dropdown = QComboBox()
-        self.number_dropdown.addItems([str(i) for i in range(9)])
-        layout.addWidget(self.number_dropdown)
+    #     # Number dropdown
+    #     self.number_dropdown = QComboBox()
+    #     self.number_dropdown.addItems([str(i) for i in range(9)])
+    #     layout.addWidget(self.number_dropdown)
 
-        tab.setLayout(layout)
-        return tab
+    #     tab.setLayout(layout)
+    #     return tab
 
     def create_experiment_tab(self):
         tab = QWidget()
