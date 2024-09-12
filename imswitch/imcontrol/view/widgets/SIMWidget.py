@@ -65,7 +65,7 @@ class SIMWidget(NapariHybridWidget):
 
     def setRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            colormap = self.laserColormaps[name[:3]]
+            colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = [2,2]
         else:
