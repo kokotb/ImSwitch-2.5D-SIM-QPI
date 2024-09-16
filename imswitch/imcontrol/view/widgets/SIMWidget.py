@@ -71,8 +71,10 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].scale = [2,2]
             self.viewer.layers[name]._contrast_limits_range = [0,4095]
             self.viewer.layers[name]._contrast_limits = (0,4095)
+
         else:
             self.viewer.layers[name].data = im
+
 
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
@@ -80,6 +82,7 @@ class SIMWidget(NapariHybridWidget):
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = [2,2]
             self.viewer.layers[name]._contrast_limits_range = [0,4095]
+            self.viewer.layers[name]._keep_auto_contrast = True
         else:
             self.viewer.layers[name].data = im
 

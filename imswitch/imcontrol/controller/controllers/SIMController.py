@@ -282,10 +282,10 @@ class SIMController(ImConWidgetController):
         # FIXME: Automate buffer size calculation based on image size, it did not work before
         total_buffer_size_MB = 350 # in MBs
         for detector in self.detectors:
-            image_size = detector.shape
-            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            # buffer_size = 500
+            # image_size = detector.shape
+            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
+            # buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
+            buffer_size = 9
             self.setCamForExperiment(detector, int(buffer_size))
         
 
@@ -392,7 +392,7 @@ class SIMController(ImConWidgetController):
                         waitingBuffersEnd = waitingBuffers
                         broken = False
                         # print(waitingBuffers,bufferTotalTime)
-                        if waitingBuffers != 9 and bufferTotalTime > .08:
+                        if waitingBuffers != 9 and bufferTotalTime > 1:
                             for detector in self.detectors:
                                 detector._camera.clearBuffers()
                             self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
@@ -1063,7 +1063,7 @@ class SIMProcessor(object):
     def getWFlbf(self, mStack):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        bfFrame = np.round(np.mean(np.array(mStack), 0))
+        bfFrame = np.round(np.mean(np.array(mStack), 0)) #CTNOTE See if need all 9 or 3
         self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
