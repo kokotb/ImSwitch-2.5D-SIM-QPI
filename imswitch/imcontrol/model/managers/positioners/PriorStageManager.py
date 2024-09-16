@@ -31,9 +31,9 @@ class PriorStageManager(PositionerManager):
             for axis in self.axes: 
                 self.setPosition(self._position[axis], axis)
         else:
-            for j, axis in enumerate(self.axes):
-                startPos = self.get_abs()
-                self.setPosition(startPos[j], axis)
+            # for j, axis in enumerate(self.axes):
+            startPos = self.get_abs()
+            self.setPositionXY(startPos[0], startPos[1])
 
     def initialize_all(self):
         """Initialize the stage and go to mock if not present."""
@@ -165,6 +165,7 @@ class PriorStageManager(PositionerManager):
         print(self._position) #queries from get_abs
 
 
+
     def checkBusy(self):
         """Loops until stage becomes available."""
         busy = self.query("controller.stage.busy.get")[1]
@@ -191,6 +192,7 @@ class PriorStageManager(PositionerManager):
         self.query(msg_set_position)
         self._position[axis] = position
         print(self._position) #calcuated, not queries from get_abs
+
 
 
     def getSpeedLow(self):

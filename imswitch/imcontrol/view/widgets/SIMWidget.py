@@ -63,7 +63,7 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
-            self.viewer.layers[name]._contrast_limits_range = [0,4095]
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
         else:
             self.viewer.layers[name].data = im
     
@@ -72,8 +72,8 @@ class SIMWidget(NapariHybridWidget):
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = [2,2]
-            self.viewer.layers[name]._contrast_limits_range = [0,4095]
-            self.viewer.layers[name]._contrast_limits = (0,4095)
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
+            self.viewer.layers[name].contrast_limits = (0,4095)
 
         else:
             self.viewer.layers[name].data = im
@@ -83,8 +83,8 @@ class SIMWidget(NapariHybridWidget):
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = [2,2]
-            self.viewer.layers[name]._contrast_limits_range = [0,4095]
-            self.viewer.layers[name]._keep_auto_contrast = True
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
+            # self.viewer.layers[name]._keep_auto_contrast = True
         else:
             self.viewer.layers[name].data = im
     

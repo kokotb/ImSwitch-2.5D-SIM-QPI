@@ -39,6 +39,7 @@ def bestLevels(arr):
 def minmaxLevels(arr):
     minlevel = 0
     maxlevel = arr.max() + 2
+    # maxlevel = 4095
 
     return minlevel, maxlevel
 

@@ -31,11 +31,12 @@ class LUCIDManager(DetectorManager):
         self.roiInfo = detectorInfo.managerProperties['ROI']
         
         #Properties that will not EVER change, but are also not defult
-        self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014)
+        self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014, toPrint=False)
+        self._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
 
         #Read all camProperties in config file and set on cams. This operation is only for properties, not ROIs
-        for propertyName, propertyValue in self.setupInfo.items():
-            self._camera.setPropertyValue(propertyName, propertyValue)
+        # for propertyName, propertyValue in self.setupInfo.items():
+        #     self._camera.setPropertyValue(propertyName, propertyValue)
 
         
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])

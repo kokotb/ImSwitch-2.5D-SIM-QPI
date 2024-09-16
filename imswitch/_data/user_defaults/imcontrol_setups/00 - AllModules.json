@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 "Arduino":{
@@ -55,7 +55,7 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 4000.0
+        "ExposureTime": 1700.0
       },
       "ROI":{
         "OffsetX": 2608,
@@ -82,7 +82,7 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1000.0
+        "ExposureTime": 1700.0
       },
       "ROI":{
         "OffsetX": 2442,
@@ -109,7 +109,7 @@
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
           "AcquisitionFrameRate":5.0,
-          "ExposureTime": 1000.0
+          "ExposureTime": 1700.0
         },
         "ROI":{
           "OffsetX": 2560,
