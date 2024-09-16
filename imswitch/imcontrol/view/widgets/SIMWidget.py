@@ -107,10 +107,13 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_reconstruction.setChecked(True)
         self.checkbox_record_reconstruction = QCheckBox('Save Reconstruction')
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
+        self.checkbox_logging = QCheckBox("Logging")
+        self.checkbox_logging.setChecked(False)
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
+        checkbox_layout.addWidget(self.checkbox_logging)
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM

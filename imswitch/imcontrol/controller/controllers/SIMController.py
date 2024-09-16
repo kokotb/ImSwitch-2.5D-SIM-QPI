@@ -24,6 +24,7 @@ from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
 # from imswitch.imcontrol.model import SLM4DDManager as SIMclient
 
 import imswitch
+import pandas as pd
 
 
 
@@ -159,6 +160,10 @@ class SIMController(ImConWidgetController):
 
         #Get save directory root from config file and populate text box in SIM widget.
         self._widget.setDefaultSaveDir(setupInfoDict['saveDir'])
+        
+        #Create log file attributes that get filled during experiment
+        self.log_times_loop = []
+        
 
 
     def performSIMExperimentThread(self, sim_parameters):
@@ -168,19 +173,18 @@ class SIMController(ImConWidgetController):
         Run continuous on a single frame. 
         Run snake scan for larger FOVs.
         """
-
+        
         self.isReconstructing = False
         
         # Newly added, prep for SLM integration
         self.sim_parameters = sim_parameters
-
+        
         dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-
-
+        
         dic_laser_present = {488:True, 561:True, 640:True}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
-
+        
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
@@ -211,7 +215,7 @@ class SIMController(ImConWidgetController):
                     # detectors is configured in the config file
                     det_name = detector_names_connected[0]
                     det_names.append()
-    
+        
         
         
         #Assembling detector list based on active AOTF channels. Pulls current detector shape.
@@ -256,7 +260,7 @@ class SIMController(ImConWidgetController):
         # Set stacks to be saved into separate folder
         self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
 
- 
+
         
         # Creating a unique identifier for experiment name generated 
         # before a grid scan is acquired
@@ -493,6 +497,8 @@ class SIMController(ImConWidgetController):
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
                 self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
                 self._logger.debug('Total frames: {:.2f}'.format(self.frameSetCount))
+                
+                self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
                 
 
 
@@ -767,6 +773,8 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.deactivateSLMWriteOnly()
         for detector in self.detectors:
             detector.stopAcquisitionSIM()
+        # Save log file
+        self.createLogFile()
 
 
 
@@ -783,6 +791,9 @@ class SIMController(ImConWidgetController):
         simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
+        
+        # Clear logger files before start of experiment
+        self.log_times_loop = []
         
         # # Load experiment parameters to object
         self.getExperimentSettings()
@@ -896,8 +907,20 @@ class SIMController(ImConWidgetController):
         sim_parameters.Magnification = np.float32(self._widget.magnification_textedit.text())
         sim_parameters.saveDir = self._widget.path_edit.text()
         return sim_parameters
-
-
+    
+    def createLogFile(self):
+        if self._widget.checkbox_logging.isChecked():
+            dir_save = os.path.join(self.exptFolderPath,"logging")
+            if not os.path.exists(dir_save):
+                os.makedirs(dir_save)
+            export_name = os.path.join(dir_save,"log_file.xlsx")
+            
+            # Loop time logging
+            t_loop = np.transpose(self.log_times_loop)
+            t_loop_column_names = ["frame","loop time [s]"]
+            df = pd.DataFrame(data=t_loop, index=t_loop_column_names).T
+            df.to_excel(export_name, sheet_name="Sheet1")
+    
     def getReconstructionMethod(self):
         return self._widget.SIMReconstructorList.currentText()
 
