@@ -40,7 +40,7 @@
   "isMock": false
 },
 "detectors": {
-  "55Camera": {
+  "488 Cam": {
     "analogChannel": null,
     "digitalLine": null,
     "managerName": "LUCIDManager",
@@ -67,7 +67,7 @@
     },
     "forAcquisition": true
   },
-  "66Camera": {
+  "561 Cam": {
     "analogChannel": null,
     "digitalLine": null,
     "managerName": "LUCIDManager",
@@ -94,7 +94,7 @@
     },
     "forAcquisition": true
   },
-    "65Camera": {
+    "640 Cam": {
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "LUCIDManager",

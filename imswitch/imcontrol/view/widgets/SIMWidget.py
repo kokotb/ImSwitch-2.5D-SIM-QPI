@@ -23,7 +23,6 @@ class SIMWidget(NapariHybridWidget):
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
-
         # Main GUI 
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
@@ -31,23 +30,27 @@ class SIMWidget(NapariHybridWidget):
         # Side TabView
         self.tabView = QTabWidget()
         self.layout.addWidget(self.tabView, 0)
-        
 
         # Add tabs
         # self.manual_control_tab = self.create_manual_control_tab()
-        self.experiment_tab = self.create_experiment_tab()
-        self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
-        # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
-        # self.zstack_settings_tab = self.create_zstack_settings_tab()
-        
-        
-        self.tabView.addTab(self.experiment_tab, "Experiment")
-        self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
         # self.tabView.addTab(self.manual_control_tab, "Manual Control")
-
+        
+        self.experiment_tab = self.create_experiment_tab()
+        self.tabView.addTab(self.experiment_tab, "Experiment")
+        
+        # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
         # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
+        
+        # self.zstack_settings_tab = self.create_zstack_settings_tab()
         # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
+        
+        #BKEDIT econstruction_parameters_tab ported to create_experiment_tab()
+        # self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab() 
+        # self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
+        
         # self.calibrateButton.toggled.connect(self.sigCalibrateToggled)
+
+        # Set layer properties
         self.layer = None
         self.laserColormaps = {'488':'blue','561':'green','640':'red'}
         
@@ -63,7 +66,7 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name]._contrast_limits_range = [0,4095]
         else:
             self.viewer.layers[name].data = im
-
+    
     def setRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = 'grayclip'
@@ -75,7 +78,6 @@ class SIMWidget(NapariHybridWidget):
         else:
             self.viewer.layers[name].data = im
 
-
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
@@ -85,12 +87,15 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name]._keep_auto_contrast = True
         else:
             self.viewer.layers[name].data = im
-
-
+    
+    
     def create_experiment_tab(self):
         tab = QWidget()
         wholeTabVertLayout = QVBoxLayout()
-
+        tabBottomVertLayout1 = QVBoxLayout()
+        tabBottomVertLayout2 = QVBoxLayout()
+        tabBottomHorLayout = QHBoxLayout()
+    
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
@@ -102,7 +107,7 @@ class SIMWidget(NapariHybridWidget):
         button_layout.addWidget(self.calibrateButton,1,0)
         button_layout.addWidget(self.saveOneReconRawButton,1,1)
         wholeTabVertLayout.addLayout(button_layout)
-
+    
         # Checkbox options
         self.checkbox_reconstruction = QCheckBox('Live Reconstruction')
         self.checkbox_reconstruction.setChecked(True)
@@ -112,7 +117,7 @@ class SIMWidget(NapariHybridWidget):
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
-        wholeTabVertLayout.addLayout(checkbox_layout)
+        tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
         self.roSelectLayout = QtWidgets.QHBoxLayout()
@@ -120,16 +125,14 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectList = QtWidgets.QComboBox()
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
-        wholeTabVertLayout.addLayout(self.roSelectLayout)
-
-
-
+        tabBottomVertLayout1.addLayout(self.roSelectLayout)
+    
         # Grid scan settings
         self.gridScanLabelBox = QtWidgets.QHBoxLayout()
         self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
         self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
         # vertLayout.addLayout(self.gridScanLabelBox)
-
+        
         gridScanLayout = QtWidgets.QGridLayout()
         self.numGridX_label = QLabel("Steps - X")
         self.numGridX_textedit = QLineEdit("1")
@@ -139,7 +142,7 @@ class SIMWidget(NapariHybridWidget):
         self.overlap_textedit = QLineEdit("0")
         self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
         self.reconFrameSkip_textedit = QLineEdit("0")
-
+        
         row = 0
         # gridScanLayout.addWidget(self.gridScanBoxLabel,row,0)
         # gridScanLayout.addWidget(QtWidgets.QLabel(""),row,1)
@@ -151,8 +154,8 @@ class SIMWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
         gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
         gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
-             
-        wholeTabVertLayout.addLayout(gridScanLayout)
+        
+        tabBottomVertLayout1.addLayout(gridScanLayout)
 
 
         # Save folder
@@ -174,7 +177,19 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
         # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
-        wholeTabVertLayout.addLayout(parameters2_layout)
+        tabBottomVertLayout1.addLayout(parameters2_layout)
+        
+        # FIXME: delete after development
+        # self.start_button_test = QPushButton("Test_long-text-test")
+        # button_layout_test = QtWidgets.QGridLayout()
+        # button_layout_test.addWidget(self.start_button_test,0,0)
+        # tabBottomVertLayout2.addLayout(button_layout_test)
+        reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
+        tabBottomVertLayout2.addLayout(reconstruction_parameters_tab)
+        
+        tabBottomHorLayout.addLayout(tabBottomVertLayout2)
+        tabBottomHorLayout.addLayout(tabBottomVertLayout1)
+        wholeTabVertLayout.addLayout(tabBottomHorLayout)
 
         self.start_button.toggled.connect(self.sigSIMAcqToggled)
         
@@ -215,7 +230,7 @@ class SIMWidget(NapariHybridWidget):
 
 
     def create_reconstruction_parameters_tab(self):
-        tab = QWidget()
+        # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
         
@@ -296,8 +311,9 @@ class SIMWidget(NapariHybridWidget):
 
         
 
-        tab.setLayout(layout)
-        return tab
+        # tab.setLayout(layout) #BKedit
+        # return tab
+        return layout
 
         
     def setSIMWidgetFromConfig(self,setupInfoDict):
