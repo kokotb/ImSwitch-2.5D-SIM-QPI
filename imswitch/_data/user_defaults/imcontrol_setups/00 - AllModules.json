@@ -4,7 +4,8 @@
   "width":1080,
   "height":1920,
   "pixelSize":13.62,
-  "managerName": "SLM4DDManager"
+  "managerName": "SLM4DDManager",
+  "mock": true
 
 },
 "Arduino":{
