@@ -53,7 +53,7 @@
         "Gain": 0.0, 
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":98.0,
+        "AcquisitionFrameRate":5.0,
         "ExposureTime": 4000.0
       },
       "ROI":{
@@ -80,7 +80,7 @@
         "Gain": 0.0, 
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":98.0,
+        "AcquisitionFrameRate":5.0,
         "ExposureTime": 1000.0
       },
       "ROI":{
@@ -107,7 +107,7 @@
           "Gain": 0.0, 
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
-          "AcquisitionFrameRate":98.0,
+          "AcquisitionFrameRate":5.0,
           "ExposureTime": 1000.0
         },
         "ROI":{
