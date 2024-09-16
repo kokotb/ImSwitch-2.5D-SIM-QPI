@@ -13,4 +13,5 @@ from .SLM25DManager import SLMManager
 # from .RotatorsManager import RotatorsManager
 from .SIMManager import SIMManager 
 from .SLM4DDManager import SLM4DDManager
+from .SLM4DDManagerMock import SLM4DDManagerMock
 from .ArduinoManager import ArduinoManager

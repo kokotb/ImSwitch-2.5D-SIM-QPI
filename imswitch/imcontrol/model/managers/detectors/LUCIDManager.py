@@ -2,7 +2,7 @@ import numpy as np
 import time
 from imswitch.imcommon.model import initLogger
 from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter, DetectorListParameter
-from imswitch.imcontrol.model.interfaces.lucidcamera import CameraTIS
+from imswitch.imcontrol.model.interfaces.lucidcamera import LucidCam
 from ..ArduinoManager import ArduinoManager
 
 class LUCIDManager(DetectorManager):
@@ -20,7 +20,7 @@ class LUCIDManager(DetectorManager):
     def __init__(self, detectorInfo, name, **_lowLevelManagers):
         self.__logger = initLogger(self, instanceName=name)
         # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
-        self._camera = self._getTISObj(detectorInfo.managerProperties['cameraListIndex']) #Goes to LC.py to create object and set parameters for first time
+        self._camera = self._getCamObj(detectorInfo.managerProperties['cameraListIndex']) #Goes to LC.py to create object and set parameters for first time
         
         self._running = False
         self._adjustingParameters = False
@@ -177,7 +177,6 @@ class LUCIDManager(DetectorManager):
             self._running = False
             self._camSet = False
             self._camera.suspend_live()
-            
 
     def stopAcquisitionForROIChange(self):
         self._running = False
@@ -215,18 +214,18 @@ class LUCIDManager(DetectorManager):
     def openPropertiesDialog(self):
         self._camera.openPropertiesGUI()
 
-    def _getTISObj(self, cameraId):
+    def _getCamObj(self, cameraId):
         try:
 
 
-            camera = CameraTIS(cameraId)
+            camera = LucidCam(cameraId)
 
 
             # print(camera)
         except Exception:
             self.__logger.warning(f'Failed to initialize Lucid camera {cameraId}, loading mocker')
-            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import MockCameraTIS
-            camera = MockCameraTIS()
+            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import LucidCamMock
+            camera = LucidCamMock()
             print(camera)
 
         self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}')  #Prints "Initialized camera. serial ending...."
