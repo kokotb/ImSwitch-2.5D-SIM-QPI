@@ -504,8 +504,8 @@ class SIMController(ImConWidgetController):
                 time_global_total = time_whole_end-time_global_start
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
-                self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
-                self._logger.debug('Total frames: {:.2f}'.format(self.frameSetCount))
+                self._logger.debug('Dropped frames: {}'.format(droppedFrameSets))
+                self._logger.debug('Total frames: {}'.format(self.frameSetCount))
                 
                 self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
                 
