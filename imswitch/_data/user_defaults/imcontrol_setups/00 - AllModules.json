@@ -21,15 +21,15 @@
   "monitorIdx": 2,
   "width": 1920,
   "height": 1080,
-  "Wavelength1": 488,
-  "Wavelength2": 561,
-  "Wavelength3": 640,
+  "Wavelength1": 510,
+  "Wavelength2": 580,
+  "Wavelength3": 660,
   "NA": 0.8,
   "Pixelsize": 2.74,
   "Alpha": 0.5,
-  "Beta": 0.98,
+  "Beta": 0.9,
   "w": 0.2,
-  "eta": 0.6,
+  "eta": 0.7,
   "n": 1.0,
   "Magnification": 22.22,
   "saveDir": "D:\\SIM_Data\\",
@@ -58,8 +58,8 @@
         "ExposureTime": 1700.0
       },
       "ROI":{
-        "OffsetX": 2608,
-        "OffsetY": 1956,
+        "OffsetX": 2648,
+        "OffsetY": 1850,
         "Width": 512,
         "Height": 512
       }
@@ -113,7 +113,7 @@
         },
         "ROI":{
           "OffsetX": 2560,
-          "OffsetY": 2074,
+          "OffsetY": 2064,
           "Width": 512,
           "Height": 512
         }

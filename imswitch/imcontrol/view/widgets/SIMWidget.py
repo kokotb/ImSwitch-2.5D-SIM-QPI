@@ -82,7 +82,6 @@ class SIMWidget(NapariHybridWidget):
 
         else:
             self.viewer.layers[name].data = im
-            self.viewer.grid.enabled = True #Slightly stupid as this is set every loop. No need to do this. NEed to find other location for it.
             
 
     def setWFImage(self, im, name):
