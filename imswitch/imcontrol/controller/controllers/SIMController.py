@@ -901,7 +901,7 @@ class SIMController(ImConWidgetController):
         sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
         sim_parameters.Alpha = np.float32(self._widget.alpha_textedit.text())
         sim_parameters.Beta = np.float32(self._widget.beta_textedit.text())
-        sim_parameters.w = np.float32(self._widget.eta_textedit.text())
+        sim_parameters.w = np.float32(self._widget.w_textedit.text())
         sim_parameters.eta = np.float32(self._widget.eta_textedit.text())
         sim_parameters.n = np.float32(self._widget.n_textedit.text())
         sim_parameters.Magnification = np.float32(self._widget.magnification_textedit.text())
