@@ -53,7 +53,7 @@ class SIMWidget(NapariHybridWidget):
         # Set layer properties
         self.layer = None
         self.laserColormaps = {'488':'blue','561':'green','640':'red'}
-        
+        self.micronsPerPixel = [.1233,.1233]
         
     def getImage(self):
         if self.layer is not None:
@@ -63,6 +63,8 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.viewer.layers[name].scale = [x/2 for x in self.micronsPerPixel] #SIM image recon result is 2x size of WF and raw images. So scale needs to be reduced by half.
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
         else:
             self.viewer.layers[name].data = im
     
@@ -70,15 +72,25 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
-            self.viewer.layers[name].scale = [2,2]
+            self.viewer.layers[name].scale = self.micronsPerPixel
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
+            self.viewer.layers[name].contrast_limits = (0,4095)
+            self.viewer.scale_bar.unit = 'um'
+            self.viewer.scale_bar.visible = True
+            
+            
+
         else:
             self.viewer.layers[name].data = im
-    
+            
+
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
-            self.viewer.layers[name].scale = [2,2]
+            self.viewer.layers[name].scale = self.micronsPerPixel
+            self.viewer.layers[name].contrast_limits_range = [0,4095]
+
         else:
             self.viewer.layers[name].data = im
     

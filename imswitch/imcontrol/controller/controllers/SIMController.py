@@ -278,6 +278,8 @@ class SIMController(ImConWidgetController):
         # Set running order on SLM
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
+        # Get max exposure time from the selected RO on SLM
+        expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
 
         
 
@@ -289,8 +291,8 @@ class SIMController(ImConWidgetController):
             image_size = detector.shape
             image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
             buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
-            # buffer_size = 500
-            self.setCamForExperiment(detector, int(buffer_size))
+            # buffer_size = 9
+            self.setCamForExperiment(detector, int(buffer_size),expTimeMax)
         
 
 
@@ -350,6 +352,7 @@ class SIMController(ImConWidgetController):
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
                 
+                
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
@@ -375,12 +378,15 @@ class SIMController(ImConWidgetController):
                     framesPerDetector = 9
 
 
-                    waitingBuffers = 0
+                    waitingBuffers = detector._camera.getBufferValue()
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
+                    
+                    if k == 0:
+                        time.sleep(expTimeMax/1000000*16)
                     while waitingBuffers != 9:
                         
-                        time.sleep(.01)
+                        time.sleep(expTimeMax/1000000)
                         waitingBuffers = detector._camera.getBufferValue() #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
                         
                         if waitingBuffers != waitingBuffersEnd:
@@ -390,20 +396,23 @@ class SIMController(ImConWidgetController):
                             bufferEndTime = time.time()
 
                         bufferTotalTime = bufferEndTime-bufferStartTime
+                        # print(bufferTotalTime)
 
                         # print(bufferTotalTime)
                         # print(waitingBuffers)
                         waitingBuffersEnd = waitingBuffers
                         broken = False
                         # print(waitingBuffers,bufferTotalTime)
-                        if waitingBuffers != 9 and bufferTotalTime > .08:
+                        if waitingBuffers != 9 and bufferTotalTime > expTimeMax/250000: #expTimeMax/250000 = 4x exp time in correct units
+                        # if waitingBuffers != 9 and bufferTotalTime > .1: #expTimeMax/250000 = 4x exp time in correct units
+                            self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                             for detector in self.detectors:
                                 detector._camera.clearBuffers()
-                            self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers}')
+                            
                             broken = True
                             break
                         
-
+                        
                     if broken == True:
                         droppedFrameSets += 1
                         
@@ -484,6 +493,7 @@ class SIMController(ImConWidgetController):
                         self.saveOneSetRaw = False
                         self.saveOneTime = False
                 
+                # self._widget.viewer.grid.enabled = True
                 self._logger.debug(f"{times_color}")
 
                 self.frameSetCount += 1
@@ -495,8 +505,8 @@ class SIMController(ImConWidgetController):
                 time_global_total = time_whole_end-time_global_start
                 self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
                 self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
-                self._logger.debug('Dropped frames: {:.2f}'.format(droppedFrameSets))
-                self._logger.debug('Total frames: {:.2f}'.format(self.frameSetCount))
+                self._logger.debug('Dropped frames: {}'.format(droppedFrameSets))
+                self._logger.debug('Total frames: {}'.format(self.frameSetCount))
                 
                 self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
                 
@@ -569,9 +579,9 @@ class SIMController(ImConWidgetController):
 
 
     def populateAndSelectROList(self):
-        roNameList = self._master.SLM4DDManager.getAllRONames()
-        for i in range(len(roNameList)):
-            self._widget.addROName(i,roNameList[i])
+        self.roNameList = self._master.SLM4DDManager.getAllRONames()
+        for i in range(len(self.roNameList)):
+            self._widget.addROName(i,self.roNameList[i])
         roSelectedOnSLM = self._master.SLM4DDManager.getRunningOrder()
         self._widget.setSelectedRO(roSelectedOnSLM)
 
@@ -831,36 +841,34 @@ class SIMController(ImConWidgetController):
             self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
         return value
     
-    def setCamForExperiment(self, detector, num_buffers):
-        # self.getExperimentSettings()
-        # detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
-        # detectors = []
-        # for det_name in detector_names_connected:
-        #     detectors.append(self._master.detectorsManager[det_name]._camera)
-        # Hardcoded parameters at the moment
-        # detector.stopAcquisition()
-        trigger_source = 'Line2'
+    def setCamForExperiment(self, detector, num_buffers, expTimeMax):
+
+
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0)
+        trigger_source = 'Line2'    
         trigger_mode = 'On'
         exposure_auto = 'Off'
-        # FIXME: There must be a neater, better, more stable way to do this
+
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
         # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
-        bit_depth = 'Bits12' # FIXME: maybe syntax not exactly right
+        bit_depth = 'Bits12'
         frame_rate_enable = True
-        frame_rate = 190.0 # Needs to be faster than trigger rate
         buffer_mode = "OldestFirst"
-        # width, height, offsetX, offsetY - is all taken care of with SettingsWidget
 
         # Check if exposure is low otherwise set to max value
-        exposure_limit = 5000 # us
+        exposure_limit = expTimeMax # us
         if exposure_time > exposure_limit:
             exposure_time = float(exposure_limit)
             self.exposure = exposure_time
-            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms. Setting exposure tme to {exposure_limit/1000:.2f} ms")
+            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure tme to {exposure_limit/1000:.2f} ms")
         
+        #Calc Acq Frame Rate
+        frame_rate = 1000000/exposure_limit*.95
+
+
         # Set cam parameters
         dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
@@ -1086,7 +1094,7 @@ class SIMProcessor(object):
     def getWFlbf(self, mStack):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
-        bfFrame = np.round(np.mean(np.array(mStack), 0))
+        bfFrame = np.round(np.mean(np.array(mStack), 0)) #CTNOTE See if need all 9 or 3
         self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         
