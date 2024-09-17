@@ -86,6 +86,8 @@ class NapariBaseWidget(QtWidgets.QWidget):
         super().__init__()
         self.viewer = napariViewer
         self.viewer.grid.shape = (3,3) #CTNOTE Napari
+        # self.viewer.grid.enabled = True
+        # self.viewer.camera.zoom = 4.42
 
     @classmethod
     def addToViewer(cls, napariViewer, position='left'):

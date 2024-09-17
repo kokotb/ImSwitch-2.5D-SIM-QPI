@@ -493,6 +493,7 @@ class SIMController(ImConWidgetController):
                         self.saveOneSetRaw = False
                         self.saveOneTime = False
                 
+                # self._widget.viewer.grid.enabled = True
                 self._logger.debug(f"{times_color}")
 
                 self.frameSetCount += 1
