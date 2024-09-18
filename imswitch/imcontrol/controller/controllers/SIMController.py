@@ -347,9 +347,10 @@ class SIMController(ImConWidgetController):
                     pass
                 else:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
+                    time.sleep(.2)
                     
                 # time_postest_start = time.time()
-                # time.sleep(.15)
+                
 
 
                 time_color_end = time.time()
