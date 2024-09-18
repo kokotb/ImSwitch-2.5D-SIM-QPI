@@ -130,9 +130,9 @@ class SIMController(ImConWidgetController):
             setattr(self.sim_parameters,key,setupInfoDict[key])
 
         # Create class objects for each channel.
-        self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength1)
-        self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength2)
-        self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.Wavelength3)
+        self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL1)
+        self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL2)
+        self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL3)
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
@@ -382,7 +382,7 @@ class SIMController(ImConWidgetController):
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
                     self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
-                    self.LaserWL = processor.wavelength
+                    self.LaserWL = self.detectors[k]._detectorInfo.managerProperties['wavelength']
                     
                     # Set current detector being used
                     detector = self.detectors[k]
@@ -534,9 +534,9 @@ class SIMController(ImConWidgetController):
 
             processor.setParameters(self.sim_parameters)
 
-        self.SimProcessorLaser1.wavelength = self.sim_parameters.Wavelength1
-        self.SimProcessorLaser2.wavelength = self.sim_parameters.Wavelength2
-        self.SimProcessorLaser3.wavelength = self.sim_parameters.Wavelength3
+        self.SimProcessorLaser1.wavelength = self.sim_parameters.ReconWL1
+        self.SimProcessorLaser2.wavelength = self.sim_parameters.ReconWL2
+        self.SimProcessorLaser3.wavelength = self.sim_parameters.ReconWL3
 
 
 
@@ -547,14 +547,14 @@ class SIMController(ImConWidgetController):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
     def recordRawFunc(self,j):
         rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL*1000):03}_{self.exptTimeElapsedStr}.tif"
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
 
@@ -915,9 +915,9 @@ class SIMController(ImConWidgetController):
 
 
         # Copies current widget values to the SIMParameters object
-        sim_parameters.Wavelength1 = np.float32(self._widget.wavelength1_textedit.text())/1000
-        sim_parameters.Wavelength2 = np.float32(self._widget.wavelength2_textedit.text())/1000
-        sim_parameters.Wavelength3 = np.float32(self._widget.wavelength3_textedit.text())/1000
+        sim_parameters.ReconWL1 = np.float32(self._widget.ReconWL1_textedit.text())/1000
+        sim_parameters.ReconWL2 = np.float32(self._widget.ReconWL2_textedit.text())/1000
+        sim_parameters.ReconWL3 = np.float32(self._widget.ReconWL3_textedit.text())/1000
         sim_parameters.Pixelsize = np.float32(self._widget.pixelsize_textedit.text())
         sim_parameters.NA = np.float32(self._widget.NA_textedit.text())
         sim_parameters.Alpha = np.float32(self._widget.alpha_textedit.text())
@@ -1247,11 +1247,11 @@ class SIMProcessor(object):
     def setWavelength(self, wavelength, sim_parameters):
         self.LaserWL = wavelength
         if self.LaserWL == 488:
-            self.h.wavelength = sim_parameters.wavelength_1
+            self.h.wavelength = sim_parameters.ReconWL1
         elif self.LaserWL == 561:
-            self.h.wavelength = sim_parameters.wavelength_3
+            self.h.wavelength = sim_parameters.ReconWL2
         elif self.LaserWL == 640:
-            self.h.wavelength = sim_parameters.wavelength_2
+            self.h.wavelength = sim_parameters.ReconWL1
         
     def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
         '''
@@ -1280,12 +1280,12 @@ class SIMProcessor(object):
 
     def recordSIMFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
         reconSavePath = os.path.join(exptPath, "Recon")
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}.tif"
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL):03}_{exptTimeElapsedStr}.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
 
     def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
         reconSavePath = exptPath
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL*1000):03}_{exptTimeElapsedStr}_recon.tif"
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL):03}_{exptTimeElapsedStr}_recon.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
 
     def saveImageInBackground(self, image, savePath, saveName ):

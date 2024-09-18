@@ -282,14 +282,14 @@ class SIMInfo:
     height: int
     """ Height of SLM, in pixels. """
 
-    Wavelength1: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL1: int
+    """ Wavelength of the emission from 488 laser. """
 
-    Wavelength2: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL2: int
+    """ Wavelength of the emission from 561 laser. """
 
-    Wavelength3: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL3: int
+    """ Wavelength of the emission from 640 laser. """
 
     NA: float
 

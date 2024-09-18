@@ -247,12 +247,12 @@ class SIMWidget(NapariHybridWidget):
         
         
         # create widget per label
-        self.wavelength1_label = QLabel("")
-        self.wavelength1_textedit = QLineEdit("")
-        self.wavelength2_label = QLabel("")
-        self.wavelength2_textedit = QLineEdit("")
-        self.wavelength3_label = QLabel("")
-        self.wavelength3_textedit = QLineEdit("")
+        self.ReconWL1_label = QLabel("")
+        self.ReconWL1_textedit = QLineEdit("")
+        self.ReconWL2_label = QLabel("")
+        self.ReconWL2_textedit = QLineEdit("")
+        self.ReconWL3_label = QLabel("")
+        self.ReconWL3_textedit = QLineEdit("")
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
         self.pixelsize_label = QLabel("")
@@ -270,14 +270,14 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_label = QLabel("")
         self.magnification_textedit = QLineEdit("")
         row_layout_1 = QHBoxLayout()
-        row_layout_1.addWidget(self.wavelength1_label)
-        row_layout_1.addWidget(self.wavelength1_textedit)
+        row_layout_1.addWidget(self.ReconWL1_label)
+        row_layout_1.addWidget(self.ReconWL1_textedit)
         row_layout_2 = QHBoxLayout()
-        row_layout_2.addWidget(self.wavelength2_label)
-        row_layout_2.addWidget(self.wavelength2_textedit)
+        row_layout_2.addWidget(self.ReconWL2_label)
+        row_layout_2.addWidget(self.ReconWL2_textedit)
         row_layout_3 = QHBoxLayout()
-        row_layout_3.addWidget(self.wavelength3_label)
-        row_layout_3.addWidget(self.wavelength3_textedit)
+        row_layout_3.addWidget(self.ReconWL3_label)
+        row_layout_3.addWidget(self.ReconWL3_textedit)
         row_layout_4 = QHBoxLayout()
         row_layout_4.addWidget(self.NA_label)
         row_layout_4.addWidget(self.NA_textedit)
@@ -328,14 +328,14 @@ class SIMWidget(NapariHybridWidget):
     def setSIMWidgetFromConfig(self,setupInfoDict):
 
         params = [
-            "Wavelength1", "Wavelength2", "Wavelength3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
+            "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
         ]
-        self.wavelength1_label.setText(params[0])
-        self.wavelength1_textedit.setText(str(setupInfoDict[params[0]]))
-        self.wavelength2_label.setText(params[1])
-        self.wavelength2_textedit.setText(str(setupInfoDict[params[1]]))
-        self.wavelength3_label.setText(params[2])
-        self.wavelength3_textedit.setText(str(setupInfoDict[params[2]]))
+        self.ReconWL1_label.setText(params[0])
+        self.ReconWL1_textedit.setText(str(setupInfoDict[params[0]]))
+        self.ReconWL2_label.setText(params[1])
+        self.ReconWL2_textedit.setText(str(setupInfoDict[params[1]]))
+        self.ReconWL3_label.setText(params[2])
+        self.ReconWL3_textedit.setText(str(setupInfoDict[params[2]]))
         self.NA_label.setText(params[3])
         self.NA_textedit.setText(str(setupInfoDict[params[3]]))
         self.pixelsize_label.setText(params[4])
