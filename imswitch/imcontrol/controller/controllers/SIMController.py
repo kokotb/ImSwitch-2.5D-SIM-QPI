@@ -190,21 +190,25 @@ class SIMController(ImConWidgetController):
         for laser in self.lasers:
             if laser.power > 0:
                 poweredLasers.append(laser.wavelength)
+
+        ##CTNOTE TEMPORARY        
+        lasersInUse = [488,561,640] #Overwriting poweredLasers to keep all on at the moment.
+        ##CTNOTE TEMPORARY      
         
         # Check if detector is present comparing hardcoded names to connected 
         # names, detector names are used only for pulling imageSize from the 
         # detector
         # FIXME: Check again if this laser checkup makes sense
         det_names = []
-        if poweredLasers != []:
-            for dic in poweredLasers:
+        if lasersInUse != []:
+            for dic in lasersInUse:
                 det_name = dic_det_names[dic]
                 if det_name in detector_names_connected:
                     det_names.append(det_name)
                 else:
                     self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(poweredLasers) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {poweredLasers}")
+                    if len(lasersInUse) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {lasersInUse}")
                     # FIXME: If used for anything else but pixel number 
                     # readout it should be changed to not continue the code if 
                     # detector not present
@@ -239,8 +243,8 @@ class SIMController(ImConWidgetController):
         processors = []
         isLaser = []
 
-        for wl in poweredLasers:
-            if poweredLasers != []:
+        for wl in lasersInUse:
+            if lasersInUse != []:
                 processors.append(processors_dic[wl])
                 isLaser.append(dic_laser_present[wl])
                 processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
@@ -301,7 +305,7 @@ class SIMController(ImConWidgetController):
         time_whole_start = time_global_start
         self._master.arduinoManager.activateSLMWriteOnly()
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
-        while self.active and poweredLasers != []:
+        while self.active and lasersInUse != []:
 
             stackSIM = [] 
             for k in range(len(processors)):
@@ -377,7 +381,7 @@ class SIMController(ImConWidgetController):
                 # Loop over channels
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
-
+                    self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
                     self.LaserWL = processor.wavelength
                     
                     # Set current detector being used
@@ -395,7 +399,7 @@ class SIMController(ImConWidgetController):
                     waitingBuffers = detector._camera.getBufferValue()
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
-                    
+                    broken = False
                     if k == 0:
                         time.sleep(expTimeMax/1000000*16)
                     while waitingBuffers != 9:
@@ -444,20 +448,15 @@ class SIMController(ImConWidgetController):
 
                     time_color_start = time.time()
 
-                    # TODO: remove after development is done, kept for testing
-                    # Push all colors into one array - export disabled below
-                    # Enable below if you need this
-                    # stackSIM[k].append(self.SIMStack)
-                    
-                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
-                    
-                    # Set sim stack for processing all functions work on 
-                    # self.stack in SIMProcessor class
-                    processor.setSIMStack(self.rawStack)
-                    
-                    # Push all wide fields into one array.
-                    # wfImages[k].append(processor.getWFlbf(self.rawStack)) #CTBOS Note
-                    processor.getWFlbf(self.rawStack)
+
+                    if self.powered:
+                        self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
+                        
+                        # Set sim stack for processing all functions work on 
+                        processor.setSIMStack(self.rawStack)
+                        
+                        # Push all wide fields into one array.
+                        processor.getWFlbf(self.rawStack)
                     
                     # Activate recording and reconstruction in processor
                     processor.setRecordingMode(self.isRecordRecon)
@@ -473,9 +472,9 @@ class SIMController(ImConWidgetController):
 
                     if k == 0 and self.saveOneTime:
                         self.saveOneSetRaw = True
-                    if self.saveOneSetRaw:
+                    if self.saveOneSetRaw and self.powered:
                         self.recordOneSetRaw(j)
-                    if self.isRecordingRaw:
+                    if self.isRecordingRaw and self.powered:
 
                         self.recordRawFunc(j)
 
@@ -492,7 +491,7 @@ class SIMController(ImConWidgetController):
                         div_1  = divmod(self.frameSetCount, num_skip_frames)[1]
                     
                     # if self.isReconstruction and div_1 == 0:
-                    if self.isReconstruction and div_1 == 0:
+                    if self.isReconstruction and div_1 == 0 and self.powered:
                         threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
 
 
