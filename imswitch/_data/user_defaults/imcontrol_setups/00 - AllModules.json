@@ -55,7 +55,7 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1700.0
+        "ExposureTime": 3000.0
       },
       "ROI":{
         "OffsetX": 2648,

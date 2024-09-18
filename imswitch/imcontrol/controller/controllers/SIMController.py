@@ -340,7 +340,9 @@ class SIMController(ImConWidgetController):
                     pass
                 else:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
-
+                    
+                # time_postest_start = time.time()
+                # time.sleep(.15)
 
 
                 time_color_end = time.time()
@@ -350,9 +352,21 @@ class SIMController(ImConWidgetController):
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
 
+
+
+
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
+                # time_postest_end = time.time()
+                # time_postest_total = time_postest_end - time_postest_start
+                # self._logger.debug('Move start to trigger {:.10f}'.format(time_postest_total))
                 
                 
+
+
+
+
+
+
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
