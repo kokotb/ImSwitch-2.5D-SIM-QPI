@@ -131,7 +131,7 @@ class LucidCamMock:
     def getLastChunk(self):
         return np.expand_dims(self.grabFrame(),0)
     
-    def setPropertyValue(self, property_name, property_value):
+    def setPropertyValue(self, property_name, property_value, toPrint=True):
         return property_value
 
     def getPropertyValue(self, property_name):
@@ -178,7 +178,7 @@ class LucidCamMock:
             for name in names_import:
                 stack_mock_color.append(tif.imread(name))
             #allImages.append(stack_mock_color)
-            allImages = np.array(stack_mock_color)
+            allImages = np.array(np.divide(stack_mock_color,16).astype(np.uint16))
         else:
             # Simulate SIM set 
             # Nx = 1024

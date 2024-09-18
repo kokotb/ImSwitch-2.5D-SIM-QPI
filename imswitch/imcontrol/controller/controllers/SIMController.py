@@ -379,6 +379,7 @@ class SIMController(ImConWidgetController):
 
 
                     waitingBuffers = detector._camera.getBufferValue()
+                    broken = False
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
                     
