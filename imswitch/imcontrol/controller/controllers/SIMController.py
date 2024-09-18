@@ -87,6 +87,7 @@ class SIMController(ImConWidgetController):
         self.isRecordingRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
         self.isRecordRecon = False
+        self.isRecordWF = False
 
         # self.processors = []
         
@@ -147,11 +148,12 @@ class SIMController(ImConWidgetController):
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
         self._widget.checkbox_record_raw.stateChanged.connect(self.toggleRecording)
+        self._widget.checkbox_record_WF.stateChanged.connect(self.toggleRecordWF)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
-        self._widget.saveOneReconRawButton.clicked.connect(self.saveOneReconRaw)
+        self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         
@@ -277,6 +279,7 @@ class SIMController(ImConWidgetController):
         self.frameSetCount = 0
         self.saveOneTime = False
         self.saveOneSetRaw = False
+        self.saveOneSetWF = False
         
 
         # Set running order on SLM
@@ -456,7 +459,9 @@ class SIMController(ImConWidgetController):
                         processor.setSIMStack(self.rawStack)
                         
                         # Push all wide fields into one array.
-                        processor.getWFlbf(self.rawStack)
+                        imageWF = processor.getWFlbf(self.rawStack)
+                        imageWF = imageWF.astype(np.uint16)
+
                     
                     # Activate recording and reconstruction in processor
                     processor.setRecordingMode(self.isRecordRecon)
@@ -475,8 +480,14 @@ class SIMController(ImConWidgetController):
                     if self.saveOneSetRaw and self.powered:
                         self.recordOneSetRaw(j)
                     if self.isRecordingRaw and self.powered:
-
                         self.recordRawFunc(j)
+
+                    if k == 0 and self.saveOneTime:
+                        self.saveOneSetWF = True
+                    if self.saveOneSetWF and self.powered:
+                        self.recordOneSetWF(j, imageWF)
+                    if self.isRecordWF and self.powered:
+                        self.recordWFFunc(j, imageWF)
 
 
                     time_color_end = time.time()
@@ -505,6 +516,7 @@ class SIMController(ImConWidgetController):
                     if k==(len(processors)-1) and self.saveOneSetRaw and self.saveOneTime:
                         self.saveOneSetRaw = False
                         self.saveOneTime = False
+                        self.saveOneSetWF = False
                 
                 # self._widget.viewer.grid.enabled = True
                 self._logger.debug(f"{times_color}")
@@ -547,7 +559,7 @@ class SIMController(ImConWidgetController):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_raw.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
 
     def recordRawFunc(self,j):
@@ -556,6 +568,20 @@ class SIMController(ImConWidgetController):
             os.makedirs(rawSavePath)
         rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
         threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+
+    def recordOneSetWF(self,j,im):
+        wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(wfSavePath):
+            os.makedirs(wfSavePath)
+        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_WF.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+
+    def recordWFFunc(self,j,im):
+        wfSavePath = os.path.join(self.exptFolderPath, "WF")
+        if not os.path.exists(wfSavePath):
+            os.makedirs(wfSavePath)
+        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
+        threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
 
 
 
@@ -603,7 +629,7 @@ class SIMController(ImConWidgetController):
         for processor in self.processors:
             processor.isCalibrated = False
 
-    def saveOneReconRaw(self):
+    def saveOneSet(self):
         self.saveOneTime = True
 
 
@@ -685,12 +711,19 @@ class SIMController(ImConWidgetController):
     def toggleReconstruction(self):
         self.isReconstruction = not self.isReconstruction
         if not self.isReconstruction:
-            self.isActive = False
+            self.isActive = False #All of these function here have this same general self variable. Probably a conflict if it was actually used.
     
     def toggleRecording(self):
         self.isRecordingRaw = not self.isRecordingRaw
         if not self.isRecordingRaw:
             self.isActive = False
+
+    def toggleRecordWF(self):
+        self.isRecordWF = not self.isRecordWF
+        if not self.isRecordWF:
+            self.isActive = False
+        print('yo')
+
 
     def toggleRecordReconstruction(self):
         self.isRecordRecon = not self.isRecordRecon
@@ -1108,6 +1141,11 @@ class SIMProcessor(object):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
         bfFrame = np.round(np.mean(np.array(mStack), 0)) #CTNOTE See if need all 9 or 3
+
+
+
+
+
         self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
         return bfFrame
         

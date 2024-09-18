@@ -106,12 +106,12 @@ class SIMWidget(NapariHybridWidget):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.calibrateButton = QPushButton("Calibrate")
-        self.saveOneReconRawButton = QPushButton("Save One Recon/Raw Set")
+        self.saveOneSetButton = QPushButton("Save One Set")
         button_layout = QtWidgets.QGridLayout()
         button_layout.addWidget(self.start_button,0,0)
         button_layout.addWidget(self.stop_button,0,1)
         button_layout.addWidget(self.calibrateButton,1,0)
-        button_layout.addWidget(self.saveOneReconRawButton,1,1)
+        button_layout.addWidget(self.saveOneSetButton,1,1)
         wholeTabVertLayout.addLayout(button_layout)
     
         # Checkbox options
@@ -119,12 +119,13 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_reconstruction.setChecked(True)
         self.checkbox_record_reconstruction = QCheckBox('Save Reconstruction')
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
+        self.checkbox_record_WF = QCheckBox('Save Widefield')
         self.checkbox_logging = QCheckBox("Logging")
-        self.checkbox_logging.setChecked(False)
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
+        checkbox_layout.addWidget(self.checkbox_record_WF)
         checkbox_layout.addWidget(self.checkbox_logging)
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
@@ -136,12 +137,13 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
     
-        # Grid scan settings
-        self.gridScanLabelBox = QtWidgets.QHBoxLayout()
-        self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
-        self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
-        # vertLayout.addLayout(self.gridScanLabelBox)
         
+        # self.gridScanLabelBox = QtWidgets.QHBoxLayout()
+        # self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
+        # self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
+        # vertLayout.addLayout(self.gridScanLabelBox)
+
+        # Grid scan settings
         gridScanLayout = QtWidgets.QGridLayout()
         self.numGridX_label = QLabel("Steps - X")
         self.numGridX_textedit = QLineEdit("1")
@@ -176,7 +178,6 @@ class SIMWidget(NapariHybridWidget):
         self.expt_label = QLabel("Experiment Name")
         self.expt_edit = QLineEdit("")
         self.openFolderButton = guitools.BetterPushButton('Open')
-        # self.checkbox_mock = QCheckBox("Mock")
         row = 0
         parameters2_layout.addWidget(self.user_label, row, 0)
         parameters2_layout.addWidget(self.user_edit, row, 1)
@@ -185,7 +186,6 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.path_label, row+2, 0)
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
-        # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
         tabBottomVertLayout1.addLayout(parameters2_layout)
         
         # FIXME: delete after development
@@ -193,7 +193,7 @@ class SIMWidget(NapariHybridWidget):
         # button_layout_test = QtWidgets.QGridLayout()
         # button_layout_test.addWidget(self.start_button_test,0,0)
         # tabBottomVertLayout2.addLayout(button_layout_test)
-        reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
+        reconstruction_parameters_tab = self.create_reconstruction_parameters()
         tabBottomVertLayout2.addLayout(reconstruction_parameters_tab)
         
         tabBottomHorLayout.addLayout(tabBottomVertLayout2)
@@ -238,7 +238,7 @@ class SIMWidget(NapariHybridWidget):
 
 
 
-    def create_reconstruction_parameters_tab(self):
+    def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
