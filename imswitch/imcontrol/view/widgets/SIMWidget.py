@@ -147,7 +147,7 @@ class SIMWidget(NapariHybridWidget):
         self.numGridX_textedit = QLineEdit("1")
         self.numGridY_label = QLabel("Steps - Y")
         self.numGridY_textedit = QLineEdit("1")
-        self.overlap_label = QLabel("Overlap")
+        self.overlap_label = QLabel("Overlap [%]")
         self.overlap_textedit = QLineEdit("0")
         self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
         self.reconFrameSkip_textedit = QLineEdit("0")

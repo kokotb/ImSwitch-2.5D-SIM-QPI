@@ -828,7 +828,7 @@ class SIMController(ImConWidgetController):
         # Load parameters to object
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
-        self.overlap = float(parameter_dict['overlap'])
+        self.overlap = float(parameter_dict['overlap'])/100
         
         # self.exposure = float(parameter_dict['exposure'])
 
