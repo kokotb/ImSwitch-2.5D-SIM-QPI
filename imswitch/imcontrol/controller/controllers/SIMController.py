@@ -84,28 +84,15 @@ class SIMController(ImConWidgetController):
         self._logger = initLogger(self)
 
         #Setup state variables
-        self.isRecordingRaw = False
+        self.isRecordRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
         self.isRecordRecon = False
         self.isRecordWF = False
-
-        # self.processors = []
-        
+     
         # Only napari implemented as of 12/9/24
         self.reconstructionMethod = "napari" # or "mcSIM"
 
-        # Load SIM section of config file. Used to populate 'reconstrution settings' tab
-        if self._setupInfo.sim is None:
-            self._widget.replaceWithError('SIM is not configured in your setup file.')
-            return
-        
-        self.setupInfo = self._setupInfo.sim
-        setupInfoKeyList = [a for a in dir(self.setupInfo) if not a.startswith('__') and not callable(getattr(self.setupInfo, a))] #Pulls all attribute names from class not dunder (__) and not functions.
-        self.setupValueList = []
-        for item in setupInfoKeyList:
-            self.setupValueList.append(getattr(self.setupInfo,item)) #Pulls values of the attributes.
-        setupInfoDict = dict(zip(setupInfoKeyList,self.setupValueList)) #Put names, values in a dict.
-        self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
+        setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict.
         
         #Create list of available laser objects from config file.
         # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
@@ -261,15 +248,8 @@ class SIMController(ImConWidgetController):
                         
         positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
 
-        # TODO: Check if it affects speed, remove if it does
-        # move to top where all this is handled
         # Set stacks to be saved into separate folder
         self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
-
-
-        
-        # Creating a unique identifier for experiment name generated 
-        # before a grid scan is acquired
 
         # Set file-path read from GUI for each processor
         self.updateProcessorParameters()
@@ -288,8 +268,6 @@ class SIMController(ImConWidgetController):
         # Get max exposure time from the selected RO on SLM
         expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
 
-        
-
         # -------------------Set-up cams-------------------
 
         # FIXME: Automate buffer size calculation based on image size, it did not work before
@@ -306,7 +284,7 @@ class SIMController(ImConWidgetController):
         droppedFrameSets = 0
         time_global_start = time.time()
         time_whole_start = time_global_start
-        self._master.arduinoManager.activateSLMWriteOnly()
+        self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receiv e triggers.
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
         while self.active and lasersInUse != []:
 
@@ -480,7 +458,7 @@ class SIMController(ImConWidgetController):
                         self.saveOneSetRaw = True
                     if self.saveOneSetRaw and self.powered:
                         self.recordOneSetRaw(j)
-                    if self.isRecordingRaw and self.powered:
+                    if self.isRecordRaw and self.powered:
                         self.recordRawFunc(j)
 
                     if k == 0 and self.saveOneTime:
@@ -540,6 +518,26 @@ class SIMController(ImConWidgetController):
 
                 
 
+
+
+
+
+
+    def makeSetupInfoDict(self):
+
+        if self._setupInfo.sim is None:
+            self._widget.replaceWithError('SIM is not configured in your setup file.')
+            return
+        
+        setupInfo = self._setupInfo.sim
+        setupInfoKeyList = [a for a in dir(setupInfo) if not a.startswith('__') and not callable(getattr(setupInfo, a))] #Pulls all attribute names from class not dunder (__) and not functions.
+        setupValueList = []
+        for item in setupInfoKeyList:
+            setupValueList.append(getattr(setupInfo,item)) #Pulls values of the attributes.
+        setupInfoDict = dict(zip(setupInfoKeyList,setupValueList)) #Put names, values in a dict.
+        self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
+
+        return setupInfoDict
           
     def updateProcessorParameters(self):
         self.sim_parameters = self.getSIMParametersFromGUI()
@@ -550,11 +548,6 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.wavelength = self.sim_parameters.ReconWL1
         self.SimProcessorLaser2.wavelength = self.sim_parameters.ReconWL2
         self.SimProcessorLaser3.wavelength = self.sim_parameters.ReconWL3
-
-
-
-
-
 
     def recordOneSetRaw(self,j):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
@@ -715,8 +708,8 @@ class SIMController(ImConWidgetController):
             self.isActive = False #All of these function here have this same general self variable. Probably a conflict if it was actually used.
     
     def toggleRecording(self):
-        self.isRecordingRaw = not self.isRecordingRaw
-        if not self.isRecordingRaw:
+        self.isRecordRaw = not self.isRecordRaw
+        if not self.isRecordRaw:
             self.isActive = False
 
     def toggleRecordWF(self):
@@ -910,7 +903,7 @@ class SIMController(ImConWidgetController):
         if exposure_time > exposure_limit:
             exposure_time = float(exposure_limit)
             self.exposure = exposure_time
-            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure tme to {exposure_limit/1000:.2f} ms")
+            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure tme to {exposure_limit/1000:.2f} ms on {detector.name}")
         
         #Calc Acq Frame Rate
         frame_rate = 1000000/exposure_limit*.95

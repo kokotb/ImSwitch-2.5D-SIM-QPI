@@ -55,11 +55,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 3000.0
+        "ExposureTime": 1500.0
       },
       "ROI":{
-        "OffsetX": 2648,
-        "OffsetY": 1850,
+        "OffsetX": 2048,
+        "OffsetY": 1732,
         "Width": 512,
         "Height": 512
       }
@@ -82,11 +82,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1700.0
+        "ExposureTime": 9000.0
       },
       "ROI":{
-        "OffsetX": 2442,
-        "OffsetY": 2156,
+        "OffsetX": 2560,
+        "OffsetY": 2325,
         "Width": 512,
         "Height": 512
       }
@@ -109,11 +109,11 @@
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
           "AcquisitionFrameRate":5.0,
-          "ExposureTime": 1700.0
+          "ExposureTime": 500.0
         },
         "ROI":{
-          "OffsetX": 2560,
-          "OffsetY": 2064,
+          "OffsetX": 2528,
+          "OffsetY": 2252,
           "Width": 512,
           "Height": 512
         }
