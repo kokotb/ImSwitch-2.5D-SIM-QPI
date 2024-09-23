@@ -20,6 +20,7 @@ from .SLMController import SLMController
 # from .RotatorController import RotatorController
 from .SettingsController import SettingsController
 from .SLMController import SLMController
+from .SLM25DController import SLM25DController
 # from .TilingController import TilingController
 # from .ULensesController import ULensesController
 from .ViewController import ViewController

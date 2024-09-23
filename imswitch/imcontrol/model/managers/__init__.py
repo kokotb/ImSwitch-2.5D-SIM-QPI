@@ -5,7 +5,6 @@ from .MultiManager import MultiManager
 from .PositionersManager import PositionersManager
 from .RS232sManager import RS232sManager
 from .RecordingManager import RecordingManager, RecMode, SaveMode, SaveFormat
-from .SLM25DManager import SLMManager
 # from .ScanManagerPointScan import ScanManagerPointScan
 # from .ScanManagerBase import ScanManagerBase
 # from .ScanManagerMoNaLISA import ScanManagerMoNaLISA
@@ -13,5 +12,7 @@ from .SLM25DManager import SLMManager
 # from .RotatorsManager import RotatorsManager
 from .SIMManager import SIMManager 
 from .SLM4DDManager import SLM4DDManager
+from .SLM25DManager import SLM25DManager
 from .SLM4DDManagerMock import SLM4DDManagerMock
+from .SLM25DManagerMock import SLM25DManagerMock
 from .ArduinoManager import ArduinoManager

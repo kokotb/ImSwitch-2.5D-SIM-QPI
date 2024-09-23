@@ -8,7 +8,7 @@ from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 
 
-class SLMController(ImConWidgetController):
+class SLM25DController(ImConWidgetController):
     """Linked to SLMWidget."""
 
     def __init__(self, *args, **kwargs):
@@ -19,11 +19,11 @@ class SLMController(ImConWidgetController):
         if not os.path.exists(self.slmDir):
             os.makedirs(self.slmDir)
 
-        if self._setupInfo.slm is None:
+        if self._setupInfo.SLM25D is None:
             self._widget.replaceWithError('SLM is not configured in your setup file.')
             return
 
-        self._widget.initSLMDisplay(self._setupInfo.slm.monitorIdx)
+        self._widget.initSLMDisplay(self._setupInfo.SLM25D.monitorIdx)
 
         # Connect CommunicationChannel signals
         self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
@@ -61,7 +61,7 @@ class SLMController(ImConWidgetController):
         self._widget.sigSLMMonitorChanged.connect(self.monitorChanged)
 
         # Initial SLM display
-        self.displayMask(self._master.SLM25DManager.maskCombined)
+        #self.displayMask(self._master.SLM25DManager.maskCombined)
 
     def toggleSLMDisplay(self, enabled):
         self._widget.setSLMDisplayVisible(enabled)

@@ -21,6 +21,7 @@ from .RotationScanWidget import RotationScanWidget
 from .RotatorWidget import RotatorWidget
 from .SettingsWidget import SettingsWidget
 from .SLMWidget import SLMWidget
+from .SLM25DWidget import SLM25DWidget
 from .TilingWidget import TilingWidget
 from .ULensesWidget import ULensesWidget
 from .ViewWidget import ViewWidget

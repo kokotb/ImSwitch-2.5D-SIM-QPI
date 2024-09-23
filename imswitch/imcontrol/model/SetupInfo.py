@@ -132,6 +132,22 @@ class SLMInfo:
     at various wavelengths. A combination will be chosen based on the
     wavelength. """
 
+@dataclass(frozen=True)
+class SLM25DInfo:
+    mock: bool
+
+    width: int
+    """ Width of SLM, in pixels. """
+
+    height: int
+    """ Height of SLM, in pixels. """
+
+    managerName: str
+    """ Manager name in string. """
+
+    monitorIdx: int
+    """Check if this is needed at all"""
+
 
 @dataclass(frozen=True)
 class FocusLockInfo:
@@ -382,6 +398,9 @@ class SetupInfo:
 
     slm: Optional[SLMInfo] = field(default_factory=lambda: None)
     """ SLM settings. Required to be defined to use SLM functionality. """
+
+    SLM25D: Optional[SLM25DInfo] = field(default_factory=lambda: None)
+    """ SLM for 2.5D settings. Required to be defined to use SLM(2.5D) functionality. """
 
     focusLock: Optional[FocusLockInfo] = field(default_factory=lambda: None)
     """ Focus lock settings. Required to be defined to use focus lock

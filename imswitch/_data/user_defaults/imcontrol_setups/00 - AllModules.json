@@ -8,6 +8,14 @@
   "mock": true
 
 },
+"SLM25D":{
+  "width":1080,
+  "height":1920,
+  "managerName": "SLM25DManager",
+  "mock": true,
+  "monitorIdx": 1
+
+},
 "Arduino":{
   "width":1080,
   "height":1920,
@@ -249,6 +257,7 @@
     "SIM",
     "Laser",
     "View",
+    "SLM25D",
     "Image",
     "Recording",
     "Settings",

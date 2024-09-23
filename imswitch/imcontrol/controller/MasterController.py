@@ -1,12 +1,12 @@
 from imswitch.imcommon.model import VFileItem, initLogger
 # from imswitch.imcontrol.model import (
 #     DetectorsManager, LasersManager, MultiManager, NidaqManager, PositionersManager, RecordingManager, RS232sManager, 
-#     ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLMManager, StandManager, RotatorsManager, SIMManager, SLM4DDManager, ArduinoManager
+#     ScanManagerPointScan, ScanManagerBase, ScanManagerMoNaLISA, SLM25DManager, StandManager, RotatorsManager, SIMManager, SLM4DDManager, ArduinoManager
 # )
 
 from imswitch.imcontrol.model import (
-    DetectorsManager, LasersManager, MultiManager, PositionersManager, RecordingManager, RS232sManager, 
-     SLMManager, SIMManager, SLM4DDManager, ArduinoManager, SLM4DDManagerMock
+    DetectorsManager, LasersManager, MultiManager, PositionersManager, RecordingManager, RS232sManager,
+      SIMManager, SLM4DDManager, ArduinoManager, SLM4DDManagerMock, SLM25DManager, SLM25DManagerMock
 )
 
 
@@ -45,7 +45,7 @@ class MasterController:
         #                                        **lowLevelManagers)
 
         self.recordingManager = RecordingManager(self.detectorsManager)
-        self.slmManager = SLMManager(self.__setupInfo.slm)
+        #self.SLM25DManager = SLM25DManager(self.__setupInfo.slm)
 
         # if self.__setupInfo.microscopeStand:
         #     self.standManager = StandManager(self.__setupInfo.microscopeStand,
@@ -58,6 +58,12 @@ class MasterController:
                 self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
             else:    
                 self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
+
+        if self.__setupInfo.SLM25D:
+            if self.__setupInfo.SLM25D.mock:
+                self.SLM25DManager = SLM25DManagerMock(self.__setupInfo.SLM25D)
+            else:    
+                self.SLM25DManager = SLM25DManager(self.__setupInfo.SLM25D)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,
@@ -96,7 +102,7 @@ class MasterController:
         self.recordingManager.sigMemorySnapAvailable.connect(cc.sigMemorySnapAvailable)
         self.recordingManager.sigMemoryRecordingAvailable.connect(self.memoryRecordingAvailable)
 
-        self.slmManager.sigSLMMaskUpdated.connect(cc.sigSLMMaskUpdated)
+        # self.SLM25DManager.sigSLMMaskUpdated.connect(cc.sigSLMMaskUpdated)
 
     def memoryRecordingAvailable(self, name, file, filePath, savedToDisk):
         self.__moduleCommChannel.memoryRecordings[name] = VFileItem(

@@ -20,7 +20,7 @@ class ArduinoManager(SignalInterface):
         
         # TODO: Remove after development. Handled in MasterController.
         # the same way StandManager is handled
-        # That is how they handled this in SLMManager.py
+        # That is how they handled this in SLM25DManager.py
         # if setupInfo is None:
         #     self._rs232manager = None
         #     return
