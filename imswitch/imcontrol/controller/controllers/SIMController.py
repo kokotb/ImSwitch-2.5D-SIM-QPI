@@ -176,7 +176,7 @@ class SIMController(ImConWidgetController):
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
-            if laser.power > 0:
+            if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
         ##CTNOTE TEMPORARY        
