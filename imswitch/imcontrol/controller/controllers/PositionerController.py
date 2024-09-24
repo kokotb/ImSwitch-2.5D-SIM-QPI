@@ -86,12 +86,11 @@ class PositionerController(ImConWidgetController):
         self.move(positionerName, axis, -self._widget.getStepSizeCoarse(positionerName, axis))
 
     def setAbsPosGUI(self, positionerName, axis):
-        # positionerName = self.getPositionerNames()[0] # probably stays the same
         absPos = self._widget.getAbsPos(positionerName, axis) # pulls value from text box
         self.setAbsPos(positionerName=positionerName, absPos=absPos, axis=axis)
         # Updates all positioners with current value in memory
-        for axis1 in self._master.positionersManager[positionerName].axes: 
-            self.updatePosition(positionerName, axis=axis1)
+        # for axis1 in self._master.positionersManager[positionerName].axes: 
+        self.updatePosition(positionerName, axis=axis)
         # self.updatePosition(positionerName, axis=axis)
 
     def setAbsPos(self, positionerName, absPos, axis):

@@ -1,5 +1,5 @@
 from qtpy import QtCore, QtWidgets
-from PyQt5.QtGui import QWheelEvent
+from PyQt5.QtGui import QWheelEvent , QDoubleValidator
 
 
 from imswitch.imcontrol.view import guitools as guitools
@@ -19,13 +19,10 @@ class PositionerWidget(Widget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.numPositioners = 0
+
         self.pars = {}
-        self.grid = QtWidgets.QGridLayout()
-        self.setLayout(self.grid)
-
-
-
+        self.posLayout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.posLayout)
 
     def addPositionerZ(self, positionerName, axes, speed):
 
@@ -41,13 +38,6 @@ class PositionerWidget(Widget):
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-        self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
-        self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-        self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
-        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-        self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
-        self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
-
         self.wholeZLayout.addWidget(self.pars['Label' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['Position' + parNameSuffix])
 
@@ -73,13 +63,19 @@ class PositionerWidget(Widget):
         self.gridZCoarseFine.addWidget(self.pars['StepUnitCoarse' + parNameSuffix], 1, 4)
         self.wholeZLayout.addLayout(self.gridZCoarseFine)
 
+
+        self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
+        self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
+        self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
         self.wholeZLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
-
         self.wholeZLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
 
-        self.grid.addLayout(self.wholeZLayout,0,0)
+        self.posLayout.addLayout(self.wholeZLayout)
 
 
         # Connect signals
@@ -99,143 +95,180 @@ class PositionerWidget(Widget):
             lambda *args, axis=axis: self.sigStepDownCoarseClicked.emit(positionerName, axis)
         )
 
-        self.numPositioners += 1
+
 
     def addPositionerXY(self, positionerName, axes, speed):
-        axisInitialValues = {  "X": "10",  "Y": "10"}
-        for i in range(len(axes)):
-            axis = axes[i]
-            initialValue = axisInitialValues[axis]
+        for axis in axes:
+            if axis == 'X':
+                self.addPositionerX(positionerName, axis, speed)
+            if axis == 'Y':
+                self.addPositionerY(positionerName, axis, speed)
 
-            parNameSuffix = self._getParNameSuffix(positionerName, axis)
-            label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
 
-            self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
-            self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
-            self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
-            self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
+    def addPositionerX(self, positionerName, axis, speed):
+        axisInitialValues = {"X": "10"}
+        self.wholeXLayout = QtWidgets.QHBoxLayout()
+        initialStepValue = axisInitialValues[axis]
 
-            self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialValue)
-            # self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLineEdit()
-            self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+        parNameSuffix = self._getParNameSuffix(positionerName, axis)
+        label = f'{axis}' if positionerName != axis else positionerName
 
-            self.grid.addWidget(self.pars['Label' + parNameSuffix], self.numPositioners, 0)
-            self.grid.addWidget(self.pars['Position' + parNameSuffix], self.numPositioners, 1)
-            self.grid.addWidget(self.pars['UpButton' + parNameSuffix], self.numPositioners, 3)
-            self.grid.addWidget(self.pars['DownButton' + parNameSuffix], self.numPositioners, 4)
-            self.grid.addWidget(QtWidgets.QLabel('Step'), self.numPositioners, 5)
-            self.grid.addWidget(self.pars['StepEdit' + parNameSuffix], self.numPositioners, 6)
-            self.grid.addWidget(self.pars['StepUnit' + parNameSuffix], self.numPositioners, 7)
+        self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
+        self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('→')
+        self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('←')
+        self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
+        self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
+        self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
+        self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
+        self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
 
-            # Connect signals
-            self.pars['UpButton' + parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigStepUpClicked.emit(positionerName, axis)
-            )
-            self.pars['DownButton' + parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigStepDownClicked.emit(positionerName, axis)
-            )
+
+        self.wholeXLayout.addWidget(self.pars['Label' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['Position' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['DownButton' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['UpButton' + parNameSuffix])
+        self.wholeXLayout.addWidget(QtWidgets.QLabel('Step'))
+        self.wholeXLayout.addWidget(self.pars['StepEdit' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['StepUnit' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
+        self.wholeXLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+
+        self.posLayout.addLayout(self.wholeXLayout)
+
+
+
+        # Connect signals
+        self.pars['UpButton' + parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigStepUpClicked.emit(positionerName, axis)
+        )
+        self.pars['DownButton' + parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigStepDownClicked.emit(positionerName, axis)
+        )
+        self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
+        )
+
+
+    def addPositionerY(self, positionerName, axis, speed):
+        axisInitialValues = {"Y": "10"}
+
+        self.wholeYLayout = QtWidgets.QHBoxLayout()
+
+        initialStepValue = axisInitialValues[axis]
+
+        parNameSuffix = self._getParNameSuffix(positionerName, axis)
+        label = f'{axis}' if positionerName != axis else positionerName
+
+        self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
+        self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('↑')
+        self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('↓')
+        self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
+        self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
+        self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
+        self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
+
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        # validator = QDoubleValidator()
+        # validator.setRange(-10000.0, 9999.0, 1)
+        # self.pars['AbsPosEdit' + parNameSuffix].setMaxLength(8)
+        # self.pars['AbsPosEdit' + parNameSuffix].setValidator(validator)
+        self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
+
+        self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
+
+
+        self.wholeYLayout.addWidget(self.pars['Label' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['Position' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['DownButton' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['UpButton' + parNameSuffix])
+        self.wholeYLayout.addWidget(QtWidgets.QLabel('Step'))
+        self.wholeYLayout.addWidget(self.pars['StepEdit' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['StepUnit' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
+        self.wholeYLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+
+
+
+        self.posLayout.addLayout(self.wholeYLayout)
+
+        # Connect signals
+        self.pars['UpButton' + parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigStepUpClicked.emit(positionerName, axis)
+        )
+        self.pars['DownButton' + parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigStepDownClicked.emit(positionerName, axis)
+        )
+        self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
+            lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
+        )
+
+
+    # def addPositioner(self, positionerName, axes, speed):
+    #     axisInitialValues = {  "X": "10",  "Y": "10",  "Z": "0.2"}
+    #     for i in range(len(axes)):
+    #         axis = axes[i]
+    #         initialValue = axisInitialValues[axis]
+
+    #         parNameSuffix = self._getParNameSuffix(positionerName, axis)
+    #         label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
+
+    #         self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
+    #         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+    #         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+    #         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+    #         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
+    #         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
+
+    #         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialValue)
+    #         # self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLineEdit()
+    #         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+
+    #         self.posLayout.addWidget(self.pars['Label' + parNameSuffix], self.numPositioners, 0)
+    #         self.posLayout.addWidget(self.pars['Position' + parNameSuffix], self.numPositioners, 1)
+    #         self.posLayout.addWidget(self.pars['UpButton' + parNameSuffix], self.numPositioners, 3)
+    #         self.posLayout.addWidget(self.pars['DownButton' + parNameSuffix], self.numPositioners, 4)
+    #         self.posLayout.addWidget(QtWidgets.QLabel('Step'), self.numPositioners, 5)
+    #         self.posLayout.addWidget(self.pars['StepEdit' + parNameSuffix], self.numPositioners, 6)
+    #         self.posLayout.addWidget(self.pars['StepUnit' + parNameSuffix], self.numPositioners, 7)
+
+    #         # Connect signals
+    #         self.pars['UpButton' + parNameSuffix].clicked.connect(
+    #             lambda *args, axis=axis: self.sigStepUpClicked.emit(positionerName, axis)
+    #         )
+    #         self.pars['DownButton' + parNameSuffix].clicked.connect(
+    #             lambda *args, axis=axis: self.sigStepDownClicked.emit(positionerName, axis)
+    #         )
             
-   
-            self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
-            self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
-            self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-            self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
-            self.grid.addWidget(self.pars['AbsPosEdit' + parNameSuffix], self.numPositioners, 9)
-            self.grid.addWidget(self.pars['AbsPosUnit' + parNameSuffix], self.numPositioners, 10)
-            self.grid.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix], self.numPositioners, 11)
-            self.grid.addWidget(self.pars['AbsPos' + parNameSuffix], self.numPositioners, 8)
+    #         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
+    #         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+    #         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
+    #         self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+    #         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+    #         self.posLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix], self.numPositioners, 9)
+    #         self.posLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix], self.numPositioners, 10)
+    #         self.posLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix], self.numPositioners, 11)
+    #         self.posLayout.addWidget(self.pars['AbsPos' + parNameSuffix], self.numPositioners, 8)
 
 
-            self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
-            )
+    #         self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
+    #             lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
+    #         )
 
-            # self.pars['Speed' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Speed</strong>')
-            # self.pars['Speed' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            # self.pars['ButtonSpeedEnter' + parNameSuffix] = guitools.BetterPushButton('SetSpeed')
-            # self.pars['SpeedEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-            # self.pars['SpeedUnit' + parNameSuffix] = QtWidgets.QLabel(' µm/s?')
-            # self.grid.addWidget(self.pars['SpeedEdit' + parNameSuffix], self.numPositioners, 13)
-            # self.grid.addWidget(self.pars['SpeedUnit' + parNameSuffix], self.numPositioners, 14)
-            # self.grid.addWidget(self.pars['ButtonSpeedEnter' + parNameSuffix], self.numPositioners, 15)
-            # self.grid.addWidget(self.pars['Speed' + parNameSuffix], self.numPositioners, 12)
-
-            # self.pars['ButtonSpeedEnter'+ parNameSuffix].clicked.connect(
-            #     lambda *args, axis=axis: self.sigsetPositionerSpeedClicked.emit(positionerName, axis)
-            # )
-
-            self.numPositioners += 1
-
-    def addPositioner(self, positionerName, axes, speed):
-        axisInitialValues = {  "X": "10",  "Y": "10",  "Z": "0.2"}
-        for i in range(len(axes)):
-            axis = axes[i]
-            initialValue = axisInitialValues[axis]
-
-            parNameSuffix = self._getParNameSuffix(positionerName, axis)
-            label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
-
-            self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
-            self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
-            self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
-            self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
-
-            self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialValue)
-            # self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLineEdit()
-            self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
-
-            self.grid.addWidget(self.pars['Label' + parNameSuffix], self.numPositioners, 0)
-            self.grid.addWidget(self.pars['Position' + parNameSuffix], self.numPositioners, 1)
-            self.grid.addWidget(self.pars['UpButton' + parNameSuffix], self.numPositioners, 3)
-            self.grid.addWidget(self.pars['DownButton' + parNameSuffix], self.numPositioners, 4)
-            self.grid.addWidget(QtWidgets.QLabel('Step'), self.numPositioners, 5)
-            self.grid.addWidget(self.pars['StepEdit' + parNameSuffix], self.numPositioners, 6)
-            self.grid.addWidget(self.pars['StepUnit' + parNameSuffix], self.numPositioners, 7)
-
-            # Connect signals
-            self.pars['UpButton' + parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigStepUpClicked.emit(positionerName, axis)
-            )
-            self.pars['DownButton' + parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigStepDownClicked.emit(positionerName, axis)
-            )
-            
-   
-            self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
-            self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
-            self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-            self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
-            self.grid.addWidget(self.pars['AbsPosEdit' + parNameSuffix], self.numPositioners, 9)
-            self.grid.addWidget(self.pars['AbsPosUnit' + parNameSuffix], self.numPositioners, 10)
-            self.grid.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix], self.numPositioners, 11)
-            self.grid.addWidget(self.pars['AbsPos' + parNameSuffix], self.numPositioners, 8)
-
-
-            self.pars['ButtonAbsPosEnter'+ parNameSuffix].clicked.connect(
-                lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
-            )
-
-            # self.pars['Speed' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Speed</strong>')
-            # self.pars['Speed' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            # self.pars['ButtonSpeedEnter' + parNameSuffix] = guitools.BetterPushButton('SetSpeed')
-            # self.pars['SpeedEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
-            # self.pars['SpeedUnit' + parNameSuffix] = QtWidgets.QLabel(' µm/s?')
-            # self.grid.addWidget(self.pars['SpeedEdit' + parNameSuffix], self.numPositioners, 13)
-            # self.grid.addWidget(self.pars['SpeedUnit' + parNameSuffix], self.numPositioners, 14)
-            # self.grid.addWidget(self.pars['ButtonSpeedEnter' + parNameSuffix], self.numPositioners, 15)
-            # self.grid.addWidget(self.pars['Speed' + parNameSuffix], self.numPositioners, 12)
-
-            # self.pars['ButtonSpeedEnter'+ parNameSuffix].clicked.connect(
-            #     lambda *args, axis=axis: self.sigsetPositionerSpeedClicked.emit(positionerName, axis)
-            # )
-
-            self.numPositioners += 1
+    #         self.numPositioners += 1
 
     def wheelEvent(self, event: QWheelEvent):
             modifiers = QtWidgets.QApplication.keyboardModifiers()

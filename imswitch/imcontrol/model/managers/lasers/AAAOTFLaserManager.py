@@ -41,7 +41,7 @@ class AAAOTFLaserManager(LaserManager):
         valueaotf = round(power)  # assuming input value is [0,1023]
         cmd = 'L' + str(self._channel) + 'P' + str(valueaotf)
         ans = self._rs232manager.query(cmd)
-        print(ans)
+        # print(ans)
 
     def blankingOn(self):
         """Switch on the blanking of all the channels"""
