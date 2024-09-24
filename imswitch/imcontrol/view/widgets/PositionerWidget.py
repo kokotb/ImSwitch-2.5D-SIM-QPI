@@ -1,4 +1,6 @@
 from qtpy import QtCore, QtWidgets
+from PyQt5.QtGui import QWheelEvent
+
 
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
@@ -13,6 +15,7 @@ class PositionerWidget(Widget):
     sigStepDownCoarseClicked = QtCore.Signal(str, str)  # (positionerName, axis)
     sigsetAbsPosClicked = QtCore.Signal(str, str)  # (positionerName, axis)
     sigsetPositionerSpeedClicked = QtCore.Signal(str, str)  # (positionerName, axis)
+    sigWheelEvent = QtCore.Signal(float)  # (positionerName, axis)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,6 +23,9 @@ class PositionerWidget(Widget):
         self.pars = {}
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
+
+
+
 
     def addPositionerZ(self, positionerName, axes, speed):
 
@@ -228,6 +234,15 @@ class PositionerWidget(Widget):
             # )
 
             self.numPositioners += 1
+
+    def wheelEvent(self, event: QWheelEvent):
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ShiftModifier:
+                self.focusDelta = event.angleDelta().y() / 12
+                self.sigWheelEvent.emit(self.focusDelta)
+            elif modifiers == QtCore.Qt.ControlModifier:
+                self.focusDelta = event.angleDelta().y() / 600
+                self.sigWheelEvent.emit(self.focusDelta)
 
     def getStepSize(self, positionerName, axis):
         """ Returns the step size of the specified positioner axis in

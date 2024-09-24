@@ -45,6 +45,7 @@ class PositionerController(ImConWidgetController):
         self._widget.sigStepDownCoarseClicked.connect(self.stepDownCoarse)
         self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
         self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
+        self._widget.sigWheelEvent.connect(self.focusWheelDelta)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(
@@ -54,7 +55,10 @@ class PositionerController(ImConWidgetController):
 
     def getPos(self):
         return self._master.positionersManager.execOnAll(lambda p: p.position)
-
+    
+    def focusWheelDelta(self, focusDelta):
+        self._master.positionersManager['Z'].move(focusDelta, 'Z')
+        self.updatePosition('Z', 'Z')
 
     def getSpeed(self):
         return self._master.positionersManager.execOnAll(lambda p: p.speed)
