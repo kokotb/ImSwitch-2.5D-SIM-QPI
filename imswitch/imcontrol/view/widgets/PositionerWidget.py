@@ -45,6 +45,7 @@ class PositionerWidget(Widget):
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
         self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
 
         self.wholeZLayout.addWidget(self.pars['Label' + parNameSuffix])
@@ -74,6 +75,7 @@ class PositionerWidget(Widget):
 
         self.wholeZLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
+
         self.wholeZLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
 
