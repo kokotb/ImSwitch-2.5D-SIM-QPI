@@ -29,39 +29,68 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
 
         # Connect SLMWidget signals
-        self._widget.controlPanel.upButton.clicked.connect(
-            lambda: self.moveMask(Direction.Up))  # change 'up' to (x,y)=(0,1)
-        self._widget.controlPanel.downButton.clicked.connect(
-            lambda: self.moveMask(Direction.Down))  # change 'down' to (x,y)=(0,-1)
-        self._widget.controlPanel.leftButton.clicked.connect(
-            lambda: self.moveMask(Direction.Left))  # change 'left' to (x,y)=(-1,0)
-        self._widget.controlPanel.rightButton.clicked.connect(
-            lambda: self.moveMask(Direction.Right))  # change 'right' to (x,y)=(1,0)
+        # self._widget.controlPanel.upButton.clicked.connect(
+        #     lambda: self.moveMask(Direction.Up))  # change 'up' to (x,y)=(0,1)
+        # self._widget.controlPanel.downButton.clicked.connect(
+        #     lambda: self.moveMask(Direction.Down))  # change 'down' to (x,y)=(0,-1)
+        # self._widget.controlPanel.leftButton.clicked.connect(
+        #     lambda: self.moveMask(Direction.Left))  # change 'left' to (x,y)=(-1,0)
+        # self._widget.controlPanel.rightButton.clicked.connect(
+        #     lambda: self.moveMask(Direction.Right))  # change 'right' to (x,y)=(1,0)
 
-        self._widget.controlPanel.saveButton.clicked.connect(self.saveParams)
-        self._widget.controlPanel.loadButton.clicked.connect(self.loadParams)
+        #self._widget.controlPanel.saveButton.clicked.connect(self.saveParams)
+        #self._widget.controlPanel.loadButton.clicked.connect(self.loadParams)
 
-        self._widget.controlPanel.donutButton.clicked.connect(lambda: self.setMask(MaskMode.Donut))
-        self._widget.controlPanel.tophatButton.clicked.connect(
-            lambda: self.setMask(MaskMode.Tophat))
+        # self._widget.controlPanel.donutButton.clicked.connect(lambda: self.setMask(MaskMode.Donut))
+        # self._widget.controlPanel.tophatButton.clicked.connect(
+        #     lambda: self.setMask(MaskMode.Tophat))
 
-        self._widget.controlPanel.blackButton.clicked.connect(lambda: self.setMask(MaskMode.Black))
-        self._widget.controlPanel.gaussianButton.clicked.connect(
-            lambda: self.setMask(MaskMode.Gauss))
+        # self._widget.controlPanel.blackButton.clicked.connect(lambda: self.setMask(MaskMode.Black))
+        # self._widget.controlPanel.gaussianButton.clicked.connect(
+        #     lambda: self.setMask(MaskMode.Gauss))
 
-        self._widget.controlPanel.halfButton.clicked.connect(lambda: self.setMask(MaskMode.Half))
-        self._widget.controlPanel.quadrantButton.clicked.connect(
-            lambda: self.setMask(MaskMode.Quad))
-        self._widget.controlPanel.hexButton.clicked.connect(lambda: self.setMask(MaskMode.Hex))
-        self._widget.controlPanel.splitbullButton.clicked.connect(
-            lambda: self.setMask(MaskMode.Split))
+        # self._widget.controlPanel.halfButton.clicked.connect(lambda: self.setMask(MaskMode.Half))
+        # self._widget.controlPanel.quadrantButton.clicked.connect(
+        #     lambda: self.setMask(MaskMode.Quad))
+        # self._widget.controlPanel.hexButton.clicked.connect(lambda: self.setMask(MaskMode.Hex))
+        # self._widget.controlPanel.splitbullButton.clicked.connect(
+        #     lambda: self.setMask(MaskMode.Split))
 
-        self._widget.applyChangesButton.clicked.connect(self.applyParams)
-        self._widget.sigSLMDisplayToggled.connect(self.toggleSLMDisplay)
-        self._widget.sigSLMMonitorChanged.connect(self.monitorChanged)
+        # self._widget.applyChangesButton.clicked.connect(self.applyParams)
+        # self._widget.sigSLMDisplayToggled.connect(self.toggleSLMDisplay)
+        # self._widget.sigSLMMonitorChanged.connect(self.monitorChanged)
 
+        #self._widget.addSLM()
         # Initial SLM display
         #self.displayMask(self._master.SLM25DManager.maskCombined)
+
+        # Connect PositionerWidget signals
+        self._widget.sigStepUpClicked.connect(self.stepUp)
+        self._widget.sigStepDownClicked.connect(self.stepDown)
+        #self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
+
+    #def stepUp(self, positionerName, axis):
+     #   self.move(positionerName, axis, self._widget.getStepSize(positionerName, axis))
+
+    #def stepDown(self, positionerName, axis):
+     #   self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
+
+    def move(self, positionerName, axis, dist):
+        """ Moves positioner by dist micrometers in the specified axis. """
+        self.updatePosition(positionerName, axis)
+
+    def stepUp(self, positionerName, axis):
+        absPos = self._widget.getAbsPos(positionerName, axis)
+        step = self._widget.getStepSize(positionerName, axis)
+        newPosition = absPos + step
+        self._widget.updatePosition(positionerName, axis, float(newPosition))
+        #self.setSharedAttr(positionerName, axis, _positionAttr, newPos)
+
+    def stepDown(self, positionerName, axis):
+        absPos = self._widget.getAbsPos(positionerName, axis)
+        step = self._widget.getStepSize(positionerName, axis)
+        newPosition = absPos - step
+        self._widget.updatePosition(positionerName, axis, float(newPosition))
 
     def toggleSLMDisplay(self, enabled):
         self._widget.setSLMDisplayVisible(enabled)
