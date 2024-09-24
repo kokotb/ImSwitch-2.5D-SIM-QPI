@@ -228,31 +228,32 @@ def getNamesByPattern(file_names, pattern):
 ##############################
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p3overlap"
-input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p5overlap"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p5overlap"
+input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\1 - analysis\\sensitivity\\SIM\\240918110201_CT_HanaSampleWell2"
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_Neg0p5overlap"
 
 # Set if you want to run tiling from folder
 # input_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
-exp_names = ["2024_08_"]
-name_pattern = "SIM_Stack" # can be wf or something else
-t_pattern = "t_"
+exp_names = ["f"]
+name_pattern = "_stack" # can be wf or something else
+t_pattern = "f"
 
 # input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
 # exp_names = ["2024_07_"]
 # name_pattern = "Reconstruction"
 # t_pattern = "frame_"
 
-single_channels_names = ['488nm', '561nm', '640nm']
-number_of_rows = 5
-number_of_columns = 5
+single_channels_names = ['510', '580', '660']
+number_of_rows = 1
+number_of_columns = 1
 image_overlay = 0.58
 # image_overlay = 0
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run
 create_tiling = True                                   # can be True or False
-combine_timepoints = True
-combine_timepoints_colors_separate = False
+combine_timepoints = False
+combine_timepoints_colors_separate = True
 single_chan_tiling = False
 is_sim_stack = True # True for SIM_stack, false for Reconstructed images
 # reorder_stack = True

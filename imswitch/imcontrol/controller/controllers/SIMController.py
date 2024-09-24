@@ -154,7 +154,6 @@ class SIMController(ImConWidgetController):
         self.log_times_loop = []
         
 
-
     def performSIMExperimentThread(self, sim_parameters):
         """
         Select a sequence on the SLM that will choose laser combination.
@@ -379,6 +378,7 @@ class SIMController(ImConWidgetController):
 
 
                     waitingBuffers = detector._camera.getBufferValue()
+
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
                     broken = False
@@ -867,7 +867,7 @@ class SIMController(ImConWidgetController):
         # Load parameters to object
         self.num_grid_x = int(parameter_dict['num_grid_x'])
         self.num_grid_y = int(parameter_dict['num_grid_y'])
-        self.overlap = float(parameter_dict['overlap'])
+        self.overlap = float(parameter_dict['overlap'])/100
         
         # self.exposure = float(parameter_dict['exposure'])
 

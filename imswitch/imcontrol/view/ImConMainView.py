@@ -80,7 +80,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'SIM': _DockInfo(name = 'SIM', yPosition = 2),
             'Laser': _DockInfo(name='Laser Control', yPosition=3),
             'Positioner': _DockInfo(name='Positioner', yPosition=4),
-            'Console': _DockInfo(name='Console', yPosition=5)
+            'Console': _DockInfo(name='Console', yPosition=5),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 6)
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys
