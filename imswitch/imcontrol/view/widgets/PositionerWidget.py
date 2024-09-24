@@ -278,6 +278,7 @@ class PositionerWidget(Widget):
             elif modifiers == QtCore.Qt.ControlModifier:
                 self.focusDelta = event.angleDelta().y() / 600
                 self.sigWheelEvent.emit(self.focusDelta)
+            event.accept()
 
     def getStepSize(self, positionerName, axis):
         """ Returns the step size of the specified positioner axis in
