@@ -106,12 +106,12 @@ class SIMWidget(NapariHybridWidget):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.calibrateButton = QPushButton("Calibrate")
-        self.saveOneReconRawButton = QPushButton("Save One Recon/Raw Set")
+        self.saveOneSetButton = QPushButton("Save One Set")
         button_layout = QtWidgets.QGridLayout()
         button_layout.addWidget(self.start_button,0,0)
         button_layout.addWidget(self.stop_button,0,1)
         button_layout.addWidget(self.calibrateButton,1,0)
-        button_layout.addWidget(self.saveOneReconRawButton,1,1)
+        button_layout.addWidget(self.saveOneSetButton,1,1)
         wholeTabVertLayout.addLayout(button_layout)
     
         # Checkbox options
@@ -119,12 +119,13 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_reconstruction.setChecked(True)
         self.checkbox_record_reconstruction = QCheckBox('Save Reconstruction')
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
+        self.checkbox_record_WF = QCheckBox('Save Widefield')
         self.checkbox_logging = QCheckBox("Logging")
-        self.checkbox_logging.setChecked(False)
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
+        checkbox_layout.addWidget(self.checkbox_record_WF)
         checkbox_layout.addWidget(self.checkbox_logging)
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
@@ -136,12 +137,13 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
     
-        # Grid scan settings
-        self.gridScanLabelBox = QtWidgets.QHBoxLayout()
-        self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
-        self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
-        # vertLayout.addLayout(self.gridScanLabelBox)
         
+        # self.gridScanLabelBox = QtWidgets.QHBoxLayout()
+        # self.gridScanBoxLabel = QLabel('<h3><strong>Grid Scan</strong></h3>')
+        # self.gridScanLabelBox.addWidget(self.gridScanBoxLabel)
+        # vertLayout.addLayout(self.gridScanLabelBox)
+
+        # Grid scan settings
         gridScanLayout = QtWidgets.QGridLayout()
         self.numGridX_label = QLabel("Steps - X")
         self.numGridX_textedit = QLineEdit("1")
@@ -176,7 +178,6 @@ class SIMWidget(NapariHybridWidget):
         self.expt_label = QLabel("Experiment Name")
         self.expt_edit = QLineEdit("")
         self.openFolderButton = guitools.BetterPushButton('Open')
-        # self.checkbox_mock = QCheckBox("Mock")
         row = 0
         parameters2_layout.addWidget(self.user_label, row, 0)
         parameters2_layout.addWidget(self.user_edit, row, 1)
@@ -185,7 +186,6 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.path_label, row+2, 0)
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
-        # parameters2_layout.addWidget(self.checkbox_mock, row + 2, 0)
         tabBottomVertLayout1.addLayout(parameters2_layout)
         
         # FIXME: delete after development
@@ -193,7 +193,7 @@ class SIMWidget(NapariHybridWidget):
         # button_layout_test = QtWidgets.QGridLayout()
         # button_layout_test.addWidget(self.start_button_test,0,0)
         # tabBottomVertLayout2.addLayout(button_layout_test)
-        reconstruction_parameters_tab = self.create_reconstruction_parameters_tab()
+        reconstruction_parameters_tab = self.create_reconstruction_parameters()
         tabBottomVertLayout2.addLayout(reconstruction_parameters_tab)
         
         tabBottomHorLayout.addLayout(tabBottomVertLayout2)
@@ -238,7 +238,7 @@ class SIMWidget(NapariHybridWidget):
 
 
 
-    def create_reconstruction_parameters_tab(self):
+    def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
@@ -247,12 +247,12 @@ class SIMWidget(NapariHybridWidget):
         
         
         # create widget per label
-        self.wavelength1_label = QLabel("")
-        self.wavelength1_textedit = QLineEdit("")
-        self.wavelength2_label = QLabel("")
-        self.wavelength2_textedit = QLineEdit("")
-        self.wavelength3_label = QLabel("")
-        self.wavelength3_textedit = QLineEdit("")
+        self.ReconWL1_label = QLabel("")
+        self.ReconWL1_textedit = QLineEdit("")
+        self.ReconWL2_label = QLabel("")
+        self.ReconWL2_textedit = QLineEdit("")
+        self.ReconWL3_label = QLabel("")
+        self.ReconWL3_textedit = QLineEdit("")
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
         self.pixelsize_label = QLabel("")
@@ -270,14 +270,14 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_label = QLabel("")
         self.magnification_textedit = QLineEdit("")
         row_layout_1 = QHBoxLayout()
-        row_layout_1.addWidget(self.wavelength1_label)
-        row_layout_1.addWidget(self.wavelength1_textedit)
+        row_layout_1.addWidget(self.ReconWL1_label)
+        row_layout_1.addWidget(self.ReconWL1_textedit)
         row_layout_2 = QHBoxLayout()
-        row_layout_2.addWidget(self.wavelength2_label)
-        row_layout_2.addWidget(self.wavelength2_textedit)
+        row_layout_2.addWidget(self.ReconWL2_label)
+        row_layout_2.addWidget(self.ReconWL2_textedit)
         row_layout_3 = QHBoxLayout()
-        row_layout_3.addWidget(self.wavelength3_label)
-        row_layout_3.addWidget(self.wavelength3_textedit)
+        row_layout_3.addWidget(self.ReconWL3_label)
+        row_layout_3.addWidget(self.ReconWL3_textedit)
         row_layout_4 = QHBoxLayout()
         row_layout_4.addWidget(self.NA_label)
         row_layout_4.addWidget(self.NA_textedit)
@@ -328,14 +328,14 @@ class SIMWidget(NapariHybridWidget):
     def setSIMWidgetFromConfig(self,setupInfoDict):
 
         params = [
-            "Wavelength1", "Wavelength2", "Wavelength3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
+            "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
         ]
-        self.wavelength1_label.setText(params[0])
-        self.wavelength1_textedit.setText(str(setupInfoDict[params[0]]))
-        self.wavelength2_label.setText(params[1])
-        self.wavelength2_textedit.setText(str(setupInfoDict[params[1]]))
-        self.wavelength3_label.setText(params[2])
-        self.wavelength3_textedit.setText(str(setupInfoDict[params[2]]))
+        self.ReconWL1_label.setText(params[0])
+        self.ReconWL1_textedit.setText(str(setupInfoDict[params[0]]))
+        self.ReconWL2_label.setText(params[1])
+        self.ReconWL2_textedit.setText(str(setupInfoDict[params[1]]))
+        self.ReconWL3_label.setText(params[2])
+        self.ReconWL3_textedit.setText(str(setupInfoDict[params[2]]))
         self.NA_label.setText(params[3])
         self.NA_textedit.setText(str(setupInfoDict[params[3]]))
         self.pixelsize_label.setText(params[4])

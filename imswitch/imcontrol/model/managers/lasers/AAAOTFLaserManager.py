@@ -1,4 +1,5 @@
 from .LaserManager import LaserManager
+import math
 
 
 class AAAOTFLaserManager(LaserManager):
@@ -18,8 +19,8 @@ class AAAOTFLaserManager(LaserManager):
         self._rs232manager = lowLevelManagers['rs232sManager'][
             laserInfo.managerProperties['rs232device']
         ]
-        
-        self.power = laserInfo.valueInit
+        # self.maxdBm = laserInfo.maxdBmValue
+        self.percentPower = laserInfo.valueInit
         self.externalControl()
         super().__init__(laserInfo, name, isBinary=False, valueUnits='arb', valueDecimals=0)
 
@@ -33,28 +34,40 @@ class AAAOTFLaserManager(LaserManager):
         ans = self._rs232manager.query(cmd)
         print(ans)
 
-    def setValue(self, power):
+    def setValue(self, percentPower):
         """Handles output power.
         Sends a RS232 command to the laser specifying the new intensity.
         """
-        self.power = power
-        valueaotf = round(power)  # assuming input value is [0,1023]
-        cmd = 'L' + str(self._channel) + 'P' + str(valueaotf)
+        maxdBm = self._LaserManager__maxdBm
+        self.setdBm = self.powerPercentTodBm(maxdBm,power)
+        self.percentPower = percentPower
+        valueaotf = round(self.setdBm,1)
+        cmd = 'L' + str(self._channel) + 'D' + str(valueaotf)
         ans = self._rs232manager.query(cmd)
         print(ans)
 
-    def blankingOn(self):
-        """Switch on the blanking of all the channels"""
-        # cmd = 'L0' + 'I1' + 'O1'
-        cmd = 'L1'
+    # def blankingOn(self):
+    #     """Switch on the blanking of all the channels"""
+    #     # cmd = 'L0' + 'I1' + 'O1'
+    #     cmd = 'L1'
         
-        self._rs232manager.query(cmd)
+    #     self._rs232manager.query(cmd)
 
     def externalControl(self):
         """Switch the channel to external control""" 
         cmd = 'L' + str(self._channel) + 'I1' #1=external, 0=internal
         ans = self._rs232manager.query(cmd)
         # print(ans)
+
+    def powerPercentTodBm(self,maxdBm,power):
+        try:
+            offset = 5*math.log(100)-maxdBm
+            setdBm = 5*math.log(power) - offset
+        except ValueError as ve:
+            setdBm = -2.0
+
+        return setdBm
+
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

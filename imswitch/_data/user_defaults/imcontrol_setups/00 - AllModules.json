@@ -21,9 +21,9 @@
   "monitorIdx": 2,
   "width": 1920,
   "height": 1080,
-  "Wavelength1": 510,
-  "Wavelength2": 580,
-  "Wavelength3": 660,
+  "ReconWL1": 510,
+  "ReconWL2": 580,
+  "ReconWL3": 660,
   "NA": 0.8,
   "Pixelsize": 2.74,
   "Alpha": 0.5,
@@ -55,11 +55,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1700.0
+        "ExposureTime": 1500.0
       },
       "ROI":{
-        "OffsetX": 2648,
-        "OffsetY": 1850,
+        "OffsetX": 2048,
+        "OffsetY": 1732,
         "Width": 512,
         "Height": 512
       }
@@ -82,11 +82,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1700.0
+        "ExposureTime": 9000.0
       },
       "ROI":{
-        "OffsetX": 2442,
-        "OffsetY": 2156,
+        "OffsetX": 2560,
+        "OffsetY": 2325,
         "Width": 512,
         "Height": 512
       }
@@ -109,11 +109,11 @@
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
           "AcquisitionFrameRate":5.0,
-          "ExposureTime": 1700.0
+          "ExposureTime": 500.0
         },
         "ROI":{
-          "OffsetX": 2560,
-          "OffsetY": 2064,
+          "OffsetX": 2528,
+          "OffsetY": 2252,
           "Width": 512,
           "Height": 512
         }
@@ -135,9 +135,11 @@
       },
       "wavelength": 488,
       "valueRangeMin": 0,
-      "valueRangeMax": 1023,
-      "valueRangeStep": 10,
-      "valueInit": 513
+      "valueRangeMax": 100,
+      "valueRangeStep": 2,
+      "valueInit": 100,
+      "maxdBmValue": 18.2
+      
       },
   "561AOTF": {
     "analogChannel": null,
@@ -149,9 +151,10 @@
     },
     "wavelength": 561,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 545
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 20.2
     },
   "640AOTF": {
     "analogChannel": null,
@@ -163,9 +166,10 @@
     },
     "wavelength": 640,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 605
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 22.0
     }
     
 },
