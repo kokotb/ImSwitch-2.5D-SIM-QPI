@@ -17,12 +17,8 @@ class InfoGatheringWidget(NapariHybridWidget):
         #super().__init__(*args, **kwargs)
 
         # Main GUI 
-        self.layout = QtWidgets.QHBoxLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
-
-        # Side TabView
-        # self.tabView = QTabWidget()
-        # self.layout.addWidget(self.tabView, 0)
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.
