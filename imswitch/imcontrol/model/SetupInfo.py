@@ -51,6 +51,7 @@ class LaserInfo(DeviceInfo):
     valueRangeMin: Optional[Union[int, float]]
     """ Minimum value of the laser. ``null`` if laser doesn't setting a value.
     """
+    maxdBmValue: Optional[Union[int, float]]
 
     valueRangeMax: Optional[Union[int, float]]
     """ maximum value of the laser. ``null`` if laser doesn't setting a value.
@@ -71,9 +72,11 @@ class LaserInfo(DeviceInfo):
     freqRangeInit: Optional[int] = 0
     """ Initial value of frequency modulation. Don't fill if laser doesn't support it. """
 
-    valueRangeStep: float = 1.0
+    valueRangeStep: float = 2
     """ The default step size of the value range that the laser can be set to.
     """
+
+
 
 
 

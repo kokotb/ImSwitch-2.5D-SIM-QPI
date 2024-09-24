@@ -135,9 +135,11 @@
       },
       "wavelength": 488,
       "valueRangeMin": 0,
-      "valueRangeMax": 1023,
-      "valueRangeStep": 10,
-      "valueInit": 513
+      "valueRangeMax": 100,
+      "valueRangeStep": 2,
+      "valueInit": 100,
+      "maxdBmValue": 18.2
+      
       },
   "561AOTF": {
     "analogChannel": null,
@@ -149,9 +151,10 @@
     },
     "wavelength": 561,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 545
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 20.2
     },
   "640AOTF": {
     "analogChannel": null,
@@ -163,9 +166,10 @@
     },
     "wavelength": 640,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 605
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 22.0
     }
     
 },
