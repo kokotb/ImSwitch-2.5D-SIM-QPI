@@ -80,6 +80,7 @@ class ImConMainView(QtWidgets.QMainWindow):
             'View': _DockInfo(name='Image Controls', yPosition=1),
             'Recording': _DockInfo(name='Recording', yPosition=2),
             'SIM': _DockInfo(name = 'SIM', yPosition = 2),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 3),
             'Console': _DockInfo(name='Console', yPosition=4)
         }
         otherDockKeys = ['Image']

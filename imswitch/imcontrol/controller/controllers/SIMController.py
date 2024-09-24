@@ -152,7 +152,7 @@ class SIMController(ImConWidgetController):
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneReconRawButton.clicked.connect(self.saveOneReconRaw)
-        # Communication channels signls (signals sent elsewhere in the program)
+        # Communication channels signals (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
@@ -164,7 +164,6 @@ class SIMController(ImConWidgetController):
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
         
-
 
     def performSIMExperimentThread(self, sim_parameters):
         """

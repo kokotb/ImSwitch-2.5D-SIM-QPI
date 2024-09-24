@@ -25,3 +25,4 @@ from .SLMController import SLMController
 from .ViewController import ViewController
 # from .WatcherController import WatcherController
 from .SIMController import SIMController
+from. InfoGatheringController import InfoGatheringController
