@@ -19,8 +19,7 @@ class SIMWidget(NapariHybridWidget):
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
-
-
+    sigUserDirInfoChanged = QtCore.Signal(str, str, str)
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
@@ -58,6 +57,9 @@ class SIMWidget(NapariHybridWidget):
         self.layer = None
         self.laserColormaps = {'488':'blue','561':'green','640':'red'}
         self.micronsPerPixel = [.1233,.1233]
+        self.connectSIMSharedAttrSigs(self.params)
+        self.connectUserDirSharedAttrSigs()
+
         
     def getImage(self):
         if self.layer is not None:
@@ -240,19 +242,16 @@ class SIMWidget(NapariHybridWidget):
             reconStateBool = True
         return reconStateBool
 
-    def setDefaultSaveDir(self, saveDir):
+    def setUserDirInfo(self, saveDir):
         self.path_edit.setText(saveDir)
-
-
+        self.user_edit.setText('username')
+        self.expt_edit.setText('exptname')
 
     def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
-        
 
-        
-        
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
@@ -331,7 +330,7 @@ class SIMWidget(NapariHybridWidget):
         
     def setSIMWidgetFromConfig(self,setupInfoDict):
 
-        self.connectSharedAttrSigs(self.params)
+
         self.ReconWL1_label.setText(self.params[0])
         self.ReconWL1_textedit.setText(str(setupInfoDict[self.params[0]]))
         self.ReconWL2_label.setText(self.params[1])
@@ -355,7 +354,7 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_label.setText(self.params[10])
         self.magnification_textedit.setText(str(setupInfoDict[self.params[10]]))    
 
-    def connectSharedAttrSigs(self, params):
+    def connectSIMSharedAttrSigs(self, params):
         self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[0],value))
         self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[1],value))
         self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[2],value))
@@ -380,6 +379,11 @@ class SIMWidget(NapariHybridWidget):
         # self.eta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[8],self.eta_textedit.text()))
         # self.n_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[9],self.n_textedit.text()))
         # self.magnification_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[10],self.magnification_textedit.text()))
+
+    def connectUserDirSharedAttrSigs(self):
+        self.path_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Working Directory',value))
+        self.user_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',value))
+        self.expt_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','User Name',value))
 
     def getZStackParameters(self):
         return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))

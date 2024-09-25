@@ -93,14 +93,11 @@ class SIMController(ImConWidgetController):
 
         #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
         self._widget.sigSIMParamChanged.connect(self.valueChanged)
+        self._widget.sigUserDirInfoChanged.connect(self.valueChanged)
 
 
-        setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict.
+        setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict and also set on SIM widget.
 
-        
-        
-    
-        
         #Create list of available laser objects from config file.
         # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
         self.lasers = list(self._master.lasersManager._subManagers.values()) #List of just the laser object handles
@@ -156,7 +153,7 @@ class SIMController(ImConWidgetController):
         self.populateAndSelectROList()
 
         #Get save directory root from config file and populate text box in SIM widget.
-        self._widget.setDefaultSaveDir(setupInfoDict['saveDir'])
+        self._widget.setUserDirInfo(setupInfoDict['saveDir'])
         
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
