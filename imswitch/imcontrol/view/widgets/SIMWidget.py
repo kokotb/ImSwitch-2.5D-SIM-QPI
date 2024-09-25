@@ -20,6 +20,8 @@ class SIMWidget(NapariHybridWidget):
     sigSIMAcqToggled = QtCore.Signal(bool)
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
+    sigTilingInfoChanged = QtCore.Signal(str, str, str)
+    sigROInfoChanged = QtCore.Signal(str, str, str)
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
@@ -112,7 +114,7 @@ class SIMWidget(NapariHybridWidget):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.calibrateButton = QPushButton("Calibrate")
-        self.saveOneSetButton = QPushButton("Save One Set")
+        self.saveOneSetButton = QPushButton("Snapshot")
         button_layout = QtWidgets.QGridLayout()
         button_layout.addWidget(self.start_button,0,0)
         button_layout.addWidget(self.stop_button,0,1)
@@ -139,6 +141,7 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout = QtWidgets.QHBoxLayout()
         self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
         self.roSelectList = QtWidgets.QComboBox()
+        self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM SLM',"SLM Running Order", value))
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
@@ -151,14 +154,23 @@ class SIMWidget(NapariHybridWidget):
 
         # Grid scan settings
         gridScanLayout = QtWidgets.QGridLayout()
+
         self.numGridX_label = QLabel("Steps - X")
-        self.numGridX_textedit = QLineEdit("1")
+        self.numGridX_textedit = QLineEdit("")
+        self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
+
         self.numGridY_label = QLabel("Steps - Y")
-        self.numGridY_textedit = QLineEdit("1")
+        self.numGridY_textedit = QLineEdit("")
+        self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
+
         self.overlap_label = QLabel("Overlap [%]")
-        self.overlap_textedit = QLineEdit("0")
+        self.overlap_textedit = QLineEdit("")
+        self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap [%]", value))
+
         self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
-        self.reconFrameSkip_textedit = QLineEdit("0")
+        self.reconFrameSkip_textedit = QLineEdit("")
+        self.reconFrameSkip_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Recon Frames to Skips", value))
+
         
         row = 0
         # gridScanLayout.addWidget(self.gridScanBoxLabel,row,0)
@@ -384,6 +396,14 @@ class SIMWidget(NapariHybridWidget):
         self.path_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Working Directory',value))
         self.user_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',value))
         self.expt_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','User Name',value))
+
+    def initTilingInfo(self):
+        self.numGridX_textedit.setText("1")
+        self.numGridY_textedit.setText("1")
+        self.overlap_textedit.setText("0")
+        self.reconFrameSkip_textedit.setText("0")
+
+
 
     def getZStackParameters(self):
         return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))

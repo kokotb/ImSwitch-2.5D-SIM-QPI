@@ -33,16 +33,16 @@ class InfoGatheringController(ImConWidgetController):
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
         # self._logger.warning("Shared attributes updated.")
         
-    def saveAttributesToFile(self):
-        # Filter out only the important attributes?
+    # def saveAttributesToFile(self):
+    #     # Filter out only the important attributes?
         
-        # Save attributes
-        dir_harcoded = 'C:/Users/SIM_admin/Documents/ImSwitchConfig'
-        file_name_hardcoded = "exp_metadata"
-        # with open(os.path.join(dir_harcoded, file_name_hardcoded), 'w') as setupFile:
-        #     setupFile.write(self.shared_attributes.to_json(indent=4))
+    #     # Save attributes
+    #     dir_harcoded = 'C:/Users/SIM_admin/Documents/ImSwitchConfig'
+    #     file_name_hardcoded = "exp_metadata"
+    #     # with open(os.path.join(dir_harcoded, file_name_hardcoded), 'w') as setupFile:
+    #     #     setupFile.write(self.shared_attributes.to_json(indent=4))
         
-        self._logger.warning("Attributes saved.")
+    #     self._logger.warning("Attributes saved.")
 
 
     def getAttrs(self):
