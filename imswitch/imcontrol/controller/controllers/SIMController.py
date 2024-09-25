@@ -520,10 +520,10 @@ class SIMController(ImConWidgetController):
 
                 
 
-    def valueChanged(self):
+    def valueChanged(self, name, value):
 
-        print('controllersignal')
-
+        print(name)
+        print(value)
 
 
     def makeSetupInfoDict(self):
@@ -539,8 +539,6 @@ class SIMController(ImConWidgetController):
             setupValueList.append(getattr(setupInfo,item)) #Pulls values of the attributes.
         setupInfoDict = dict(zip(setupInfoKeyList,setupValueList)) #Put names, values in a dict.
         self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
-
-        # self._widget.sigValueChanged.emit(self.ReconWL1_textedit.text())
 
         return setupInfoDict
           

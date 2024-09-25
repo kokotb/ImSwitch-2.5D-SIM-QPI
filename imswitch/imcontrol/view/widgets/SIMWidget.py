@@ -18,7 +18,7 @@ class SIMWidget(NapariHybridWidget):
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
-    sigSIMParamChanged = QtCore.Signal(str) # (value)
+    sigSIMParamChanged = QtCore.Signal(str, str) # (value)
 
 
     def __post_init__(self):
@@ -208,6 +208,9 @@ class SIMWidget(NapariHybridWidget):
         tab.setLayout(wholeTabVertLayout)
         return tab
     
+
+
+    
     def addROName(self, roIndex, roName):
         self.roSelectList.addItem(f'{roName}', roIndex)
 
@@ -351,10 +354,34 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_label.setText(params[10])
         self.magnification_textedit.setText(str(setupInfoDict[params[10]]))
         
-        # # Connect signals
-        # # Each edit box needs to be connected to sigValueChanged
-        self.ReconWL1_textedit.editingFinished.connect(self.simParamChanged)
+        self.connectSharedAttrSigs(params)
+        
 
+    def connectSharedAttrSigs(self, params):
+        self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[0],value))
+        self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[1],value))
+        self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[2],value))
+        self.NA_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[3],value))
+        self.pixelsize_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[4],value))
+        self.alpha_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[5],value))
+        self.beta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[6],value))
+        self.w_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[7],value))
+        self.eta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[8],value))
+        self.n_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[9],value))
+        self.magnification_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[10],value))
+
+        #editingFinished seems to be a better method, but cannot get to work correctly.
+        # self.ReconWL1_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[0],self.ReconWL1_textedit.text()))
+        # self.ReconWL2_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[1],self.ReconWL2_textedit.text()))
+        # self.ReconWL3_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[2],self.ReconWL3_textedit.text()))
+        # self.NA_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[3],self.NA_textedit.text()))
+        # self.pixelsize_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[4],self.pixelsize_textedit.text()))
+        # self.alpha_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[5],self.alpha_textedit.text()))
+        # self.beta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[6],self.beta_textedit.text()))
+        # self.w_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[7],self.w_textedit.text()))
+        # self.eta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[8],self.eta_textedit.text()))
+        # self.n_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[9],self.n_textedit.text()))
+        # self.magnification_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[10],self.magnification_textedit.text()))
 
     def getZStackParameters(self):
         return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))
@@ -373,11 +400,6 @@ class SIMWidget(NapariHybridWidget):
     def getSkipFrames(self):
         num = int(self.reconFrameSkip_textedit.text())
         return num
-    
-    def simParamChanged(self):
-        print('widget signal')
-        self.sigSIMParamChanged.emit(self.ReconWL1_textedit.text())
-        # self.sigValueChanged.emit()
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.
