@@ -78,6 +78,7 @@ class SIMController(ImConWidgetController):
     sigRawStackReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
+    sigValueChanged = Signal()
     
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -141,6 +142,7 @@ class SIMController(ImConWidgetController):
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
+        self._widget.sigValueChanged.connect(self.valueChanged)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         
@@ -974,7 +976,29 @@ class SIMController(ImConWidgetController):
 
     def getIsUseGPU(self):
         return self._widget.useGPUCheckbox.isChecked()
+    
+    def valueChanged(self, parameterName, value):
+        self.setSharedAttr(parameterName, _valueAttr, value)
+    
+    def attrChanged(self, key, value):
+        #BK EDIT - not sure we will use this in our case
+        if self.settingAttr or len(key) != 3 or key[0] != _attrCategory:
+            return
 
+        positionerName = key[1]
+        axis = key[2]
+        if key[3] == _valueAttr:
+            self.setPositioner(positionerName, axis, value)
+    
+    def setSharedAttr(self, parameterName, attr, value):
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(_attrCategory, parameterName, attr)] = value
+        finally:
+            self.settingAttr = False
+
+_attrCategory = 'SIM'
+_valueAttr = 'Value'
 
 class SIMParameters(object):
     def __init__(self):

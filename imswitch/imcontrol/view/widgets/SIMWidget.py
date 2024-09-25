@@ -18,6 +18,7 @@ class SIMWidget(NapariHybridWidget):
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
+    sigValueChanged = QtCore.Signal() # (value)
 
 
     def __post_init__(self):
@@ -303,9 +304,6 @@ class SIMWidget(NapariHybridWidget):
         row_layout_11.addWidget(self.magnification_label)
         row_layout_11.addWidget(self.magnification_textedit)
         
-
-
-        
         layout.addLayout(row_layout_1)
         layout.addLayout(row_layout_2)
         layout.addLayout(row_layout_3)
@@ -317,7 +315,7 @@ class SIMWidget(NapariHybridWidget):
         layout.addLayout(row_layout_9)
         layout.addLayout(row_layout_10)
         layout.addLayout(row_layout_11)
-
+        
         
 
         # tab.setLayout(layout) #BKedit
@@ -352,6 +350,10 @@ class SIMWidget(NapariHybridWidget):
         self.n_textedit.setText(str(setupInfoDict[params[9]]))
         self.magnification_label.setText(params[10])
         self.magnification_textedit.setText(str(setupInfoDict[params[10]]))
+        
+        # Connect signals
+        # Each edit box needs to be connected to sigValueChanged
+        self.ReconWL1_textedit.textChanged.connect(self.valueChanged())
 
 
     def getZStackParameters(self):
@@ -375,7 +377,9 @@ class SIMWidget(NapariHybridWidget):
         num = int(self.reconFrameSkip_textedit.text())
         return num
     
-
+    def valueChanged(self):
+        # self.sigValueChanged.emit(self.ReconWL1_textedit.text())
+        self.sigValueChanged.emit()
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.
