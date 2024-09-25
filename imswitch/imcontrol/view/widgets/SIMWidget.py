@@ -18,7 +18,7 @@ class SIMWidget(NapariHybridWidget):
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
-    sigValueChanged = QtCore.Signal() # (value)
+    sigSIMParamChanged = QtCore.Signal(str) # (value)
 
 
     def __post_init__(self):
@@ -351,9 +351,9 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_label.setText(params[10])
         self.magnification_textedit.setText(str(setupInfoDict[params[10]]))
         
-        # Connect signals
-        # Each edit box needs to be connected to sigValueChanged
-        self.ReconWL1_textedit.textChanged.connect(self.valueChanged())
+        # # Connect signals
+        # # Each edit box needs to be connected to sigValueChanged
+        self.ReconWL1_textedit.editingFinished.connect(self.simParamChanged)
 
 
     def getZStackParameters(self):
@@ -364,10 +364,7 @@ class SIMWidget(NapariHybridWidget):
     
     def getRecFolder(self):
         return self.path_edit.text()
-    
-    # def setMockValue(self, mock):
-    #         self.checkbox_mock.setChecked(mock)
-    
+      
     def getRecParameters(self):
         # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
         parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text()}
@@ -377,9 +374,10 @@ class SIMWidget(NapariHybridWidget):
         num = int(self.reconFrameSkip_textedit.text())
         return num
     
-    def valueChanged(self):
-        # self.sigValueChanged.emit(self.ReconWL1_textedit.text())
-        self.sigValueChanged.emit()
+    def simParamChanged(self):
+        print('widget signal')
+        self.sigSIMParamChanged.emit(self.ReconWL1_textedit.text())
+        # self.sigValueChanged.emit()
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

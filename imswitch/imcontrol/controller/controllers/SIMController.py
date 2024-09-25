@@ -142,7 +142,7 @@ class SIMController(ImConWidgetController):
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
-        self._widget.sigValueChanged.connect(self.valueChanged)
+        self._widget.sigSIMParamChanged.connect(self.valueChanged)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         
@@ -520,8 +520,9 @@ class SIMController(ImConWidgetController):
 
                 
 
+    def valueChanged(self):
 
-
+        print('controllersignal')
 
 
 
@@ -538,6 +539,8 @@ class SIMController(ImConWidgetController):
             setupValueList.append(getattr(setupInfo,item)) #Pulls values of the attributes.
         setupInfoDict = dict(zip(setupInfoKeyList,setupValueList)) #Put names, values in a dict.
         self._widget.setSIMWidgetFromConfig(setupInfoDict) #Call function in SIMWidget that pulls in dict just created.
+
+        # self._widget.sigValueChanged.emit(self.ReconWL1_textedit.text())
 
         return setupInfoDict
           
@@ -977,8 +980,8 @@ class SIMController(ImConWidgetController):
     def getIsUseGPU(self):
         return self._widget.useGPUCheckbox.isChecked()
     
-    def valueChanged(self, parameterName, value):
-        self.setSharedAttr(parameterName, _valueAttr, value)
+    # def valueChanged(self, parameterName, value):
+    #     self.setSharedAttr(parameterName, _valueAttr, value)
     
     def attrChanged(self, key, value):
         #BK EDIT - not sure we will use this in our case
