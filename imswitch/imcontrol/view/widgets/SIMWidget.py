@@ -18,7 +18,7 @@ class SIMWidget(NapariHybridWidget):
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
-    sigSIMParamChanged = QtCore.Signal(str, str) # (value)
+    sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
 
 
     def __post_init__(self):
@@ -38,6 +38,7 @@ class SIMWidget(NapariHybridWidget):
         
         self.experiment_tab = self.create_experiment_tab()
         self.tabView.addTab(self.experiment_tab, "Experiment")
+
         
         # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
         # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
@@ -50,7 +51,9 @@ class SIMWidget(NapariHybridWidget):
         # self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
         
         # self.calibrateButton.toggled.connect(self.sigCalibrateToggled)
-
+        self.params = [
+            "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
+        ]
         # Set layer properties
         self.layer = None
         self.laserColormaps = {'488':'blue','561':'green','640':'red'}
@@ -328,60 +331,55 @@ class SIMWidget(NapariHybridWidget):
         
     def setSIMWidgetFromConfig(self,setupInfoDict):
 
-        params = [
-            "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
-        ]
-        self.ReconWL1_label.setText(params[0])
-        self.ReconWL1_textedit.setText(str(setupInfoDict[params[0]]))
-        self.ReconWL2_label.setText(params[1])
-        self.ReconWL2_textedit.setText(str(setupInfoDict[params[1]]))
-        self.ReconWL3_label.setText(params[2])
-        self.ReconWL3_textedit.setText(str(setupInfoDict[params[2]]))
-        self.NA_label.setText(params[3])
-        self.NA_textedit.setText(str(setupInfoDict[params[3]]))
-        self.pixelsize_label.setText(params[4])
-        self.pixelsize_textedit.setText(str(setupInfoDict[params[4]]))
-        self.alpha_label.setText(params[5])
-        self.alpha_textedit.setText(str(setupInfoDict[params[5]]))
-        self.beta_label.setText(params[6])
-        self.beta_textedit.setText(str(setupInfoDict[params[6]]))
-        self.w_label.setText(params[7])
-        self.w_textedit.setText(str(setupInfoDict[params[7]]))
-        self.eta_label.setText(params[8])
-        self.eta_textedit.setText(str(setupInfoDict[params[8]]))
-        self.n_label.setText(params[9])
-        self.n_textedit.setText(str(setupInfoDict[params[9]]))
-        self.magnification_label.setText(params[10])
-        self.magnification_textedit.setText(str(setupInfoDict[params[10]]))
-        
-        self.connectSharedAttrSigs(params)
-        
+        self.connectSharedAttrSigs(self.params)
+        self.ReconWL1_label.setText(self.params[0])
+        self.ReconWL1_textedit.setText(str(setupInfoDict[self.params[0]]))
+        self.ReconWL2_label.setText(self.params[1])
+        self.ReconWL2_textedit.setText(str(setupInfoDict[self.params[1]]))
+        self.ReconWL3_label.setText(self.params[2])
+        self.ReconWL3_textedit.setText(str(setupInfoDict[self.params[2]]))
+        self.NA_label.setText(self.params[3])
+        self.NA_textedit.setText(str(setupInfoDict[self.params[3]]))
+        self.pixelsize_label.setText(self.params[4])
+        self.pixelsize_textedit.setText(str(setupInfoDict[self.params[4]]))
+        self.alpha_label.setText(self.params[5])
+        self.alpha_textedit.setText(str(setupInfoDict[self.params[5]]))
+        self.beta_label.setText(self.params[6])
+        self.beta_textedit.setText(str(setupInfoDict[self.params[6]]))
+        self.w_label.setText(self.params[7])
+        self.w_textedit.setText(str(setupInfoDict[self.params[7]]))
+        self.eta_label.setText(self.params[8])
+        self.eta_textedit.setText(str(setupInfoDict[self.params[8]]))
+        self.n_label.setText(self.params[9])
+        self.n_textedit.setText(str(setupInfoDict[self.params[9]]))
+        self.magnification_label.setText(self.params[10])
+        self.magnification_textedit.setText(str(setupInfoDict[self.params[10]]))    
 
     def connectSharedAttrSigs(self, params):
-        self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[0],value))
-        self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[1],value))
-        self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[2],value))
-        self.NA_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[3],value))
-        self.pixelsize_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[4],value))
-        self.alpha_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[5],value))
-        self.beta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[6],value))
-        self.w_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[7],value))
-        self.eta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[8],value))
-        self.n_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[9],value))
-        self.magnification_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit(params[10],value))
+        self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[0],value))
+        self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[1],value))
+        self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[2],value))
+        self.NA_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[3],value))
+        self.pixelsize_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[4],value))
+        self.alpha_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[5],value))
+        self.beta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[6],value))
+        self.w_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[7],value))
+        self.eta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[8],value))
+        self.n_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[9],value))
+        self.magnification_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[10],value))
 
         #editingFinished seems to be a better method, but cannot get to work correctly.
-        # self.ReconWL1_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[0],self.ReconWL1_textedit.text()))
-        # self.ReconWL2_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[1],self.ReconWL2_textedit.text()))
-        # self.ReconWL3_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[2],self.ReconWL3_textedit.text()))
-        # self.NA_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[3],self.NA_textedit.text()))
-        # self.pixelsize_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[4],self.pixelsize_textedit.text()))
-        # self.alpha_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[5],self.alpha_textedit.text()))
-        # self.beta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[6],self.beta_textedit.text()))
-        # self.w_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[7],self.w_textedit.text()))
-        # self.eta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[8],self.eta_textedit.text()))
-        # self.n_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[9],self.n_textedit.text()))
-        # self.magnification_textedit.editingFinished.connect(self.sigSIMParamChanged.emit(params[10],self.magnification_textedit.text()))
+        # self.ReconWL1_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[0],self.ReconWL1_textedit.text()))
+        # self.ReconWL2_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[1],self.ReconWL2_textedit.text()))
+        # self.ReconWL3_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[2],self.ReconWL3_textedit.text()))
+        # self.NA_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[3],self.NA_textedit.text()))
+        # self.pixelsize_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[4],self.pixelsize_textedit.text()))
+        # self.alpha_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[5],self.alpha_textedit.text()))
+        # self.beta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[6],self.beta_textedit.text()))
+        # self.w_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[7],self.w_textedit.text()))
+        # self.eta_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[8],self.eta_textedit.text()))
+        # self.n_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[9],self.n_textedit.text()))
+        # self.magnification_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[10],self.magnification_textedit.text()))
 
     def getZStackParameters(self):
         return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))
