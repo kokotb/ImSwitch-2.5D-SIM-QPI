@@ -520,10 +520,10 @@ class SIMController(ImConWidgetController):
 
                 
 
-    def valueChanged(self, name, value):
+    def valueChanged(self, parameterName, value):
+        self.setSharedAttr(parameterName, _valueAttr, value)
+        # print('controllersignal')
 
-        print(name)
-        print(value)
 
 
     def makeSetupInfoDict(self):
@@ -986,17 +986,28 @@ class SIMController(ImConWidgetController):
         if self.settingAttr or len(key) != 3 or key[0] != _attrCategory:
             return
 
-        positionerName = key[1]
-        axis = key[2]
-        if key[3] == _valueAttr:
-            self.setPositioner(positionerName, axis, value)
+        parameterName = key[1]
+        if key[2] == _valueAttr:
+            # FIXME: not set up yet just a place holder
+            self.setParameter(parameterName, value)
     
     def setSharedAttr(self, parameterName, attr, value):
+        """Sending attribute to shared attributes
+
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
         self.settingAttr = True
         try:
             self._commChannel.sharedAttrs[(_attrCategory, parameterName, attr)] = value
         finally:
             self.settingAttr = False
+            
+    def setParameter(self, parameterName, value):
+        # FIXME: Just a place holder
+        self._logger.error(f"{parameterName} with {value} not set! Setting of SIM parameters using attrChanged in widget is not set up yet.")
 
 _attrCategory = 'SIM'
 _valueAttr = 'Value'
