@@ -39,7 +39,7 @@ class AAAOTFLaserManager(LaserManager):
         Sends a RS232 command to the laser specifying the new intensity.
         """
         maxdBm = self._LaserManager__maxdBm
-        self.setdBm = self.powerPercentTodBm(maxdBm,percentPower)
+        self.setdBm = self.powerPercentTodBm(maxdBm, percentPower)
         self.percentPower = percentPower
         valueaotf = round(self.setdBm,1)
         cmd = 'L' + str(self._channel) + 'D' + str(valueaotf)

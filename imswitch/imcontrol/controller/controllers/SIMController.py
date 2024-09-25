@@ -52,8 +52,6 @@ try:
     isNIP = True
 except:
     isNIP = False
-    
-
 
 try:
     from napari_sim_processor.processors.convSimProcessor import ConvSimProcessor
@@ -78,6 +76,7 @@ class SIMController(ImConWidgetController):
     sigRawStackReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
+    sigValueChanged = Signal()
     
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,7 +91,15 @@ class SIMController(ImConWidgetController):
         # Only napari implemented as of 12/9/24
         self.reconstructionMethod = "napari" # or "mcSIM"
 
+        #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
+        self._widget.sigSIMParamChanged.connect(self.valueChanged)
+
+
         setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict.
+
+        
+        
+    
         
         #Create list of available laser objects from config file.
         # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
@@ -143,6 +150,7 @@ class SIMController(ImConWidgetController):
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
+
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
         self.populateAndSelectROList()
@@ -152,6 +160,7 @@ class SIMController(ImConWidgetController):
         
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
+        # self.setSharedAttr(attrCategory, parameterName, value):
         
 
     def performSIMExperimentThread(self, sim_parameters):
@@ -176,7 +185,7 @@ class SIMController(ImConWidgetController):
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
-            if laser.power > 0:
+            if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
         ##CTNOTE TEMPORARY        
@@ -518,8 +527,9 @@ class SIMController(ImConWidgetController):
 
                 
 
-
-
+    def valueChanged(self, attrCategory, parameterName, value):
+        self.setSharedAttr(attrCategory, parameterName, value)
+        # print('controllersignal')
 
 
 
@@ -974,6 +984,37 @@ class SIMController(ImConWidgetController):
 
     def getIsUseGPU(self):
         return self._widget.useGPUCheckbox.isChecked()
+    
+    # def valueChanged(self, parameterName, value):
+    #     self.setSharedAttr(parameterName, _valueAttr, value)
+    
+    # def attrChanged(self, key, value):
+    #     #BK EDIT - not sure we will use this in our case
+    #     if self.settingAttr or len(key) != 3 or key[0] != _attrCategory:
+    #         return
+
+    #     parameterName = key[1]
+    #     if key[2] == _valueAttr:
+    #         # FIXME: not set up yet just a place holder
+    #         self.setParameter(parameterName, value)
+    
+    def setSharedAttr(self, attrCategory, parameterName, value):
+        """Sending attribute to shared attributes
+
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
+        finally:
+            self.settingAttr = False
+            
+    # def setParameter(self, parameterName, value):
+    #     # FIXME: Just a place holder
+    #     self._logger.error(f"{parameterName} with {value} not set! Setting of SIM parameters using attrChanged in widget is not set up yet.")
 
 
 class SIMParameters(object):
