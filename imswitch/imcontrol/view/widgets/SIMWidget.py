@@ -98,6 +98,7 @@ class SIMWidget(NapariHybridWidget):
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.viewer.layers[name].scale = self.micronsPerPixel
             self.viewer.layers[name].contrast_limits_range = [0,4095]
+            self.viewer.layers[name]._keep_auto_contrast = True
 
         else:
             self.viewer.layers[name].data = im
