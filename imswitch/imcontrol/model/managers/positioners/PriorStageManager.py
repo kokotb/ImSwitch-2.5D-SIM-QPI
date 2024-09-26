@@ -25,6 +25,7 @@ class PriorStageManager(PositionerManager):
         self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all()
         
         self.check_axes()
+        self.invertJoystickY()
         # Set intial values to match the widget
         self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
         if self.zeroOnStartup:
@@ -34,6 +35,10 @@ class PriorStageManager(PositionerManager):
             # for j, axis in enumerate(self.axes):
             startPos = self.get_abs()
             self.setPositionXY(startPos[0], startPos[1])
+
+
+    def invertJoystickY(self):
+        self.query("controller.stage.joystickdirection.set 1 -1")
 
     def initialize_all(self):
         """Initialize the stage and go to mock if not present."""
