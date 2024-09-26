@@ -82,6 +82,9 @@ class LaserInfo(DeviceInfo):
 
 @dataclass(frozen=True)
 class PositionerInfo(DeviceInfo):
+
+    limits: List[int]
+    
     axes: List[str]
     """ A list of axes (names) that the positioner controls. """
 
@@ -96,6 +99,8 @@ class PositionerInfo(DeviceInfo):
 
     resetOnClose: bool = False
     """ Whether the positioner should be reset to 0-position upon closing ImSwitch. """
+
+
 
 
 @dataclass(frozen=True)

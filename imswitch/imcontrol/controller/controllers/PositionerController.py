@@ -44,7 +44,7 @@ class PositionerController(ImConWidgetController):
         self._widget.sigStepUpCoarseClicked.connect(self.stepUpCoarse)
         self._widget.sigStepDownCoarseClicked.connect(self.stepDownCoarse)
         self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
-        self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
+        # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
 
     def closeEvent(self):

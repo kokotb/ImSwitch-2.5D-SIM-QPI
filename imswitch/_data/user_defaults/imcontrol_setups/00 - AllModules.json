@@ -191,6 +191,7 @@
         "zeroOnStartup": false
       },
       "axes": ["X","Y"],
+      "limits":[22000,10000],
       "forPositioning": true,
       "forScanning": true
     }
