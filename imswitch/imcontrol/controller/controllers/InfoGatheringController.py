@@ -22,7 +22,7 @@ class InfoGatheringController(ImConWidgetController):
 
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
-        self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
+        # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
         
         # Load experimental parameters into local object attribute
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
