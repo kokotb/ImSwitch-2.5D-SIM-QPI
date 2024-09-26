@@ -5,9 +5,10 @@ from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
+
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
-                             QCheckBox, QLabel, QLineEdit)
+                             QCheckBox, QLabel, QLineEdit, QFrame)
 
 
 class SIMWidget(NapariHybridWidget):
@@ -115,6 +116,65 @@ class SIMWidget(NapariHybridWidget):
             initMaxLimit = np.max(self.viewer.layers[name].data_raw)
             self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
 
+    def colormapToggleReconFunc(self, channel):
+        self.laserColormaps
+        layerList = self.getAllLayerNames()
+        reconLayerList = [x for x in layerList if 'Recon' in x]
+        if channel not in reconLayerList:
+            return
+        currentColor = self.viewer.layers[channel].colormap.name
+        if currentColor == 'grayclip':
+            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:3]]
+        else:
+            self.viewer.layers[channel].colormap = 'grayclip'
+
+
+
+
+    def contrastRawsFSFunc(self):
+        layerList = self.getAllLayerNames()
+        rawLayerList = [x for x in layerList if 'Raw' in x]
+        for name in rawLayerList:
+            self.viewer.layers[name].contrast_limits = [0,4095]
+
+    def contrastRawsFunc(self):
+        layerList = self.getAllLayerNames()
+        rawLayerList = [x for x in layerList if 'Raw' in x]
+        for name in rawLayerList:
+            initMaxLimit = np.max(self.viewer.layers[name].data_raw)
+            self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
+
+    def hideShowAllLayersFunc(self):
+        layerList = self.getAllLayerNames()
+        if True in [self.viewer.layers[name].visible for name in layerList]:
+            for name in layerList:
+                self.viewer.layers[name].visible = False
+        else:
+            for name in layerList:
+                self.viewer.layers[name].visible = True
+        
+    def hideShowLayerByType(self, layerType):
+        layerList = self.getAllLayerNames()
+        layerListByType = [x for x in layerList if layerType in x]
+
+        if True in [self.viewer.layers[name].visible for name in layerListByType]:
+            for name in layerListByType:
+                self.viewer.layers[name].visible = False
+        else:
+            for name in layerListByType:
+                self.viewer.layers[name].visible = True
+
+    def hideShowLayerByChannel(self,channel):
+        layerList = self.getAllLayerNames()
+        layerListByChannel = [x for x in layerList if channel in x]
+
+        if True in [self.viewer.layers[name].visible for name in layerListByChannel]:
+            for name in layerListByChannel:
+                self.viewer.layers[name].visible = False
+        else:
+            for name in layerListByChannel:
+                self.viewer.layers[name].visible = True
+
 
     def getAllLayerNames(self):
         layerList = []
@@ -127,12 +187,105 @@ class SIMWidget(NapariHybridWidget):
         
         
         tab = QWidget()
-        parentLayout = QtWidgets.QGridLayout()
-        self.contrastRecon = QPushButton("Recon Contrast All")
-        parentLayout.addWidget(self.contrastRecon,0,0)
-        self.contrastRecon.clicked.connect(self.contrastReconFunc)
+        parentLayout = QVBoxLayout()
+        self.hideShowAllLayers = QPushButton("Hide/Show All Layers")
+
+        #Layer contrast buttons grouped together
+        self.contrastLabel = QtWidgets.QLabel('Layer Contrasts')
+        self.contrastLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.contrastRecon = QPushButton("Recons Once")
+        self.contrastFSRaw = QPushButton("Raws Full Scale")
+        self.contrastRaw = QPushButton("Raws Once")
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.StyledPanel)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(5)
+
+        layersContrast = QVBoxLayout(self.myframe)
+        layersContrast.addWidget(self.contrastRecon)
+        layersContrast.addWidget(self.contrastFSRaw)
+        layersContrast.addWidget(self.contrastRaw)
+        layersContrastBoxed = QVBoxLayout(self)
+        layersContrastBoxed.addWidget(self.myframe)
+
+        # Recon colormap toggle buttons boxed by channel.
+        self.colormapToggleLabel = QtWidgets.QLabel('Toggle Recon Colormaps')
+        self.colormapToggleLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.colormapToggle488 = QPushButton("488")
+        self.colormapToggle561 = QPushButton("561")
+        self.colormapToggle640 = QPushButton("640")
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.StyledPanel)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(5)
+        layersColormapToggle = QVBoxLayout(self.myframe)
+        layersColormapToggle.addWidget(self.colormapToggle488)
+        layersColormapToggle.addWidget(self.colormapToggle561)
+        layersColormapToggle.addWidget(self.colormapToggle640)
+        layersColormapToggleBoxed = QVBoxLayout(self)
+        layersColormapToggleBoxed.addWidget(self.myframe)
+
+        # Hide/show buttons boxed by channel.
+        self.hideShowChanLabel = QtWidgets.QLabel('Hide/Show by Channel')
+        self.hideShowChanLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.hideShow488Layers = QPushButton("488")
+        self.hideShow561Layers = QPushButton("561")
+        self.hideShow640Layers = QPushButton("640")
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.StyledPanel)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(5)
+        layersHideShowChannel = QVBoxLayout(self.myframe)
+        layersHideShowChannel.addWidget(self.hideShow488Layers)
+        layersHideShowChannel.addWidget(self.hideShow561Layers)
+        layersHideShowChannel.addWidget(self.hideShow640Layers)
+        layersHideShowChannelBoxed = QVBoxLayout(self)
+        layersHideShowChannelBoxed.addWidget(self.myframe)
 
         
+        # Hide/show buttons boxed by type.
+        self.hideShowTypeLabel = QtWidgets.QLabel('Hide/Show by Type')
+        self.hideShowTypeLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.hideShowReconLayers = QPushButton("Recons")
+        self.hideShowWFLayers = QPushButton("Widefields")
+        self.hideShowRawLayers = QPushButton("Raws")
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.StyledPanel)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(5)
+        layersHideShowType = QVBoxLayout(self.myframe)
+        layersHideShowType.addWidget(self.hideShowReconLayers)
+        layersHideShowType.addWidget(self.hideShowWFLayers)
+        layersHideShowType.addWidget(self.hideShowRawLayers)
+        layersHideShowTypeBoxed = QVBoxLayout(self)
+        layersHideShowTypeBoxed.addWidget(self.myframe)
+
+
+        #Add elements in order you want them to appear
+        parentLayout.addWidget(self.contrastLabel)
+        parentLayout.addLayout(layersContrastBoxed)
+        parentLayout.addWidget(self.colormapToggleLabel)
+        parentLayout.addLayout(layersColormapToggleBoxed)
+        parentLayout.addWidget(self.hideShowChanLabel)
+        parentLayout.addLayout(layersHideShowChannelBoxed)
+        parentLayout.addWidget(self.hideShowTypeLabel)
+        parentLayout.addLayout(layersHideShowTypeBoxed)
+        parentLayout.addWidget(self.hideShowAllLayers)
+
+        #Connect all buttons to functions. Lambda syntax used when a argument is needed to be passed with the function.
+        self.contrastRecon.clicked.connect(self.contrastReconFunc)
+        self.contrastFSRaw.clicked.connect(self.contrastRawsFSFunc)
+        self.contrastRaw.clicked.connect(self.contrastRawsFunc)
+        self.colormapToggle488.clicked.connect(lambda: self.colormapToggleReconFunc('488 Recon'))
+        self.colormapToggle561.clicked.connect(lambda: self.colormapToggleReconFunc('561 Recon'))
+        self.colormapToggle640.clicked.connect(lambda: self.colormapToggleReconFunc('640 Recon'))
+        self.hideShowReconLayers.clicked.connect(lambda: self.hideShowLayerByType('Recon'))
+        self.hideShowWFLayers.clicked.connect(lambda: self.hideShowLayerByType('WF'))
+        self.hideShowRawLayers.clicked.connect(lambda: self.hideShowLayerByType('Raw'))
+        self.hideShow488Layers.clicked.connect(lambda: self.hideShowLayerByChannel('488'))
+        self.hideShow561Layers.clicked.connect(lambda: self.hideShowLayerByChannel('561'))
+        self.hideShow640Layers.clicked.connect(lambda: self.hideShowLayerByChannel('640'))
+        self.hideShowAllLayers.clicked.connect(self.hideShowAllLayersFunc)
 
         tab.setLayout(parentLayout)
         return tab
