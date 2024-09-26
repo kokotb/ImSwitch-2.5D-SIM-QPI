@@ -38,7 +38,9 @@ class SIMWidget(NapariHybridWidget):
         # self.tabView.addTab(self.manual_control_tab, "Manual Control")
         
         self.experiment_tab = self.create_experiment_tab()
+        self.layer_control_tab = self.create_layer_control_tab()
         self.tabView.addTab(self.experiment_tab, "Experiment")
+        self.tabView.addTab(self.layer_control_tab, "Layer Control")
 
         
         # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
@@ -102,8 +104,42 @@ class SIMWidget(NapariHybridWidget):
 
         else:
             self.viewer.layers[name].data = im
-    
-    
+
+    def contrastReconFunc(self):
+            
+        layerList = self.getAllLayerNames()
+        reconLayerList = [x for x in layerList if 'Recon' in x]
+        # if reconLayerList == []:
+        #     return
+        for name in reconLayerList:
+            initMaxLimit = np.max(self.viewer.layers[name].data_raw)
+            self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
+
+
+    def getAllLayerNames(self):
+        layerList = []
+        for i in range(len(self.viewer.layers)):
+            layerList.append(self.viewer.layers[i].name)
+        return layerList
+
+    def create_layer_control_tab(self):
+
+        
+        
+        tab = QWidget()
+        parentLayout = QtWidgets.QGridLayout()
+        self.contrastRecon = QPushButton("Recon Contrast All")
+        parentLayout.addWidget(self.contrastRecon,0,0)
+        self.contrastRecon.clicked.connect(self.contrastReconFunc)
+
+        
+
+        tab.setLayout(parentLayout)
+        return tab
+
+
+
+
     def create_experiment_tab(self):
         tab = QWidget()
         wholeTabVertLayout = QVBoxLayout()
