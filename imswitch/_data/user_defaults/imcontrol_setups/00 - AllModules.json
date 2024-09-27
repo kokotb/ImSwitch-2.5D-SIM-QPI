@@ -52,11 +52,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 1500.0
+        "ExposureTime": 10000.0
       },
       "ROI":{
-        "OffsetX": 2048,
-        "OffsetY": 1732,
+        "OffsetX": 2040,
+        "OffsetY": 1724,
         "Width": 512,
         "Height": 512
       }
@@ -79,7 +79,7 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 10000.0
       },
       "ROI":{
         "OffsetX": 2560,
@@ -102,15 +102,15 @@
         "camProperties": {
           "ExposureAuto": "Off",
           "TriggerMode": "Off",
-          "Gain": 0.0, 
+          "Gain": 0.0,
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
           "AcquisitionFrameRate":5.0,
-          "ExposureTime": 500.0
+          "ExposureTime": 10000.0
         },
         "ROI":{
           "OffsetX": 2528,
-          "OffsetY": 2252,
+          "OffsetY": 2250,
           "Width": 512,
           "Height": 512
         }
@@ -179,6 +179,7 @@
         "rs232device": "zpiezo"
       },
       "axes": ["Z"],
+      "limits":[-45,450],
       "forPositioning": true,
       "forScanning": true
     },

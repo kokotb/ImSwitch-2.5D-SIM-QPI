@@ -205,7 +205,7 @@ class SIMWidget(NapariHybridWidget):
         layersContrast.addWidget(self.contrastRecon)
         layersContrast.addWidget(self.contrastFSRaw)
         layersContrast.addWidget(self.contrastRaw)
-        layersContrastBoxed = QVBoxLayout(self)
+        layersContrastBoxed = QVBoxLayout()
         layersContrastBoxed.addWidget(self.myframe)
 
         # Recon colormap toggle buttons boxed by channel.
@@ -222,7 +222,7 @@ class SIMWidget(NapariHybridWidget):
         layersColormapToggle.addWidget(self.colormapToggle488)
         layersColormapToggle.addWidget(self.colormapToggle561)
         layersColormapToggle.addWidget(self.colormapToggle640)
-        layersColormapToggleBoxed = QVBoxLayout(self)
+        layersColormapToggleBoxed = QVBoxLayout()
         layersColormapToggleBoxed.addWidget(self.myframe)
 
         # Hide/show buttons boxed by channel.
@@ -239,7 +239,7 @@ class SIMWidget(NapariHybridWidget):
         layersHideShowChannel.addWidget(self.hideShow488Layers)
         layersHideShowChannel.addWidget(self.hideShow561Layers)
         layersHideShowChannel.addWidget(self.hideShow640Layers)
-        layersHideShowChannelBoxed = QVBoxLayout(self)
+        layersHideShowChannelBoxed = QVBoxLayout()
         layersHideShowChannelBoxed.addWidget(self.myframe)
 
         
@@ -257,7 +257,7 @@ class SIMWidget(NapariHybridWidget):
         layersHideShowType.addWidget(self.hideShowReconLayers)
         layersHideShowType.addWidget(self.hideShowWFLayers)
         layersHideShowType.addWidget(self.hideShowRawLayers)
-        layersHideShowTypeBoxed = QVBoxLayout(self)
+        layersHideShowTypeBoxed = QVBoxLayout()
         layersHideShowTypeBoxed.addWidget(self.myframe)
 
 
