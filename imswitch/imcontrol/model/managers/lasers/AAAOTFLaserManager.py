@@ -22,7 +22,7 @@ class AAAOTFLaserManager(LaserManager):
         # self.maxdBm = laserInfo.maxdBmValue
         self.percentPower = laserInfo.valueInit
         self.externalControl()
-        super().__init__(laserInfo, name, isBinary=False, valueUnits='arb', valueDecimals=0)
+        super().__init__(laserInfo, name, isBinary=False, valueUnits='%', valueDecimals=0)
 
     def setEnabled(self, enabled):
         """Turn on (1) or off (0) laser emission"""
@@ -32,7 +32,7 @@ class AAAOTFLaserManager(LaserManager):
             value = 0
         cmd = 'L' + str(self._channel) + 'O' + str(value)
         ans = self._rs232manager.query(cmd)
-        print(ans)
+        # print(ans)
 
     def setValue(self, percentPower):
         """Handles output power.
@@ -46,12 +46,8 @@ class AAAOTFLaserManager(LaserManager):
         ans = self._rs232manager.query(cmd)
         print(ans)
 
-    # def blankingOn(self):
-    #     """Switch on the blanking of all the channels"""
-    #     # cmd = 'L0' + 'I1' + 'O1'
-    #     cmd = 'L1'
-        
-    #     self._rs232manager.query(cmd)
+    # def closeingEvent(self):
+
 
     def externalControl(self):
         """Switch the channel to external control""" 
