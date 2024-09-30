@@ -77,18 +77,6 @@ class TilingWidget(Widget):
         self.overlap_textedit.setText("0")
         self.reconFrameSkip_textedit.setText("0")
 
-
-
-
-
-
-
-
-
-
-
-
-
     def setLabel(self, label):
         self.tileNumberEdit.setText(label)
 

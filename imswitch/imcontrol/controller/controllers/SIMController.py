@@ -94,9 +94,9 @@ class SIMController(ImConWidgetController):
         #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
         self._widget.sigSIMParamChanged.connect(self.valueChanged)
         self._widget.sigUserDirInfoChanged.connect(self.valueChanged)
-        self._widget.sigTilingInfoChanged.connect(self.valueChanged)
+        # self._widget.sigTilingInfoChanged.connect(self.valueChanged)
         self._widget.sigROInfoChanged.connect(self.valueChanged)
-        self._widget.initTilingInfo()
+        # self._widget.initTilingInfo()
 
 
         setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict and also set on SIM widget.
@@ -221,19 +221,19 @@ class SIMController(ImConWidgetController):
         
         #Assembling detector list based on active AOTF channels. Pulls current detector shape.
         self.detectors = []        
-        image_sizes_px = []
+
         
         if det_names != []:
             for det_name in det_names:
                 detector = self._master.detectorsManager[det_name]
                 self.detectors.append(detector)
-                image_sizes_px.append(detector.shape)
+
         else:
             self._logger.debug(f"Lasers not enabled. Setting image_size_px to default 512x512.")
-            image_sizes_px = [[512,512]]
 
 
-        imageLeastCommonSize = self.smallestXYForGridSpacing(image_sizes_px)
+
+
 
         
         # Set processors for selected lasers
@@ -253,8 +253,10 @@ class SIMController(ImConWidgetController):
         magnification = sim_parameters.Magnification
         camPixelSize = sim_parameters.Pixelsize
         projCamPixelSize = camPixelSize/magnification
-                        
-        positions = self.createXYGridPositionArray(imageLeastCommonSize,projCamPixelSize)
+
+
+        self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
+        positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
 
         # Set stacks to be saved into separate folder
         self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
@@ -644,73 +646,6 @@ class SIMController(ImConWidgetController):
     #         timedList.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
     #         return timedList
 
-    def smallestXYForGridSpacing(self,image_sizes_px):
-        imageLeastCommonSize = [] 
-        # Check if image-sizes on all detectors are the same
-        if image_sizes_px.count(image_sizes_px[0]) == len(image_sizes_px):
-            imageLeastCommonSize = image_sizes_px[0]
-        else:
-            self._logger.debug(f"Check detector settings. Not all colors have same image size on the detectors. Defaulting to smallest size in each dimension.")
-            # size = 0
-            # Set desired
-            image_size_x = image_sizes_px[0][0]
-            image_size_y = image_sizes_px[0][1]
-            for image_size_px in image_sizes_px:
-                if image_size_px[0] < image_size_x:
-                    image_size_x = image_size_px[0]
-                if image_size_px[1] < image_size_y:
-                    image_size_y = image_size_px[1]
-            imageLeastCommonSize = [image_size_x, image_size_y]
-
-        return imageLeastCommonSize
-
-    def createXYGridPositionArray(self, imageLeastCommonSize,projCamPixelSize):
-        imageSizePixelsX, imageSizePixelsY = imageLeastCommonSize
-        #Pulled from SIM GUI
-        grid_x_num = self.num_grid_x
-        grid_y_num = self.num_grid_y
-        overlap_xy = self.overlap
-        xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
-        count_limit = 101
-
-        # Grab starting position that we can return to
-        start_position_x, start_position_y = self.positionerXY.get_abs()
-        x_start, y_start = [float(start_position_x), float(start_position_y)]
-        
-        # Determine stage travel range, stage accepts values in microns
-        frame_size_x = imageSizePixelsX*projCamPixelSize
-        frame_size_y = imageSizePixelsY*projCamPixelSize
-        
-        # Step-size based on overlap info
-        x_step = (1 - overlap_xy) * frame_size_x
-        y_step = (1 - overlap_xy) * frame_size_y
-        assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
-        positions = []
-        y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
-        # ------------Grid scan------------
-        # Generate positions for each row
-        for y in y_list:
-            # Where to start this row
-
-            if xy_scan_type == 'snake':
-                # Generate x coordinates
-                x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
-
-                
-            # Run every other row backwards to minimize stage movement
-            if y_list.index(y) % 2 == 1:
-                x_list.reverse()
-            
-            # Populate the final list
-            for x in x_list:
-                positions.append([x,y])
-                
-            # Truncate the list if the length/the number of created
-            # positions exceeds the specified limit
-            if len(positions) > count_limit:
-                positions = positions[:count_limit]
-                self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-        return positions
 
     def toggleReconstruction(self):
         self.isReconstruction = not self.isReconstruction
@@ -856,7 +791,7 @@ class SIMController(ImConWidgetController):
         self.log_times_loop = []
         
         # # Load experiment parameters to object
-        self.getExperimentSettings()
+        # self.getExperimentSettings()
 
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()
@@ -871,15 +806,12 @@ class SIMController(ImConWidgetController):
         self._widget.updateSIMDisplay(image)
         # self._logger.debug("Updated displayed image")
         
-    def getExperimentSettings(self):
-        parameter_dict = self._widget.getRecParameters()
-        
-        # Load parameters to object
-        self.num_grid_x = int(parameter_dict['num_grid_x'])
-        self.num_grid_y = int(parameter_dict['num_grid_y'])
-        self.overlap = float(parameter_dict['overlap'])/100
-        
-        # self.exposure = float(parameter_dict['exposure'])
+    def getTilingSettings(self):
+        self.startxpos, self.startypos = self.positionerXY.get_abs()
+        self.num_grid_x = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - X')])
+        self.num_grid_y = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - Y')])
+        self.overlap = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Overlap [%]')])
+        self.reconFramesSkipped = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Recon Frames to Skips')])
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name

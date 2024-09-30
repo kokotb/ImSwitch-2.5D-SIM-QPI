@@ -4,32 +4,30 @@ from scipy import signal as sg
 from imswitch.imcontrol.view.guitools.ViewSetupInfo import ViewSetupInfo as SetupInfo
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
-import requests
 
 
 class TilingManager(SignalInterface):
     """ 
-    Arduino trigger to start and stop SLM sequence.
+    Tiling functions
     """
     def __init__(self):
-        pass
+        super().__init__()
+        self._logger = initLogger(self)
             
-    def createXYGridPositionArray(self):
-        imageLeastCommonSize = [512,512]
-        pixelsize = self._commChannel.sharedAttrs._data[('SIM Parameters','Pixel size')]
-        mag = self._commChannel.sharedAttrs._data[('SIM Parameters','Magnification')]
-        projCamPixelSize = pixelsize/mag
+    def createXYGridPositionArray(self,grid_x_num, grid_y_num, overlap_xy, startxpos, startypos, projCamPixelSize):
+
+        imageLeastCommonSize = [512,512] #CTNOTE need programmatic, cant deal with at the moment.
+        # pixelsize = self._commChannel.sharedAttrs._data[('SIM Parameters','Pixel size')]
+        # mag = self._commChannel.sharedAttrs._data[('SIM Parameters','Magnification')]
+        # projCamPixelSize = pixelsize/mag
         imageSizePixelsX, imageSizePixelsY = imageLeastCommonSize
-        #Pulled from SIM GUI
-        grid_x_num = self.num_grid_x
-        grid_y_num = self.num_grid_y
-        overlap_xy = self.overlap
+
         xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
         count_limit = 101
 
         # Grab starting position that we can return to
-        start_position_x, start_position_y = self.positionerXY.get_abs()
-        x_start, y_start = [float(start_position_x), float(start_position_y)]
+        x_start = float(startxpos)
+        y_start = float(startypos)
         
         # Determine stage travel range, stage accepts values in microns
         frame_size_x = imageSizePixelsX*projCamPixelSize
@@ -64,8 +62,8 @@ class TilingManager(SignalInterface):
             if len(positions) > count_limit:
                 positions = positions[:count_limit]
                 self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-        self._commChannel.sigTilingPositions.emit(positions)
-        print(positions)
+        # self._commChannel.sigTilingPositions.emit(positions)
+
         return positions
 # Copyright (C) 2020-2024 ImSwitch developers
 # This file is part of ImSwitch.
