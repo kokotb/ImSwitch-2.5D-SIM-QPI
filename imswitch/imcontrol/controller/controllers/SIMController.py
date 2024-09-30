@@ -76,6 +76,7 @@ class SIMController(ImConWidgetController):
     sigRawStackReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
+
     sigValueChanged = Signal()
     
     def __init__(self,*args, **kwargs):
@@ -86,6 +87,7 @@ class SIMController(ImConWidgetController):
         self.isRecordRaw = False
         self.isReconstruction = self._widget.getReconCheckState()
         self.isRecordRecon = False
+        self.tilePreview = False
         self.isRecordWF = False
      
         # Only napari implemented as of 12/9/24
@@ -145,6 +147,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_WF.stateChanged.connect(self.toggleRecordWF)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
+        self._widget.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
@@ -296,6 +299,9 @@ class SIMController(ImConWidgetController):
         time_whole_start = time_global_start
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receiv e triggers.
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
+
+
+        
         while self.active and lasersInUse != []:
 
             stackSIM = [] 
@@ -451,6 +457,8 @@ class SIMController(ImConWidgetController):
                         # Push all wide fields into one array.
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
+                        if self.tilePreview:
+                            self._commChannel.sigTileImage.emit(imageWF, pos)
 
                     
                     # Activate recording and reconstruction in processor
@@ -485,7 +493,7 @@ class SIMController(ImConWidgetController):
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
 
                     time_color_start = time.time()
-                    num_skip_frames = self._widget.getSkipFrames() + 1
+                    num_skip_frames = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Recon Frames to Skips')]) + 1
                     if self.frameSetCount == 0:
                         div_1 = 0
                     else:                        
@@ -651,6 +659,9 @@ class SIMController(ImConWidgetController):
         self.isReconstruction = not self.isReconstruction
         if not self.isReconstruction:
             self.isActive = False #All of these function here have this same general self variable. Probably a conflict if it was actually used.
+
+    def toggleTilePreview(self):
+        self.tilePreview = not self.tilePreview
     
     def toggleRecording(self):
         self.isRecordRaw = not self.isRecordRaw
@@ -1113,7 +1124,7 @@ class SIMProcessor(object):
 
 
 
-        self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF") #CTNOTE WF DISPLAYED
+        self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF")
         return bfFrame
         
     def setSIMStack(self, stack):

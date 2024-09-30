@@ -19,18 +19,85 @@ class TilingController(ImConWidgetController):
         # self._skipOrNot = None
         self._widget.initTilingInfo()
 
-        # self.num_grid_x = self._widget.numGridX_textedit.text()
-
-        # self.num_grid_y = self._widget.numGridY_textedit.text()
-        
-        # self.overlap = self._widget.overlap_textedit.text()
-
         for key in self._master.positionersManager._subManagers:
             if self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
 
+        self._commChannel.sigTileImage.connect(self.recWFTileImage)
+        self.numTiledImages = 0
 
 
+    def recWFTileImage(self, im, coords):
+        # self.image = im
+        self._widget.createTilingWindow()
+        self.numTiledImages = len(self._widget.tilingView.layers)
+        if self.numTiledImages == 0:
+            self.originRealCoords = coords
+            self.addTileImageToCanvas(im, [0,0])
+        else:
+            currentRealCoords = coords
+            currentPixCoords = self.convertRealToPix(currentRealCoords)
+            # currentPixCoords.insert(0,0)
+            self.addTileImageToCanvas(im, currentPixCoords)
+
+
+
+
+
+
+
+
+    def addTileImageToCanvas(self, im, currentPixCoords):
+        self._widget.tilingView.add_image(im, translate = currentPixCoords)
+
+
+    def convertRealToPix(self, currentRealCoords):
+        xoffset = 0 - self.originRealCoords[0]
+        yoffset = 0 - self.originRealCoords[1]
+        scale = 1/0.1233 #pixels per micron
+
+        
+        currentXPixCoords = (currentRealCoords[0] + xoffset) * scale
+        currentYPixCoords = (currentRealCoords[1] + yoffset) * scale
+        currentPixCoords = [currentXPixCoords,currentYPixCoords]
+        return currentPixCoords
+
+
+
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # def saveFocus(self, bool):
+    #     self._skipOrNot = bool
+    #     # self._commChannel.sigSaveFocus.emit()
+
+    # @APIExport()
+    # def setTileLabel(self, label) -> None:
+    #     self._widget.setLabel(label)
+
+    # @APIExport()
+    # def getSkipOrNot(self) -> bool:
+    #     return self._skipOrNot
 
 
     def valueChanged(self, attrCategory, parameterName, value):
@@ -50,24 +117,6 @@ class TilingController(ImConWidgetController):
         finally:
             self.settingAttr = False
 
-    def getTilingParams(self):
-        self.num_grid_x = self._widget.numGridX_textedit.text()
-        self.num_grid_y = self._widget.numGridY_textedit.text()
-        self.overlap = self._widget.overlap_textedit.text()
-
-
-
-    # def saveFocus(self, bool):
-    #     self._skipOrNot = bool
-    #     # self._commChannel.sigSaveFocus.emit()
-
-    # @APIExport()
-    # def setTileLabel(self, label) -> None:
-    #     self._widget.setLabel(label)
-
-    # @APIExport()
-    # def getSkipOrNot(self) -> bool:
-    #     return self._skipOrNot
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

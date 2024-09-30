@@ -5,7 +5,7 @@ from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
-
+import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
@@ -319,12 +319,14 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
         self.checkbox_record_WF = QCheckBox('Save Widefield')
         self.checkbox_logging = QCheckBox("Logging")
+        self.checkbox_tilepreview =  QCheckBox("Tile Preview")
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
         checkbox_layout.addWidget(self.checkbox_record_WF)
         checkbox_layout.addWidget(self.checkbox_logging)
+        checkbox_layout.addWidget(self.checkbox_tilepreview)
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
@@ -336,42 +338,7 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
     
-        
-
-
-        # # Grid scan settings
-        # gridScanLayout = QtWidgets.QGridLayout()
-
-        # self.numGridX_label = QLabel("Steps - X")
-        # self.numGridX_textedit = QLineEdit("")
-        # self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
-
-        # self.numGridY_label = QLabel("Steps - Y")
-        # self.numGridY_textedit = QLineEdit("")
-        # self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
-
-        # self.overlap_label = QLabel("Overlap [%]")
-        # self.overlap_textedit = QLineEdit("")
-        # self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap [%]", value))
-
-        # self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
-        # self.reconFrameSkip_textedit = QLineEdit("")
-        # self.reconFrameSkip_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Recon Frames to Skips", value))
-
-        
-        # row = 0
-        # # gridScanLayout.addWidget(self.gridScanBoxLabel,row,0)
-        # # gridScanLayout.addWidget(QtWidgets.QLabel(""),row,1)
-        # gridScanLayout.addWidget(self.numGridX_label, row, 0)
-        # gridScanLayout.addWidget(self.numGridX_textedit, row, 1)
-        # gridScanLayout.addWidget(self.numGridY_label, row+1, 0)
-        # gridScanLayout.addWidget(self.numGridY_textedit, row+1, 1)
-        # gridScanLayout.addWidget(self.overlap_label, row+2, 0)
-        # gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
-        # gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
-        # gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
-        
-        # tabBottomVertLayout1.addLayout(gridScanLayout)
+    
 
 
         # Save folder
@@ -600,15 +567,8 @@ class SIMWidget(NapariHybridWidget):
     
     def getRecFolder(self):
         return self.path_edit.text()
-      
-    def getRecParameters(self):
-        # parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text(), 'exposure':self.exposure_textedit.text()}
-        parameter_dict = {'num_grid_x':self.numGridX_textedit.text(), 'num_grid_y':self.numGridY_textedit.text(), 'overlap':self.overlap_textedit.text()}
-        return parameter_dict
     
-    def getSkipFrames(self):
-        num = int(self.reconFrameSkip_textedit.text())
-        return num
+
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

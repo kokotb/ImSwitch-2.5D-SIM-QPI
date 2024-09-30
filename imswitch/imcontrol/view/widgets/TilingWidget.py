@@ -6,26 +6,17 @@ import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
+from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
+import napari
 
-class TilingWidget(Widget):
-    """ Widget that watch for new script files (.py) in a specific folder, for running them sequentially."""
+class TilingWidget(NapariHybridWidget):
+
 
     # sigSaveFocus = QtCore.Signal(bool)
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # self.skipTileButton = guitools.BetterPushButton("Skip tile")
-        # self.registerFocusButton = guitools.BetterPushButton("Register focus")
-        # self.tileNumberEdit = QtWidgets.QLabel("Tile Number: 0/0")
-
-        # layout = QtWidgets.QGridLayout()
-        # self.setLayout(layout)
-
-        # layout.addWidget(self.tileNumberEdit, 0, 0)
-        # layout.addWidget(self.registerFocusButton, 0, 1)
-        # layout.addWidget(self.skipTileButton, 0, 2)
-
+    def __post_init__(self):
+        # super().__init__(*args, **kwargs)
+        self.tilingViewBool = False
         # Grid scan settings
         gridScanLayout = QtWidgets.QGridLayout()
         self.setLayout(gridScanLayout)
@@ -48,8 +39,7 @@ class TilingWidget(Widget):
 
         
         row = 0
-        # gridScanLayout.addWidget(self.gridScanBoxLabel,row,0)
-        # gridScanLayout.addWidget(QtWidgets.QLabel(""),row,1)
+
         gridScanLayout.addWidget(self.numGridX_label, row, 0)
         gridScanLayout.addWidget(self.numGridX_textedit, row, 1)
         gridScanLayout.addWidget(self.numGridY_label, row+1, 0)
@@ -59,14 +49,6 @@ class TilingWidget(Widget):
         gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
         gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
         
-        # tabBottomVertLayout1.addLayout(gridScanLayout)
-
-
-
-
-        # self.registerFocusButton.clicked.connect(lambda: self.sigSaveFocus.emit(True))
-        # self.skipTileButton.clicked.connect(lambda: self.sigSaveFocus.emit(False))
-
 
 
 
@@ -77,8 +59,17 @@ class TilingWidget(Widget):
         self.overlap_textedit.setText("0")
         self.reconFrameSkip_textedit.setText("0")
 
-    def setLabel(self, label):
-        self.tileNumberEdit.setText(label)
+    def createTilingWindow(self):
+        if not self.tilingViewBool:
+            self.tilingView = napari.Viewer()
+            self.tilingViewBool = True
+        else:
+            pass
+
+        
+
+    # def setLabel(self, label):
+    #     self.tileNumberEdit.setText(label)
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.
