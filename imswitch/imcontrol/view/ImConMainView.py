@@ -71,7 +71,7 @@ class ImConMainView(QtWidgets.QMainWindow):
             'ULenses': _DockInfo(name='uLenses Tool', yPosition=3),
             'FFT': _DockInfo(name='FFT Tool', yPosition=3),
             'Watcher': _DockInfo(name='File Watcher', yPosition=3),
-            'Tiling': _DockInfo(name='Tiling', yPosition=3)
+            
         }
         leftDockInfos = {
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
@@ -81,7 +81,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Laser': _DockInfo(name='Laser Control', yPosition=3),
             'Positioner': _DockInfo(name='Positioner', yPosition=4),
             'Console': _DockInfo(name='Console', yPosition=5),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 6)
+            'Tiling': _DockInfo(name='Tiling', yPosition=6),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys
