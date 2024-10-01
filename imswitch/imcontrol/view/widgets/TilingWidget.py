@@ -60,16 +60,14 @@ class TilingWidget(NapariHybridWidget):
         self.reconFrameSkip_textedit.setText("0")
 
     def createTilingWindow(self):
-        if not self.tilingViewBool:
-            self.tilingView = napari.Viewer()
-            self.tilingViewBool = True
-        else:
-            pass
+
+        self.tilingView = napari.Viewer(title='Tiling Preview')
+
+
 
         
 
-    # def setLabel(self, label):
-    #     self.tileNumberEdit.setText(label)
+
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

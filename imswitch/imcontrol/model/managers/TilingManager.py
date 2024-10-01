@@ -38,7 +38,7 @@ class TilingManager(SignalInterface):
         y_step = (1 - overlap_xy) * frame_size_y
         assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
         positions = []
-        y_list = list(np.arange(0, grid_y_num, 1)*y_step+y_start)
+        y_list = list(y_start+np.arange(0, grid_y_num, 1)*y_step)
         # ------------Grid scan------------
         # Generate positions for each row
         for y in y_list:
@@ -46,7 +46,7 @@ class TilingManager(SignalInterface):
 
             if xy_scan_type == 'snake':
                 # Generate x coordinates
-                x_list = list(np.arange(0, -grid_x_num, -1)*x_step+x_start)
+                x_list = list(x_start+np.arange(0, -grid_x_num, -1)*x_step)
 
                 
             # Run every other row backwards to minimize stage movement
@@ -61,8 +61,8 @@ class TilingManager(SignalInterface):
             # positions exceeds the specified limit
             if len(positions) > count_limit:
                 positions = positions[:count_limit]
-                self.logger.warning(f"Number fo positions was reduced to {count_limit}!")
-        # self._commChannel.sigTilingPositions.emit(positions)
+                self.logger.warning(f"Number of positions was reduced to {count_limit}!")
+
 
         return positions
 # Copyright (C) 2020-2024 ImSwitch developers

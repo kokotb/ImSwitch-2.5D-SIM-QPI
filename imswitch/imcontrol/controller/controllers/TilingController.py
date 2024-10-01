@@ -3,10 +3,11 @@ from imswitch.imcommon.model import APIExport
 import numpy as np
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcommon.framework import Signal
-
+import threading
+import ctypes
 
 class TilingController(ImConWidgetController):
-    """ Linked to WatcherWidget. """
+
 
     # sigTilingPositions = Signal(list)
 
@@ -23,22 +24,34 @@ class TilingController(ImConWidgetController):
             if self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
 
-        self._commChannel.sigTileImage.connect(self.recWFTileImage)
+        self._commChannel.sigTileImage.connect(self.recWFTileImageThread)
         self.numTiledImages = 0
 
 
+    def recWFTileImageThread(self, im , coords):
+        threading.Thread(target=self.recWFTileImage(im, coords), args=(im, coords, ), daemon=True).start()
+    
+    
     def recWFTileImage(self, im, coords):
         # self.image = im
-        self._widget.createTilingWindow()
+        # negCoords = [coords[0],-coords[1]]
+        if not self.windowExists():
+            self._widget.createTilingWindow()
+            if len(self._widget.tilingView.layers) != 0:
+                for layer in self._widget.tilingView.layers:
+                    self._widget.tilingView.layers.remove(layer)
+
         self.numTiledImages = len(self._widget.tilingView.layers)
         if self.numTiledImages == 0:
             self.originRealCoords = coords
             self.addTileImageToCanvas(im, [0,0])
+            print('wait')
         else:
             currentRealCoords = coords
             currentPixCoords = self.convertRealToPix(currentRealCoords)
             # currentPixCoords.insert(0,0)
             self.addTileImageToCanvas(im, currentPixCoords)
+            print('wait')
 
 
 
@@ -57,11 +70,31 @@ class TilingController(ImConWidgetController):
         scale = 1/0.1233 #pixels per micron
 
         
-        currentXPixCoords = (currentRealCoords[0] + xoffset) * scale
+        currentXPixCoords = (currentRealCoords[0] + xoffset) * -scale
         currentYPixCoords = (currentRealCoords[1] + yoffset) * scale
-        currentPixCoords = [currentXPixCoords,currentYPixCoords]
+        currentPixCoords = [currentYPixCoords,currentXPixCoords] #imswitch seems to use [Y,X] coordinates
         return currentPixCoords
 
+
+    def windowExists(self):
+
+        EnumWindows = ctypes.windll.user32.EnumWindows
+        EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int))
+        GetWindowText = ctypes.windll.user32.GetWindowTextW
+        GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
+        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+        
+        titles = []
+        def foreach_window(hwnd, lParam):
+            if IsWindowVisible(hwnd):
+                length = GetWindowTextLength(hwnd)
+                buff = ctypes.create_unicode_buffer(length + 1)
+                GetWindowText(hwnd, buff, length + 1)
+                titles.append(buff.value)
+            return True
+        EnumWindows(EnumWindowsProc(foreach_window), 0)
+        
+        return ('Tiling Preview' in titles)
 
 
     

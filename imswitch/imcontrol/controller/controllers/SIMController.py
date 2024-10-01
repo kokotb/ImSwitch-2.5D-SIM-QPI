@@ -457,7 +457,7 @@ class SIMController(ImConWidgetController):
                         # Push all wide fields into one array.
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
-                        if self.tilePreview:
+                        if self.tilePreview and not len(positions)==1:
                             self._commChannel.sigTileImage.emit(imageWF, pos)
 
                     
