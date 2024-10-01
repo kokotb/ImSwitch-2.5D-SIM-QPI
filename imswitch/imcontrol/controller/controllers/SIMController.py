@@ -257,7 +257,7 @@ class SIMController(ImConWidgetController):
         camPixelSize = sim_parameters.Pixelsize
         projCamPixelSize = camPixelSize/magnification
 
-
+ 
         self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
 
@@ -458,7 +458,7 @@ class SIMController(ImConWidgetController):
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
                         if self.tilePreview and not len(positions)==1:
-                            self._commChannel.sigTileImage.emit(imageWF, pos)
+                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}")
 
                     
                     # Activate recording and reconstruction in processor

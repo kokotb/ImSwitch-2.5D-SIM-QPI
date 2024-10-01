@@ -22,7 +22,7 @@ class CommunicationChannel(SignalInterface):
 
     sigSIMAcqToggled = Signal(bool)
 
-    sigTileImage = Signal(np.ndarray, list)
+    sigTileImage = Signal(np.ndarray, list, str)
 
     # sigTriggerModeToggled = Signal()
     

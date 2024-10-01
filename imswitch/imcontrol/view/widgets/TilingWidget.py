@@ -60,7 +60,7 @@ class TilingWidget(NapariHybridWidget):
         self.reconFrameSkip_textedit.setText("0")
 
     def createTilingWindow(self):
-
+        # self.napari = napari
         self.tilingView = napari.Viewer(title='Tiling Preview')
 
 

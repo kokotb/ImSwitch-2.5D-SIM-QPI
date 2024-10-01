@@ -24,34 +24,38 @@ class TilingController(ImConWidgetController):
             if self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
 
-        self._commChannel.sigTileImage.connect(self.recWFTileImageThread)
+        self._commChannel.sigTileImage.connect(self.mainWFTileImageThread)
         self.numTiledImages = 0
 
 
-    def recWFTileImageThread(self, im , coords):
-        threading.Thread(target=self.recWFTileImage(im, coords), args=(im, coords, ), daemon=True).start()
     
     
-    def recWFTileImage(self, im, coords):
-        # self.image = im
-        # negCoords = [coords[0],-coords[1]]
+    def mainWFTileImage(self, im, coords, name):
+        
+        im = im[np.newaxis,:,:]
         if not self.windowExists():
+            self.layerSet = set()
             self._widget.createTilingWindow()
+            xSteps = int(self._widget.numGridX_textedit.text())
+            ySteps = int(self._widget.numGridY_textedit.text())
+            totalSteps = xSteps * ySteps
+
             if len(self._widget.tilingView.layers) != 0:
                 for layer in self._widget.tilingView.layers:
                     self._widget.tilingView.layers.remove(layer)
-
-        self.numTiledImages = len(self._widget.tilingView.layers)
-        if self.numTiledImages == 0:
             self.originRealCoords = coords
-            self.addTileImageToCanvas(im, [0,0])
-            print('wait')
+            self.addTileImageToCanvas(im, [0,0,0], name=name)
+            self.layerSet.add(name)
         else:
-            currentRealCoords = coords
-            currentPixCoords = self.convertRealToPix(currentRealCoords)
-            # currentPixCoords.insert(0,0)
-            self.addTileImageToCanvas(im, currentPixCoords)
-            print('wait')
+
+            
+            if name not in self.layerSet:
+                currentRealCoords = coords
+                currentPixCoords = self.convertRealToPix(currentRealCoords)
+                self.addTileImageToCanvas(im, currentPixCoords, name)
+                self.layerSet.add(name)
+            else:
+                self._widget.tilingView.layers[name].data = np.concatenate((im.data,self._widget.tilingView.layers[name].data),axis=0)
 
 
 
@@ -60,8 +64,18 @@ class TilingController(ImConWidgetController):
 
 
 
-    def addTileImageToCanvas(self, im, currentPixCoords):
-        self._widget.tilingView.add_image(im, translate = currentPixCoords)
+
+
+
+
+
+    def mainWFTileImageThread(self, im , coords, name):
+        threading.Thread(target=self.mainWFTileImage(im, coords, name), args=(im, coords,name, ), daemon=True).start()
+
+
+
+    def addTileImageToCanvas(self, im, currentPixCoords, name):
+        self._widget.tilingView.add_image(im, translate = currentPixCoords, name=name)
 
 
     def convertRealToPix(self, currentRealCoords):
@@ -74,7 +88,7 @@ class TilingController(ImConWidgetController):
         currentYPixCoords = (currentRealCoords[1] + yoffset) * scale
         currentPixCoords = [currentYPixCoords,currentXPixCoords] #imswitch seems to use [Y,X] coordinates
         return currentPixCoords
-
+ 
 
     def windowExists(self):
 
