@@ -153,6 +153,7 @@ class SIMController(ImConWidgetController):
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
+        self._commChannel.sigStopSim.connect(self.stopSIM)
 
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
@@ -329,7 +330,9 @@ class SIMController(ImConWidgetController):
             #         print('fuckyou')
 
             # Scan over all positions generated for grid
-            for j, pos in enumerate(positions):
+            j = 0
+            while j < len(positions):
+                pos = positions[j]
                 
                 # FIXME: Remove after development is completed
                 times_color = []
@@ -374,7 +377,7 @@ class SIMController(ImConWidgetController):
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
              
 
-
+                numChannels = len(processors)
 
                 # Loop over channels
                 for k, processor in enumerate(processors):
@@ -458,7 +461,7 @@ class SIMController(ImConWidgetController):
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
                         if self.tilePreview and not len(positions)==1:
-                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}")
+                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numChannels,k, self.frameSetCount)
 
                     
                     # Activate recording and reconstruction in processor
@@ -521,6 +524,7 @@ class SIMController(ImConWidgetController):
 
                 self.frameSetCount += 1
                 
+                
                 # Timing of the process for testing purposes
                 time_whole_end = time.time()
                 time_whole_total = time_whole_end-time_whole_start                
@@ -532,6 +536,10 @@ class SIMController(ImConWidgetController):
                 self._logger.debug('Total frames: {}'.format(self.frameSetCount))
                 
                 self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
+                if broken:
+                    pass
+                else:
+                    j += 1
                 
 
 

@@ -1,5 +1,7 @@
-i = 0
-while i < 10:
 
-    print(i)
-    i+=1
+frameNum = [x for x in range(20)]
+
+
+for number in frameNum:
+    print(divmod(number, 15)[0])
+
