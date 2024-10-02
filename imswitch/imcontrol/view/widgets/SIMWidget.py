@@ -303,6 +303,7 @@ class SIMWidget(NapariHybridWidget):
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
+        self.stop_button.setCheckable(True)
         self.calibrateButton = QPushButton("Calibrate")
         self.saveOneSetButton = QPushButton("Snapshot")
         button_layout = QtWidgets.QGridLayout()
@@ -373,6 +374,7 @@ class SIMWidget(NapariHybridWidget):
         wholeTabVertLayout.addLayout(tabBottomHorLayout)
 
         self.start_button.toggled.connect(self.sigSIMAcqToggled)
+        # self.stop_button.toggled.connect(self._commChannel.sigStopSim.emit())
         
 
 

@@ -332,6 +332,7 @@ class SIMController(ImConWidgetController):
             # Scan over all positions generated for grid
             j = 0
             while j < len(positions):
+ 
                 pos = positions[j]
                 
                 # FIXME: Remove after development is completed
@@ -540,6 +541,11 @@ class SIMController(ImConWidgetController):
                     pass
                 else:
                     j += 1
+
+                if self._widget.stop_button.isChecked():
+                    self._widget.stop_button.setChecked(False)
+                    return
+
                 
 
 
