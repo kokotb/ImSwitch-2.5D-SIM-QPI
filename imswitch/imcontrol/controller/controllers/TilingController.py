@@ -60,7 +60,7 @@ class TilingController(ImConWidgetController):
             currentRealCoords = coords
             currentPixCoords = self.convertRealToPix(currentRealCoords)
             self.addTileImageToCanvas(zeroMask, currentPixCoords, self.posIndex)
-            self._widget.tilingView.layers[self.posIndex].data[chanIndex,:,:] = im 
+            self._widget.tilingView.layers[self.posIndex].data[chanIndex,:,:] = im
             self.posIndexSet.add(self.posIndex)
             self.chanIndexSet = set()
             self.chanIndexSet.add('0')

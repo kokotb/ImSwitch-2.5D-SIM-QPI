@@ -835,7 +835,7 @@ class SIMController(ImConWidgetController):
         self.startxpos, self.startypos = self.positionerXY.get_abs()
         self.num_grid_x = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - X')])
         self.num_grid_y = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - Y')])
-        self.overlap = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Overlap [%]')])
+        self.overlap = float(self._commChannel.sharedAttrs._data[('Tiling Settings','Overlap')])
         self.reconFramesSkipped = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Recon Frames to Skips')])
 
     def getParameterValue(self, detector, parameter_name):
