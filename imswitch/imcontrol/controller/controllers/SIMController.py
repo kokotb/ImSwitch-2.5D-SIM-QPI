@@ -345,7 +345,7 @@ class SIMController(ImConWidgetController):
                     pass
                 else:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
-                    time.sleep(.2)
+                    time.sleep(.3)
                     
                 # time_postest_start = time.time()
                 
@@ -686,7 +686,7 @@ class SIMController(ImConWidgetController):
         self.isRecordWF = not self.isRecordWF
         if not self.isRecordWF:
             self.isActive = False
-        print('yo')
+
 
 
     def toggleRecordReconstruction(self):
@@ -852,7 +852,7 @@ class SIMController(ImConWidgetController):
 
 
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0)
-        trigger_source = 'Line2'    
+        trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'
 

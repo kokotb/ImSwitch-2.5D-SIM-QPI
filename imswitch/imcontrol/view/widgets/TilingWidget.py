@@ -31,7 +31,7 @@ class TilingWidget(NapariHybridWidget):
 
         self.overlap_label = QLabel("Overlap [%]")
         self.overlap_textedit = QLineEdit("")
-        self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap [%]", value))
+        self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap [%]", value/100))
 
         self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
         self.reconFrameSkip_textedit = QLineEdit("")
