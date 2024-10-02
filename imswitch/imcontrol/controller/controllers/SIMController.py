@@ -378,7 +378,7 @@ class SIMController(ImConWidgetController):
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
              
 
-                numChannels = len(processors)
+                numChannels = len(poweredLasers)
 
                 # Loop over channels
                 for k, processor in enumerate(processors):
