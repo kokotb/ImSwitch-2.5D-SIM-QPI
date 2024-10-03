@@ -58,6 +58,7 @@ class TilingWidget(NapariHybridWidget):
         self.numGridY_textedit.setText("1")
         self.overlap_textedit.setText("0")
         self.tilingReps_textedit.setText("1")
+        self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", '0') # Checkboxes initialize a little different from QLineEdit. This sends a signal to register value with sharedAttrs
 
     def createTilingWindow(self):
         self.tilingView = napari.Viewer(title='Tiling Preview')

@@ -1,8 +1,4 @@
-import requests
-import json
 import os
-import glob
-
 import numpy as np
 import time
 import threading
@@ -11,11 +7,8 @@ import tifffile as tif
 import os
 import time
 import numpy as np
-
 from decimal import Decimal
-import math
-import logging
-import sys
+
 
 
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
@@ -314,18 +307,8 @@ class SIMController(ImConWidgetController):
             self.isTiling = False
 
         while self.active and lasersInUse != []:
-
-            stackSIM = [] 
-            for k in range(len(processors)):
-                # wfImages.append([])
-                stackSIM.append([]) 
-            # TODO: SLM drives laser powers, do lasers really need to be 
-            # enabled?
-
-                
-            # Set frame number - prepared for time-lapse
-         
-            
+      
+        
             # Generate time_step
             if self.frameSetCount == 0:
                 exptTimeElapsed = 0.0
@@ -885,6 +868,7 @@ class SIMController(ImConWidgetController):
             # self.folder = self._widget.getRecFolder()
             filename = os.path.join(path,filename) #FIXME: Remove hardcoded path
             image = np.array(image)
+            # tif.imwrite(filename, image, imagej=True, metadata = {'pixelsize':2,'units':'um'})
             tif.imwrite(filename, image, imagej=True)
             self._logger.debug("Saving file: "+filename)
         except  Exception as e:
@@ -1310,7 +1294,7 @@ class SIMProcessor(object):
             
             # self.folder = self.path
             filePath = os.path.join(savePath,saveName) #FIXME: Remove hardcoded path
-            tif.imwrite(filePath, image)
+            tif.imwrite(filePath, image, imagej=True)
             self._logger.debug("Saving file: "+filePath)
         except  Exception as e:
             self._logger.error(e)

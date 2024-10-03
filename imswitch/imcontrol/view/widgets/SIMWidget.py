@@ -412,10 +412,12 @@ class SIMWidget(NapariHybridWidget):
 
     def setUserDirInfo(self, saveDir):
         self.path_edit.setText(saveDir)
-        self.user_edit.setText('')
-        self.expt_edit.setText('')
-        self.user_edit.placeholderText = 'Username'
-        self.expt_edit.placeholderText = 'Experiment Name'
+        self.user_edit.setPlaceholderText('Username')
+        self.expt_edit.setPlaceholderText('Experiment Name')
+        self.sigUserDirInfoChanged.emit('User Dir Info','User Name',"username")
+        self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',"exptname")
+
+
 
     def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
