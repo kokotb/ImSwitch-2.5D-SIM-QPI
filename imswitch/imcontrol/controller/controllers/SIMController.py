@@ -8,6 +8,7 @@ import os
 import time
 import numpy as np
 from decimal import Decimal
+import string
 
 
 
@@ -258,6 +259,12 @@ class SIMController(ImConWidgetController):
  
         self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
+        # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
+        # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
+        # test = []
+        # for item in gridNamesY:
+        #     for value in gridNamesX:
+        #         test.append(item+value)
         self.tileOrigin = positions[0]
 
         # Set stacks to be saved into separate folder
