@@ -135,7 +135,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.2
+      "maxdBmValue": 18.3
       
       },
   "561AOTF": {
@@ -166,7 +166,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 22.0
+    "maxdBmValue": 22.2
     }
     
 },
