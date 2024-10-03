@@ -11,6 +11,7 @@ import napari
 class TilingWidget(NapariHybridWidget):
 
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
+
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         self.tilingViewBool = False
@@ -33,8 +34,9 @@ class TilingWidget(NapariHybridWidget):
         self.tilingReps_label = QLabel("Tiling Repetitions")
         self.tilingReps_textedit = QLineEdit("")
         self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
-
+        self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+        self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
 
 
         row = 0
@@ -47,7 +49,9 @@ class TilingWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
         gridScanLayout.addWidget(self.tilingReps_label, row+3, 0)
         gridScanLayout.addWidget(self.tilingReps_textedit, row+3, 1)
-        gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 0)
+        gridScanLayout.addWidget(self.checkbox_tiling, row+4, 0)
+        gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 1)
+
         
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")

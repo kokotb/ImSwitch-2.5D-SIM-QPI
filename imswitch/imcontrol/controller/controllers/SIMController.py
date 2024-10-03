@@ -307,9 +307,12 @@ class SIMController(ImConWidgetController):
         time_whole_start = time_global_start
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receiv e triggers.
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
-
-        # fullCycles = 0
         
+        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
+            self.isTiling = True
+        else:
+            self.isTiling = False
+
         while self.active and lasersInUse != []:
 
             stackSIM = [] 
@@ -342,9 +345,8 @@ class SIMController(ImConWidgetController):
                 time_color_start = time.time()
 
                 # Move stage only if grid positions is greater than 1
-                if len(positions) != 1 and j != 0:
+                if self.isTiling:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
-                    self.isTiling = True
                     time.sleep(.3)
 
                 time_color_end = time.time()
@@ -444,7 +446,7 @@ class SIMController(ImConWidgetController):
                         # Push all wide fields into one array.
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
-                        if self.tilePreview and not len(positions)==1:
+                        if self.tilePreview and self.isTiling:
                             self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numActiveChannels,k, completeFrameSets)
 
                     
@@ -530,8 +532,8 @@ class SIMController(ImConWidgetController):
                     j += 1
                     completeFrameSets += 1
 
-                if len(positions) != 1 and not (completeFrameSets +1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
-                    self._commChannel.sigStopSim.emit() # Actually calced wrong. Correct calc allows one more cycle than wanted. If we call stopSIM one cycle early, appears to work. Very stupid.
+                if self.isTiling and not (completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
+                    self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
                 
 
 
@@ -924,8 +926,8 @@ class SIMController(ImConWidgetController):
     def getReconstructionMethod(self):
         return self._widget.SIMReconstructorList.currentText()
 
-    def getIsUseGPU(self):
-        return self._widget.useGPUCheckbox.isChecked()
+    # def getIsUseGPU(self):
+    #     return self._widget.useGPUCheckbox.isChecked()
     
     # def valueChanged(self, parameterName, value):
     #     self.setSharedAttr(parameterName, _valueAttr, value)
