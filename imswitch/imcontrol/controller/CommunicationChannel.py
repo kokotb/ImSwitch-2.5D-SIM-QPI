@@ -26,6 +26,8 @@ class CommunicationChannel(SignalInterface):
 
     sigTileImage = Signal(np.ndarray, list, str, int, int, int)
 
+    sigTilePreview = Signal()
+
     # sigTriggerModeToggled = Signal()
     
     # sigRunAcquireSetStarted = Signal()

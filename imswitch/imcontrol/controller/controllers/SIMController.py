@@ -147,13 +147,15 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_WF.stateChanged.connect(self.toggleRecordWF)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
-        self._widget.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
+        # self._widget.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         # Communication channels signls (signals sent elsewhere in the program)
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)
+        self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
+        # self._commChannel.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
 
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
@@ -165,6 +167,7 @@ class SIMController(ImConWidgetController):
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
         # self.setSharedAttr(attrCategory, parameterName, value):
+        self.sharedAttrs = self._commChannel.sharedAttrs._data
         
 
     def performSIMExperimentThread(self, sim_parameters):
@@ -175,8 +178,9 @@ class SIMController(ImConWidgetController):
         Run snake scan for larger FOVs.
         """
         
-        self.isReconstructing = False
+        self.isReconstructing = False # Is this line needed, all other references to this variable are in SIMProcessor
         
+
         # Newly added, prep for SLM integration
         self.sim_parameters = sim_parameters
         
@@ -261,9 +265,11 @@ class SIMController(ImConWidgetController):
  
         self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
+        self.tileOrigin = positions[0]
 
         # Set stacks to be saved into separate folder
-        self.exptFolderPath = self.makeExptFolderStr(datetime.now().strftime("%y%m%d%H%M%S"))
+
+        dateTimeStartClick = datetime.now().strftime("%y%m%d%H%M%S")
 
         # Set file-path read from GUI for each processor
         self.updateProcessorParameters()
@@ -271,6 +277,7 @@ class SIMController(ImConWidgetController):
             
         # Set count for frames to 0
         self.frameSetCount = 0
+        completeFrameSets = 0 # Initialized this counter now that we are not "skipping" broken frames during tiling.
         self.saveOneTime = False
         self.saveOneSetRaw = False
         self.saveOneSetWF = False
@@ -301,7 +308,7 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receiv e triggers.
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
 
-
+        # fullCycles = 0
         
         while self.active and lasersInUse != []:
 
@@ -322,15 +329,10 @@ class SIMController(ImConWidgetController):
             else:
                 exptTimeElapsed = time.time() - time_global_start
 
-
-            
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
-            # for processor in self.processors:
-            #     if processor.isCalibrated == False:
-            #         print('fuckyou')
 
             # Scan over all positions generated for grid
-            j = 0
+            j = 0 # Position iterator
             while j < len(positions):
  
                 pos = positions[j]
@@ -339,17 +341,11 @@ class SIMController(ImConWidgetController):
                 times_color = []
                 time_color_start = time.time()
 
-
                 # Move stage only if grid positions is greater than 1
-                if len(positions)==1:
-                    pass
-                else:
+                if len(positions) != 1 and j != 0:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
+                    self.isTiling = True
                     time.sleep(.3)
-                    
-                # time_postest_start = time.time()
-                
-
 
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
@@ -358,28 +354,15 @@ class SIMController(ImConWidgetController):
                 # Trigger SIM set acquisition for all present lasers
                 time_color_start = time.time()
 
-
-
-
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
-                # time_postest_end = time.time()
-                # time_postest_total = time_postest_end - time_postest_start
-                # self._logger.debug('Move start to trigger {:.10f}'.format(time_postest_total))
-                
-                
-
-
-
-
-
+               
 
                 time_color_end = time.time()
                 time_color_total = time_color_end-time_color_start
                 times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
-             
 
-                numChannels = len(poweredLasers)
-
+                numActiveChannels = len(poweredLasers)
+                self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
                 for k, processor in enumerate(processors):
                     # Setting a reconstruction processor for current laser
@@ -462,7 +445,7 @@ class SIMController(ImConWidgetController):
                         imageWF = processor.getWFlbf(self.rawStack)
                         imageWF = imageWF.astype(np.uint16)
                         if self.tilePreview and not len(positions)==1:
-                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numChannels,k, self.frameSetCount)
+                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numActiveChannels,k, completeFrameSets)
 
                     
                     # Activate recording and reconstruction in processor
@@ -497,14 +480,9 @@ class SIMController(ImConWidgetController):
                     times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
 
                     time_color_start = time.time()
-                    num_skip_frames = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Recon Frames to Skips')]) + 1
-                    if self.frameSetCount == 0:
-                        div_1 = 0
-                    else:                        
-                        div_1  = divmod(self.frameSetCount, num_skip_frames)[1]
                     
                     # if self.isReconstruction and div_1 == 0:
-                    if self.isReconstruction and div_1 == 0 and self.powered:
+                    if self.isReconstruction and self.powered:
                         threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
 
 
@@ -537,15 +515,23 @@ class SIMController(ImConWidgetController):
                 self._logger.debug('Total frames: {}'.format(self.frameSetCount))
                 
                 self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
-                if broken:
-                    pass
-                else:
-                    j += 1
+
 
                 if self._widget.stop_button.isChecked():
                     self._widget.stop_button.setChecked(False)
                     return
+                
 
+
+
+                if broken:
+                    pass
+                else:
+                    j += 1
+                    completeFrameSets += 1
+
+                if len(positions) != 1 and not (completeFrameSets +1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
+                    self._commChannel.sigStopSim.emit() # Actually calced wrong. Correct calc allows one more cycle than wanted. If we call stopSIM one cycle early, appears to work. Very stupid.
                 
 
 
@@ -553,8 +539,6 @@ class SIMController(ImConWidgetController):
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)
-        # print('controllersignal')
-
 
 
     def makeSetupInfoDict(self):
@@ -793,8 +777,12 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.deactivateSLMWriteOnly()
         for detector in self.detectors:
             detector.stopAcquisitionSIM()
+        if self.isTiling:
+            self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
+            self.isTiling = False
         # Save log file
         self.createLogFile()
+
 
 
 
@@ -814,9 +802,6 @@ class SIMController(ImConWidgetController):
         
         # Clear logger files before start of experiment
         self.log_times_loop = []
-        
-        # # Load experiment parameters to object
-        # self.getExperimentSettings()
 
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()
@@ -833,10 +818,10 @@ class SIMController(ImConWidgetController):
         
     def getTilingSettings(self):
         self.startxpos, self.startypos = self.positionerXY.get_abs()
-        self.num_grid_x = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - X')])
-        self.num_grid_y = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Steps - Y')])
-        self.overlap = float(self._commChannel.sharedAttrs._data[('Tiling Settings','Overlap')])
-        self.reconFramesSkipped = int(self._commChannel.sharedAttrs._data[('Tiling Settings','Recon Frames to Skips')])
+        self.num_grid_x = int(self.sharedAttrs[('Tiling Settings','Steps - X')])
+        self.num_grid_y = int(self.sharedAttrs[('Tiling Settings','Steps - Y')])
+        self.overlap = float(self.sharedAttrs[('Tiling Settings','Overlap')])
+        self.reconFramesSkipped = int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name
@@ -976,9 +961,7 @@ class SIMController(ImConWidgetController):
 
 class SIMParameters(object):
     def __init__(self):
-
-        self.placeHolder = ""
-
+        pass
 
 class SIMProcessor(object):
 

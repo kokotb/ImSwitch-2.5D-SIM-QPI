@@ -320,14 +320,14 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
         self.checkbox_record_WF = QCheckBox('Save Widefield')
         self.checkbox_logging = QCheckBox("Logging")
-        self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+        # self.checkbox_tilepreview =  QCheckBox("Tile Preview")
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
         checkbox_layout.addWidget(self.checkbox_record_WF)
         checkbox_layout.addWidget(self.checkbox_logging)
-        checkbox_layout.addWidget(self.checkbox_tilepreview)
+        # checkbox_layout.addWidget(self.checkbox_tilepreview)
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
@@ -412,8 +412,10 @@ class SIMWidget(NapariHybridWidget):
 
     def setUserDirInfo(self, saveDir):
         self.path_edit.setText(saveDir)
-        self.user_edit.setText('username')
-        self.expt_edit.setText('exptname')
+        self.user_edit.setText('')
+        self.expt_edit.setText('')
+        self.user_edit.placeholderText = 'Username'
+        self.expt_edit.placeholderText = 'Experiment Name'
 
     def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
@@ -552,13 +554,6 @@ class SIMWidget(NapariHybridWidget):
         self.path_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Working Directory',value))
         self.user_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',value))
         self.expt_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','User Name',value))
-
-    # def initTilingInfo(self):
-    #     self.numGridX_textedit.setText("1")
-    #     self.numGridY_textedit.setText("1")
-    #     self.overlap_textedit.setText("0")
-    #     self.reconFrameSkip_textedit.setText("0")
-
 
 
     def getZStackParameters(self):

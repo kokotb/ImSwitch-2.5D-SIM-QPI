@@ -2,7 +2,6 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
-import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
@@ -11,8 +10,6 @@ import napari
 
 class TilingWidget(NapariHybridWidget):
 
-
-    # sigSaveFocus = QtCore.Signal(bool)
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -33,11 +30,13 @@ class TilingWidget(NapariHybridWidget):
         self.overlap_textedit = QLineEdit("")
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
 
-        self.reconFrameSkip_label = QLabel("Recon Frames to Skips")
-        self.reconFrameSkip_textedit = QLineEdit("")
-        self.reconFrameSkip_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Recon Frames to Skips", value))
+        self.tilingReps_label = QLabel("Tiling Repetitions")
+        self.tilingReps_textedit = QLineEdit("")
+        self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
 
-        
+        self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+
+
         row = 0
 
         gridScanLayout.addWidget(self.numGridX_label, row, 0)
@@ -46,21 +45,17 @@ class TilingWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.numGridY_textedit, row+1, 1)
         gridScanLayout.addWidget(self.overlap_label, row+2, 0)
         gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
-        gridScanLayout.addWidget(self.reconFrameSkip_label, row+3, 0)
-        gridScanLayout.addWidget(self.reconFrameSkip_textedit, row+3, 1)
+        gridScanLayout.addWidget(self.tilingReps_label, row+3, 0)
+        gridScanLayout.addWidget(self.tilingReps_textedit, row+3, 1)
+        gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 0)
         
-
-
-
-
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")
         self.overlap_textedit.setText("0")
-        self.reconFrameSkip_textedit.setText("0")
+        self.tilingReps_textedit.setText("1")
 
     def createTilingWindow(self):
-        # self.napari = napari
         self.tilingView = napari.Viewer(title='Tiling Preview')
 
 
