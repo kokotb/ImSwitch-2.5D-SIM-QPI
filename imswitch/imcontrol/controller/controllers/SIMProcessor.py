@@ -361,14 +361,13 @@ class SIMProcessor(object):
     def setPositionNum(self, pos_num):
         self.pos_num = pos_num
 
-    def setWavelength(self, wavelength, sim_parameters):
-        self.LaserWL = wavelength
-        if self.LaserWL == 488:
+    def setWavelength(self, laserWL, sim_parameters):
+        if laserWL == 488:
             self.h.wavelength = sim_parameters.ReconWL1
-        elif self.LaserWL == 561:
+        elif laserWL == 561:
             self.h.wavelength = sim_parameters.ReconWL2
-        elif self.LaserWL == 640:
-            self.h.wavelength = sim_parameters.ReconWL1
+        elif laserWL == 640:
+            self.h.wavelength = sim_parameters.ReconWL3
         
     def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
         '''

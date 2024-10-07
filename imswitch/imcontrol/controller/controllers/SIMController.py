@@ -236,7 +236,6 @@ class SIMController(ImConWidgetController):
                 exptTimeElapsed = 0.0
             else:
                 exptTimeElapsed = time.time() - time_global_start
-
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
 
             # Scan over all positions generated for grid
