@@ -143,7 +143,6 @@ class SIMController(ImConWidgetController):
         dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
         detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
         
-        dic_laser_present = {488:True, 561:True, 640:True}
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
         # Check if lasers are set and have power in them select only lasers with powers
@@ -151,25 +150,22 @@ class SIMController(ImConWidgetController):
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
-
-        ##CTNOTE TEMPORARY        
-        lasersInUse = [488,561,640] #Overwriting poweredLasers to keep all on at the moment.
-        ##CTNOTE TEMPORARY      
+    
         
         # Check if detector is present comparing hardcoded names to connected 
         # names, detector names are used only for pulling imageSize from the 
         # detector
         # FIXME: Check again if this laser checkup makes sense
         det_names = []
-        if lasersInUse != []:
-            for dic in lasersInUse:
+        if poweredLasers != []:
+            for dic in poweredLasers:
                 det_name = dic_det_names[dic]
                 if det_name in detector_names_connected:
                     det_names.append(det_name)
                 else:
                     self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(lasersInUse) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {lasersInUse}")
+                    if len(poweredLasers) > len(detector_names_connected):
+                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {poweredLasers}")
                     # FIXME: If used for anything else but pixel number 
                     # readout it should be changed to not continue the code if 
                     # detector not present
@@ -202,12 +198,11 @@ class SIMController(ImConWidgetController):
         
         # Set processors for selected lasers
         processors = []
-        isLaser = []
 
-        for wl in lasersInUse:
-            if lasersInUse != []:
+        for wl in poweredLasers:
+            if poweredLasers != []:
                 processors.append(processors_dic[wl])
-                isLaser.append(dic_laser_present[wl])
+
                 processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
 
 
@@ -275,7 +270,7 @@ class SIMController(ImConWidgetController):
         else:
             self.isTiling = False
 
-        while self.active and lasersInUse != []:
+        while self.active and poweredLasers != []:
       
         
             # Generate time_step
