@@ -11,6 +11,7 @@ from decimal import Decimal
 import string
 from .SIMProcessor import SIMProcessor
 from .SIMProcessor import SIMParameters
+from concurrent.futures import ThreadPoolExecutor
 
 
 
@@ -192,7 +193,7 @@ class SIMController(ImConWidgetController):
             
         # Set count for frames to 0
         self.frameSetCount = 0
-        completeFrameSets = 0 # Initialized this counter now that we are not "skipping" broken frames during tiling.
+        self.completeFrameSets = 0 # Initialized this counter now that we are not "skipping" broken frames during tiling.
         self.saveOneTime = False
         self.saveOneSetRaw = False
         self.saveOneSetWF = False
@@ -202,7 +203,7 @@ class SIMController(ImConWidgetController):
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
         # Get max exposure time from the selected RO on SLM
-        expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
+        self.expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
 
         # -------------------Set-up cams-------------------
 
@@ -213,7 +214,7 @@ class SIMController(ImConWidgetController):
             image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
             buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
             # buffer_size = 9
-            self.setCamForExperiment(detector, int(buffer_size),expTimeMax)
+            self.setCamForExperiment(detector, int(buffer_size),self.expTimeMax)
         
 
 
@@ -228,7 +229,7 @@ class SIMController(ImConWidgetController):
         else:
             self.isTiling = False
 
-        numActiveChannels = len(poweredLasers)
+        self.numActiveChannels = len(poweredLasers)
         # print(threading.current_thread())
 
 
@@ -245,14 +246,15 @@ class SIMController(ImConWidgetController):
             # Scan over all positions generated for grid
             j = 0 # Position iterator
             while j < len(positions):
- 
-                pos = positions[j]
+                self.j = j
+                self.pos = positions[self.j]
+                timestart = time.time()
                 
 
 
                 # Move stage only if grid positions is greater than 1
                 if self.isTiling:
-                    self.positionerXY.setPositionXY(pos[0], pos[1])
+                    self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
                     time.sleep(.3)
 
 
@@ -266,114 +268,13 @@ class SIMController(ImConWidgetController):
 
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
-                for processor in self.processors:
+
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    executor.map(self.mainSIMLoop, self.processors)
+
                     # Setting a reconstruction processor for current laser
                     # self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
-                    k = processor.processorIndex
-                    self.LaserWL = processor.handle
-                    
-                    # Set current detector being used
-                    detector = processor.detObj
-                    
-                    # FIXME: Remove after development is completed
 
-                    
-                    # 3 angles 3 phases
-                    framesPerDetector = 9
-
-
-                    waitingBuffers = detector._camera.getBufferValue()
-
-                    waitingBuffersEnd = 0
-                    bufferStartTime = time.time()
-                    broken = False
-                    # time.sleep(expTimeMax/1000000*16)
-                    # time.sleep(1)
-                    while waitingBuffers != 9:
-                        
-                        time.sleep(expTimeMax/1000000)
-                        waitingBuffers = detector._camera.getBufferValue() #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
-                        
-                        if waitingBuffers != waitingBuffersEnd:
-                            bufferStartTime = time.time()
-                            bufferEndTime = time.time()
-                        else: 
-                            bufferEndTime = time.time()
-
-                        bufferTotalTime = bufferEndTime-bufferStartTime
-                        # print(bufferTotalTime)
-
-                        # print(bufferTotalTime)
-                        # print(waitingBuffers)
-                        waitingBuffersEnd = waitingBuffers
-                        broken = False
-                        # print(waitingBuffers,bufferTotalTime)
-                        if waitingBuffers != 9 and bufferTotalTime > expTimeMax/250000: #expTimeMax/250000 = 4x exp time in correct units
-                        # if waitingBuffers != 9 and bufferTotalTime > .1: #expTimeMax/250000 = 4x exp time in correct units
-                            self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
-                            for detector in self.detectors:
-                                detector._camera.clearBuffers()
-                            
-                            broken = True
-                            break
-                        
-                        
-                    if broken == True:
-                        droppedFrameSets += 1
-                        
-                        break
-
-                    self.rawStack = detector._camera.grabFrameSet(framesPerDetector)
-
-
-
-   
-                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
-                    
-                    # Set sim stack for processing all functions work on 
-                    processor.setSIMStack(self.rawStack)
-                    
-                    # Push all wide fields into one array.
-                    imageWF = processor.getWFlbf(self.rawStack)
-                    imageWF = imageWF.astype(np.uint16)
-                    if self.tilePreview and self.isTiling:
-                        self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numActiveChannels,k, completeFrameSets)
-
-                    
-                    # Activate recording and reconstruction in processor
-                    processor.setRecordingMode(self.isRecordRecon)
-                    processor.setReconstructionMode(self.isReconstruction)
-                    processor.setWavelength(self.LaserWL, sim_parameters)
-                    
-                    if k == 0 and self.saveOneTime:
-                        self.saveOneSetRaw = True
-                    if self.saveOneSetRaw:
-                        self.recordOneSetRaw(j)
-                    if self.isRecordRaw:
-                        self.recordRawFunc(j)
-
-                    if k == 0 and self.saveOneTime:
-                        self.saveOneSetWF = True
-                    if self.saveOneSetWF:
-                        self.recordOneSetWF(j, imageWF)
-                    if self.isRecordWF:
-                        self.recordWFFunc(j, imageWF)
-
-
-                    
-                    # if self.isReconstruction and div_1 == 0:
-                    if self.isReconstruction:
-                        processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw)
-
-
-                    processor.clearStack()                    
-
-               
-                    if k==(len(self.processors)-1) and self.saveOneSetRaw and self.saveOneTime:
-                        self.saveOneSetRaw = False
-                        self.saveOneTime = False
-                        self.saveOneSetWF = False
-                
                 # self._widget.viewer.grid.enabled = True
 
 
@@ -394,16 +295,121 @@ class SIMController(ImConWidgetController):
 
 
 
-                if broken:
-                    pass
-                else:
-                    j += 1
-                    completeFrameSets += 1
+                # if broken:
+                #     pass
+                # else:
+                j += 1
+                self.completeFrameSets += 1
 
-                if self.isTiling and not (completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
-                    self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
+                if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
+                    self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after self.completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
+                print(time.time()-timestart)
+    def mainSIMLoop(self, processor):
+        k = processor.processorIndex
+        self.LaserWL = processor.handle
+        
+        # Set current detector being used
+        detector = processor.detObj
+        
+        # FIXME: Remove after development is completed
+
+        
+        # 3 angles 3 phases
+        framesPerDetector = 9
+
+
+        waitingBuffers = detector._camera.getBufferValue()
+
+        waitingBuffersEnd = 0
+        bufferStartTime = time.time()
+        broken = False
+        # time.sleep(self.expTimeMax/1000000*16)
+        # time.sleep(1)
+        while waitingBuffers != 9:
+            
+            time.sleep(self.expTimeMax/1000000)
+            waitingBuffers = detector._camera.getBufferValue() #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
+            
+            if waitingBuffers != waitingBuffersEnd:
+                bufferStartTime = time.time()
+                bufferEndTime = time.time()
+            else: 
+                bufferEndTime = time.time()
+
+            bufferTotalTime = bufferEndTime-bufferStartTime
+            # print(bufferTotalTime)
+
+            # print(bufferTotalTime)
+            # print(waitingBuffers)
+            waitingBuffersEnd = waitingBuffers
+            broken = False
+            # print(waitingBuffers,bufferTotalTime)
+            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/250000: #self.expTimeMax/250000 = 4x exp time in correct units
+            # if waitingBuffers != 9 and bufferTotalTime > .1: #self.expTimeMax/250000 = 4x exp time in correct units
+                self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
+                for detector in self.detectors:
+                    detector._camera.clearBuffers()
                 
+                broken = True
+                break
+            
+            
+        # if broken == True:
+        #     droppedFrameSets += 1
+            
+            # break
 
+        self.rawStack = detector._camera.grabFrameSet(framesPerDetector)
+
+
+
+
+        self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
+        
+        # Set sim stack for processing all functions work on 
+        processor.setSIMStack(self.rawStack)
+        
+        # Push all wide fields into one array.
+        imageWF = processor.getWFlbf(self.rawStack)
+        imageWF = imageWF.astype(np.uint16)
+        if self.tilePreview and self.isTiling:
+            self._commChannel.sigTileImage.emit(imageWF, self.pos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+
+        
+        # Activate recording and reconstruction in processor
+        processor.setRecordingMode(self.isRecordRecon)
+        processor.setReconstructionMode(self.isReconstruction)
+        processor.setWavelength(self.LaserWL, self.sim_parameters)
+        
+        if k == 0 and self.saveOneTime:
+            self.saveOneSetRaw = True
+        if self.saveOneSetRaw:
+            self.recordOneSetRaw(self.j)
+        if self.isRecordRaw:
+            self.recordRawFunc(self.j)
+
+        if k == 0 and self.saveOneTime:
+            self.saveOneSetWF = True
+        if self.saveOneSetWF:
+            self.recordOneSetWF(self.j, imageWF)
+        if self.isRecordWF:
+            self.recordWFFunc(self.j, imageWF)
+
+
+        
+        # if self.isReconstruction and div_1 == 0:
+        if self.isReconstruction:
+            processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, self.j, self.exptTimeElapsedStr,self.saveOneSetRaw)
+
+
+        processor.clearStack()                    
+
+    
+        if k==(len(self.processors)-1) and self.saveOneSetRaw and self.saveOneTime:
+            self.saveOneSetRaw = False
+            self.saveOneTime = False
+            self.saveOneSetWF = False
+                
 
                 
 
