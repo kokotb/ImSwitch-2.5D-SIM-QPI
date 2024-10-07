@@ -286,7 +286,7 @@ class SIMController(ImConWidgetController):
                     bufferStartTime = time.time()
                     broken = False
                     # time.sleep(expTimeMax/1000000*16)
-                    time.sleep(1)
+                    # time.sleep(1)
                     while waitingBuffers != 9:
                         
                         time.sleep(expTimeMax/1000000)
