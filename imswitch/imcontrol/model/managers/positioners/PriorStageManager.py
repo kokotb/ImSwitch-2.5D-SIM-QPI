@@ -17,23 +17,28 @@ class PriorStageManager(PositionerManager):
             axis: 0 for axis in positionerInfo.axes
         })
         self.__logger = initLogger(self)
-
+        
         self.positionerInfo = positionerInfo
+        self.moveLimitsRegHolder = self.positionerInfo.limits
         self.port = positionerInfo.managerProperties['port']
         self.rx = create_string_buffer(1000)
         
         self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all()
         
         self.check_axes()
+        self.invertJoystickY()
         # Set intial values to match the widget
         self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']
         if self.zeroOnStartup:
-            for axis in self.axes: 
-                self.setPosition(self._position[axis], axis)
+            self.setPositionXY(0, 0)
         else:
-            for j, axis in enumerate(self.axes):
-                startPos = self.get_abs()
-                self.setPosition(startPos[j], axis)
+            # for j, axis in enumerate(self.axes):
+            startPos = self.get_abs()
+            self.setPositionXY(startPos[0], startPos[1])
+
+
+    def invertJoystickY(self):
+        self.query("controller.stage.joystickdirection.set 1 -1")
 
     def initialize_all(self):
         """Initialize the stage and go to mock if not present."""
@@ -132,17 +137,29 @@ class PriorStageManager(PositionerManager):
         
 
     def move(self, dist, axis):
-        # self.setPosition(self._position[axis] + dist, axis)
         self.moveRelative(dist, axis) 
     
 
     def setPositionXY(self, position_x, position_y):
+
+        if abs(float(position_x)) > self.moveLimitsRegHolder[0] or abs(float(position_y)) > self.moveLimitsRegHolder[1]:
+
+            self.__logger.error(f'Out of bounds request for XY stage. Limits are ±{self.moveLimitsRegHolder}')
+            old_pos = self.get_abs()
+            self._position['X'] = float(old_pos[0])
+            self._position['Y'] = float(old_pos[1])
+            return
         new_position = [str(position_x), str(position_y)]
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
-        self.query(msg_set_position)
-        self._position['X'] = position_x
-        self._position['Y'] = position_y
-        print(self._position) #calculated, not queries from get_abs
+        ret = self.query(msg_set_position)
+        if ret[1] == '0':
+            self._position['X'] = position_x
+            self._position['Y'] = position_y
+        else:
+            old_pos = self.get_abs()
+            self._position['X'] = float(old_pos[0])
+            self._position['Y'] = float(old_pos[1])
+        print(self._position)
 
     def moveRelative(self, dist, axis):
         """Moves the stage for a relative given step. """
@@ -152,8 +169,15 @@ class PriorStageManager(PositionerManager):
             axis_order = 1
         else:
             axis_order = 'None'
-            print(f"{axis} is invalid input for Prior XY stage!")
-        
+            print(f"{axis} axis is invalid input for Prior XY stage!")
+        old_pos = self.get_abs()
+
+        if float(old_pos[axis_order])+dist > self.moveLimitsRegHolder[axis_order]:
+            self.__logger.error(f'Out of bounds request on {axis} axis. Limit is ±{self.moveLimitsRegHolder[axis_order]}.')
+            self._position['X'] = float(old_pos[0])
+            self._position['Y'] = float(old_pos[1])
+            return
+
         distance = ['0','0']
         distance[axis_order] = str(dist)
         
@@ -165,13 +189,13 @@ class PriorStageManager(PositionerManager):
         print(self._position) #queries from get_abs
 
 
-    def checkBusy(self):
+
+    def checkBusy(self): #CTNOTE This function hangs the GUI for long operations
         """Loops until stage becomes available."""
         busy = self.query("controller.stage.busy.get")[1]
         while busy != '0':
             # Query until stop moving
             busy = self.query("controller.stage.busy.get")[1]
-        # print('Not busy.')
 
 
     def setPosition(self, position, axis):
@@ -191,6 +215,7 @@ class PriorStageManager(PositionerManager):
         self.query(msg_set_position)
         self._position[axis] = position
         print(self._position) #calcuated, not queries from get_abs
+
 
 
     def getSpeedLow(self):

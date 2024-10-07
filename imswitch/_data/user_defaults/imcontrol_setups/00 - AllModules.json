@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 "SLM25D":{
@@ -17,9 +17,6 @@
 
 },
 "Arduino":{
-  "width":1080,
-  "height":1920,
-  "pixelSize":13.62,
   "managerName": "ArduinoManager",
   "managerProperties": {
     "rs232device": "arduino"
@@ -29,15 +26,15 @@
   "monitorIdx": 2,
   "width": 1920,
   "height": 1080,
-  "Wavelength1": 488,
-  "Wavelength2": 561,
-  "Wavelength3": 640,
+  "ReconWL1": 510,
+  "ReconWL2": 580,
+  "ReconWL3": 660,
   "NA": 0.8,
   "Pixelsize": 2.74,
   "Alpha": 0.5,
-  "Beta": 0.98,
+  "Beta": 0.9,
   "w": 0.2,
-  "eta": 0.6,
+  "eta": 0.7,
   "n": 1.0,
   "Magnification": 22.22,
   "saveDir": "D:\\SIM_Data\\",
@@ -62,12 +59,12 @@
         "Gain": 0.0, 
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":190.0,
-        "ExposureTime": 4000.0
+        "AcquisitionFrameRate":5.0,
+        "ExposureTime": 10000.0
       },
       "ROI":{
-        "OffsetX": 2632,
-        "OffsetY": 2056,
+        "OffsetX": 2040,
+        "OffsetY": 1724,
         "Width": 512,
         "Height": 512
       }
@@ -89,12 +86,12 @@
         "Gain": 0.0, 
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
-        "AcquisitionFrameRate":190.0,
-        "ExposureTime": 2500.0
+        "AcquisitionFrameRate":5.0,
+        "ExposureTime": 10000.0
       },
       "ROI":{
-        "OffsetX": 2352,
-        "OffsetY": 2224,
+        "OffsetX": 2560,
+        "OffsetY": 2325,
         "Width": 512,
         "Height": 512
       }
@@ -113,15 +110,15 @@
         "camProperties": {
           "ExposureAuto": "Off",
           "TriggerMode": "Off",
-          "Gain": 0.0, 
+          "Gain": 0.0,
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
-          "AcquisitionFrameRate":190.0,
-          "ExposureTime": 2000.0
+          "AcquisitionFrameRate":5.0,
+          "ExposureTime": 10000.0
         },
         "ROI":{
-          "OffsetX": 2576,
-          "OffsetY": 2082,
+          "OffsetX": 2528,
+          "OffsetY": 2250,
           "Width": 512,
           "Height": 512
         }
@@ -143,9 +140,11 @@
       },
       "wavelength": 488,
       "valueRangeMin": 0,
-      "valueRangeMax": 1023,
-      "valueRangeStep": 10,
-      "valueInit": 1023
+      "valueRangeMax": 100,
+      "valueRangeStep": 2,
+      "valueInit": 100,
+      "maxdBmValue": 18.3
+      
       },
   "561AOTF": {
     "analogChannel": null,
@@ -157,9 +156,10 @@
     },
     "wavelength": 561,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 1023
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 20.2
     },
   "640AOTF": {
     "analogChannel": null,
@@ -171,9 +171,10 @@
     },
     "wavelength": 640,
     "valueRangeMin": 0,
-    "valueRangeMax": 1023,
-    "valueRangeStep": 10,
-    "valueInit": 1023
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 22.2
     }
     
 },
@@ -186,6 +187,7 @@
         "rs232device": "zpiezo"
       },
       "axes": ["Z"],
+      "limits":[-45,450],
       "forPositioning": true,
       "forScanning": true
     },
@@ -198,6 +200,7 @@
         "zeroOnStartup": false
       },
       "axes": ["X","Y"],
+      "limits":[22000,10000],
       "forPositioning": true,
       "forScanning": true
     }
@@ -261,6 +264,8 @@
     "Image",
     "Recording",
     "Settings",
-    "Positioner"
+    "Positioner",
+    "InfoGathering",
+    "Tiling"
   ]  
 }

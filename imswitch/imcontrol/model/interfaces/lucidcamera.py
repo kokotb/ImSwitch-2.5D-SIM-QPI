@@ -278,7 +278,7 @@ class LucidCam:
 
 
 ###Write values from JSON config to the camera
-    def setPropertyValue(self, property_name, property_value):
+    def setPropertyValue(self, property_name, property_value, toPrint=True):
         if property_name == 'StreamBufferHandlingMode': #Needed as this property is under tl_steam, not regular nodemap.
             sbhmValueOld = self.getPropertyValue(property_name)
             if sbhmValueOld == property_value:
@@ -312,8 +312,8 @@ class LucidCam:
             self.__logger.debug(f"Property {property_name} is not readable nor writable! Property not set!")
 
             property_value = None
-
-        self.__logger.debug(f"Set {property_name} {property_value} on {self.model}")
+        if toPrint:
+            self.__logger.debug(f"Set {property_name} {property_value} on {self.model}")
         return property_value
     
     # def setPropertyValueRunning(self, property_name, property_value):
@@ -362,7 +362,7 @@ class LucidCam:
 
             property_value = None
 
-        print(property_name,property_value)
+        # print(property_name,property_value)
         return property_value
 
 ###Get values from the camera and store as variable

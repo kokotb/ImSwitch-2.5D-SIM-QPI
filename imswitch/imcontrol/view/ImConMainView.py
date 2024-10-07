@@ -56,11 +56,9 @@ class ImConMainView(QtWidgets.QMainWindow):
 
         # Dock area
         rightDockInfos = {
-            'Autofocus': _DockInfo(name='Autofocus', yPosition=0),
+            'Autofocus': _DockInfo(name='Autofocus', yPosition=0), #CTNOTE Dock side changed.
             'FocusLock': _DockInfo(name='Focus Lock', yPosition=0),
-            'Laser': _DockInfo(name='Laser Control', yPosition=0),
             'EtSTED': _DockInfo(name='EtSTED', yPosition=0),
-            'Positioner': _DockInfo(name='Positioner', yPosition=1),
             'Rotator': _DockInfo(name='Rotator', yPosition=1),
             'MotCorr': _DockInfo(name='Motorized Correction Collar', yPosition=1),
             'SLM': _DockInfo(name='SLM', yPosition=2),
@@ -74,14 +72,18 @@ class ImConMainView(QtWidgets.QMainWindow):
             'ULenses': _DockInfo(name='uLenses Tool', yPosition=3),
             'FFT': _DockInfo(name='FFT Tool', yPosition=3),
             'Watcher': _DockInfo(name='File Watcher', yPosition=3),
-            'Tiling': _DockInfo(name='Tiling', yPosition=3)
+            
         }
         leftDockInfos = {
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             'View': _DockInfo(name='Image Controls', yPosition=1),
             'Recording': _DockInfo(name='Recording', yPosition=2),
             'SIM': _DockInfo(name = 'SIM', yPosition = 2),
-            'Console': _DockInfo(name='Console', yPosition=4)
+            'Laser': _DockInfo(name='Laser Control', yPosition=3),
+            'Positioner': _DockInfo(name='Positioner', yPosition=4),
+            'Console': _DockInfo(name='Console', yPosition=5),
+            'Tiling': _DockInfo(name='Tiling', yPosition=6),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys
@@ -116,13 +118,13 @@ class ImConMainView(QtWidgets.QMainWindow):
         layout.addWidget(dockArea)
 
         # Maximize window
-        #self.showMaximized()
+        self.showMaximized()
         self.hide()  # Minimize time the window is displayed while loading multi module window
 
         # Adjust dock sizes (the window has to be maximized first for this to work properly)
         if 'Settings' in self.docks:
             self.docks['Settings'].setStretch(1, 5)
-            self.docks['Settings'].container().setStretch(3, 1)
+            self.docks['Settings'].container().setStretch(2, 1)
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 5)
         if 'Image' in self.docks:

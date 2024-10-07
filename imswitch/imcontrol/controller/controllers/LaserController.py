@@ -61,8 +61,10 @@ class LaserController(ImConWidgetController):
         self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
 
     def closeEvent(self):
-        self._master.lasersManager.execOnAll(lambda l: l.setScanModeActive(False))
+        # self._master.lasersManager.execOnAll(lambda l: l.setScanModeActive(False))
+        self._master.lasersManager.execOnAll(lambda l: l.setEnabled(0))
         self._master.lasersManager.execOnAll(lambda l: l.setValue(0))
+
 
     def toggleLaser(self, laserName, enabled):
         """ Enable or disable laser (on/off)."""

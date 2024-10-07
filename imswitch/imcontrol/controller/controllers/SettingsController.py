@@ -533,7 +533,7 @@ class SettingsController(ImConWidgetController):
                 key = (_attrCategory, detectorName, attr)
             else:
                 key = (_attrCategory, detectorName, _detectorParameterSubCategory, attr)
-            self._commChannel.sharedAttrs[key] = value
+            self._commChannel.sharedAttrs[key] = value #CTNOTE possible not doing anything
         finally:
             self.settingAttr = False
 

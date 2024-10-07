@@ -27,3 +27,4 @@ from .ULensesWidget import ULensesWidget
 from .ViewWidget import ViewWidget
 from .WatcherWidget import WatcherWidget
 from .SIMWidget import SIMWidget
+from .InfoGatheringWidget import InfoGatheringWidget

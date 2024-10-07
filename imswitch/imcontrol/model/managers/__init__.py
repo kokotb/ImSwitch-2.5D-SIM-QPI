@@ -16,3 +16,4 @@ from .SLM25DManager import SLM25DManager
 from .SLM4DDManagerMock import SLM4DDManagerMock
 from .SLM25DManagerMock import SLM25DManagerMock
 from .ArduinoManager import ArduinoManager
+from .TilingManager import TilingManager

@@ -21,8 +21,9 @@ from .SLMController import SLMController
 from .SettingsController import SettingsController
 from .SLMController import SLMController
 from .SLM25DController import SLM25DController
-# from .TilingController import TilingController
+from .TilingController import TilingController
 # from .ULensesController import ULensesController
 from .ViewController import ViewController
 # from .WatcherController import WatcherController
 from .SIMController import SIMController
+from. InfoGatheringController import InfoGatheringController

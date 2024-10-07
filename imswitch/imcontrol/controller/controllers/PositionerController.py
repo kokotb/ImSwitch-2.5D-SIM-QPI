@@ -21,7 +21,13 @@ class PositionerController(ImConWidgetController):
                 continue
 
             speed = hasattr(pManager, 'speed')
-            self._widget.addPositioner(pName, pManager.axes, speed)###
+
+            if pName == 'Z':
+                self._widget.addPositionerZ(pName, pManager.axes, speed)
+            elif pName == 'XY':
+                self._widget.addPositionerXY(pName, pManager.axes, speed)
+            else:
+                self._widget.addPositioner(pName, pManager.axes, speed)
             for axis in pManager.axes:
                 self.updatePosition(pName, axis)
                 self.setSharedAttr(pName, axis, _positionAttr, pManager.position[axis])
@@ -35,8 +41,11 @@ class PositionerController(ImConWidgetController):
         # Connect PositionerWidget signals
         self._widget.sigStepUpClicked.connect(self.stepUp)
         self._widget.sigStepDownClicked.connect(self.stepDown)
+        self._widget.sigStepUpCoarseClicked.connect(self.stepUpCoarse)
+        self._widget.sigStepDownCoarseClicked.connect(self.stepDownCoarse)
         self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
-        self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
+        # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
+        self._widget.sigWheelEvent.connect(self.focusWheelDelta)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(
@@ -46,17 +55,18 @@ class PositionerController(ImConWidgetController):
 
     def getPos(self):
         return self._master.positionersManager.execOnAll(lambda p: p.position)
-
+    
+    def focusWheelDelta(self, focusDelta):
+        self._master.positionersManager['Z'].move(focusDelta, 'Z')
+        self.updatePosition('Z', 'Z')
 
     def getSpeed(self):
         return self._master.positionersManager.execOnAll(lambda p: p.speed)
-
 
     def move(self, positionerName, axis, dist):
         """ Moves positioner by dist micrometers in the specified axis. """
         self._master.positionersManager[positionerName].move(dist, axis)
         self.updatePosition(positionerName, axis)
-
 
     def setPos(self, positionerName, axis, position):
         """ Moves the positioner to the specified position in the specified axis. """
@@ -66,16 +76,21 @@ class PositionerController(ImConWidgetController):
     def stepUp(self, positionerName, axis):
         self.move(positionerName, axis, self._widget.getStepSize(positionerName, axis))
 
+    def stepUpCoarse(self, positionerName, axis):
+        self.move(positionerName, axis, self._widget.getStepSizeCoarse(positionerName, axis))
+
     def stepDown(self, positionerName, axis):
         self.move(positionerName, axis, -self._widget.getStepSize(positionerName, axis))
+    
+    def stepDownCoarse(self, positionerName, axis):
+        self.move(positionerName, axis, -self._widget.getStepSizeCoarse(positionerName, axis))
 
     def setAbsPosGUI(self, positionerName, axis):
-        # positionerName = self.getPositionerNames()[0] # probably stays the same
         absPos = self._widget.getAbsPos(positionerName, axis) # pulls value from text box
         self.setAbsPos(positionerName=positionerName, absPos=absPos, axis=axis)
         # Updates all positioners with current value in memory
-        for axis1 in self._master.positionersManager[positionerName].axes: 
-            self.updatePosition(positionerName, axis=axis1)
+        # for axis1 in self._master.positionersManager[positionerName].axes: 
+        self.updatePosition(positionerName, axis=axis)
         # self.updatePosition(positionerName, axis=axis)
 
     def setAbsPos(self, positionerName, absPos, axis):

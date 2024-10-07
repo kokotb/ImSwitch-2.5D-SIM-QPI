@@ -22,6 +22,12 @@ class CommunicationChannel(SignalInterface):
 
     sigSIMAcqToggled = Signal(bool)
 
+    sigStopSim = Signal()
+
+    sigTileImage = Signal(np.ndarray, list, str, int, int, int)
+
+    sigTilePreview = Signal()
+
     # sigTriggerModeToggled = Signal()
     
     # sigRunAcquireSetStarted = Signal()

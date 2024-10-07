@@ -51,6 +51,7 @@ class LaserInfo(DeviceInfo):
     valueRangeMin: Optional[Union[int, float]]
     """ Minimum value of the laser. ``null`` if laser doesn't setting a value.
     """
+    maxdBmValue: Optional[Union[int, float]]
 
     valueRangeMax: Optional[Union[int, float]]
     """ maximum value of the laser. ``null`` if laser doesn't setting a value.
@@ -71,14 +72,19 @@ class LaserInfo(DeviceInfo):
     freqRangeInit: Optional[int] = 0
     """ Initial value of frequency modulation. Don't fill if laser doesn't support it. """
 
-    valueRangeStep: float = 1.0
+    valueRangeStep: float = 2
     """ The default step size of the value range that the laser can be set to.
     """
 
 
 
+
+
 @dataclass(frozen=True)
 class PositionerInfo(DeviceInfo):
+
+    limits: List[int]
+    
     axes: List[str]
     """ A list of axes (names) that the positioner controls. """
 
@@ -91,8 +97,10 @@ class PositionerInfo(DeviceInfo):
     forScanning: bool = False
     """ Whether the positioner is used for scanning. """
 
-    resetOnClose: bool = True
+    resetOnClose: bool = False
     """ Whether the positioner should be reset to 0-position upon closing ImSwitch. """
+
+
 
 
 @dataclass(frozen=True)
@@ -298,14 +306,14 @@ class SIMInfo:
     height: int
     """ Height of SLM, in pixels. """
 
-    Wavelength1: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL1: int
+    """ Wavelength of the emission from 488 laser. """
 
-    Wavelength2: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL2: int
+    """ Wavelength of the emission from 561 laser. """
 
-    Wavelength3: int
-    """ Wavelength of the laser line used with the SLM. """
+    ReconWL3: int
+    """ Wavelength of the emission from 640 laser. """
 
     NA: float
 
@@ -352,19 +360,8 @@ class SIMslmInfo:
     managerName: str
     """ Manager name in string. """
     
-    managerProperties: dict
-    """ Dict of properties for a lower level manager. """
-
 @dataclass(frozen=True)
 class ArduinoInfo:
-    width: int
-    """ Width of SLM, in pixels. """
-
-    height: int
-    """ Height of SLM, in pixels. """
-
-    pixelSize: float
-    """ Pixel size or pixel pitch of the SLM, in millimetres. """
     
     managerName: str
     """ Manager name in string. """
