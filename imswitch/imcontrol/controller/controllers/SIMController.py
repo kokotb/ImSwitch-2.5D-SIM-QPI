@@ -330,29 +330,20 @@ class SIMController(ImConWidgetController):
  
                 pos = positions[j]
                 
-                # FIXME: Remove after development is completed
-                times_color = []
-                time_color_start = time.time()
+
 
                 # Move stage only if grid positions is greater than 1
                 if self.isTiling:
                     self.positionerXY.setPositionXY(pos[0], pos[1])
                     time.sleep(.3)
 
-                time_color_end = time.time()
-                time_color_total = time_color_end-time_color_start
-                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"move stage"])
+
                                 
                 # Trigger SIM set acquisition for all present lasers
-                time_color_start = time.time()
+
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
                
-
-                time_color_end = time.time()
-                time_color_total = time_color_end-time_color_start
-                times_color.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
-
                 numActiveChannels = len(poweredLasers)
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
@@ -366,8 +357,6 @@ class SIMController(ImConWidgetController):
                     
                     # FIXME: Remove after development is completed
 
-
-                    time_color_start = time.time()
                     
                     # 3 angles 3 phases
                     framesPerDetector = 9
@@ -414,17 +403,8 @@ class SIMController(ImConWidgetController):
                         
                         break
 
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"buffer filling"])
-
-                    time_color_start = time.time()
                     self.rawStack = detector._camera.grabFrameSet(framesPerDetector)
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"grab_stack"])
 
-                    time_color_start = time.time()
 
 
                     if self.powered:
@@ -445,13 +425,6 @@ class SIMController(ImConWidgetController):
                     processor.setReconstructionMode(self.isReconstruction)
                     processor.setWavelength(self.LaserWL, sim_parameters)
                     
-                    # FIXME: Remove after development is completed
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"acquire data"])
-
-                    time_color_start = time.time()
-
                     if k == 0 and self.saveOneTime:
                         self.saveOneSetRaw = True
                     if self.saveOneSetRaw and self.powered:
@@ -467,20 +440,11 @@ class SIMController(ImConWidgetController):
                         self.recordWFFunc(j, imageWF)
 
 
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"save data"])
-
-                    time_color_start = time.time()
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction and self.powered:
                         threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
 
-
-                    time_color_end = time.time()
-                    time_color_total = time_color_end-time_color_start
-                    times_color.append(["{:0.3f} ms".format(time_color_total*1000),"reconstruct data"])
 
                     processor.clearStack()                    
 
@@ -491,22 +455,16 @@ class SIMController(ImConWidgetController):
                         self.saveOneSetWF = False
                 
                 # self._widget.viewer.grid.enabled = True
-                self._logger.debug(f"{times_color}")
+
 
                 self.frameSetCount += 1
                 
                 
-                # Timing of the process for testing purposes
-                time_whole_end = time.time()
-                time_whole_total = time_whole_end-time_whole_start                
-                time_whole_start = time.time()
-                time_global_total = time_whole_end-time_global_start
-                self._logger.debug('Loop time: {:.2f} s'.format(time_whole_total))
-                self._logger.debug('Expt time: {:.2f} s'.format(time_global_total))
+
                 self._logger.debug('Dropped frames: {}'.format(droppedFrameSets))
                 self._logger.debug('Total frames: {}'.format(self.frameSetCount))
                 
-                self.log_times_loop.append([self.frameSetCount - 1, time_whole_total])
+
 
 
                 if self._widget.stop_button.isChecked():
@@ -1266,7 +1224,7 @@ class SIMProcessor(object):
         '''
         # compute image
         # initialize the model
-        self._logger.debug("Processing frames")
+        # self._logger.debug("Processing frames")
         if not self.getIsCalibrated():
             
             self.setReconstructor()
@@ -1312,7 +1270,7 @@ class SIMProcessor(object):
         '''
         if self.reconstructionMethod == "napari":
             # we use the napari reconstruction method
-            self._logger.debug("reconstructing the stack with napari")
+            # self._logger.debug("reconstructing the stack with napari")
             assert self.isCalibrated, 'SIM processor not calibrated, unable to perform SIM reconstruction'
 
             dshape= np.shape(currentImage)
@@ -1336,7 +1294,7 @@ class SIMProcessor(object):
             fname_data = os.path.join(root_dir, "synthetic_microtubules_512.tif")
             imgs = tifffile.imread(fname_data)
             '''
-            self._logger.debug("reconstructing the stack with mcsim")
+            # self._logger.debug("reconstructing the stack with mcsim")
 
             imgset_next = sim.SimImageSet({"pixel_size": self.dxy,
                                         "na": self.na,
