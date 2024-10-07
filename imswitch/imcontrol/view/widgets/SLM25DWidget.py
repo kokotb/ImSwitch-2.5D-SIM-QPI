@@ -33,7 +33,7 @@ class SLM25DWidget(Widget):
         self.vb.addItem(self.img)
         self.vb.setAspectLocked(True)
 
-        self.numPositioners = 0
+        self.numPositioners = 2
         self.pars = {}
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
@@ -202,31 +202,36 @@ class SLM25DWidget(Widget):
         axes = ["gamma", "psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         AbsaxisInitialValues = {"gamma": "0.5", "psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "0.006"}
         StepaxisInitialValues = {"gamma": "0.1", "psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.001"}
+        UnitaxisInitialValues = {"gamma": "-", "psi": "-", "Left Center-X": "pixels", "Left Center-Y": "pixels", "Right Center-X": "pixels", "Right Center-Y": "pixels", "Beam Diameter": "mm"}
         positionerName = "Phase mask"
         for i in range(len(axes)):
             self.numPositioners += 1
             axis = axes[i]
             StepInitialValue = StepaxisInitialValues[axis]
             AbsInitialValue = AbsaxisInitialValues[axis]
+            self.unit = UnitaxisInitialValues[axis]
 
             parNameSuffix = self._getParNameSuffix(positionerName, axis)
             label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
 
             self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
             self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-            self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+            self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{AbsInitialValue}</strong>')
             self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+            self.pars['Unit' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{self.unit}</strong>')
+            self.pars['Unit' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
             self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
             self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
 
             self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(StepInitialValue)
             # self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLineEdit()
-            self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+            self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(self.unit)
 
 
 
             self.grid.addWidget(self.pars['Label' + parNameSuffix], self.numPositioners, 0)
             self.grid.addWidget(self.pars['Position' + parNameSuffix], self.numPositioners, 1)
+            self.grid.addWidget(self.pars['Unit' + parNameSuffix], self.numPositioners, 2)
             self.grid.addWidget(self.pars['UpButton' + parNameSuffix], self.numPositioners, 3)
             self.grid.addWidget(self.pars['DownButton' + parNameSuffix], self.numPositioners, 4)
             self.grid.addWidget(QtWidgets.QLabel('Step'), self.numPositioners, 5)
@@ -245,7 +250,7 @@ class SLM25DWidget(Widget):
             self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
             self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
             self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit(AbsInitialValue)
-            self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+            self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(self.unit)
             self.grid.addWidget(self.pars['AbsPosEdit' + parNameSuffix], self.numPositioners, 9)
             self.grid.addWidget(self.pars['AbsPosUnit' + parNameSuffix], self.numPositioners, 10)
             self.grid.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix], self.numPositioners, 11)
@@ -356,7 +361,7 @@ class SLM25DWidget(Widget):
 
     def updatePosition(self, positionerName, axis, position):
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
-        self.pars['Position' + parNameSuffix].setText(f'<strong>{position:.2f} µm</strong>') #Sets value on left side of positioner widget
+        self.pars['Position' + parNameSuffix].setText(f'<strong>{position}</strong>') #Sets value on left side of positioner widget
         # Updates entry window for absolute position
         self.updateAbsPos(positionerName, axis, position)
 
