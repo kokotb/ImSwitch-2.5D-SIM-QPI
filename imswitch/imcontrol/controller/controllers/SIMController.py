@@ -151,10 +151,12 @@ class SIMController(ImConWidgetController):
         self.detectors = [] 
         self.processors = []
         if poweredLasers != []:
-            for dic in poweredLasers:
+            for k, dic in enumerate(poweredLasers):
                 detector = self._master.detectorsManager[str(dic) + ' Cam']
                 self.detectors.append(detector)
                 self.processors.append(processors_dic[dic])
+                processors_dic[dic].detObj = detector
+                processors_dic[dic].processorIndex = k
                 processors_dic[dic].isCalibrated = False # force calibration each time 'Start' is pressed.
         else:
             self._logger.error("No lasers found")
@@ -262,13 +264,14 @@ class SIMController(ImConWidgetController):
 
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
-                for k, processor in enumerate(self.processors):
+                for processor in self.processors:
                     # Setting a reconstruction processor for current laser
                     # self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
-                    self.LaserWL = self.detectors[k]._detectorInfo.managerProperties['wavelength']
+                    k = processor.processorIndex
+                    self.LaserWL = processor.handle
                     
                     # Set current detector being used
-                    detector = self.detectors[k]
+                    detector = processor.detObj
                     
                     # FIXME: Remove after development is completed
 
@@ -282,8 +285,8 @@ class SIMController(ImConWidgetController):
                     waitingBuffersEnd = 0
                     bufferStartTime = time.time()
                     broken = False
-                    if k == 0:
-                        time.sleep(expTimeMax/1000000*16)
+                    # time.sleep(expTimeMax/1000000*16)
+                    time.sleep(1)
                     while waitingBuffers != 9:
                         
                         time.sleep(expTimeMax/1000000)
