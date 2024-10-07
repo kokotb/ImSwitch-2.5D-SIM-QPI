@@ -66,7 +66,7 @@ class SIMController(ImConWidgetController):
             self._logger.error("No laser found")
 
         # Create list of detectors objects
-        self.detectors = list(self._master.detectorsManager._subManagers.values())
+        # self.detectors = list(self._master.detectorsManager._subManagers.values())
             
         # Create positioner objects -- Positioner must have axis 'Z' or axis 'XY' listed in config file to be added correctly.
         for key in self._master.positionersManager._subManagers:
@@ -89,7 +89,7 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
-        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
+        # self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
 
 
         # Signals originating from SIMController.py
@@ -140,8 +140,6 @@ class SIMController(ImConWidgetController):
         # Newly added, prep for SLM integration
         self.sim_parameters = sim_parameters
         
-        dic_det_names = {488:'488 Cam', 561:'561 Cam', 640:'640 Cam'} 
-        detector_names_connected = self._master.detectorsManager.getAllDeviceNames()
         
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
@@ -156,59 +154,24 @@ class SIMController(ImConWidgetController):
         # names, detector names are used only for pulling imageSize from the 
         # detector
         # FIXME: Check again if this laser checkup makes sense
-        det_names = []
+
+        self.detectors = [] 
+        self.processors = []
         if poweredLasers != []:
             for dic in poweredLasers:
-                det_name = dic_det_names[dic]
-                if det_name in detector_names_connected:
-                    det_names.append(det_name)
-                else:
-                    self._logger.debug(f"Specified detector {det_name} for {dic} nm laser not present in \n{detector_names_connected} - correct hardcoded names. Defaulting to detector No. 0.")
-                    if len(poweredLasers) > len(detector_names_connected):
-                        self._logger.debug(f"Not enough detectors configured in config file: {detector_names_connected} for all laser wavelengths selected {poweredLasers}")
-                    # FIXME: If used for anything else but pixel number 
-                    # readout it should be changed to not continue the code if 
-                    # detector not present
-                    # break
-                    # Defaulting to detector 0 to be still able to run the 
-                    # code with only one detector connected. Probably redundant
-                    # since detectors default to mocker if the right number of 
-                    # detectors is configured in the config file
-                    det_name = detector_names_connected[0]
-                    det_names.append()
-        
-        
-        
-        #Assembling detector list based on active AOTF channels. Pulls current detector shape.
-        self.detectors = []        
-
-        
-        if det_names != []:
-            for det_name in det_names:
-                detector = self._master.detectorsManager[det_name]
+                detector = self._master.detectorsManager[str(dic) + ' Cam']
                 self.detectors.append(detector)
-
+                self.processors.append(processors_dic[dic])
+                processors_dic[dic].isCalibrated = False # force calibration each time 'Start' is pressed.
         else:
-            self._logger.debug(f"Lasers not enabled. Setting image_size_px to default 512x512.")
-
-
-
+            self._logger.error("No lasers found")
 
 
         
-        # Set processors for selected lasers
-        processors = []
-
-        for wl in poweredLasers:
-            if poweredLasers != []:
-                processors.append(processors_dic[wl])
-
-                processors_dic[wl].isCalibrated = False # force calibration each time 'Start' is pressed.
-
 
         # Make processors object attribute so calibration can be changed when 
         # detector size is changed.
-        self.processors = processors
+
         magnification = sim_parameters.Magnification
         camPixelSize = sim_parameters.Pixelsize
         projCamPixelSize = camPixelSize/magnification
@@ -270,6 +233,8 @@ class SIMController(ImConWidgetController):
         else:
             self.isTiling = False
 
+        numActiveChannels = len(poweredLasers)
+
         while self.active and poweredLasers != []:
       
         
@@ -300,11 +265,12 @@ class SIMController(ImConWidgetController):
 
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
+                time.sleep(1) #sleep to make different amounts of processors not throw  an error
                
-                numActiveChannels = len(poweredLasers)
+
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
-                for k, processor in enumerate(processors):
+                for k, processor in enumerate(self.processors):
                     # Setting a reconstruction processor for current laser
                     self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
                     self.LaserWL = self.detectors[k]._detectorInfo.managerProperties['wavelength']
@@ -406,7 +372,7 @@ class SIMController(ImConWidgetController):
                     processor.clearStack()                    
 
                
-                    if k==(len(processors)-1) and self.saveOneSetRaw and self.saveOneTime:
+                    if k==(len(self.processors)-1) and self.saveOneSetRaw and self.saveOneTime:
                         self.saveOneSetRaw = False
                         self.saveOneTime = False
                         self.saveOneSetWF = False
