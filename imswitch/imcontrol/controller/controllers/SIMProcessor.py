@@ -336,6 +336,9 @@ class SIMProcessor(object):
         '''
         # TODO: Perhaps we should work with quees?
         # reconstruct and save the stack in background to not block the main thread
+        # print(threading.current_thread())
+
+
         if not self.isReconstructing:  # not
             self.isReconstructing=True
             mStackCopy = np.array(self.stack.copy())
@@ -362,11 +365,12 @@ class SIMProcessor(object):
         self.pos_num = pos_num
 
     def setWavelength(self, laserWL, sim_parameters):
-        if laserWL == 488:
+        self.laserWL = laserWL # self it to be available to other funcitons (saving)
+        if self.laserWL == 488:
             self.h.wavelength = sim_parameters.ReconWL1
-        elif laserWL == 561:
+        elif self.laserWL == 561:
             self.h.wavelength = sim_parameters.ReconWL2
-        elif laserWL == 640:
+        elif self.laserWL == 640:
             self.h.wavelength = sim_parameters.ReconWL3
         
     def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
@@ -377,6 +381,7 @@ class SIMProcessor(object):
         # compute image
         # initialize the model
         # self._logger.debug("Processing frames")
+        # print(threading.current_thread())
         if not self.getIsCalibrated():
             
             self.setReconstructor()
@@ -396,15 +401,18 @@ class SIMProcessor(object):
 
     def recordSIMFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
         reconSavePath = os.path.join(exptPath, "Recon")
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL):03}_{exptTimeElapsedStr}.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+        self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
 
     def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
         reconSavePath = exptPath
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.LaserWL):03}_{exptTimeElapsedStr}_recon.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}_recon.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+        self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
 
     def saveImageInBackground(self, image, savePath, saveName ):
+        print(threading.current_thread())
         try:
             if not os.path.exists(savePath):
                 os.makedirs(savePath)

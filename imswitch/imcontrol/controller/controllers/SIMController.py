@@ -229,6 +229,8 @@ class SIMController(ImConWidgetController):
             self.isTiling = False
 
         numActiveChannels = len(poweredLasers)
+        # print(threading.current_thread())
+
 
         while self.active and poweredLasers != []:
       
@@ -361,7 +363,7 @@ class SIMController(ImConWidgetController):
                     
                     # if self.isReconstruction and div_1 == 0:
                     if self.isReconstruction:
-                        threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
+                        processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw)
 
 
                     processor.clearStack()                    
@@ -440,28 +442,32 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
         rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_raw.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+        # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+        self.saveImageInBackground(self.rawStack,rawSavePath, rawFilenames)
 
     def recordRawFunc(self,j):
         rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
         rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+        # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+        self.saveImageInBackground(self.rawStack,rawSavePath, rawFilenames)
 
     def recordOneSetWF(self,j,im):
         wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
         wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_WF.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
     def recordWFFunc(self,j,im):
         wfSavePath = os.path.join(self.exptFolderPath, "WF")
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
         wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
-        threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
+        self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
 
 
@@ -747,6 +753,7 @@ class SIMController(ImConWidgetController):
 
 
     def saveImageInBackground(self, image, path, filename):
+        print(threading.current_thread())
         try:
             # self.folder = self._widget.getRecFolder()
             filename = os.path.join(path,filename) #FIXME: Remove hardcoded path
