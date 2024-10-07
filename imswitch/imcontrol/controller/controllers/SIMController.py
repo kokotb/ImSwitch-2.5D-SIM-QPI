@@ -140,7 +140,6 @@ class SIMController(ImConWidgetController):
         # Newly added, prep for SLM integration
         self.sim_parameters = sim_parameters
         
-        
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
         # Check if lasers are set and have power in them select only lasers with powers
@@ -148,12 +147,6 @@ class SIMController(ImConWidgetController):
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
-    
-        
-        # Check if detector is present comparing hardcoded names to connected 
-        # names, detector names are used only for pulling imageSize from the 
-        # detector
-        # FIXME: Check again if this laser checkup makes sense
 
         self.detectors = [] 
         self.processors = []
@@ -272,7 +265,7 @@ class SIMController(ImConWidgetController):
                 # Loop over channels
                 for k, processor in enumerate(self.processors):
                     # Setting a reconstruction processor for current laser
-                    self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
+                    # self.powered = self.detectors[k]._detectorInfo.managerProperties['wavelength'] in poweredLasers
                     self.LaserWL = self.detectors[k]._detectorInfo.managerProperties['wavelength']
                     
                     # Set current detector being used
@@ -330,17 +323,17 @@ class SIMController(ImConWidgetController):
 
 
 
-                    if self.powered:
-                        self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
-                        
-                        # Set sim stack for processing all functions work on 
-                        processor.setSIMStack(self.rawStack)
-                        
-                        # Push all wide fields into one array.
-                        imageWF = processor.getWFlbf(self.rawStack)
-                        imageWF = imageWF.astype(np.uint16)
-                        if self.tilePreview and self.isTiling:
-                            self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numActiveChannels,k, completeFrameSets)
+   
+                    self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
+                    
+                    # Set sim stack for processing all functions work on 
+                    processor.setSIMStack(self.rawStack)
+                    
+                    # Push all wide fields into one array.
+                    imageWF = processor.getWFlbf(self.rawStack)
+                    imageWF = imageWF.astype(np.uint16)
+                    if self.tilePreview and self.isTiling:
+                        self._commChannel.sigTileImage.emit(imageWF, pos, f"{processor.handle}WF-{j}",numActiveChannels,k, completeFrameSets)
 
                     
                     # Activate recording and reconstruction in processor
@@ -350,22 +343,22 @@ class SIMController(ImConWidgetController):
                     
                     if k == 0 and self.saveOneTime:
                         self.saveOneSetRaw = True
-                    if self.saveOneSetRaw and self.powered:
+                    if self.saveOneSetRaw:
                         self.recordOneSetRaw(j)
-                    if self.isRecordRaw and self.powered:
+                    if self.isRecordRaw:
                         self.recordRawFunc(j)
 
                     if k == 0 and self.saveOneTime:
                         self.saveOneSetWF = True
-                    if self.saveOneSetWF and self.powered:
+                    if self.saveOneSetWF:
                         self.recordOneSetWF(j, imageWF)
-                    if self.isRecordWF and self.powered:
+                    if self.isRecordWF:
                         self.recordWFFunc(j, imageWF)
 
 
                     
                     # if self.isReconstruction and div_1 == 0:
-                    if self.isReconstruction and self.powered:
+                    if self.isReconstruction:
                         threading.Thread(target=processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw), args=(self.frameSetCount, j, self.exptTimeElapsedStr,self.saveOneSetRaw, ), daemon=True).start()
 
 
