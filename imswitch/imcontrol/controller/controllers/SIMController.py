@@ -535,6 +535,7 @@ class SIMController(ImConWidgetController):
     
     def toggleRecording(self):
         self.isRecordRaw = not self.isRecordRaw
+        # print(self.isRecordRaw)
         if not self.isRecordRaw:
             self.isActive = False
 
