@@ -216,14 +216,10 @@ class SIMProcessor(object):
             self.h.kx = self.kx_input
             self.h.ky = self.ky_input
         
-    def getWFlbf(self, mStack):
+    def computeWFlbf(self, mStack):
         # display the BF image
         # bfFrame = np.sum(np.array(mStack[-3:]), 0)
         bfFrame = np.round(np.mean(np.array(mStack), 0)) #CTNOTE See if need all 9 or 3
-
-
-
-
 
         self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF")
         return bfFrame
@@ -330,21 +326,21 @@ class SIMProcessor(object):
 
 
     
-    def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr, saveOne):
-        '''
-        reconstruct the image stack asychronously
-        '''
-        # TODO: Perhaps we should work with quees?
-        # reconstruct and save the stack in background to not block the main thread
-        # print(threading.current_thread())
+    # def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr):
+    #     '''
+    #     reconstruct the image stack asychronously
+    #     '''
+    #     # TODO: Perhaps we should work with quees?
+    #     # reconstruct and save the stack in background to not block the main thread
+    #     # print(threading.current_thread())
 
 
-        if not self.isReconstructing:  # not
-            self.isReconstructing=True
-            mStackCopy = np.array(self.stack.copy())
-            # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
-            # self.mReconstructionThread.start()
-            self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne)
+    #     if not self.isReconstructing:  # not
+    #         self.isReconstructing=True
+    #         mStackCopy = np.array(self.stack.copy())
+    #         # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
+    #         # self.mReconstructionThread.start()
+    #         self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr)
 
     def setRecordingMode(self, isRecording):
         self.isRecording = isRecording
@@ -373,7 +369,7 @@ class SIMProcessor(object):
         elif self.laserWL == 640:
             self.h.wavelength = sim_parameters.ReconWL3
         
-    def reconstructSIMStackBackgroundLBF(self, mStack, exptPath, frameSetCount, pos_num, exptTimeElapsedStr,saveOne):
+    def reconstructSIMStackBackgroundLBF(self):
         '''
         reconstruct the image stack asychronously
         the stack is a list of 9 images (3 angles, 3 phases)
@@ -382,47 +378,43 @@ class SIMProcessor(object):
         # initialize the model
         # self._logger.debug("Processing frames")
         # print(threading.current_thread())
+        if not self.isReconstructing:
+            self.isReconstructing=True
+            mStack = np.array(self.stack.copy())
         if not self.getIsCalibrated():
             
             self.setReconstructor()
             self.calibrate(mStack)
         self.SIMReconstruction = self.reconstruct(mStack)
 
-        # save images eventually
-        if self.isRecording:
-            self.recordSIMFunc(exptPath, frameSetCount,pos_num, exptTimeElapsedStr)
-        if saveOne:
-            exptPathOne = os.path.join(exptPath, "Snapshot")
-            self.recordOneSetSIM(exptPathOne, frameSetCount,pos_num, exptTimeElapsedStr)
-
         self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
+
+
+
+        
         
         self.isReconstructing = False
 
-    def recordSIMFunc(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
-        reconSavePath = os.path.join(exptPath, "Recon")
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}.tif"
-        # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
-        self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
 
-    def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
-        reconSavePath = exptPath
-        reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}_recon.tif"
-        # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
-        self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
 
-    def saveImageInBackground(self, image, savePath, saveName ):
-        print(threading.current_thread())
-        try:
-            if not os.path.exists(savePath):
-                os.makedirs(savePath)
+    # def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
+    #     reconSavePath = exptPath
+    #     reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}_recon.tif"
+    #     # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+    #     self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
+
+    # def saveImageInBackground(self, image, savePath, saveName ):
+    #     print(threading.current_thread())
+    #     try:
+    #         if not os.path.exists(savePath):
+    #             os.makedirs(savePath)
             
-            # self.folder = self.path
-            filePath = os.path.join(savePath,saveName) #FIXME: Remove hardcoded path
-            tif.imwrite(filePath, image, imagej=True)
-            self._logger.debug("Saving file: "+filePath)
-        except  Exception as e:
-            self._logger.error(e)
+    #         # self.folder = self.path
+    #         filePath = os.path.join(savePath,saveName) #FIXME: Remove hardcoded path
+    #         tif.imwrite(filePath, image, imagej=True)
+    #         self._logger.debug("Saving file: "+filePath)
+    #     except  Exception as e:
+    #         self._logger.error(e)
 
     def reconstruct(self, currentImage):
         '''

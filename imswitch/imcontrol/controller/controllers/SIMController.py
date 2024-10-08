@@ -170,9 +170,9 @@ class SIMController(ImConWidgetController):
         # Set count for frames to 0
         self.frameSetCount = 0
         self.completeFrameSets = 0 # Initialized this counter now that we are not "skipping" broken frames during tiling.
-        self.saveOneTime = False
-        self.saveOneSetRaw = False
-        self.saveOneSetWF = False
+        # self.saveOneTime = False
+        # self.saveOneSetRaw = False
+        # self.saveOneSetWF = False
         #Set tiling flag, determines whether program will enter the tiling code.
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
@@ -214,17 +214,21 @@ class SIMController(ImConWidgetController):
 
         while self.active and poweredLasers != []:
       
-        
+
             # Generate time_step
             if self.frameSetCount == 0:
                 exptTimeElapsed = 0.0
             else:
                 exptTimeElapsed = time.time() - time_global_start
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
-
+            # print(self.saveOneTime)
             # Scan over all positions generated for grid
             j = 0 # Position iterator
             while j < len(positions):
+                for processor in self.processors:
+                    processor.setRecordingMode(self.isRecordRecon)
+                    processor.setReconstructionMode(self.isReconstruction)
+                    processor.setWavelength(processor.handle, self.sim_parameters)   
                 self.j = j
                 self.pos = positions[self.j]
                 timestart = time.time()
@@ -235,11 +239,14 @@ class SIMController(ImConWidgetController):
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
                 # time.sleep(1) #sleep to make different amounts of processors not throw  an error
-               
+                    # Activate recording and reconstruction in processor
+
 
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
                 self.waitToMoveEvent = threading.Event()
+
+
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     if self.isTiling:
                         executor.submit(self.tilingMoveThread)
@@ -268,23 +275,24 @@ class SIMController(ImConWidgetController):
 
 
 
-                # if broken:
-                #     pass
-                # else:
+
                 j += 1
                 self.completeFrameSets += 1
-
+                # if self.saveOneTime:
+                #     self.saveOneTime = False
                 if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after self.completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
                 print(time.time()-timestart)
 
     def mainSIMLoop(self, processor):
+        # saveOneTime = self.saveOneTime
+        # print(saveOneTime)
         k = processor.processorIndex
         if k+1 == self.numActiveChannels:
             lastChan = True
         else:
             lastChan = False
-        self.LaserWL = processor.handle
+        # laserWL = processor.handle
         
         # Set current detector being used
         detector = processor.detObj
@@ -315,10 +323,7 @@ class SIMController(ImConWidgetController):
                 bufferEndTime = time.time()
 
             bufferTotalTime = bufferEndTime-bufferStartTime
-            # print(bufferTotalTime)
 
-            # print(bufferTotalTime)
-            # print(waitingBuffers)
             waitingBuffersEnd = waitingBuffers
             # broken = False
             # print(waitingBuffers,bufferTotalTime)
@@ -335,64 +340,47 @@ class SIMController(ImConWidgetController):
 
         if lastChan:
             self.waitToMoveEvent.set()
+            print('All images, all channels loaded into buffer')
 
             
-        # if broken == True:
-        #     droppedFrameSets += 1
-            
-            # break
-
-        self.rawStack = detector._camera.grabFrameSet(framesPerDetector)
-
-
-
-
-        self.sigRawStackReceived.emit(np.array(self.rawStack),f"{processor.handle} Raw")
+        rawStack = detector._camera.grabFrameSet(framesPerDetector) # receive raw image stack
+        self.sigRawStackReceived.emit(np.array(rawStack),f"{processor.handle} Raw") # display raw image stack
         
-        # Set sim stack for processing all functions work on 
-        processor.setSIMStack(self.rawStack)
+        # Set sim stack for reconstruction
+        processor.setSIMStack(rawStack)
         
-        # Push all wide fields into one array.
-        imageWF = processor.getWFlbf(self.rawStack)
+        # Average rawe stack to make WF
+        imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor?
         imageWF = imageWF.astype(np.uint16)
+
+        if self.isReconstruction:
+            processor.reconstructSIMStackBackgroundLBF()
+        # print(processor.SIMReconstruction)
+
         if self.tilePreview and self.isTiling:
             self._commChannel.sigTileImage.emit(imageWF, self.pos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
 
         
-        # Activate recording and reconstruction in processor
-        processor.setRecordingMode(self.isRecordRecon)
-        processor.setReconstructionMode(self.isReconstruction)
-        processor.setWavelength(self.LaserWL, self.sim_parameters)
-        
-        if k == 0 and self.saveOneTime:
-            self.saveOneSetRaw = True
-        if self.saveOneSetRaw:
-            self.recordOneSetRaw(self.j)
+        if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
+            self.recordOneSetRaw(self.j, processor)
+            self.recordOneSetWF(self.j, imageWF, processor)
+            if self.isReconstruction:
+                self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
+            processor.saveOneTime = False
+
         if self.isRecordRaw:
-            self.recordRawFunc(self.j)
-
-        if k == 0 and self.saveOneTime:
-            self.saveOneSetWF = True
-        if self.saveOneSetWF:
-            self.recordOneSetWF(self.j, imageWF)
+            self.recordRawFunc(self.j, processor)
         if self.isRecordWF:
-            self.recordWFFunc(self.j, imageWF)
+            self.recordWFFunc(self.j, imageWF, processor)
+        if self.isRecordRecon:
+            self.recordSIMFunc(self.j, processor)
 
 
-        
-        # if self.isReconstruction and div_1 == 0:
-        if self.isReconstruction:
-            processor.reconstructSIMStackLBF(self.exptFolderPath,self.frameSetCount, self.j, self.exptTimeElapsedStr,self.saveOneSetRaw)
 
 
         processor.clearStack()                    
 
-    
-        if k==(len(self.processors)-1) and self.saveOneSetRaw and self.saveOneTime:
-            self.saveOneSetRaw = False
-            self.saveOneTime = False
-            self.saveOneSetWF = False
-                
+                    
 
     def tilingMoveThread(self):
 
@@ -432,40 +420,53 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser2.wavelength = self.sim_parameters.ReconWL2
         self.SimProcessorLaser3.wavelength = self.sim_parameters.ReconWL3
 
-    def recordOneSetRaw(self,j):
+    def recordOneSetRaw(self,j,processor):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_raw.tif"
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_raw.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
-        self.saveImageInBackground(self.rawStack,rawSavePath, rawFilenames)
+        self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
-    def recordRawFunc(self,j):
+    def recordRawFunc(self,j, processor):
         rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
+        rawFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
-        self.saveImageInBackground(self.rawStack,rawSavePath, rawFilenames)
+        self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
-    def recordOneSetWF(self,j,im):
+    def recordOneSetWF(self,j,im, processor):
         wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
-        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}_WF.tif"
+        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_WF.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
-    def recordWFFunc(self,j,im):
+    def recordWFFunc(self,j,im, processor):
         wfSavePath = os.path.join(self.exptFolderPath, "WF")
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
-        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(self.LaserWL):03}_{self.exptTimeElapsedStr}.tif"
+        wfFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
+    def recordOneSetSIM(self,j,im, processor):
+        simSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(simSavePath):
+            os.makedirs(simSavePath)
+        simFilenames = f"f{self.frameSetCount:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_SIM.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        self.saveImageInBackground(im,simSavePath, simFilenames)
 
-
+    def recordSIMFunc(self,pos_num, processor):
+        reconSavePath = os.path.join(self.exptFolderPath, "Recon")
+        if not os.path.exists(reconSavePath):
+            os.makedirs(reconSavePath)
+        reconFilenames = f"f{self.frameSetCount:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
+        self.saveImageInBackground(processor.SIMReconstruction, reconSavePath,reconFilenames)
 
 
     def getElapsedTimeString(self, seconds):
@@ -511,7 +512,9 @@ class SIMController(ImConWidgetController):
             processor.isCalibrated = False
 
     def saveOneSet(self):
-        self.saveOneTime = True
+            for processor in self.processors:
+                processor.saveOneTime = True
+
 
 
     # def timeMe(self, timedList, function):
