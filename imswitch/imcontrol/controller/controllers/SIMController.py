@@ -245,6 +245,7 @@ class SIMController(ImConWidgetController):
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
                 self.waitToMoveEvent = threading.Event()
+                self.waitToMoveEvent.clear()
 
 
                 with ThreadPoolExecutor(max_workers=4) as executor:
@@ -278,8 +279,7 @@ class SIMController(ImConWidgetController):
 
                 j += 1
                 self.completeFrameSets += 1
-                # if self.saveOneTime:
-                #     self.saveOneTime = False
+
                 if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after self.completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
                 print(time.time()-timestart)
@@ -682,11 +682,11 @@ class SIMController(ImConWidgetController):
 
     # TODO: for timelapse and zstack, check running is still needed also stop
 
-    def updateDisplayImage(self, image):
-        image = np.fliplr(image.transpose())
-        self._widget.img.setImage(image, autoLevels=True, autoDownsample=False)
-        self._widget.updateSIMDisplay(image)
-        # self._logger.debug("Updated displayed image")
+    # def updateDisplayImage(self, image):
+    #     image = np.fliplr(image.transpose())
+    #     self._widget.img.setImage(image, autoLevels=True, autoDownsample=False)
+    #     self._widget.updateSIMDisplay(image)
+    #     # self._logger.debug("Updated displayed image")
         
     def getTilingSettings(self):
         self.startxpos, self.startypos = self.positionerXY.get_abs()
@@ -751,10 +751,10 @@ class SIMController(ImConWidgetController):
 
 
     def saveImageInBackground(self, image, path, filename):
-        print(threading.current_thread())
+        # print(threading.current_thread())
         try:
             # self.folder = self._widget.getRecFolder()
-            filename = os.path.join(path,filename) #FIXME: Remove hardcoded path
+            filename = os.path.join(path,filename) 
             image = np.array(image)
             # tif.imwrite(filename, image, imagej=True, metadata = {'pixelsize':2,'units':'um'})
             tif.imwrite(filename, image, imagej=True)
