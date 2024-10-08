@@ -1,7 +1,12 @@
 
-frameNum = [x for x in range(20)]
 
 
-for number in frameNum:
-    print(divmod(number, 15)[0])
 
+
+buffer_size, _ = divmod(100/9,1)
+
+test = 100 // 9
+
+print(test)
+
+print(buffer_size)

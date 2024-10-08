@@ -24,9 +24,6 @@ import imswitch
 import pandas as pd
 
 
-
-
-
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
 
@@ -53,21 +50,14 @@ class SIMController(ImConWidgetController):
         #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
         self._widget.sigSIMParamChanged.connect(self.valueChanged)
         self._widget.sigUserDirInfoChanged.connect(self.valueChanged)
-        # self._widget.sigTilingInfoChanged.connect(self.valueChanged)
         self._widget.sigROInfoChanged.connect(self.valueChanged)
-        # self._widget.initTilingInfo()
-
 
         setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict and also set on SIM widget.
 
         #Create list of available laser objects from config file.
-        # allLasersDict = self._master.lasersManager.getAllDeviceNames() #Dict of laser name keys and object values.
         self.lasers = list(self._master.lasersManager._subManagers.values()) #List of just the laser object handles
-        if len(self.lasers) == 0:
-            self._logger.error("No laser found")
-
-        # Create list of detectors objects
-        # self.detectors = list(self._master.detectorsManager._subManagers.values())
+        # if len(self.lasers) == 0:  #Not likely to be used given how the mockers work.
+            # self._logger.error("No laser found")
             
         # Create positioner objects -- Positioner must have axis 'Z' or axis 'XY' listed in config file to be added correctly.
         for key in self._master.positionersManager._subManagers:
@@ -83,15 +73,13 @@ class SIMController(ImConWidgetController):
         for key in setupInfoDict:
             setattr(self.sim_parameters,key,setupInfoDict[key])
 
-        # Create class objects for each channel.
+        # Create class objects for each processor channel.
         self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL1)
         self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL2)
         self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL3)
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
-        # self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
-
 
         # Signals originating from SIMController.py
         self.sigRawStackReceived.connect(self.displayRawImage)
@@ -104,7 +92,6 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_WF.stateChanged.connect(self.toggleRecordWF)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
-        # self._widget.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
@@ -112,21 +99,16 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
-        # self._commChannel.checkbox_tilepreview.stateChanged.connect(self.toggleTilePreview)
-
         
-        #Get RO names from SLM4DDManager and send values to widget function to populate RO list.
+        #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         self.populateAndSelectROList()
-
         #Get save directory root from config file and populate text box in SIM widget.
         self._widget.setUserDirInfo(setupInfoDict['saveDir'])
-        
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         
-
     def performSIMExperimentThread(self, sim_parameters):
         """
         Select a sequence on the SLM that will choose laser combination.
@@ -143,66 +125,67 @@ class SIMController(ImConWidgetController):
         
         processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
         
+
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
-
         self.detectors = [] 
         self.processors = []
         if poweredLasers != []:
             for k, dic in enumerate(poweredLasers):
-                detector = self._master.detectorsManager[str(dic) + ' Cam']
+                detector = self._master.detectorsManager[str(dic) + ' Cam'] #CTNOTE depends on 'XXX Cam' detector name structure. Can change to wavelength attribute.
                 self.detectors.append(detector)
                 self.processors.append(processors_dic[dic])
                 processors_dic[dic].detObj = detector
-                processors_dic[dic].processorIndex = k
-                processors_dic[dic].isCalibrated = False # force calibration each time 'Start' is pressed.
+                processors_dic[dic].processorIndex = k #Give processor an index up front instead of during the (k, processor) for loop.
+                processors_dic[dic].isCalibrated = False # force calibration each time 'Start' is pressed. May need to be overwritten from previous session.
         else:
-            self._logger.error("No lasers found")
+            self._logger.error("No powered lasers.")
 
+        # magnification = sim_parameters.Magnification
+        # camPixelSize = sim_parameters.Pixelsize
+        projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
-        
-
-        # Make processors object attribute so calibration can be changed when 
-        # detector size is changed.
-
-        magnification = sim_parameters.Magnification
-        camPixelSize = sim_parameters.Pixelsize
-        projCamPixelSize = camPixelSize/magnification
-
- 
-        self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
+        #Get the parameters that go into the createXYGridPositionArray function
+        self.getTilingSettings() 
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
+        self.tileOrigin = positions[0] #CTNOTE this will change to positions[-1] after tiling is moved to middle of script.
+        ''' # For nameing tiling squares A1, A2, .....C5 etc.
         # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
         # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
         # test = []
         # for item in gridNamesY:
         #     for value in gridNamesX:
         #         test.append(item+value)
-        self.tileOrigin = positions[0]
-
-        # Set stacks to be saved into separate folder
-
+        '''
+        
+        # Datetime string registered when start button is pressed only.
         dateTimeStartClick = datetime.now().strftime("%y%m%d%H%M%S")
 
-        # Set file-path read from GUI for each processor
+        # Set all SIM parameters from GUI to each processor. All will be the same, except Recon WL
         self.updateProcessorParameters()
 
-            
         # Set count for frames to 0
         self.frameSetCount = 0
         self.completeFrameSets = 0 # Initialized this counter now that we are not "skipping" broken frames during tiling.
         self.saveOneTime = False
         self.saveOneSetRaw = False
         self.saveOneSetWF = False
+        #Set tiling flag, determines whether program will enter the tiling code.
+        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
+            self.isTiling = True
+        else:
+            self.isTiling = False
+
+        self.numActiveChannels = len(poweredLasers)
         
 
         # Set running order on SLM
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
-        # Get max exposure time from the selected RO on SLM
+        # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'
         self.expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
 
         # -------------------Set-up cams-------------------
@@ -212,25 +195,20 @@ class SIMController(ImConWidgetController):
         for detector in self.detectors:
             image_size = detector.shape
             image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            buffer_size, decimal = divmod(total_buffer_size_MB/image_size_MB,1)
+            buffer_size = int(total_buffer_size_MB // image_size_MB)
             # buffer_size = 9
-            self.setCamForExperiment(detector, int(buffer_size),self.expTimeMax)
+            self.setCamForExperiment(detector, buffer_size,self.expTimeMax)
         
 
 
         droppedFrameSets = 0
         time_global_start = time.time()
         # time_whole_start = time_global_start
-        self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receiv e triggers.
+
+        # Maybe change to query with variable assignment. Will probably ensure line is executed completed with delay less than 10 ms.
+        self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
         time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
         
-        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
-            self.isTiling = True
-        else:
-            self.isTiling = False
-
-        self.numActiveChannels = len(poweredLasers)
-        # print(threading.current_thread())
 
 
         while self.active and poweredLasers != []:
@@ -304,6 +282,7 @@ class SIMController(ImConWidgetController):
                 if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after self.completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
                 print(time.time()-timestart)
+
     def mainSIMLoop(self, processor):
         k = processor.processorIndex
         self.LaserWL = processor.handle
@@ -411,7 +390,7 @@ class SIMController(ImConWidgetController):
             self.saveOneSetWF = False
                 
 
-                
+    # def tilingThread(self):
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)
