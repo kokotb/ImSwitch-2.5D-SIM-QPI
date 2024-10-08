@@ -151,7 +151,7 @@ class SIMController(ImConWidgetController):
         #Get the parameters that go into the createXYGridPositionArray function
         self.getTilingSettings() 
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
-        self.tileOrigin = positions[0] #CTNOTE this will change to positions[-1] after tiling is moved to middle of script.
+        self.tileOrigin = positions[-1] 
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
         # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
         # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
@@ -230,10 +230,12 @@ class SIMController(ImConWidgetController):
                 
 
 
-                # Move stage only if grid positions is greater than 1
-                if self.isTiling:
-                    self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
-                    time.sleep(.3)
+                # if self.isTiling:
+                #     self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
+                #     movestart = time.time()
+                #     self.positionerXY.checkBusy()
+                #     print(f'Move time = {time.time()-movestart}')
+                    
 
 
                                 
@@ -390,7 +392,11 @@ class SIMController(ImConWidgetController):
             self.saveOneSetWF = False
                 
 
-    # def tilingThread(self):
+    # def tilingThread(self, isTiling):
+    #     # Move stage only if grid positions is greater than 1
+    #     if isTiling:
+    #         self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
+    #         time.sleep(.3)
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)

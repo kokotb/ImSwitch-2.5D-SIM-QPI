@@ -62,7 +62,9 @@ class TilingManager(SignalInterface):
             if len(positions) > count_limit:
                 positions = positions[:count_limit]
                 self.logger.warning(f"Number of positions was reduced to {count_limit}!")
-
+        posOrigin = positions[0]
+        positions.pop(0)
+        positions.append(posOrigin)
 
         return positions
 # Copyright (C) 2020-2024 ImSwitch developers
