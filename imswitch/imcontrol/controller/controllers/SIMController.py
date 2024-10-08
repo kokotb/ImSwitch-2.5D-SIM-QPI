@@ -234,14 +234,15 @@ class SIMController(ImConWidgetController):
 
 
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
-                time.sleep(1) #sleep to make different amounts of processors not throw  an error
+                # time.sleep(1) #sleep to make different amounts of processors not throw  an error
                
 
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
                 self.waitToMoveEvent = threading.Event()
                 with ThreadPoolExecutor(max_workers=4) as executor:
-                    executor.submit(self.tilingMoveThread)
+                    if self.isTiling:
+                        executor.submit(self.tilingMoveThread)
                     executor.map(self.mainSIMLoop, self.processors)
 
                     # Setting a reconstruction processor for current laser
@@ -280,9 +281,9 @@ class SIMController(ImConWidgetController):
     def mainSIMLoop(self, processor):
         k = processor.processorIndex
         if k+1 == self.numActiveChannels:
-            self.lastChan = True
+            lastChan = True
         else:
-            self.lastChan = False
+            lastChan = False
         self.LaserWL = processor.handle
         
         # Set current detector being used
@@ -290,16 +291,16 @@ class SIMController(ImConWidgetController):
         
         # FIXME: Remove after development is completed
 
-        
+
         # 3 angles 3 phases
         framesPerDetector = 9
 
-
+        time.sleep(self.expTimeMax/1000000*(k)*18)
         waitingBuffers = detector._camera.getBufferValue()
 
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
-        broken = False
+        # broken = False
         # time.sleep(self.expTimeMax/1000000*16)
         # time.sleep(1)
         while waitingBuffers != 9:
@@ -319,20 +320,20 @@ class SIMController(ImConWidgetController):
             # print(bufferTotalTime)
             # print(waitingBuffers)
             waitingBuffersEnd = waitingBuffers
-            broken = False
+            # broken = False
             # print(waitingBuffers,bufferTotalTime)
             if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/250000: #self.expTimeMax/250000 = 4x exp time in correct units
             # if waitingBuffers != 9 and bufferTotalTime > .1: #self.expTimeMax/250000 = 4x exp time in correct units
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 for detector in self.detectors:
                     detector._camera.clearBuffers()
-                
-                broken = True
-                break
+                # broken = True
+                # break
             
+        print(f'Thread {threading.current_thread().getName()} buffers done on processor {k}, lastChan = {lastChan}')
 
 
-        if self.lastChan:
+        if lastChan:
             self.waitToMoveEvent.set()
 
             
@@ -394,11 +395,11 @@ class SIMController(ImConWidgetController):
                 
 
     def tilingMoveThread(self):
+
         self.waitToMoveEvent.wait()
         self.waitToMoveEvent.clear()
-        # Move stage only if grid positions is greater than 1
-        if self.isTiling:
-            self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
+        print(f'Thread {threading.current_thread().getName()} started moving')
+        self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
             # self.positionerXY.checkBusy()
 
     def valueChanged(self, attrCategory, parameterName, value):
