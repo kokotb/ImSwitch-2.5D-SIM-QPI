@@ -205,9 +205,10 @@ class SIMController(ImConWidgetController):
         time_global_start = time.time()
         # time_whole_start = time_global_start
 
+
         # Maybe change to query with variable assignment. Will probably ensure line is executed completed with delay less than 10 ms.
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
-        time.sleep(.01) # Need small time delay between sending activateSLM() and trigOneSequence() functions. Only adds to very first loop time. 1 ms was not enough.
+       # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         
 
 
@@ -228,16 +229,6 @@ class SIMController(ImConWidgetController):
                 self.pos = positions[self.j]
                 timestart = time.time()
                 
-
-
-                # if self.isTiling:
-                #     self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
-                #     movestart = time.time()
-                #     self.positionerXY.checkBusy()
-                #     print(f'Move time = {time.time()-movestart}')
-                    
-
-
                                 
                 # Trigger SIM set acquisition for all present lasers
 
@@ -408,7 +399,7 @@ class SIMController(ImConWidgetController):
         # Move stage only if grid positions is greater than 1
         if self.isTiling:
             self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
-            # time.sleep(.3)
+            # self.positionerXY.checkBusy()
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)

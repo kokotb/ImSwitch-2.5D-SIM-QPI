@@ -1,15 +1,8 @@
-import enum
-import glob
-import cv2
-import os
-import re
-import numpy as np
-from PIL import Image
-from scipy import signal as sg
+
 from imswitch.imcontrol.view.guitools.ViewSetupInfo import ViewSetupInfo as SetupInfo
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
-import requests
+import time
 
 
 class ArduinoManager(SignalInterface):
@@ -50,10 +43,11 @@ class ArduinoManager(SignalInterface):
 
     def activateSLMWriteOnly(self):
         """Sends a trigger to SLM to put SPO0 high, activating the SLM. Ready for a trigger."""
-        # running_order order as a string
+
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'A'
         self._rs232manager.write(cmd)
+        time.sleep(0.01)
 
 
     def activateSLM(self):
