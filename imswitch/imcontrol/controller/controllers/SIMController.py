@@ -248,8 +248,9 @@ class SIMController(ImConWidgetController):
 
                 self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
                 # Loop over channels
-
-                with ThreadPoolExecutor(max_workers=3) as executor:
+                self.waitToMoveEvent = threading.Event()
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    executor.submit(self.tilingMoveThread)
                     executor.map(self.mainSIMLoop, self.processors)
 
                     # Setting a reconstruction processor for current laser
@@ -287,6 +288,10 @@ class SIMController(ImConWidgetController):
 
     def mainSIMLoop(self, processor):
         k = processor.processorIndex
+        if k+1 == self.numActiveChannels:
+            self.lastChan = True
+        else:
+            self.lastChan = False
         self.LaserWL = processor.handle
         
         # Set current detector being used
@@ -334,6 +339,11 @@ class SIMController(ImConWidgetController):
                 broken = True
                 break
             
+
+
+        if self.lastChan:
+            self.waitToMoveEvent.set()
+
             
         # if broken == True:
         #     droppedFrameSets += 1
@@ -392,11 +402,13 @@ class SIMController(ImConWidgetController):
             self.saveOneSetWF = False
                 
 
-    # def tilingThread(self, isTiling):
-    #     # Move stage only if grid positions is greater than 1
-    #     if isTiling:
-    #         self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
-    #         time.sleep(.3)
+    def tilingMoveThread(self):
+        self.waitToMoveEvent.wait()
+        self.waitToMoveEvent.clear()
+        # Move stage only if grid positions is greater than 1
+        if self.isTiling:
+            self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
+            # time.sleep(.3)
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)
