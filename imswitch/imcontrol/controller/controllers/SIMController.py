@@ -330,7 +330,7 @@ class SIMController(ImConWidgetController):
                 # broken = True
                 # break
             
-        print(f'Thread {threading.current_thread().getName()} buffers done on processor {k}, lastChan = {lastChan}')
+        # print(f'Thread {threading.current_thread().getName()} buffers done on processor {k}, lastChan = {lastChan}')
 
 
         if lastChan:
@@ -398,7 +398,7 @@ class SIMController(ImConWidgetController):
 
         self.waitToMoveEvent.wait()
         self.waitToMoveEvent.clear()
-        print(f'Thread {threading.current_thread().getName()} started moving')
+        # print(f'Thread {threading.current_thread().getName()} started moving')
         self.positionerXY.setPositionXY(self.pos[0], self.pos[1])
             # self.positionerXY.checkBusy()
 
