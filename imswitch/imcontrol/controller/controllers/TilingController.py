@@ -63,7 +63,7 @@ class TilingController(ImConWidgetController):
             self.addTileImageToCanvas(zeroMask, currentPixCoords, self.posIndex)
             self._widget.tilingView.layers[self.posIndex].contrast_limits_range = [0,4095]
             self._widget.tilingView.layers[self.posIndex].data[chanIndex,:,:] = im
-            self._widget.tilingView.layers[self.posIndex].contrast_limits = (0,10) # for testing
+            self._widget.tilingView.layers[self.posIndex].contrast_limits = (0,3) # for testing
             # self._widget.tilingView.layers[self.posIndex].contrast_limits = (0,4095)
             self._widget.tilingView.layers[self.posIndex].refresh()
             self.posIndexSet.add(self.posIndex)

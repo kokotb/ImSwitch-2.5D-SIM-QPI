@@ -304,7 +304,7 @@ class SIMController(ImConWidgetController):
         # 3 angles 3 phases
         framesPerDetector = 9
         # print(self.expTimeMax)
-        time.sleep(self.expTimeMax/1000000*(k)*20)
+        time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
         waitingBuffers = detector._camera.getBufferValue()
 
         waitingBuffersEnd = 0

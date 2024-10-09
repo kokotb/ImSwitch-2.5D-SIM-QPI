@@ -74,6 +74,7 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.sortLayersByName()
             self.viewer.layers[name].scale = [x/2 for x in self.micronsPerPixel] #SIM image recon result is 2x size of WF and raw images. So scale needs to be reduced by half.
             self.viewer.layers[name].contrast_limits_range = [0,4095]
         else:
@@ -83,14 +84,13 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
             self.viewer.layers[name].contrast_limits_range = [0,4095]
             self.viewer.layers[name].contrast_limits = (0,4095)
             self.viewer.scale_bar.unit = 'um'
             self.viewer.scale_bar.visible = True
             
-            
-
         else:
             self.viewer.layers[name].data = im
             
@@ -99,12 +99,27 @@ class SIMWidget(NapariHybridWidget):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:3]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
+            self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
             self.viewer.layers[name].contrast_limits_range = [0,4095]
             self.viewer.layers[name]._keep_auto_contrast = True
 
         else:
             self.viewer.layers[name].data = im
+
+    def sortLayersByName(self):
+        layerNames = []
+        for layerObj in self.viewer.layers:
+            layerNames.append(layerObj.name)
+        sortingKey = [i[0] for i in sorted(enumerate(layerNames), key= lambda x:x[1] )]
+        sortingKey.reverse()
+        self.viewer.layers.move_multiple(sortingKey)
+
+
+
+
+
+
 
     def contrastReconFunc(self):
             
