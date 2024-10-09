@@ -81,7 +81,18 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
 
-        self.allProcessors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
+        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3]
+        self.detectors = []
+        for detector in self._master.detectorsManager:
+            self.detectors.append(detector[1])
+
+
+
+        for k, processor in enumerate(self.processors):
+            processor.processorIndex = k #Give processor an index up front instead of during the (k, processor) for loop.
+            processor.isCalibrated = False # force calibration each time 'Start' is pressed. May need to be overwritten from previous session.
+            self._master.detectorsManager
+            processor.detObj = self.detectors[k]
 
         # Signals originating from SIMController.py
         self.sigRawStackReceived.connect(self.displayRawImage)
@@ -133,18 +144,19 @@ class SIMController(ImConWidgetController):
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
-        self.detectors = [] 
-        self.processors = []
-        if poweredLasers != []:
-            for k, dic in enumerate(poweredLasers):
-                detector = self._master.detectorsManager[str(dic) + ' Cam'] #CTNOTE depends on 'XXX Cam' detector name structure. Can change to wavelength attribute.
-                self.detectors.append(detector)
-                self.processors.append(processors_dic[dic])
-                processors_dic[dic].detObj = detector
-                processors_dic[dic].processorIndex = k #Give processor an index up front instead of during the (k, processor) for loop.
-                processors_dic[dic].isCalibrated = False # force calibration each time 'Start' is pressed. May need to be overwritten from previous session.
-        else:
-            self._logger.error("No powered lasers.")
+        # self.detectors = [] 
+        # self.processors = []
+        # if poweredLasers != []:
+        #     for k, dic in enumerate(poweredLasers):
+        #         detector = self._master.detectorsManager[str(dic) + ' Cam'] #CTNOTE depends on 'XXX Cam' detector name structure. Can change to wavelength attribute.
+        #         self.detectors.append(detector)
+        #         self.processors.append(processors_dic[dic])
+        #         processors_dic[dic].detObj = detector
+
+        # else:
+        #     self._logger.error("No powered lasers.")
+
+        
 
         # magnification = sim_parameters.Magnification
         # camPixelSize = sim_parameters.Pixelsize
@@ -231,7 +243,7 @@ class SIMController(ImConWidgetController):
                     processor.setWavelength(processor.handle, self.sim_parameters)   
                 self.j = j
                 self.nextPos = positions[self.j]
-                self.currentPos = positions[self.j-1]
+                # self.currentPos = positions[self.j-1]
                 timestart = time.time()
                 
                                 
