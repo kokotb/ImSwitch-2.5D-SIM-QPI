@@ -261,7 +261,7 @@ class SIMController(ImConWidgetController):
         
         # Set current detector being used
         detector = processor.detObj
-
+######TIMING BUFFER WAITING LOGIC BREAKS DOWN AT FAST SPEEDS. NEED DIFFERENT WAY.
         time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
         waitingBuffers = detector._camera.getBufferValue()
 
