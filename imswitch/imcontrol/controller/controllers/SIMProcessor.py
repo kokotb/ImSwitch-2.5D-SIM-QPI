@@ -100,8 +100,8 @@ class SIMProcessor(object):
         self._nbands = self.angles_number
 
         # processing parameters
-        self.isRecording = False
-        self.allPatterns = []
+        # self.isRecording = False
+        # self.allPatterns = []
         self.isReconstructing = False
 
         # initialize logger
@@ -133,24 +133,24 @@ class SIMProcessor(object):
             pinned_mempool = cp.get_default_pinned_memory_pool()
             memory_start = mempool.used_bytes()
 
-    def loadPattern(self, path=None, filetype="bmp"):
-        # sort filenames numerically
-        import glob
-        import cv2
+    # def loadPattern(self, path=None, filetype="bmp"):
+    #     # sort filenames numerically
+    #     import glob
+    #     import cv2
 
-        if path is None:
-            path = sim_parameters["patternPath"]
-        allPatternPaths = sorted(glob.glob(os.path.join(path, "*."+filetype)))
-        self.allPatterns = []
-        for iPatternPath in allPatternPaths:
-            mImage = cv2.imread(iPatternPath)
-            mImage = cv2.cvtColor(mImage, cv2.COLOR_BGR2GRAY)
-            self.allPatterns.append(mImage)
-        return self.allPatterns
+    #     if path is None:
+    #         path = sim_parameters["patternPath"]
+    #     allPatternPaths = sorted(glob.glob(os.path.join(path, "*."+filetype)))
+    #     self.allPatterns = []
+    #     for iPatternPath in allPatternPaths:
+    #         mImage = cv2.imread(iPatternPath)
+    #         mImage = cv2.cvtColor(mImage, cv2.COLOR_BGR2GRAY)
+    #         self.allPatterns.append(mImage)
+    #     return self.allPatterns
 
-    def getPattern(self, iPattern):
-        # return ith sim pattern
-        return self.allPatterns[iPattern]
+    # def getPattern(self, iPattern):
+    #     # return ith sim pattern
+    #     return self.allPatterns[iPattern]
 
     def setParameters(self, sim_parameters):
         # uses parameters from GUI
@@ -342,11 +342,11 @@ class SIMProcessor(object):
     #         # self.mReconstructionThread.start()
     #         self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr)
 
-    def setRecordingMode(self, isRecording):
-        self.isRecording = isRecording
+    # def setRecordingMode(self, isRecording):
+    #     self.isRecording = isRecording
 
-    def setReconstructionMode(self, isReconstruction):
-        self.isReconstruction = isReconstruction
+    # def setReconstructionMode(self, isReconstruction):
+    #     self.isReconstruction = isReconstruction
 
     # def setDate(self, date):
     #     self.date = date
