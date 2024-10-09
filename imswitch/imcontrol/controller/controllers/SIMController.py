@@ -359,7 +359,14 @@ class SIMController(ImConWidgetController):
 
         if self.tilePreview and self.isTiling:
             self._commChannel.sigTileImage.emit(imageWF, self.pos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
-
+       
+       
+        if self.isRecordRaw:
+            self.recordRawFunc(self.j, processor)
+        if self.isRecordWF:
+            self.recordWFFunc(self.j, imageWF, processor)
+        if self.isRecordRecon and self.isReconstruction:
+            self.recordSIMFunc(self.j, processor)
         
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
             self.recordOneSetRaw(self.j, processor)
@@ -368,12 +375,7 @@ class SIMController(ImConWidgetController):
                 self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
             processor.saveOneTime = False
 
-        if self.isRecordRaw:
-            self.recordRawFunc(self.j, processor)
-        if self.isRecordWF:
-            self.recordWFFunc(self.j, imageWF, processor)
-        if self.isRecordRecon:
-            self.recordSIMFunc(self.j, processor)
+
 
 
 
