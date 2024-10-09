@@ -216,7 +216,7 @@ class SIMController(ImConWidgetController):
                     # processor.setWavelength(processor.handle, self.sim_parameters)   
                 self.j = j
                 self.nextPos = positions[self.j]
-                # self.currentPos = positions[self.j-1]
+                self.currentPos = positions[self.j-1]
                 timestart = time.time()
                 
                                 
@@ -314,7 +314,7 @@ class SIMController(ImConWidgetController):
                 processor.reconstructSIMStackBackgroundLBF()
 
             if self.tilePreview and self.isTiling:
-                self._commChannel.sigTileImage.emit(imageWF, self.nextPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+                self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
         
             if self.isRecordRaw:
                 self.recordRawFunc(self.j, processor)
