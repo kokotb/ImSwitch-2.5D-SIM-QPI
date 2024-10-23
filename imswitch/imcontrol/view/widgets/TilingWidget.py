@@ -11,10 +11,12 @@ import napari
 class TilingWidget(NapariHybridWidget):
 
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
+    sigRunTilingActive = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         self.tilingViewBool = False
+        self.runTilingActiveBool = False
         # Grid scan settings
         gridScanLayout = QtWidgets.QGridLayout()
         self.setLayout(gridScanLayout)
@@ -35,8 +37,11 @@ class TilingWidget(NapariHybridWidget):
         self.tilingReps_textedit = QLineEdit("")
         self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
         self.checkbox_tiling =  QCheckBox("Run Tiling")
-        self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+        self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
         self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
+        self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+        self.checkbox_tilepreview.setEnabled(False)
+
 
 
         row = 0
@@ -53,6 +58,12 @@ class TilingWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 1)
 
         
+    def toggleRunTilingActive(self):
+        self.runTilingActiveBool = not self.runTilingActiveBool
+        if self.runTilingActiveBool == False:
+             self.checkbox_tilepreview.setEnabled(False)
+        else: self.checkbox_tilepreview.setEnabled(True)
+
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")

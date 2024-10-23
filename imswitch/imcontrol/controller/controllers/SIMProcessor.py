@@ -86,7 +86,7 @@ class SIMProcessor(object):
         self.beta = simParameters.Beta
         self.w = simParameters.w
         self.eta = simParameters.eta
-
+        self.slmActive = False
         self.phases_number = 3
         self.angles_number = 3
         self.dz= 0.55

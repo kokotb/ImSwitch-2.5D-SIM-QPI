@@ -39,6 +39,9 @@ class DeviceInfo:
 
 @dataclass(frozen=True)
 class DetectorInfo(DeviceInfo):
+
+    # wavelength: int
+
     forAcquisition: bool = False
     """ Whether the detector is used for acquisition. """
 

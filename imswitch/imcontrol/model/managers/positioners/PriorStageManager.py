@@ -183,19 +183,28 @@ class PriorStageManager(PositionerManager):
         
         msg_move_relative = "controller.stage.move-relative "+distance[0]+" "+distance[1]
         self.query(msg_move_relative)
-        self.checkBusy()
+        self.checkBusyLoop()
         current_position = self.get_abs()
         self._position[axis] = float(current_position[axis_order])
         print(self._position) #queries from get_abs
 
 
 
-    def checkBusy(self): #CTNOTE This function hangs the GUI for long operations
+    def checkBusyLoop(self): #CTNOTE This function hangs the GUI for long operations
         """Loops until stage becomes available."""
         busy = self.query("controller.stage.busy.get")[1]
         while busy != '0':
             # Query until stop moving
+            # print(busy)
             busy = self.query("controller.stage.busy.get")[1]
+
+    def checkIfMoving(self): #CTNOTE This function hangs the GUI for long operations
+        busyQuery = self.query("controller.stage.busy.get")[1]
+        if busyQuery != '0':
+            busy = True
+        else:
+            busy = False
+        return busy
 
 
     def setPosition(self, position, axis):
@@ -240,7 +249,7 @@ class PriorStageManager(PositionerManager):
 
     @property
     def position(self):
-        self.checkBusy()
+        self.checkBusyLoop()
         _ = self.get_abs()
         return self._position
 

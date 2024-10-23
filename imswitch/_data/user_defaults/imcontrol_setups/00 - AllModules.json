@@ -52,11 +52,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 10000.0
+        "ExposureTime": 9500.0
       },
       "ROI":{
-        "OffsetX": 2040,
-        "OffsetY": 1724,
+        "OffsetX": 1896,
+        "OffsetY": 1450,
         "Width": 512,
         "Height": 512
       }
@@ -79,11 +79,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 10000.0
+        "ExposureTime": 9500.0
       },
       "ROI":{
-        "OffsetX": 2560,
-        "OffsetY": 2325,
+        "OffsetX": 2400,
+        "OffsetY": 2050,
         "Width": 512,
         "Height": 512
       }
@@ -106,11 +106,11 @@
           "Gamma": 1.0,
           "AcquisitionFrameRateEnable": true,
           "AcquisitionFrameRate":5.0,
-          "ExposureTime": 10000.0
+          "ExposureTime": 9500.0
         },
         "ROI":{
-          "OffsetX": 2528,
-          "OffsetY": 2250,
+          "OffsetX": 2400,
+          "OffsetY": 1950,
           "Width": 512,
           "Height": 512
         }
@@ -135,7 +135,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.3
+      "maxdBmValue": 18.1
       
       },
   "561AOTF": {
@@ -151,7 +151,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.2
+    "maxdBmValue": 20.5
     },
   "640AOTF": {
     "analogChannel": null,
@@ -166,7 +166,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 22.2
+    "maxdBmValue": 22.1
     }
     
 },

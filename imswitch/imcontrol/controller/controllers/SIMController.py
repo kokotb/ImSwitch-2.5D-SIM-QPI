@@ -82,11 +82,6 @@ class SIMController(ImConWidgetController):
         for detector in self._master.detectorsManager: #detector object list
             self.detectors.append(detector[1])
 
-        for k, processor in enumerate(self.processors): #Add a few attributes to processor object.
-            processor.processorIndex = k #Give processor an index up front instead of during the (k, processor) for loop.
-            processor.isCalibrated = False # force calibration each time 'Start' is pressed. May need to be overwritten from previous session.
-            processor.detObj = self.detectors[k]
-
         # Signals originating from SIMController.py
         self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
@@ -102,7 +97,7 @@ class SIMController(ImConWidgetController):
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         # Communication channels signls (signals sent elsewhere in the program)
-        self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
+        # self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
         
@@ -124,13 +119,10 @@ class SIMController(ImConWidgetController):
         """
         
         self.isReconstructing = False # Is this line needed, all other references to this variable are in SIMProcessor
-        
-
-        # Newly added, prep for SLM integration
+        # for processor in self.processors:
+        #     processor.isCalibrated = False
         self.sim_parameters = sim_parameters
-        
-        # processors_dic = {488:self.SimProcessorLaser1,561:self.SimProcessorLaser2,640:self.SimProcessorLaser3}
-        
+
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
@@ -142,7 +134,7 @@ class SIMController(ImConWidgetController):
         #Get the parameters that go into the createXYGridPositionArray function
         self.getTilingSettings() 
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
-        self.tileOrigin = positions[-1] 
+        self.tileOrigin = positions[-1]
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
         # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
         # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
@@ -153,8 +145,8 @@ class SIMController(ImConWidgetController):
         '''
         
         # Datetime string registered when start button is pressed only.
-        dateTimeStartClick = datetime.now().strftime("%y%m%d%H%M%S")
-        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
+        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
+        
 
         # Set all SIM parameters from GUI to each processor. All will be the same, except Recon WL
         self.updateProcessorParameters()
@@ -176,7 +168,19 @@ class SIMController(ImConWidgetController):
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
         # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
-        self.expTimeMax = int(self.roNameList[roID].split('ms')[0])*1000
+        self.expTimeMax, numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
+        self.setActiveSLMChannels(numSLMChannels, chansSLM)
+        self.activeProcessors = []
+        for processor in self.processors:
+            if processor.slmActive == True:
+                self.activeProcessors.append(processor)
+            for detector in self.detectors:
+                if processor.handle == detector._wavelength:
+                    processor.detObj = detector
+        for k, processor in enumerate(self.activeProcessors):
+            processor.processorIndex = k
+
+
 
         # -------------------Set-up cams-------------------
 
@@ -192,15 +196,16 @@ class SIMController(ImConWidgetController):
 
         time_global_start = time.time()
         # time_whole_start = time_global_start
-
+        # self.processors2 = self.processors[0]
+        # self.processors2 = [self.processors2]
 
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
        # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
-        
+        self.tilingRep = 1
 
         while self.active and poweredLasers != []:
-      
-
+            # print(self.tilingRep)
+            self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             # Generate time_step
             if self.numAllFrames == 0:
                 exptTimeElapsed = 0.0
@@ -217,8 +222,15 @@ class SIMController(ImConWidgetController):
                 self.j = j
                 self.nextPos = positions[self.j]
                 self.currentPos = positions[self.j-1]
+                # timestartdwell = time.time()
                 timestart = time.time()
-                
+                self.positionerXY.checkBusyLoop()
+                if j == 0 and self.completeFrameSets != 0 and self.isTiling:
+                    time.sleep(.5)
+                else:
+                    time.sleep(.05) #can probablz reduct slightly
+
+                # print(time.time()-timestartdwell)
                                 
                 # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
@@ -230,8 +242,8 @@ class SIMController(ImConWidgetController):
                 with ThreadPoolExecutor(max_workers=4) as executor: #
                     if self.isTiling:
                         executor.submit(self.tilingMoveThread)
-                    for processor in self.processors:
-                        executor.submit(self.mainSIMLoop, processor, errorLock)
+                    for processor in self.activeProcessors:
+                            executor.submit(self.mainSIMLoop, processor, errorLock)
 
                 self.numAllFrames += 1 # increment even if an acquisition was broken.
                 if True not in self.errorQ:
@@ -240,21 +252,25 @@ class SIMController(ImConWidgetController):
 
                 self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                 self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                if self._widget.stop_button.isChecked(): #allows exit of SIM loops one per cycle
+                if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                     self._widget.stop_button.setChecked(False)
                     return
                 
                 if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
-                    self._commChannel.sigStopSim.emit() # Actually calced wrong. The +1 after self.completeFrameSets shouldn't be there. If we call stopSIM one cycle early, appears to work. Very stupid.
-                print(time.time()-timestart)
+                    self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
+                loopEndTime = time.time()-timestart
+                print(loopEndTime)
+            self.tilingRep += 1
+            totalEndTime = time.time()-time_global_start
+            print(f'total time: {totalEndTime}')
 
     def mainSIMLoop(self, processor, errorLock):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
         k = processor.processorIndex
-        if k+1 == len(self.processors):
+        if k+1 == len(self.activeProcessors):
             lastChan = True
-        else:
+        else: 
             lastChan = False
 
         broken = False
@@ -317,11 +333,11 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
         
             if self.isRecordRaw:
-                self.recordRawFunc(self.j, processor)
+                self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep)
             if self.isRecordWF:
-                self.recordWFFunc(self.j, imageWF, processor)
+                self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep)
             if self.isRecordRecon and self.isReconstruction:
-                self.recordSIMFunc(self.j, processor)
+                self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep)
             
             if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
                 self.recordOneSetRaw(self.j, processor)
@@ -339,10 +355,28 @@ class SIMController(ImConWidgetController):
         if True not in self.errorQ:
         # print(f'Thread {threading.current_thread().getName()} started moving')
             self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
-            # self.positionerXY.checkBusy()
+            # self.positionerXY.checkBusyLoop()
         else:
             pass
 
+    def parseROParamsFromSLM(self, roID):
+        expTimeMax = int(self.roNameList[roID].split('_')[0].split('ms')[0])*1000
+        numSLMChannels = int(self.roNameList[roID].split('_')[1].split('Ch')[0])
+        chansSLM = self.roNameList[roID].split('_')[2]
+
+        return expTimeMax, numSLMChannels, chansSLM
+
+    def setActiveSLMChannels(self,numSLMChannels, chansSLM):
+        if numSLMChannels == 3:
+            for processor in self.processors:
+                processor.slmActive = True
+        elif numSLMChannels == 1:
+            for processor in self.processors:
+                if str(processor.handle) == chansSLM:
+                    processor.slmActive = True
+                else: processor.slmActive = False
+            
+    
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)
 
@@ -381,11 +415,17 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
-    def recordRawFunc(self,j, processor):
-        rawSavePath = os.path.join(self.exptFolderPath, "RawStacks")
+    def recordRawFunc(self,j, processor, isTiling, tilingRep):
+        if isTiling:
+            rawSavePath = os.path.join(self.exptFolderPath, "Tiling", "RawStacks")
+        else:
+            rawSavePath = os.path.join(self.exptFolderPath, "Timelapse", "RawStacks")
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        if isTiling:
+            rawFilenames = f"f{tilingRep:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        else:
+            rawFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
@@ -397,11 +437,17 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
-    def recordWFFunc(self,j,im, processor):
-        wfSavePath = os.path.join(self.exptFolderPath, "WF")
+    def recordWFFunc(self,j,im, processor, isTiling, tilingRep):
+        if isTiling:
+            wfSavePath = os.path.join(self.exptFolderPath,"Tiling", "WF")
+        else:
+            wfSavePath = os.path.join(self.exptFolderPath,"Timelapse", "WF")
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
-        wfFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        if isTiling:
+            wfFilenames = f"f{tilingRep:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        else:
+            wfFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
@@ -413,11 +459,17 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,simSavePath, simFilenames)
 
-    def recordSIMFunc(self,pos_num, processor):
-        reconSavePath = os.path.join(self.exptFolderPath, "Recon")
+    def recordSIMFunc(self,pos_num, processor, isTiling, tilingRep):
+        if isTiling:
+            reconSavePath = os.path.join(self.exptFolderPath,"Tiling", "Recon")
+        else:
+            reconSavePath = os.path.join(self.exptFolderPath,"Timelapse", "Recon")
         if not os.path.exists(reconSavePath):
             os.makedirs(reconSavePath)
-        reconFilenames = f"f{self.numAllFrames:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        if isTiling:
+            reconFilenames = f"f{tilingRep:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+        else:
+            reconFilenames = f"f{self.numAllFrames:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
         self.saveImageInBackground(processor.SIMReconstruction, reconSavePath,reconFilenames)
 
@@ -579,14 +631,14 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setWFImage(im, name)
     
-    def updateROIsize(self): #CTFIX
-        # FIXME: Make it so calibration of only the modified detector is 
-        # toggled False
-        # Each time size is changed on chip, calibration needs to be reset
-        processors = self.allProcessors
-        if processors != []:
-            for processor in processors:
-                processor.isCalibrated = False
+    # def updateROIsize(self): #CTFIX
+    #     # FIXME: Make it so calibration of only the modified detector is 
+    #     # toggled False
+    #     # Each time size is changed on chip, calibration needs to be reset
+    #     processors = self.allProcessors
+    #     if processors != []:
+    #         for processor in processors:
+    #             processor.isCalibrated = False
     
     def saveParams(self):
         pass
@@ -694,6 +746,7 @@ class SIMController(ImConWidgetController):
         for parameter_name in dic_parameters:
             # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+        # self._commChannel.sigUpdateDetectors.emit(detector)
             # print(detector._camera.getPropertyValue(parameter_name))
         # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisitionSIM(num_buffers)
@@ -706,12 +759,13 @@ class SIMController(ImConWidgetController):
 
     def saveImageInBackground(self, image, path, filename):
         # print(threading.current_thread())
+        # ijmetadata = {'data_shape':image.shape}
         try:
             # self.folder = self._widget.getRecFolder()
             filename = os.path.join(path,filename) 
             image = np.array(image)
-            # tif.imwrite(filename, image, imagej=True, metadata = {'pixelsize':2,'units':'um'})
             tif.imwrite(filename, image, imagej=True)
+            # tif.imwrite(filename, image, metadata=ijmetadata)
             self._logger.debug("Saving file: "+filename)
         except  Exception as e:
             self._logger.error(e)

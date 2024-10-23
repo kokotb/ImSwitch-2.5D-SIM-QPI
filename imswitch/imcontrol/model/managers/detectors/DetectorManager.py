@@ -103,7 +103,7 @@ class DetectorManager(SignalInterface):
         self.__parameters = parameters if parameters is not None else {}
         self.__actions = actions if actions is not None else {}
         self.__croppable = croppable
-
+        self._wavelength = int(self.name[:3])
         self.__fullShape = fullShape
         self.__fullShapeSensor = fullShapeSensor
         self.__supportedBinnings = supportedBinnings

@@ -44,6 +44,8 @@ class CommunicationChannel(SignalInterface):
 
     sigCrosshairToggled = Signal(bool)  # (enabled)
 
+    # sigUpdateDetectors = Signal(object)
+
     sigAddItemToVb = Signal(object)  # (item)
 
     sigRemoveItemFromVb = Signal(object)  # (item)
