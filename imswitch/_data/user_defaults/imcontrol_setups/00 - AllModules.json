@@ -18,9 +18,9 @@
   "monitorIdx": 2,
   "width": 1920,
   "height": 1080,
-  "ReconWL1": 510,
-  "ReconWL2": 580,
-  "ReconWL3": 660,
+  "ReconWL1": 512,
+  "ReconWL2": 573,
+  "ReconWL3": 678,
   "NA": 0.8,
   "Pixelsize": 2.74,
   "Alpha": 0.5,
@@ -52,11 +52,11 @@
         "Gamma": 1.0,
         "AcquisitionFrameRateEnable": true,
         "AcquisitionFrameRate":5.0,
-        "ExposureTime": 9500.0
+        "ExposureTime": 2000.0
       },
       "ROI":{
-        "OffsetX": 1896,
-        "OffsetY": 1450,
+        "OffsetX": 1944,
+        "OffsetY": 1570,
         "Width": 512,
         "Height": 512
       }
@@ -82,8 +82,8 @@
         "ExposureTime": 9500.0
       },
       "ROI":{
-        "OffsetX": 2400,
-        "OffsetY": 2050,
+        "OffsetX": 2480,
+        "OffsetY": 2244,
         "Width": 512,
         "Height": 512
       }
@@ -109,8 +109,8 @@
           "ExposureTime": 9500.0
         },
         "ROI":{
-          "OffsetX": 2400,
-          "OffsetY": 1950,
+          "OffsetX": 2488,
+          "OffsetY": 2194,
           "Width": 512,
           "Height": 512
         }
@@ -166,6 +166,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
+
     "maxdBmValue": 22.1
     }
     
@@ -188,7 +189,7 @@
       "digitalLine": null,
       "managerName": "PriorStageManager",
       "managerProperties": {
-        "port": "ASRLCOM5",
+        "port": "ASRLCOM6",
         "zeroOnStartup": false
       },
       "axes": ["X","Y"],
@@ -218,7 +219,7 @@
     "zpiezo": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM6",
+        "port": "ASRLCOM8",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",

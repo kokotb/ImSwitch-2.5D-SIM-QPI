@@ -147,7 +147,8 @@ def create_tiling_from_tif_XY_stack_to_WF(tiling_paths, num_columns, num_rows, o
         stack1 = []
         for stack in stack1_in:
             # stack1.append(np.sum(stack[-3:], 0, dtype=np.int16))
-            stack1.append(np.sum(stack[-3:], 0)/normalize)
+            # stack1.append(np.sum(stack[-3:], 0)/normalize)
+            stack1.append(stack[0])
     
         # Needs that because doing calculus with np
         stack1 = np.array(stack1, dtype="uint16")
@@ -229,13 +230,24 @@ def getNamesByPattern(file_names, pattern):
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0overlap"
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p3overlap"
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_0p5overlap"
-input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\1 - analysis\\sensitivity\\SIM\\240918110201_CT_HanaSampleWell2"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\1 - analysis\\tiling\\241003161441_488MTG_10by10_10over\\RawStacks"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\1 - analysis\\tiling\\test\\WF"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\1 - analysis\\tiling\\test\\WF"
+# input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\241010\\241010153855_A2CMDR_CT008\\Recon"
+
 # input_dir = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\240802_5by5Stacks\\astack\\5by5_Neg0p5overlap"
+
+input_dir_select = r"D:\SIM_Data\241024_102658_A1NoFiber_512_10x10\Tiling"
+single_channels_names = ['488','561','640']
+# input_dir_select = "D:\\Nextcloud\\2022 - 2.5D SIM - share\\Measurements\\241010\\241010143352_C2Combo_CT002"
+# single_channels_names = ['488', '561']
+select = "RawStacks" #"RawStacks", "WF", "Recon"
+input_dir = os.path.join(input_dir_select, select)
 
 # Set if you want to run tiling from folder
 # input_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
 exp_names = ["f"]
-name_pattern = "_stack" # can be wf or something else
+name_pattern = "_pos" # can be wf or something else
 t_pattern = "f"
 
 # input_dir = "D:\\Documents\\4 - software\\python-scripting\\2p5D-SIM\\test_export\\fortilingrecon"
@@ -243,19 +255,22 @@ t_pattern = "f"
 # name_pattern = "Reconstruction"
 # t_pattern = "frame_"
 
-single_channels_names = ['510', '580', '660']
-number_of_rows = 1
-number_of_columns = 1
-image_overlay = 0.58
+# single_channels_names = ['488', '561']
+number_of_rows = 10
+number_of_columns = 10
+image_overlay = .1
 # image_overlay = 0
 
 # Choose operations that will be performed, note that export and reordering 
 # can't be done in the same run
 create_tiling = True                                   # can be True or False
-combine_timepoints = False
+combine_timepoints = True
 combine_timepoints_colors_separate = True
 single_chan_tiling = False
-is_sim_stack = True # True for SIM_stack, false for Reconstructed images
+if select == "RawStacks":
+    is_sim_stack = True
+else:
+    is_sim_stack = False # True for SIM_stack, false for Reconstructed images
 # reorder_stack = True
 
 ##############################
@@ -343,7 +358,7 @@ if create_tiling:
                 dt_chan = end_chan - start_chan
                 print(f'Chan {num_ch+1} done in {int(dt_chan):03} s')
         
-        if combine_timepoints:
+        if num_times>1 and combine_timepoints:
             # if num_times < 2:
             #     time_stack_colors_out = np.array(time_stack_colors)
             #     time_stack_colors_out = np.swapaxes(time_stack_colors_out,0,1)
