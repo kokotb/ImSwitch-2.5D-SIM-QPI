@@ -118,7 +118,8 @@ class SettingsController(ImConWidgetController):
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
 
     def writeParamsFromCamFunc(self, detector, value):
-        # self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'] = value
+        self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'].value = value
+        self._master.detectorsManager._subManagers[detector.name].parameters['TriggerMode'].value = 'On'
         self.updateParamsFromDetector(detector=detector)
         self.updateSharedAttrs()
 
