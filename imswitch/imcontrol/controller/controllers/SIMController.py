@@ -746,7 +746,8 @@ class SIMController(ImConWidgetController):
         for parameter_name in dic_parameters:
             # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-        # self._commChannel.sigUpdateDetectors.emit(detector)
+            if parameter_name == 'ExposureTime':
+                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
             # print(detector._camera.getPropertyValue(parameter_name))
         # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisitionSIM(num_buffers)

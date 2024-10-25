@@ -44,7 +44,7 @@ class CommunicationChannel(SignalInterface):
 
     sigCrosshairToggled = Signal(bool)  # (enabled)
 
-    # sigUpdateDetectors = Signal(object)
+    sigWriteParamsFromCam = Signal(object, float)
 
     sigAddItemToVb = Signal(object)  # (item)
 

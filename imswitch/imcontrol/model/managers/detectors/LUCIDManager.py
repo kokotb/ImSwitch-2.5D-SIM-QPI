@@ -57,7 +57,7 @@ class LUCIDManager(DetectorManager):
         exposure_init = self.setupInfo['ExposureTime']
         gain_init = self.setupInfo['Gain']
         gamma_init = self.setupInfo['Gamma']
-        exposureauto_init = self.setupInfo['ExposureAuto']
+        # exposureauto_init = self.setupInfo['ExposureAuto']
         trigmode_init = self.setupInfo['TriggerMode']
         #trigsource_init not needed yet. All triggers on Line2. QPI may change this.
 
@@ -68,8 +68,8 @@ class LUCIDManager(DetectorManager):
                                             editable=True),
             'Gamma': DetectorNumberParameter(group='Analog Control', value=gamma_init, valueUnits='arb.u.',
                                                   editable=True),
-            'ExposureAuto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
-                                                editable=True),
+            # 'ExposureAuto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
+            #                                     editable=False),
             'TriggerMode': DetectorListParameter(group='Acq. Control', value=trigmode_init, options=['Off','On'],
                                                 editable=True)
                                                          

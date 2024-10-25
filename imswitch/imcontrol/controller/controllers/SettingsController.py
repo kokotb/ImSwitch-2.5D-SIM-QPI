@@ -110,16 +110,17 @@ class SettingsController(ImConWidgetController):
         # Connect CommunicationChannel signals
         self._commChannel.sigDetectorSwitched.connect(self.detectorSwitched)
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
-        # self._commChannel.sigUpdateDetectors.connect(self.sigFromSIM)
+        self._commChannel.sigWriteParamsFromCam.connect(self.writeParamsFromCamFunc)
 
         # Connect SettingsWidget signals
         self._widget.sigROIChanged.connect(self.ROIchanged)
         self._widget.sigDetectorChanged.connect(self.detectorSwitchClicked)
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
 
-    # def sigFromSIM(self, detector):
-    #     self.updateParamsFromDetector(detector=detector)
-    #     self.updateSharedAttrs()
+    def writeParamsFromCamFunc(self, detector, value):
+        # self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'] = value
+        self.updateParamsFromDetector(detector=detector)
+        self.updateSharedAttrs()
 
     
     def addROI(self):
