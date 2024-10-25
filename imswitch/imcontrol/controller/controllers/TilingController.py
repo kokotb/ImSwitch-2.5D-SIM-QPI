@@ -57,6 +57,7 @@ class TilingController(ImConWidgetController):
         if (self.posIndex in self.posIndexSet):
             self._widget.tilingView.layers[self.posIndex].data[chanIndex,:,:] = im
             self._widget.tilingView.layers[self.posIndex].refresh()
+            link_layers(self._widget.tilingView.layers)
 
         elif (not self.posIndex in self.posIndexSet):
             currentRealCoords = coords
@@ -70,11 +71,12 @@ class TilingController(ImConWidgetController):
             self.posIndexSet.add(self.posIndex)
             self.chanIndexSet = set()
             self.chanIndexSet.add('0')
+            link_layers(self._widget.tilingView.layers)
 
         # print(self.posIndex, chanIndex)
 
         if (frameNum + 1) ==  (xSteps * ySteps)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')]): # Stop when current frame number get to the grid size.
-            link_layers(self._widget.tilingView.layers)
+            # link_layers(self._widget.tilingView.layers)
             self._commChannel.sigStopSim.emit()
 
 
