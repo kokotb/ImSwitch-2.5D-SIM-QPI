@@ -29,7 +29,7 @@ class TilingController(ImConWidgetController):
 
 
     def mainWFTileImage(self, im, coords, name, numChan, chanIndex, frameNum):
-        zeroMask = np.zeros(shape=(numChan,512,512))
+        zeroMask = np.zeros(shape=(numChan,im.shape[0],im.shape[1]))
         xSteps = int(self._widget.numGridX_textedit.text())
         ySteps = int(self._widget.numGridY_textedit.text())
         self.channel, self.posIndex = name.split('WF-')
