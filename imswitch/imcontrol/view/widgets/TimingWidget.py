@@ -19,7 +19,7 @@ class TimingWidget(NapariHybridWidget):
 
         self.timingPeriod_label = QLabel("Timing Period")
         self.timingPeriod_textedit = QLineEdit("")
-        self.timingPeriod_textedit.setPlaceholderText('max')
+        self.timingPeriod_textedit.setPlaceholderText('blank is max')
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()
         
