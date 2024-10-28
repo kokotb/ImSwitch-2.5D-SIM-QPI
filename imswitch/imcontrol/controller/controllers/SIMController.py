@@ -132,9 +132,14 @@ class SIMController(ImConWidgetController):
         projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
         #Get the parameters that go into the createXYGridPositionArray function
-        self.getTilingSettings() 
+        self.getTilingSettings()
         positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
         self.tileOrigin = positions[-1]
+        if self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Checkbox')] == '0':
+            positions = [self.tileOrigin]
+            
+
+
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
         # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
         # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
@@ -202,6 +207,7 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
        # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         self.tilingRep = 1
+        timingPeriodInSec = self.getPeriodInSec()
 
         while self.active and poweredLasers != []:
             # print(self.tilingRep)
@@ -214,12 +220,27 @@ class SIMController(ImConWidgetController):
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
             # Scan over all positions generated for grid
             j = 0 # Position iterator
+            
+            if self.completeFrameSets != 0 and timingPeriodInSec is not None:
+                repTimer = time.time() - repTimerStart
+                while repTimer < timingPeriodInSec:
+                    time.sleep(.1)
+                    repTimer = time.time() - repTimerStart
+                    print(repTimer)
+                    if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                        self._widget.stop_button.setChecked(False)
+                        return
+            repTimerStart = time.time()
+
+
+
+
             while j < len(positions):
+                
                 # for processor in self.processors:
                     # processor.setRecordingMode(self.isRecordRecon)
                     # processor.setReconstructionMode(self.isReconstruction)
                     # processor.setWavelength(processor.handle, self.sim_parameters)
-                # repTimer = time.perf_counter()
                 self.j = j
                 self.nextPos = positions[self.j]
                 self.currentPos = positions[self.j-1]
@@ -234,7 +255,9 @@ class SIMController(ImConWidgetController):
                 # print(time.time()-timestartdwell)
                                 
                 # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
+
                 self._master.arduinoManager.trigOneSequenceWriteOnly()
+                
 
                 errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                 self.errorQ = [] #List to be populated with error results from within processor threads
@@ -521,7 +544,21 @@ class SIMController(ImConWidgetController):
             for processor in self.processors:
                 processor.saveOneTime = True
 
-
+    def getPeriodInSec(self):
+        try:
+            timingPeriodBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Timing Period')])
+        except KeyError:
+            timingPeriodBox = None
+        if timingPeriodBox is not None:
+            timingUnit = self._commChannel.sharedAttrs[('Timing Settings', 'Timing Unit')]
+            if timingUnit == 's':
+                timingSecs = timingPeriodBox
+            elif timingUnit == 'm':
+                timingSecs = timingPeriodBox * 60
+            elif timingUnit == 'h':
+                timingSecs = timingPeriodBox * 3600
+            return timingSecs
+        return None
 
     # def timeMe(self, timedList, function):
     #         time_color_start = time.time()

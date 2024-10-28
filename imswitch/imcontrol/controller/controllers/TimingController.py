@@ -14,7 +14,9 @@ class TimingController(ImConWidgetController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-
+        self._widget.sigTimingInfoChanged.connect(self.valueChanged)
+        self.sharedAttrs = self._commChannel.sharedAttrs._data
+        self._widget.populateUnitsList()
 
 
     def valueChanged(self, attrCategory, parameterName, value):

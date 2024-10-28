@@ -10,18 +10,38 @@ import napari
 
 class TimingWidget(NapariHybridWidget):
 
-    # sigTilingInfoChanged = QtCore.Signal(str, str, str)
-    # sigRunTilingActive = QtCore.Signal()
+    sigTimingInfoChanged = QtCore.Signal(str, str, str)
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
-        gridScanLayout = QtWidgets.QGridLayout()
-        self.setLayout(gridScanLayout)
+        timingLayout = QtWidgets.QGridLayout()
+        self.setLayout(timingLayout)
 
-        self.numGridX_label = QLabel("Steps - X")
+        self.timingPeriod_label = QLabel("Timing Period")
+        self.timingPeriod_textedit = QLineEdit("")
+        self.timingPeriod_textedit.setPlaceholderText('max')
+        self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
+        self.timingUnit = QtWidgets.QComboBox()
+        
+        self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Unit', value))
         row = 0
-        gridScanLayout.addWidget(self.numGridX_label, row, 0)
+        timingLayout.addWidget(self.timingPeriod_label, row, 0)
+        timingLayout.addWidget(self.timingPeriod_textedit, row, 1)
+        timingLayout.addWidget(self.timingUnit, row, 2)
 
+    def getPeriodInSec(self):
+        timingPeriodBox = self.timingPeriod_textedit.text()
+        timingUnit = self.timingUnit.currentText()
+        if timingUnit == 's':
+            timingSecs = timingPeriodBox
+        elif timingUnit == 'm':
+            timingSecs = timingPeriodBox * 60
+        elif timingUnit == 'h':
+            timingSecs = timingPeriodBox * 3600
+        return timingSecs
+    
+    def populateUnitsList(self):
+        self.timingUnit.addItems(['s', 'm','h'])
         
 
         
