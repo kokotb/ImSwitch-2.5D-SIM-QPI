@@ -82,7 +82,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Positioner': _DockInfo(name='Positioner', yPosition=4),
             'Console': _DockInfo(name='Console', yPosition=5),
             'Tiling': _DockInfo(name='Tiling', yPosition=6),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
+            'Timing': _DockInfo(name='Timing', yPosition=7),
+            # 'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys

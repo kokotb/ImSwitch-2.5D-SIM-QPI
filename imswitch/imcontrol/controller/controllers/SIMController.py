@@ -218,7 +218,8 @@ class SIMController(ImConWidgetController):
                 # for processor in self.processors:
                     # processor.setRecordingMode(self.isRecordRecon)
                     # processor.setReconstructionMode(self.isReconstruction)
-                    # processor.setWavelength(processor.handle, self.sim_parameters)   
+                    # processor.setWavelength(processor.handle, self.sim_parameters)
+                # repTimer = time.perf_counter()
                 self.j = j
                 self.nextPos = positions[self.j]
                 self.currentPos = positions[self.j-1]

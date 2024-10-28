@@ -22,6 +22,7 @@ from .RotatorWidget import RotatorWidget
 from .SettingsWidget import SettingsWidget
 from .SLMWidget import SLMWidget
 from .TilingWidget import TilingWidget
+from .TimingWidget import TimingWidget
 from .ULensesWidget import ULensesWidget
 from .ViewWidget import ViewWidget
 from .WatcherWidget import WatcherWidget

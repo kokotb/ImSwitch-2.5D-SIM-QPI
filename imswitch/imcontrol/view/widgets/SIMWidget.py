@@ -353,8 +353,8 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
-    
-    
+
+
 
 
         # Save folder
