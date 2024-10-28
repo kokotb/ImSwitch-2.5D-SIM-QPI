@@ -36,28 +36,12 @@ class SIMWidget(NapariHybridWidget):
         # Side TabView
         self.tabView = QTabWidget()
         self.layout.addWidget(self.tabView, 0)
-
-        # Add tabs
-        # self.manual_control_tab = self.create_manual_control_tab()
-        # self.tabView.addTab(self.manual_control_tab, "Manual Control")
         
         self.experiment_tab = self.create_experiment_tab()
         self.layer_control_tab = self.create_layer_control_tab()
         self.tabView.addTab(self.experiment_tab, "Experiment")
         self.tabView.addTab(self.layer_control_tab, "Layer Control")
 
-        
-        # self.timelapse_settings_tab = self.create_timelapse_settings_tab()
-        # self.tabView.addTab(self.timelapse_settings_tab, "TimeLapse Settings")
-        
-        # self.zstack_settings_tab = self.create_zstack_settings_tab()
-        # self.tabView.addTab(self.zstack_settings_tab, "Z-stack Settings")
-        
-        #BKEDIT econstruction_parameters_tab ported to create_experiment_tab()
-        # self.reconstruction_parameters_tab = self.create_reconstruction_parameters_tab() 
-        # self.tabView.addTab(self.reconstruction_parameters_tab, "Reconstruction Parameters")
-        
-        # self.calibrateButton.toggled.connect(self.sigCalibrateToggled)
         self.params = [
             "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
         ]
