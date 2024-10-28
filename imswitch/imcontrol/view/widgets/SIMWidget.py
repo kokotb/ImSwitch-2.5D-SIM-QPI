@@ -30,17 +30,19 @@ class SIMWidget(NapariHybridWidget):
         #super().__init__(*args, **kwargs)
 
         # Main GUI 
-        self.layout = QtWidgets.QHBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
 
         # Side TabView
-        self.tabView = QTabWidget()
-        self.layout.addWidget(self.tabView, 0)
+        # self.tabView = QTabWidget()
+        # self.layout.addWidget(self.tabView, 0)
         
         self.experiment_tab = self.create_experiment_tab()
         self.layer_control_tab = self.create_layer_control_tab()
-        self.tabView.addTab(self.experiment_tab, "Experiment")
-        self.tabView.addTab(self.layer_control_tab, "Layer Control")
+        self.layout.addLayout(self.experiment_tab)
+        self.layout.addLayout(self.layer_control_tab)
+        # self.tabView.addTab(self.experiment_tab, "Experiment")
+        # self.tabView.addTab(self.layer_control_tab, "Layer Control")
 
         self.params = [
             "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
@@ -188,7 +190,7 @@ class SIMWidget(NapariHybridWidget):
 
         
         
-        tab = QWidget()
+        # tab = QWidget()
         parentLayout = QVBoxLayout()
         self.hideShowAllLayers = QPushButton("Hide/Show All Layers")
 
@@ -289,14 +291,14 @@ class SIMWidget(NapariHybridWidget):
         self.hideShow640Layers.clicked.connect(lambda: self.hideShowLayerByChannel('640'))
         self.hideShowAllLayers.clicked.connect(self.hideShowAllLayersFunc)
 
-        tab.setLayout(parentLayout)
-        return tab
+        # tab.setLayout(parentLayout)
+        return parentLayout
 
 
 
 
     def create_experiment_tab(self):
-        tab = QWidget()
+        # tab = QWidget()
         wholeTabVertLayout = QVBoxLayout()
         tabBottomVertLayout1 = QVBoxLayout()
         tabBottomVertLayout2 = QVBoxLayout()
@@ -380,8 +382,8 @@ class SIMWidget(NapariHybridWidget):
         
 
 
-        tab.setLayout(wholeTabVertLayout)
-        return tab
+        # tab.setLayout(wholeTabVertLayout)
+        return wholeTabVertLayout
     
 
 
