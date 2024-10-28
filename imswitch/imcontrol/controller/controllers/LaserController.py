@@ -33,11 +33,11 @@ class LaserController(ImConWidgetController):
             self.setSharedAttr(lName, _valueAttr, self._widget.getValue(lName))
 
         # Load presets
-        for laserPresetName in self._setupInfo.laserPresets:
-            self._widget.addPreset(laserPresetName)
+        # for laserPresetName in self._setupInfo.laserPresets:
+        #     self._widget.addPreset(laserPresetName)
 
-        self._widget.setCurrentPreset(None)  # Unselect
-        self._widget.setScanDefaultPreset(self._setupInfo.defaultLaserPresetForScan)
+        # self._widget.setCurrentPreset(None)  # Unselect
+        # self._widget.setScanDefaultPreset(self._setupInfo.defaultLaserPresetForScan)
 
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
@@ -53,12 +53,12 @@ class LaserController(ImConWidgetController):
         self._widget.sigFreqChanged.connect(self.frequencyChanged)
         self._widget.sigDutyCycleChanged.connect(self.dutyCycleChanged)
 
-        self._widget.sigPresetSelected.connect(self.presetSelected)
-        self._widget.sigLoadPresetClicked.connect(self.loadPreset)
-        self._widget.sigSavePresetClicked.connect(self.savePreset)
-        self._widget.sigSavePresetAsClicked.connect(self.savePresetAs)
-        self._widget.sigDeletePresetClicked.connect(self.deletePreset)
-        self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
+        # self._widget.sigPresetSelected.connect(self.presetSelected)
+        # self._widget.sigLoadPresetClicked.connect(self.loadPreset)
+        # self._widget.sigSavePresetClicked.connect(self.savePreset)
+        # self._widget.sigSavePresetAsClicked.connect(self.savePresetAs)
+        # self._widget.sigDeletePresetClicked.connect(self.deletePreset)
+        # self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
 
     def closeEvent(self):
         # self._master.lasersManager.execOnAll(lambda l: l.setScanModeActive(False))
