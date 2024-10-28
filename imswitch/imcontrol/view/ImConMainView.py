@@ -56,33 +56,19 @@ class ImConMainView(QtWidgets.QMainWindow):
 
         # Dock area
         rightDockInfos = {
-            'Autofocus': _DockInfo(name='Autofocus', yPosition=0), #CTNOTE Dock side changed.
-            'FocusLock': _DockInfo(name='Focus Lock', yPosition=0),
-            'EtSTED': _DockInfo(name='EtSTED', yPosition=0),
-            'Rotator': _DockInfo(name='Rotator', yPosition=1),
-            'MotCorr': _DockInfo(name='Motorized Correction Collar', yPosition=1),
-            'SLM': _DockInfo(name='SLM', yPosition=2),
-            'Scan': _DockInfo(name='Scan', yPosition=2),
-            'RotationScan': _DockInfo(name='RotationScan', yPosition=2),
-            'BeadRec': _DockInfo(name='Bead Rec', yPosition=3),
-            'AlignmentLine': _DockInfo(name='Alignment Tool', yPosition=3),
-            'AlignAverage': _DockInfo(name='Axial Alignment Tool', yPosition=3),
-            'AlignXY': _DockInfo(name='Rotational Alignment Tool', yPosition=3),
-            'ULenses': _DockInfo(name='uLenses Tool', yPosition=3),
-            'FFT': _DockInfo(name='FFT Tool', yPosition=3),
-            'Watcher': _DockInfo(name='File Watcher', yPosition=3),
+            'Laser': _DockInfo(name='Laser Control', yPosition=0),
+            'Positioner': _DockInfo(name='Positioner', yPosition=1),
+            'Tiling': _DockInfo(name='Tiling', yPosition=2),
+            'Timing': _DockInfo(name='Timing', yPosition=3)
             
         }
         leftDockInfos = {
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             'View': _DockInfo(name='Image Controls', yPosition=1),
-            'Recording': _DockInfo(name='Recording', yPosition=2),
+            # 'Recording': _DockInfo(name='Recording', yPosition=2),
             'SIM': _DockInfo(name = 'SIM', yPosition = 2),
-            'Laser': _DockInfo(name='Laser Control', yPosition=3),
-            'Positioner': _DockInfo(name='Positioner', yPosition=4),
-            'Console': _DockInfo(name='Console', yPosition=5),
-            'Tiling': _DockInfo(name='Tiling', yPosition=6),
-            'Timing': _DockInfo(name='Timing', yPosition=7),
+            # 'Console': _DockInfo(name='Console', yPosition=5)
+
             # 'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
         }
         otherDockKeys = ['Image']
@@ -125,10 +111,14 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'Settings' in self.docks:
             self.docks['Settings'].setStretch(1, 5)
             self.docks['Settings'].container().setStretch(2, 1)
+        if 'SIM' in self.docks:
+            self.docks['SIM'].setStretch(1, 5)
         if len(rightDocks) > 0:
-            rightDocks[-1].setStretch(1, 5)
+            rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
             self.docks['Image'].setStretch(10, 1)
+        if 'View' in self.docks:
+            self.docks['View'].setStretch(1, 1)
 
     def addShortcuts(self, shortcuts):
         for s in shortcuts.values():

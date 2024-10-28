@@ -96,6 +96,9 @@ class SIMController(ImConWidgetController):
         self._widget.openFolderButton.clicked.connect(self.openFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
+        self._widget.sigStartSIM.connect(self.startSIM)
+        self._widget.sigStopSIM.connect(self.stopSIM)
+
         # Communication channels signls (signals sent elsewhere in the program)
         # self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)

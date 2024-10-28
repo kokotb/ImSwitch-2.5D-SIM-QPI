@@ -39,21 +39,14 @@ class ViewWidget(Widget):
         self.liveviewButton.setEnabled(True)
         
 
-        # self.acquireSetButton = guitools.BetterPushButton('AcquireSet')
-        # self.acquireSetButton.setCheckable(False)
-        # self.acquireSetButton.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                        #    QtWidgets.QSizePolicy.Expanding)
-        
-
-        # self.checkbox_triggered = QtWidgets.QCheckBox('Triggered')
-
         # Add elements to GridLayout
+        self.setMaximumHeight(120)
         self.viewCtrlLayout = QtWidgets.QGridLayout()
         self.setLayout(self.viewCtrlLayout)
-        self.viewCtrlLayout.addWidget(self.liveviewButton, 0, 1, 1, 1)
+        self.viewCtrlLayout.addWidget(self.liveviewButton, 1, 1, 1, 1)
         # self.viewCtrlLayout.addWidget(self.checkbox_triggered, 0, 0, 1, 1)
-        self.viewCtrlLayout.addWidget(self.gridButton, 1, 0)
-        self.viewCtrlLayout.addWidget(self.crosshairButton, 1, 1)
+        # self.viewCtrlLayout.addWidget(self.gridButton, 1, 0)
+        # self.viewCtrlLayout.addWidget(self.crosshairButton, 1, 1)
         # self.viewCtrlLayout.addWidget(self.acquireSetButton, 2, 0, 1, 0)
 
         # Connect signals
@@ -94,11 +87,11 @@ class ViewWidget(Widget):
     def toggleLiveviewButton(self):
         self.liveviewButton.toggle()
 
-    @shortcut('Ctrl+G', "Grid")
+
     def toggleGridButton(self):
         self.gridButton.toggle()
 
-    @shortcut('Ctrl+H', "Crosshair")
+
     def toggleCrosshairButton(self):
         self.crosshairButton.toggle()
 

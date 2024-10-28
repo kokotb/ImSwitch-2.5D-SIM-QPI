@@ -3,6 +3,7 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtWidgets
 from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
+from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
 import napari
@@ -19,6 +20,8 @@ class SIMWidget(NapariHybridWidget):
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
     sigSIMAcqToggled = QtCore.Signal(bool)
+    sigStartSIM = QtCore.Signal()
+    sigStopSIM = QtCore.Signal()
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
     # sigTilingInfoChanged = QtCore.Signal(str, str, str)
@@ -581,6 +584,14 @@ class SIMWidget(NapariHybridWidget):
     
     def getRecFolder(self):
         return self.path_edit.text()
+    
+    @shortcut("Ctrl+S", "Start SIM")
+    def startSIMShort(self):
+        self.sigStartSIM.emit()
+
+    @shortcut("Ctrl+Q", "Stop SIM")
+    def stopSIMShort(self):
+        self.sigStopSIM.emit()
     
 
 
