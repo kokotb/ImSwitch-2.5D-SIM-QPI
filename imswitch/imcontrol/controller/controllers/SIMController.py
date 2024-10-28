@@ -226,7 +226,6 @@ class SIMController(ImConWidgetController):
                 while repTimer < timingPeriodInSec:
                     time.sleep(.1)
                     repTimer = time.time() - repTimerStart
-                    print(repTimer)
                     if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                         self._widget.stop_button.setChecked(False)
                         return
