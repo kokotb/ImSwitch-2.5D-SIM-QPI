@@ -695,11 +695,13 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.deactivateSLMWriteOnly()
         for detector in self.detectors:
             detector.stopAcquisitionSIM()
+            detector._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
         if self.isTiling:
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
         # Save log file
         self.createLogFile()
+
 
 
 
