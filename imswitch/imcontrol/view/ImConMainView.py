@@ -109,15 +109,15 @@ class ImConMainView(QtWidgets.QMainWindow):
         # Adjust dock sizes (the window has to be maximized first for this to work properly)
         if 'Settings' in self.docks:
             self.docks['Settings'].setStretch(1, 5)
-            self.docks['Settings'].container().setStretch(2, 1)
+            self.docks['Settings'].container().setStretch(3, 5)
         if 'SIM' in self.docks:
             self.docks['SIM'].setStretch(1, 5)
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
-            self.docks['Image'].setStretch(8, 1)
-        if 'View' in self.docks:
-            self.docks['View'].setStretch(1, 1)
+            self.docks['Image'].setStretch(10, 1)
+        # if 'View' in self.docks:
+        #     self.docks['View'].setStretch(1, 1)
 
     def addShortcuts(self, shortcuts):
         for s in shortcuts.values():
