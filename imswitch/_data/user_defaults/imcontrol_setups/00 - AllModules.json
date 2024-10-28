@@ -248,6 +248,7 @@
     "Settings",
     "Positioner",
     "Tiling",
-    "Timing"
+    "Timing",
+    "ZStack"
   ]  
 }

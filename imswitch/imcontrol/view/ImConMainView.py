@@ -59,7 +59,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Laser': _DockInfo(name='Laser Control', yPosition=0),
             'Positioner': _DockInfo(name='Positioner', yPosition=1),
             'Tiling': _DockInfo(name='Tiling', yPosition=2),
-            'Timing': _DockInfo(name='Timing', yPosition=3)
+            'Timing': _DockInfo(name='Timing', yPosition=3),
+            'ZStack': _DockInfo(name='Z-Stack', yPosition=4)
             
         }
         leftDockInfos = {
@@ -116,6 +117,10 @@ class ImConMainView(QtWidgets.QMainWindow):
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
             self.docks['Image'].setStretch(10, 1)
+        if 'ZStack' in self.docks:
+            self.docks['ZStack'].setStretch(1, 0.5)
+        if 'Timing' in self.docks:
+            self.docks['Timing'].setStretch(1, 0.5)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 
