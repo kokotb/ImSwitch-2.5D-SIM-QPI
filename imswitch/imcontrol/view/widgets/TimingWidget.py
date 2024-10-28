@@ -29,16 +29,16 @@ class TimingWidget(NapariHybridWidget):
         timingLayout.addWidget(self.timingPeriod_textedit, row, 1)
         timingLayout.addWidget(self.timingUnit, row, 2)
 
-    def getPeriodInSec(self):
-        timingPeriodBox = self.timingPeriod_textedit.text()
-        timingUnit = self.timingUnit.currentText()
-        if timingUnit == 's':
-            timingSecs = timingPeriodBox
-        elif timingUnit == 'm':
-            timingSecs = timingPeriodBox * 60
-        elif timingUnit == 'h':
-            timingSecs = timingPeriodBox * 3600
-        return timingSecs
+    # def getPeriodInSec(self):
+    #     timingPeriodBox = self.timingPeriod_textedit.text()
+    #     timingUnit = self.timingUnit.currentText()
+    #     if timingUnit == 's':
+    #         timingSecs = timingPeriodBox
+    #     elif timingUnit == 'm':
+    #         timingSecs = timingPeriodBox * 60
+    #     elif timingUnit == 'h':
+    #         timingSecs = timingPeriodBox * 3600
+    #     return timingSecs
     
     def populateUnitsList(self):
         self.timingUnit.addItems(['s', 'm','h'])
