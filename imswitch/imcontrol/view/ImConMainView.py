@@ -115,7 +115,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
-            self.docks['Image'].setStretch(10, 1)
+            self.docks['Image'].setStretch(8, 1)
         if 'View' in self.docks:
             self.docks['View'].setStretch(1, 1)
 

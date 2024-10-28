@@ -39,7 +39,24 @@ class SIMWidget(NapariHybridWidget):
         
         self.experiment_tab = self.create_experiment_tab()
         self.layer_control_tab = self.create_layer_control_tab()
+
         self.layout.addLayout(self.experiment_tab)
+
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.HLine)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(50)
+
+        # horizLine = QVBoxLayout(self.myframe)
+        # layersContrastBoxed = QVBoxLayout()
+        self.layout.addWidget(self.myframe)
+
+
+
+
+
+
+
         self.layout.addLayout(self.layer_control_tab)
         # self.tabView.addTab(self.experiment_tab, "Experiment")
         # self.tabView.addTab(self.layer_control_tab, "Layer Control")
