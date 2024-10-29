@@ -5,8 +5,8 @@ from imswitch.imcommon.model import VFileItem, initLogger
 # )
 
 from imswitch.imcontrol.model import (
-    DetectorsManager, LasersManager, MultiManager, PositionersManager, RecordingManager, RS232sManager, 
-     SLMManager, SIMManager, SLM4DDManager, ArduinoManager, SLM4DDManagerMock, TilingManager  
+    DetectorsManager, LasersManager, MultiManager, PositionersManager, RS232sManager, 
+     SLMManager, SLM4DDManager, ArduinoManager, TilingManager  
 )
 
 
@@ -44,7 +44,7 @@ class MasterController:
         # self.rotatorsManager = RotatorsManager(self.__setupInfo.rotators,
         #                                        **lowLevelManagers)
 
-        self.recordingManager = RecordingManager(self.detectorsManager)
+        # self.recordingManager = RecordingManager(self.detectorsManager)
         self.slmManager = SLMManager(self.__setupInfo.slm)
 
         # if self.__setupInfo.microscopeStand:
@@ -54,10 +54,10 @@ class MasterController:
         # self.simManager = SIMManager(self.__setupInfo.sim)
         
         if self.__setupInfo.SIMslm:
-            if self.__setupInfo.SIMslm.mock:
-                self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
-            else:    
-                self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
+            # if self.__setupInfo.SIMslm.mock:
+            #     self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
+            # else:    
+            self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,
@@ -89,12 +89,12 @@ class MasterController:
         # self.detectorsManager.sigRunAcquireSetStopped.connect(cc.sigRunAcquireSetStopped)
         
 
-        self.recordingManager.sigRecordingStarted.connect(cc.sigRecordingStarted)
-        self.recordingManager.sigRecordingEnded.connect(cc.sigRecordingEnded)
-        self.recordingManager.sigRecordingFrameNumUpdated.connect(cc.sigUpdateRecFrameNum)
-        self.recordingManager.sigRecordingTimeUpdated.connect(cc.sigUpdateRecTime)
-        self.recordingManager.sigMemorySnapAvailable.connect(cc.sigMemorySnapAvailable)
-        self.recordingManager.sigMemoryRecordingAvailable.connect(self.memoryRecordingAvailable)
+        # self.recordingManager.sigRecordingStarted.connect(cc.sigRecordingStarted)
+        # self.recordingManager.sigRecordingEnded.connect(cc.sigRecordingEnded)
+        # self.recordingManager.sigRecordingFrameNumUpdated.connect(cc.sigUpdateRecFrameNum)
+        # self.recordingManager.sigRecordingTimeUpdated.connect(cc.sigUpdateRecTime)
+        # self.recordingManager.sigMemorySnapAvailable.connect(cc.sigMemorySnapAvailable)
+        # self.recordingManager.sigMemoryRecordingAvailable.connect(self.memoryRecordingAvailable)
 
         self.slmManager.sigSLMMaskUpdated.connect(cc.sigSLMMaskUpdated)
 
@@ -104,7 +104,7 @@ class MasterController:
         )
 
     def closeEvent(self):
-        self.recordingManager.endRecording(emitSignal=False, wait=True)
+        # self.recordingManager.endRecording(emitSignal=False, wait=True)
 
         for attrName in dir(self):
             attr = getattr(self, attrName)

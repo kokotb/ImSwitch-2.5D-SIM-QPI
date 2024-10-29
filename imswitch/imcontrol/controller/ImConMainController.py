@@ -7,7 +7,7 @@ from imswitch.imcommon.model import (
     ostools, initLogger, generateAPI, generateShortcuts, SharedAttributes
 )
 from imswitch.imcommon.framework import Thread
-from .server import ImSwitchServer
+# from .server import ImSwitchServer
 from imswitch.imcontrol.model import configfiletools
 from imswitch.imcontrol.view import guitools
 from . import controllers
