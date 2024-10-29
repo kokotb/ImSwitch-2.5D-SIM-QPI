@@ -2,11 +2,8 @@ from imswitch.imcontrol.view import guitools
 from ..basecontrollers import LiveUpdatedController
 from imswitch.imcommon.model import initLogger
 import numpy as np
-import re
 
 class ImageController(LiveUpdatedController):
-    """ Linked to ImageWidget."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -16,8 +13,6 @@ class ImageController(LiveUpdatedController):
 
         self._lastShape = self._master.detectorsManager.execOnCurrent(lambda c: c.shape)
         self._shouldResetView = False
-
-
 
         # Connect CommunicationChannel signals
         self._commChannel.sigUpdateImage.connect(self.update)
