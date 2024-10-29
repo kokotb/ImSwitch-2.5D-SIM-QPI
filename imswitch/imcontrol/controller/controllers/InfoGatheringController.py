@@ -23,11 +23,27 @@ class InfoGatheringController(ImConWidgetController):
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
         # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
+        self._widget.saveSettings.clicked.connect(self.getAndSaveJSON)
         
         # Load experimental parameters into local object attribute
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
+        self.wantedAttributes = [('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),('Laser', '561AOTF', 'Enabled'),
+                            ('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),('Positioner', 'Z', 'Z', 'Position'),
+                            ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
+                            ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Repetitions'),
+                            ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Detector', '488 Cam', 'Model'),
+                            ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
+                            ('Detector', '488 Cam', 'Param', 'Gamma'),('Detector', '488 Cam', 'Param', 'TriggerMode'),('Detector', '561 Cam', 'Model'),
+                            ('Detector', '561 Cam', 'ROI'),('Detector', '561 Cam', 'Param', 'ExposureTime'),('Detector', '561 Cam', 'Param', 'Gain'),
+                            ('Detector', '561 Cam', 'Param', 'Gamma'),('Detector', '561 Cam', 'Param', 'TriggerMode'),('Detector', '640 Cam', 'Model'),
+                            ('Detector', '640 Cam', 'ROI'),('Detector', '640 Cam', 'Param', 'ExposureTime'),('Detector', '640 Cam', 'Param', 'Gain'),
+                            ('Detector', '640 Cam', 'Param', 'Gamma'),('Detector', '640 Cam', 'Param', 'TriggerMode'),('SIM Parameters', 'ReconWL1'),
+                            ('SIM Parameters', 'ReconWL2'),('SIM Parameters', 'ReconWL3'),('SIM Parameters', 'NA'),('SIM Parameters', 'Pixelsize'),
+                            ('SIM Parameters', 'Alpha'),('SIM Parameters', 'Beta'),('SIM Parameters', 'w'),('SIM Parameters', 'eta'),
+                            ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM SLM', 'SLM Running Order'),('User Dir Info', 'Working Directory'),
+                            ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name')]
 
-        
+
     def updateSharedAttributes(self):
         # print('test')
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
@@ -45,7 +61,24 @@ class InfoGatheringController(ImConWidgetController):
     #     self._logger.warning("Attributes saved.")
 
 
-    def getAttrs(self):
+    def getWantedAttrs(self):
+        """ Returns a JSON representation of this instance. """
+        attrs = {}
+        for key, value in self.shared_attributes.items():
+            if key in self.wantedAttributes:
+                parent = attrs
+                for i in range(len(key) - 1):
+                    if key[i] not in parent:
+                        parent[key[i]] = {}
+                    parent = parent[key[i]]
+
+                parent[key[-1]] = value
+            # jsonOutput = json.dumps(attrs)
+            jsonOutputPretty = json.dumps(attrs, indent=4)
+
+        return jsonOutputPretty
+
+    def getAllAttrs(self):
         """ Returns a JSON representation of this instance. """
         attrs = {}
         for key, value in self.shared_attributes.items():
@@ -62,7 +95,7 @@ class InfoGatheringController(ImConWidgetController):
         return jsonOutputPretty
     
     def getAndSaveJSON(self):
-        jsonOutput = self.getAttrs()
+        jsonOutput = self.getWantedAttrs()
         with open("JSONTest.json", "w", encoding='utf-8') as outfile:
             outfile.write(jsonOutput)
 

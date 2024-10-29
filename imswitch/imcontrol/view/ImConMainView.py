@@ -60,7 +60,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Positioner': _DockInfo(name='Positioner', yPosition=1),
             'Tiling': _DockInfo(name='Tiling', yPosition=2),
             'Timing': _DockInfo(name='Timing', yPosition=3),
-            'ZStack': _DockInfo(name='Z-Stack', yPosition=4)
+            'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5)
             
         }
         leftDockInfos = {
@@ -69,7 +70,7 @@ class ImConMainView(QtWidgets.QMainWindow):
             # 'Recording': _DockInfo(name='Recording', yPosition=2),
             'SIM': _DockInfo(name = 'SIM', yPosition = 2),
             # 'Console': _DockInfo(name='Console', yPosition=5)
-            # 'InfoGathering': _DockInfo(name = 'Info', yPosition = 7)
+            
         }
         otherDockKeys = ['Image']
         allDockKeys = list(rightDockInfos.keys()) + list(leftDockInfos.keys()) + otherDockKeys
@@ -121,6 +122,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             self.docks['ZStack'].setStretch(1, 0.5)
         if 'Timing' in self.docks:
             self.docks['Timing'].setStretch(1, 0.5)
+        if 'InfoGathering' in self.docks:
+            self.docks['InfoGathering'].setStretch(1, 0.5)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 

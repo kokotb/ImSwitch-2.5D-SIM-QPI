@@ -249,6 +249,7 @@
     "Positioner",
     "Tiling",
     "Timing",
-    "ZStack"
+    "ZStack",
+    "InfoGathering"
   ]  
 }

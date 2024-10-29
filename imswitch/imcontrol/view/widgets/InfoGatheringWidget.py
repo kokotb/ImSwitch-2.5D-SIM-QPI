@@ -12,13 +12,16 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
 
 class InfoGatheringWidget(NapariHybridWidget):
     """ Widget containing InfoGathering interface. """
-
+    sigSaveSettings = QtCore.Signal()
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
         # Main GUI 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
+        self.saveSettings = QPushButton("Save Settings")
+        self.layout.addWidget(self.saveSettings)
+        
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

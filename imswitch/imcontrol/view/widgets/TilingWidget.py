@@ -17,7 +17,7 @@ class TilingWidget(NapariHybridWidget):
         # super().__init__(*args, **kwargs)
         self.tilingViewBool = False
         self.runTilingActiveBool = False
-        # Grid scan settings bn 
+        # Grid scan settings bn
         gridScanLayout = QtWidgets.QGridLayout()
         self.setLayout(gridScanLayout)
 
