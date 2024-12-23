@@ -104,8 +104,8 @@ def getUniqueNamesByPattern(file_names, pattern):
 #      SET PARAMETERS        #
 ##############################
 
-input_dir_select = r"D:\SIM_Data\241024_144552_A1NoFiber_3x3x5\Tiling"
-single_channels_names = ['488','561','640']
+input_dir_select = r"D:\SIM_Data\241111\241111_151859_CT_PosterImages_5x5x1O10\Tiling"
+single_channels_names = ['488',"561","640"]
 select = "Recon" #"RawStacks", "WF", "Recon", "All"
 input_dir = os.path.join(input_dir_select, select)
 
@@ -114,8 +114,8 @@ exp_names = ["f"]
 name_pattern = "_pos" # can be wf or something else
 t_pattern = "f"
 
-number_of_rows = 3
-number_of_columns = 3
+number_of_rows = 5
+number_of_columns = 5
 image_overlay = .1
 
 # Choose operations that will be performed >I    >nma
