@@ -250,7 +250,7 @@ class SIMController(ImConWidgetController):
                 timestart = time.time()
                 self.positionerXY.checkBusyLoop()
                 if j == 0 and self.completeFrameSets != 0 and self.isTiling:
-                    time.sleep(.5)
+                    time.sleep(.5) #TODO: Change to calibrate by distance needed to move
                 else:
                     time.sleep(.05) #can probablz reduct slightly
 

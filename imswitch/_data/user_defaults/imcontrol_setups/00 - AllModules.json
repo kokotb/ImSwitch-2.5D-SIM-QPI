@@ -49,14 +49,14 @@
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "ExposureTime": 9500.0
+        "ExposureTime": 4500.0  
       },
       "ROI":{
-        "OffsetX": 1944,
-        "OffsetY": 1570,
+        "OffsetX": 2192,
+        "OffsetY": 1446,
         "Width": 512,
         "Height": 512
-      }
+      } 
     },
     "forAcquisition": true
   },
@@ -76,8 +76,8 @@
         "ExposureTime": 9500.0
       },
       "ROI":{
-        "OffsetX": 2480,
-        "OffsetY": 2244,
+        "OffsetX": 2131,
+        "OffsetY": 1998,
         "Width": 512,
         "Height": 512
       }
@@ -100,8 +100,8 @@
           "ExposureTime": 3000.0
         },
         "ROI":{
-          "OffsetX": 2488,
-          "OffsetY": 2194,
+          "OffsetX": 2595,
+          "OffsetY": 2669,
           "Width": 512,
           "Height": 512
         }
