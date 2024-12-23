@@ -31,7 +31,7 @@ class InfoGatheringController(ImConWidgetController):
                             ('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),('Positioner', 'Z', 'Z', 'Position'),
                             ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
                             ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Repetitions'),
-                            ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Detector', '488 Cam', 'Model'),
+                            ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Timing Period'),('Detector', '488 Cam', 'Model'),
                             ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
                             ('Detector', '488 Cam', 'Param', 'Gamma'),('Detector', '488 Cam', 'Param', 'TriggerMode'),('Detector', '561 Cam', 'Model'),
                             ('Detector', '561 Cam', 'ROI'),('Detector', '561 Cam', 'Param', 'ExposureTime'),('Detector', '561 Cam', 'Param', 'Gain'),
