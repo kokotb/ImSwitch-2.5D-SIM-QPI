@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
+from PyQt5.QtGui import QDoubleValidator
 import napari
 
 class TimingWidget(NapariHybridWidget):
@@ -19,6 +20,9 @@ class TimingWidget(NapariHybridWidget):
 
         self.timingPeriod_label = QLabel("Timing Period")
         self.timingPeriod_textedit = QLineEdit("")
+        self.validator = QDoubleValidator()  # Range from 0.0 to 2.0 with 2 decimal places
+        self.timingPeriod_textedit.setValidator(self.validator)
+        self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the system can handle, it will just run as fastest speed possible.')  
         self.timingPeriod_textedit.setPlaceholderText('blank is max frame rate')
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()

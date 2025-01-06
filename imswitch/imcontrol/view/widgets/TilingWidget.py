@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
+
 import napari
 
 class TilingWidget(NapariHybridWidget):
@@ -23,19 +25,36 @@ class TilingWidget(NapariHybridWidget):
 
         self.numGridX_label = QLabel("Steps - X")
         self.numGridX_textedit = QLineEdit("")
+        self.validator = QIntValidator(0,1000,self)
+        self.numGridX_textedit.setValidator(self.validator)
         self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
 
         self.numGridY_label = QLabel("Steps - Y")
         self.numGridY_textedit = QLineEdit("")
+        self.validator = QIntValidator(0,1000,self)
+        self.numGridY_textedit.setValidator(self.validator)
         self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
+
+        # self.overlap_label = QLabel("Overlap")
+        # self.overlap_textedit = QLineEdit("")
+        # pattern = r"^[0-1]{1}.[0-9]{1}"
+        # regexp = QRegExp(pattern)
+        # self.validator = QRegExpValidator(regexp, self.overlap_textedit)
+        # self.overlap_textedit.setValidator(self.validator)
 
         self.overlap_label = QLabel("Overlap")
         self.overlap_textedit = QLineEdit("")
+        # self.validator = QIntValidator(0,100,self)
+        # self.overlap_textedit.setValidator(self.validator)
+        self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
 
         self.tilingReps_label = QLabel("Tiling Repetitions")
         self.tilingReps_textedit = QLineEdit("")
+        self.validator = QIntValidator(0,10000,self)
+        self.tilingReps_textedit.setValidator(self.validator)
         self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
+
         self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
         self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
@@ -68,6 +87,9 @@ class TilingWidget(NapariHybridWidget):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")
         self.overlap_textedit.setText("0")
+        # self.validator = QDoubleValidator(0.0, 1.0, 1)
+        # self.validator.setRange(0,1,1)
+        self.overlap_textedit.setValidator(self.validator)
         self.tilingReps_textedit.setText("1")
         self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", '0') # Checkboxes initialize a little different from QLineEdit. This sends a signal to register value with sharedAttrs
 

@@ -62,7 +62,7 @@ class QueensgatePiezoManager(PositionerManager):
         cmd = 'V {}'.format(value)
         self._rs232Manager.query(cmd)
         self._position[_] = value
-        print(value)
+        print(f"Z position moved to {value}")
 
 
     def getSpeedLow(self):

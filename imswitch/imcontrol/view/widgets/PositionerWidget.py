@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtGui import QWheelEvent , QDoubleValidator
-
+from PyQt5.QtGui import QIntValidator
 
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
@@ -27,7 +27,7 @@ class PositionerWidget(Widget):
     def addPositionerZ(self, positionerName, axes, speed):
 
         axis = axes[0]
-        initialValueFine = 0.2
+        initialValueFine = 0.1
         initialValueCoarse = 5
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
@@ -48,9 +48,15 @@ class PositionerWidget(Widget):
         self.pars['UpButtonCoarse' + parNameSuffix] = guitools.BetterPushButton('+')
         self.pars['DownButtonCoarse' + parNameSuffix] = guitools.BetterPushButton('-')
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(str(initialValueFine))
-        self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
+        self.pars['StepEdit' + parNameSuffix].setToolTip('Hold Ctrl while using scroll wheel to focus in fine steps. Mouse must be anywhere in Positioner box')  
+        self.validator = QDoubleValidator()
+        self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
+        self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['StepEditCoarse' + parNameSuffix] = QtWidgets.QLineEdit(str(initialValueCoarse))
-        self.pars['StepUnitCoarse' + parNameSuffix] = QtWidgets.QLabel(' µm')
+        self.pars['StepEditCoarse' + parNameSuffix].setToolTip('Hold Shift while using scroll wheel to focus in coarse steps. Mouse must be anywhere in Positioner box')  
+        self.validator = QIntValidator()
+        self.pars['StepEditCoarse' + parNameSuffix].setValidator(self.validator)
+        self.pars['StepUnitCoarse' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.gridZCoarseFine.addWidget(self.pars['DownButton' + parNameSuffix], 0, 0)
         self.gridZCoarseFine.addWidget(self.pars['UpButton' + parNameSuffix], 0, 1)
         self.gridZCoarseFine.addWidget(self.pars['DownButtonCoarse' + parNameSuffix],1, 0)
@@ -67,7 +73,9 @@ class PositionerWidget(Widget):
         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
-        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.validator = QDoubleValidator()
+        self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
         self.wholeZLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
@@ -120,11 +128,15 @@ class PositionerWidget(Widget):
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('→')
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('←')
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
+        self.validator = QDoubleValidator()
+        self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
-        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.validator = QDoubleValidator()
+        self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
 
@@ -174,12 +186,16 @@ class PositionerWidget(Widget):
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('↑')
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('↓')
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
+        self.validator = QDoubleValidator()
+        self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Abs. Pos</strong>')
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
 
-        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0')
+        self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.validator = QDoubleValidator()
+        self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         # validator = QDoubleValidator()
         # validator.setRange(-10000.0, 9999.0, 1)
         # self.pars['AbsPosEdit' + parNameSuffix].setMaxLength(8)
@@ -273,10 +289,10 @@ class PositionerWidget(Widget):
     def wheelEvent(self, event: QWheelEvent):
             modifiers = QtWidgets.QApplication.keyboardModifiers()
             if modifiers == QtCore.Qt.ShiftModifier:
-                self.focusDelta = event.angleDelta().y() / 12
+                self.focusDelta = event.angleDelta().y() / 120 * float(self.pars['StepEditCoarse'+'Z--Z'].text())
                 self.sigWheelEvent.emit(self.focusDelta)
             elif modifiers == QtCore.Qt.ControlModifier:
-                self.focusDelta = event.angleDelta().y() / 600
+                self.focusDelta = event.angleDelta().y() / 120 * float(self.pars['StepEdit'+'Z--Z'].text())
                 self.sigWheelEvent.emit(self.focusDelta)
             event.accept()
 

@@ -3,6 +3,7 @@ from qtpy import QtCore, QtWidgets
 # from imswitch.imcommon.view.guitools import colorutils
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
 
 
 class LaserWidget(Widget):
@@ -258,6 +259,8 @@ class LaserModule(QtWidgets.QWidget):
         self.setPointLabel = QtWidgets.QLabel(f'Setpoint [{valueUnits}]')
         self.setPointLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.setPointEdit = QtWidgets.QLineEdit(str(initialPower))
+        self.validator = QIntValidator(0,100,self)
+        self.setPointEdit.setValidator(self.validator)
         self.setPointEdit.setFixedWidth(50)
         self.setPointEdit.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
