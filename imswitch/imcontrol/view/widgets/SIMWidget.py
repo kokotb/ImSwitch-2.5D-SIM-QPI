@@ -5,6 +5,8 @@ from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
+from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QDoubleValidator
 
 import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
@@ -448,26 +450,51 @@ class SIMWidget(NapariHybridWidget):
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
+        self.validator = QIntValidator(100,999)
+        self.ReconWL1_textedit.setValidator(self.validator)
+
         self.ReconWL2_label = QLabel("")
         self.ReconWL2_textedit = QLineEdit("")
+        self.validator = QIntValidator(100,999)
+        self.ReconWL2_textedit.setValidator(self.validator)
+
         self.ReconWL3_label = QLabel("")
         self.ReconWL3_textedit = QLineEdit("")
+        self.validator = QIntValidator(100,999)
+        self.ReconWL3_textedit.setValidator(self.validator)
+
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
+        self.NA_textedit.setInputMask("B.9;0;_")
+
+
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
+
         self.alpha_label = QLabel("")
         self.alpha_textedit = QLineEdit("")
+        self.alpha_textedit.setInputMask("0.0;0;_")
+
+
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
+        self.beta_textedit.setInputMask("0 .00;0;_")
+        
         self.w_label = QLabel("")
         self.w_textedit = QLineEdit("")
+        self.w_textedit.setInputMask("0 .00;0;_")
+
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
+        self.eta_textedit.setInputMask("0.0;0;_")
+
+        #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
         self.n_label = QLabel("")
         self.n_textedit = QLineEdit("")
         self.magnification_label = QLabel("")
         self.magnification_textedit = QLineEdit("")
+        #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
+
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.ReconWL1_label)
         row_layout_1.addWidget(self.ReconWL1_textedit)
@@ -477,12 +504,14 @@ class SIMWidget(NapariHybridWidget):
         row_layout_3 = QHBoxLayout()
         row_layout_3.addWidget(self.ReconWL3_label)
         row_layout_3.addWidget(self.ReconWL3_textedit)
-        row_layout_4 = QHBoxLayout()
-        row_layout_4.addWidget(self.NA_label)
-        row_layout_4.addWidget(self.NA_textedit)
-        row_layout_5 = QHBoxLayout()
-        row_layout_5.addWidget(self.pixelsize_label)
-        row_layout_5.addWidget(self.pixelsize_textedit)
+
+        # row_layout_4 = QHBoxLayout()
+        # row_layout_4.addWidget(self.NA_label)
+        # row_layout_4.addWidget(self.NA_textedit)
+        # row_layout_5 = QHBoxLayout()
+        # row_layout_5.addWidget(self.pixelsize_label)
+        # row_layout_5.addWidget(self.pixelsize_textedit)
+        
         row_layout_6 = QHBoxLayout()
         row_layout_6.addWidget(self.alpha_label)
         row_layout_6.addWidget(self.alpha_textedit)
@@ -495,24 +524,24 @@ class SIMWidget(NapariHybridWidget):
         row_layout_9 = QHBoxLayout()
         row_layout_9.addWidget(self.eta_label)
         row_layout_9.addWidget(self.eta_textedit)
-        row_layout_10 = QHBoxLayout()
-        row_layout_10.addWidget(self.n_label)
-        row_layout_10.addWidget(self.n_textedit)
-        row_layout_11 = QHBoxLayout()
-        row_layout_11.addWidget(self.magnification_label)
-        row_layout_11.addWidget(self.magnification_textedit)
+        # row_layout_10 = QHBoxLayout()
+        # row_layout_10.addWidget(self.n_label)
+        # row_layout_10.addWidget(self.n_textedit)
+        # row_layout_11 = QHBoxLayout()
+        # row_layout_11.addWidget(self.magnification_label)
+        # row_layout_11.addWidget(self.magnification_textedit)
         
         layout.addLayout(row_layout_1)
         layout.addLayout(row_layout_2)
         layout.addLayout(row_layout_3)
-        layout.addLayout(row_layout_4)
-        layout.addLayout(row_layout_5)
+        # layout.addLayout(row_layout_4)
+        # layout.addLayout(row_layout_5)
         layout.addLayout(row_layout_6)
         layout.addLayout(row_layout_7)
         layout.addLayout(row_layout_8)
         layout.addLayout(row_layout_9)
-        layout.addLayout(row_layout_10)
-        layout.addLayout(row_layout_11)
+        # layout.addLayout(row_layout_10)
+        # layout.addLayout(row_layout_11)
         
         
 
