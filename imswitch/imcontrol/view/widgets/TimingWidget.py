@@ -22,12 +22,14 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit = QLineEdit("")
         self.validator = QDoubleValidator()  # Range from 0.0 to 2.0 with 2 decimal places
         self.timingPeriod_textedit.setValidator(self.validator)
-        self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the system can handle, it will just run as fastest speed possible.')  
-        self.timingPeriod_textedit.setPlaceholderText('blank is max frame rate')
+        self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the image cycle, it will just run as fastest speed possible.')  
+        self.timingPeriod_textedit.setPlaceholderText('Blank or 0 is max frame rate')
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()
         
         self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Unit', value))
+
+
         row = 0
         timingLayout.addWidget(self.timingPeriod_label, row, 0)
         timingLayout.addWidget(self.timingPeriod_textedit, row, 1)

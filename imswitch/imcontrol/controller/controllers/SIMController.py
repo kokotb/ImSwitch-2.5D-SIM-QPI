@@ -549,6 +549,8 @@ class SIMController(ImConWidgetController):
     def getPeriodInSec(self):
         try:
             timingPeriodBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Timing Period')])
+        except ValueError:
+            timingPeriodBox = 0
         except KeyError:
             timingPeriodBox = None
         if timingPeriodBox is not None:
@@ -558,6 +560,7 @@ class SIMController(ImConWidgetController):
             elif timingUnit == 'm':
                 timingSecs = timingPeriodBox * 60
             elif timingUnit == 'h':
+                
                 timingSecs = timingPeriodBox * 3600
             return timingSecs
         return None
@@ -760,6 +763,7 @@ class SIMController(ImConWidgetController):
         trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'
+        gamma = 1.0
 
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -782,7 +786,7 @@ class SIMController(ImConWidgetController):
 
 
         # Set cam parameters
-        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
