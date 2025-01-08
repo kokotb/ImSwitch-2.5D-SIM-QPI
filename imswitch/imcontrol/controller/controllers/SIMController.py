@@ -211,7 +211,7 @@ class SIMController(ImConWidgetController):
        # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         self.tilingRep = 1
         timingPeriodInSec = self.getPeriodInSec()
-
+        durationInSec = self.getDurationInSec()
         while self.active and poweredLasers != []:
             # print(self.tilingRep)
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
@@ -288,6 +288,10 @@ class SIMController(ImConWidgetController):
                 print(loopEndTime)
             self.tilingRep += 1
             totalEndTime = time.time()-time_global_start
+            
+            if not self.isTiling and durationInSec != 0 and durationInSec < totalEndTime:
+                self._commChannel.sigStopSim.emit()
+
             print(f'total time: {totalEndTime}')
 
     def mainSIMLoop(self, processor, errorLock):
@@ -560,17 +564,30 @@ class SIMController(ImConWidgetController):
             elif timingUnit == 'm':
                 timingSecs = timingPeriodBox * 60
             elif timingUnit == 'h':
-                
+
                 timingSecs = timingPeriodBox * 3600
             return timingSecs
         return None
+    
+    def getDurationInSec(self):
+        try:
+            timingDurationBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Duration')])
+        except ValueError:
+            timingDurationBox = 0
+        except KeyError:
+            timingDurationBox = None
+        if timingDurationBox is not None:
+            durationUnit = self._commChannel.sharedAttrs[('Timing Settings', 'Duration Unit')]
+            if durationUnit == 's':
+                durationsSecs = timingDurationBox
+            elif durationUnit == 'm':
+                durationsSecs = timingDurationBox * 60
+            elif durationUnit == 'h':
 
-    # def timeMe(self, timedList, function):
-    #         time_color_start = time.time()
-    #         function         
-    #         time_color_total = time.time()-time_color_start
-    #         timedList.append(["{:0.3f} ms".format(time_color_total*1000),"startOneSequence"])
-    #         return timedList
+                durationsSecs = timingDurationBox * 3600
+            return durationsSecs
+        return None
+
 
 
     def toggleReconstruction(self):
