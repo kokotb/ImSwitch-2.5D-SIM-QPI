@@ -18,7 +18,7 @@ class TimingWidget(NapariHybridWidget):
         timingLayout = QtWidgets.QGridLayout()
         self.setLayout(timingLayout)
 
-        self.timingPeriod_label = QLabel("Timing Period")
+        self.timingPeriod_label = QLabel("Period")
         self.timingPeriod_textedit = QLineEdit("")
         self.validator = QDoubleValidator()  # Range from 0.0 to 2.0 with 2 decimal places
         self.timingPeriod_textedit.setValidator(self.validator)
@@ -26,14 +26,27 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit.setPlaceholderText('Blank or 0 is max frame rate')
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()
+
+        self.timingDuration_label = QLabel("Duration")
+        self.timingDuration_textedit = QLineEdit("")
+        self.validator = QDoubleValidator()
+        self.timingDuration_textedit.setValidator(self.validator)
+        self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
+        self.timingDuration_textedit.setPlaceholderText('Blank or 0 is continuous')
+        self.timingDuration_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration', value))
+        self.timingDurationUnit = QtWidgets.QComboBox()
         
         self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Unit', value))
+        self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration Unit', value))
 
 
         row = 0
         timingLayout.addWidget(self.timingPeriod_label, row, 0)
         timingLayout.addWidget(self.timingPeriod_textedit, row, 1)
         timingLayout.addWidget(self.timingUnit, row, 2)
+        timingLayout.addWidget(self.timingDuration_label, row+1, 0)
+        timingLayout.addWidget(self.timingDuration_textedit, row+1, 1)
+        timingLayout.addWidget(self.timingDurationUnit, row+1, 2)
 
     # def getPeriodInSec(self):
     #     timingPeriodBox = self.timingPeriod_textedit.text()
@@ -48,6 +61,8 @@ class TimingWidget(NapariHybridWidget):
     
     def populateUnitsList(self):
         self.timingUnit.addItems(['s', 'm','h'])
+        self.timingDurationUnit.addItems(['s', 'm','h'])
+        self.timingDurationUnit.setCurrentIndex(1)
         
 
         

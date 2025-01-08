@@ -18,6 +18,7 @@ class TimingController(ImConWidgetController):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.populateUnitsList()
         self._widget.timingPeriod_textedit.setText("0")
+        self._widget.timingDuration_textedit.setText("0")
 
 
     def valueChanged(self, attrCategory, parameterName, value):
