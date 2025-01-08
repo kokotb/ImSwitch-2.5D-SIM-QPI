@@ -86,10 +86,10 @@ class TilingWidget(NapariHybridWidget):
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")
-        self.overlap_textedit.setText("0")
+        self.overlap_textedit.setText("0.1")
         # self.validator = QDoubleValidator(0.0, 1.0, 1)
         # self.validator.setRange(0,1,1)
-        self.overlap_textedit.setValidator(self.validator)
+        # self.overlap_textedit.setValidator(self.validator)
         self.tilingReps_textedit.setText("1")
         self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", '0') # Checkboxes initialize a little different from QLineEdit. This sends a signal to register value with sharedAttrs
 
