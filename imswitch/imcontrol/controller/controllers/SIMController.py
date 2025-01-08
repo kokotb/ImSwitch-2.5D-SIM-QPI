@@ -288,11 +288,11 @@ class SIMController(ImConWidgetController):
                 print(loopEndTime)
             self.tilingRep += 1
             totalEndTime = time.time()-time_global_start
-            
+            print(f'total time: {totalEndTime}')
             if not self.isTiling and durationInSec != 0 and durationInSec < totalEndTime:
                 self._commChannel.sigStopSim.emit()
 
-            print(f'total time: {totalEndTime}')
+            
 
     def mainSIMLoop(self, processor, errorLock):
         # saveOneTime = self.saveOneTime
