@@ -77,9 +77,9 @@ class TilingController(ImConWidgetController):
 
         # print(self.posIndex, chanIndex)
 
-        if (frameNum + 1) ==  (xSteps * ySteps)*int(self.sharedAttrs[('Timing Settings','Repetitions')]): # Stop when current frame number get to the grid size.
-            # link_layers(self._widget.tilingView.layers)
-            self._commChannel.sigStopSim.emit()
+        # if (frameNum + 1) ==  (xSteps * ySteps)*int(self.sharedAttrs[('Timing Settings','Repetitions')]): # Stop when current frame number get to the grid size.
+        #     # link_layers(self._widget.tilingView.layers)
+        #     self._commChannel.sigStopSim.emit()
 
 
    

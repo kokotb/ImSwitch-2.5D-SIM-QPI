@@ -15,11 +15,14 @@ class TimingController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
         self._widget.sigTimingInfoChanged.connect(self.valueChanged)
+        self._widget.sigTimingCheckChanged.connect(self.valueChanged)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.populateUnitsList()
         self._widget.timingPeriod_textedit.setText("0")
         self._widget.timingDuration_textedit.setText("0")
         self._widget.tilingReps_textedit.setText("1")
+        self._widget.sigTimingCheckChanged.emit('Timing Settings','Rep Checkbox', 0)
+        self._widget.sigTimingCheckChanged.emit('Timing Settings','Duration Checkbox', 0)
 
 
     def valueChanged(self, attrCategory, parameterName, value):
@@ -33,6 +36,7 @@ class TimingController(ImConWidgetController):
             attr (_type_): type of a attribute (value, enabled, ...)
             value (_type_): value of the parameter read from wdiget
         """
+        # print(value)
         self.settingAttr = True
         try:
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value

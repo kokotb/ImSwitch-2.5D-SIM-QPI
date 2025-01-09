@@ -12,12 +12,15 @@ import napari
 class TimingWidget(NapariHybridWidget):
 
     sigTimingInfoChanged = QtCore.Signal(str, str, str)
+    sigTimingCheckChanged = QtCore.Signal(str, str, int)
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         timingLayout = QtWidgets.QGridLayout()
         self.setLayout(timingLayout)
 
+
+        
         self.timingPeriod_label = QLabel("Period")
         self.timingPeriod_textedit = QLineEdit("")
         self.validator = QDoubleValidator()  # Range from 0.0 to 2.0 with 2 decimal places
@@ -27,8 +30,10 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()
 
+        self.checkbox_timingDuration = QCheckBox('Duration')
         self.timingDuration_label = QLabel("Duration")
         self.timingDuration_textedit = QLineEdit("")
+        self.timingDuration_textedit.setEnabled(False)
         self.validator = QDoubleValidator()
         self.timingDuration_textedit.setValidator(self.validator)
         self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
@@ -37,8 +42,10 @@ class TimingWidget(NapariHybridWidget):
         # self.timingDuration_textedit.editingFinished.connect(self.calcReps)
         self.timingDurationUnit = QtWidgets.QComboBox()
 
+        self.checkbox_tilingReps = QCheckBox('Reps')
         self.tilingReps_label = QLabel("Repetitions")
         self.tilingReps_textedit = QLineEdit("")
+        self.tilingReps_textedit.setEnabled(False)
         self.validator = QIntValidator(0,10000,self)
         self.tilingReps_textedit.setValidator(self.validator)
         self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings',"Repetitions", value))
@@ -52,15 +59,53 @@ class TimingWidget(NapariHybridWidget):
 
 
         row = 0
+        
         timingLayout.addWidget(self.timingPeriod_label, row, 0)
         timingLayout.addWidget(self.timingPeriod_textedit, row, 1)
         timingLayout.addWidget(self.timingUnit, row, 2)
-        timingLayout.addWidget(self.timingDuration_label, row+1, 0)
+        timingLayout.addWidget(self.checkbox_timingDuration, row+1, 0)
+        # timingLayout.addWidget(self.timingDuration_label, row+1, 1)
         timingLayout.addWidget(self.timingDuration_textedit, row+1, 1)
-        timingLayout.addWidget(self.timingDurationUnit, row+1, 2)
-        timingLayout.addWidget(self.tilingReps_label, row+2, 0)
+        timingLayout.addWidget(self.timingDurationUnit, row+1, 3)
+        timingLayout.addWidget(self.checkbox_tilingReps, row+2, 0)
+        # timingLayout.addWidget(self.tilingReps_label, row+2, 1)
         timingLayout.addWidget(self.tilingReps_textedit, row+2, 1)
 
+        self.repCheckState = False
+        self.durCheckState = False
+
+        self.checkbox_tilingReps.stateChanged.connect(self.toggleReps)
+        self.checkbox_tilingReps.stateChanged.connect(lambda value: self.sigTimingCheckChanged.emit('Timing Settings','Rep Checkbox', value))
+
+        self.checkbox_timingDuration.stateChanged.connect(self.toggleDuration)
+        self.checkbox_timingDuration.stateChanged.connect(lambda value: self.sigTimingCheckChanged.emit('Timing Settings','Duration Checkbox', value))
+     
+
+
+
+
+
+    def toggleDuration(self):
+        self.durCheckState = not self.durCheckState
+        if self.durCheckState:
+            self.timingDuration_textedit.setEnabled(True)
+            self.tilingReps_textedit.setEnabled(False)
+            self.checkbox_tilingReps.setEnabled(False)
+        else:
+            self.timingDuration_textedit.setEnabled(False)
+            self.tilingReps_textedit.setEnabled(False)
+            self.checkbox_tilingReps.setEnabled(True)
+
+    def toggleReps(self):
+        self.repCheckState = not self.repCheckState
+        if self.repCheckState:
+            self.tilingReps_textedit.setEnabled(True)
+            self.timingDuration_textedit.setEnabled(False)
+            self.checkbox_timingDuration.setEnabled(False)
+        else:
+            self.tilingReps_textedit.setEnabled(False)
+            self.timingDuration_textedit.setEnabled(False)
+            self.checkbox_timingDuration.setEnabled(True)
 
     
     def populateUnitsList(self):

@@ -283,15 +283,25 @@ class SIMController(ImConWidgetController):
                     self._widget.stop_button.setChecked(False)
                     return
                 
-                if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                
+                if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
                 loopEndTime = time.time()-timestart
                 print(loopEndTime)
             self.tilingRep += 1
             totalEndTime = time.time()-time_global_start
             print(f'total time: {totalEndTime}')
-            if not self.isTiling and durationInSec != 0 and durationInSec < totalEndTime:
-                self._commChannel.sigStopSim.emit()
+
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
+                    self._commChannel.sigStopSim.emit()
+                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2':
+                    remainder = divmod(len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')]),self.completeFrameSets)[1] #not stopping, change divmod, its dumb
+                    # print(remainder)
+                    if remainder == 0:
+                        self._commChannel.sigStopSim.emit()
+                    
+
             
             
 
@@ -773,7 +783,7 @@ class SIMController(ImConWidgetController):
         self.num_grid_x = int(self.sharedAttrs[('Tiling Settings','Steps - X')])
         self.num_grid_y = int(self.sharedAttrs[('Tiling Settings','Steps - Y')])
         self.overlap = float(self.sharedAttrs[('Tiling Settings','Overlap')])
-        self.reconFramesSkipped = int(self.sharedAttrs[('Timing Settings','Repetitions')])
+        # self.reconFramesSkipped = int(self.sharedAttrs[('Timing Settings','Repetitions')])
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name

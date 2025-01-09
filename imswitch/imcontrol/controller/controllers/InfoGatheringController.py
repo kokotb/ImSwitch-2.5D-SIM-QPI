@@ -32,7 +32,7 @@ class InfoGatheringController(ImConWidgetController):
                             ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
                             ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),
                             ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Duration'),
-                            ('Timing Settings', 'Duration Unit'),('Timing Settings', 'Repetitions'), ('Detector', '488 Cam', 'Model'), 
+                            ('Timing Settings', 'Duration Unit'),('Timing Settings', 'Repetitions'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Duration Checkbox'), ('Detector', '488 Cam', 'Model'), 
                             ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
                             ('Detector', '488 Cam', 'Param', 'Gamma'),('Detector', '488 Cam', 'Param', 'TriggerMode'),('Detector', '561 Cam', 'Model'),
                             ('Detector', '561 Cam', 'ROI'),('Detector', '561 Cam', 'Param', 'ExposureTime'),('Detector', '561 Cam', 'Param', 'Gain'),
