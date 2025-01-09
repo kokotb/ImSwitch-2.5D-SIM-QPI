@@ -34,6 +34,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
         self.timingDuration_textedit.setPlaceholderText('Blank or 0 is continuous')
         self.timingDuration_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration', value))
+        # self.timingDuration_textedit.editingFinished.connect(self.calcReps)
         self.timingDurationUnit = QtWidgets.QComboBox()
 
         self.tilingReps_label = QLabel("Repetitions")
@@ -41,6 +42,7 @@ class TimingWidget(NapariHybridWidget):
         self.validator = QIntValidator(0,10000,self)
         self.tilingReps_textedit.setValidator(self.validator)
         self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings',"Repetitions", value))
+        # self.tilingReps_textedit.editingFinished.connect(self.calcDuration)
 
 
 
@@ -59,22 +61,62 @@ class TimingWidget(NapariHybridWidget):
         timingLayout.addWidget(self.tilingReps_label, row+2, 0)
         timingLayout.addWidget(self.tilingReps_textedit, row+2, 1)
 
-    # def getPeriodInSec(self):
-    #     timingPeriodBox = self.timingPeriod_textedit.text()
-    #     timingUnit = self.timingUnit.currentText()
-    #     if timingUnit == 's':
-    #         timingSecs = timingPeriodBox
-    #     elif timingUnit == 'm':
-    #         timingSecs = timingPeriodBox * 60
-    #     elif timingUnit == 'h':
-    #         timingSecs = timingPeriodBox * 3600
-    #     return timingSecs
+
     
     def populateUnitsList(self):
         self.timingUnit.addItems(['s', 'm','h'])
         self.timingDurationUnit.addItems(['s', 'm','h'])
         self.timingDurationUnit.setCurrentIndex(1)
         
+    # def calcReps(self):
+    #     period = self.getPeriodInSec()
+    #     duration = self.getDurationInSec()
+    #     reps = duration / period
+    #     print(reps)
+
+    # def calcDuration(self):
+    #     period = self.getPeriodInSec()
+    #     reps = self.tilingReps_textedit.text()
+    #     duration = period * reps
+    #     print(duration)
+
+    # def getPeriodInSec(self):
+    #     try:
+    #         timingPeriodBox = float(self.timingPeriod_textedit.text())
+    #     except ValueError:
+    #         timingPeriodBox = 0
+    #     except KeyError:
+    #         timingPeriodBox = None
+    #     if timingPeriodBox is not None:
+    #         timingUnit = self.timingUnit.currentText()
+    #         if timingUnit == 's':
+    #             timingSecs = timingPeriodBox
+    #         elif timingUnit == 'm':
+    #             timingSecs = timingPeriodBox * 60
+    #         elif timingUnit == 'h':
+
+    #             timingSecs = timingPeriodBox * 3600
+    #         return timingSecs
+    #     return None
+    
+    # def getDurationInSec(self):
+    #     try:
+    #         timingDurationBox = float(self.timingDuration_textedit.text())
+    #     except ValueError:
+    #         timingDurationBox = 0
+    #     except KeyError:
+    #         timingDurationBox = None
+    #     if timingDurationBox is not None:
+    #         durationUnit = self.timingDurationUnit.currentText()
+    #         if durationUnit == 's':
+    #             durationsSecs = timingDurationBox
+    #         elif durationUnit == 'm':
+    #             durationsSecs = timingDurationBox * 60
+    #         elif durationUnit == 'h':
+
+    #             durationsSecs = timingDurationBox * 3600
+    #         return durationsSecs
+    #     return None
 
         
 
