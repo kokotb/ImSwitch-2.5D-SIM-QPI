@@ -112,6 +112,8 @@ class CommunicationChannel(SignalInterface):
 
     sigNewFrame = Signal()
 
+    # sigSaving = Signal()
+
     # useq-schema related signals
     sigSetXYPosition = Signal(float, float)
     sigSetZPosition = Signal(float)

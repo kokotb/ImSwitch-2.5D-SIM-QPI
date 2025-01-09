@@ -100,10 +100,10 @@ class InfoGatheringController(ImConWidgetController):
         with open("JSONTest.json", "w", encoding='utf-8') as outfile:
             outfile.write(jsonOutput)
 
-    def saveJSON(self, jsonOutput):
-        with open("JSONTest.json", "w", encoding='utf-8') as outfile:
-            outfile.write(jsonOutput)
-        self._logger.warning("Attributes saved.")
+    # def saveJSON(self, jsonOutput):
+    #     with open("JSONTest.json", "w", encoding='utf-8') as outfile:
+    #         outfile.write(jsonOutput)
+    #     self._logger.warning("Attributes saved.")
 
     def getHDF5Attributes(self):
         """ Returns a dictionary of HDF5 attributes representing this object.

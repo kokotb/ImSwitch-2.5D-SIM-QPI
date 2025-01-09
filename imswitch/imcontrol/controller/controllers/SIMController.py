@@ -730,7 +730,7 @@ class SIMController(ImConWidgetController):
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
         # Save log file
-        self.createLogFile()
+        # self.createLogFile()
 
 
 
@@ -865,18 +865,18 @@ class SIMController(ImConWidgetController):
         sim_parameters.saveDir = self._widget.path_edit.text()
         return sim_parameters
     
-    def createLogFile(self):
-        if self._widget.checkbox_logging.isChecked():
-            dir_save = os.path.join(self.exptFolderPath,"logging")
-            if not os.path.exists(dir_save):
-                os.makedirs(dir_save)
-            export_name = os.path.join(dir_save,"log_file.xlsx")
+    # def createLogFile(self):
+    #     if self._widget.checkbox_logging.isChecked():
+    #         dir_save = os.path.join(self.exptFolderPath,"logging")
+    #         if not os.path.exists(dir_save):
+    #             os.makedirs(dir_save)
+    #         export_name = os.path.join(dir_save,"log_file.xlsx")
             
-            # Loop time logging
-            t_loop = np.transpose(self.log_times_loop)
-            t_loop_column_names = ["frame","loop time [s]"]
-            df = pd.DataFrame(data=t_loop, index=t_loop_column_names).T
-            df.to_excel(export_name, sheet_name="Sheet1")
+    #         # Loop time logging
+    #         t_loop = np.transpose(self.log_times_loop)
+    #         t_loop_column_names = ["frame","loop time [s]"]
+    #         df = pd.DataFrame(data=t_loop, index=t_loop_column_names).T
+    #         df.to_excel(export_name, sheet_name="Sheet1")
     
     # def getReconstructionMethod(self):
     #     return self._widget.SIMReconstructorList.currentText()
