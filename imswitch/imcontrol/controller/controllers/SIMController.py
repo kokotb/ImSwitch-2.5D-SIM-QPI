@@ -212,7 +212,18 @@ class SIMController(ImConWidgetController):
         self.tilingRep = 1
         timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
+        totalEndTime = 0
         while self.active and poweredLasers != []:
+
+            # if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+            #     if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
+            #         self._commChannel.sigStopSim.emit()
+            #     if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2':
+            #         remainder = divmod(len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')]),self.completeFrameSets)[1] #not stopping, change divmod, its dumb
+            #         print(remainder)
+            #         if remainder == 0:
+            #             self.stopSIM
+
             # print(self.tilingRep)
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
@@ -288,19 +299,25 @@ class SIMController(ImConWidgetController):
                     self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
                 loopEndTime = time.time()-timestart
                 print(loopEndTime)
-            self.tilingRep += 1
-            totalEndTime = time.time()-time_global_start
-            print(f'total time: {totalEndTime}')
+                totalEndTime = time.time()-time_global_start
+                remainder = self.completeFrameSets % len(positions)
 
-            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
-                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-                    self._commChannel.sigStopSim.emit()
-                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2':
-                    remainder = divmod(len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')]),self.completeFrameSets)[1] #not stopping, change divmod, its dumb
-                    # print(remainder)
-                    if remainder == 0:
+                if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+                    if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
                         self._commChannel.sigStopSim.emit()
-                    
+                    if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
+                        self._commChannel.sigStopSim.emit()
+
+
+
+
+
+
+            self.tilingRep += 1
+            
+            print(f'total time: {totalEndTime}')
+            
+
 
             
             
@@ -740,8 +757,7 @@ class SIMController(ImConWidgetController):
         if self.isTiling:
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
-        # Save log file
-        # self.createLogFile()
+
 
 
 
