@@ -41,7 +41,7 @@ class InfoGatheringController(ImConWidgetController):
                             ('Detector', '640 Cam', 'Param', 'Gamma'),('Detector', '640 Cam', 'Param', 'TriggerMode'),('SIM Parameters', 'ReconWL1'),
                             ('SIM Parameters', 'ReconWL2'),('SIM Parameters', 'ReconWL3'),('SIM Parameters', 'NA'),('SIM Parameters', 'Pixelsize'),
                             ('SIM Parameters', 'Alpha'),('SIM Parameters', 'Beta'),('SIM Parameters', 'w'),('SIM Parameters', 'eta'),
-                            ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM SLM', 'SLM Running Order'),('User Dir Info', 'Working Directory'),
+                            ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM SLM', 'SLM Running Order'),('User Dir Info', 'Working Directory'), ('User Dir Info', 'Current Path'),
                             ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name')]
 
 
@@ -97,6 +97,9 @@ class InfoGatheringController(ImConWidgetController):
     
     def getAndSaveJSON(self):
         jsonOutput = self.getWantedAttrs()
+
+        
+        # savePath = os.path.join(self.exptFolderPath,'Snapshot')
         with open("JSONTest.json", "w", encoding='utf-8') as outfile:
             outfile.write(jsonOutput)
 
@@ -104,6 +107,7 @@ class InfoGatheringController(ImConWidgetController):
     #     with open("JSONTest.json", "w", encoding='utf-8') as outfile:
     #         outfile.write(jsonOutput)
     #     self._logger.warning("Attributes saved.")
+
 
     def getHDF5Attributes(self):
         """ Returns a dictionary of HDF5 attributes representing this object.

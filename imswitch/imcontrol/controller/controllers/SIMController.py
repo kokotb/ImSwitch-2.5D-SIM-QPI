@@ -215,6 +215,7 @@ class SIMController(ImConWidgetController):
         while self.active and poweredLasers != []:
             # print(self.tilingRep)
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
+            self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
             # Generate time_step
             if self.numAllFrames == 0:
                 exptTimeElapsed = 0.0
