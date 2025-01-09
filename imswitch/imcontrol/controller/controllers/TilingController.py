@@ -25,6 +25,7 @@ class TilingController(ImConWidgetController):
         self._commChannel.sigTileImage.connect(self.mainWFTileImageThread) # Connect signal to receive image and parameters from SIMController
         self._widget.checkbox_tilepreview.stateChanged.connect(lambda : self._commChannel.sigTilePreview.emit())
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunTilingButton)
         # self.numTiledImages = 0
 
 
@@ -56,6 +57,7 @@ class TilingController(ImConWidgetController):
 
         if (self.posIndex in self.posIndexSet):
             self._widget.tilingView.layers[self.posIndex].data[chanIndex,:,:] = im
+            # self._widget.tilingView.layers[self.posIndex].contrast_limits = self._commChannel.sharedAttrs[('Channel Contrast Limits', self.channel+' WF')] 
             self._widget.tilingView.layers[self.posIndex].refresh()
             link_layers(self._widget.tilingView.layers)
 
@@ -75,7 +77,7 @@ class TilingController(ImConWidgetController):
 
         # print(self.posIndex, chanIndex)
 
-        if (frameNum + 1) ==  (xSteps * ySteps)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')]): # Stop when current frame number get to the grid size.
+        if (frameNum + 1) ==  (xSteps * ySteps)*int(self.sharedAttrs[('Timing Settings','Repetitions')]): # Stop when current frame number get to the grid size.
             # link_layers(self._widget.tilingView.layers)
             self._commChannel.sigStopSim.emit()
 

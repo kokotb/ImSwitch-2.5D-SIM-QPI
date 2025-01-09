@@ -19,6 +19,7 @@ class TimingController(ImConWidgetController):
         self._widget.populateUnitsList()
         self._widget.timingPeriod_textedit.setText("0")
         self._widget.timingDuration_textedit.setText("0")
+        self._widget.tilingReps_textedit.setText("1")
 
 
     def valueChanged(self, attrCategory, parameterName, value):

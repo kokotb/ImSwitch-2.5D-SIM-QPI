@@ -282,7 +282,7 @@ class SIMController(ImConWidgetController):
                     self._widget.stop_button.setChecked(False)
                     return
                 
-                if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])): 
+                if self.isTiling and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
                 loopEndTime = time.time()-timestart
                 print(loopEndTime)
@@ -291,8 +291,16 @@ class SIMController(ImConWidgetController):
             print(f'total time: {totalEndTime}')
             if not self.isTiling and durationInSec != 0 and durationInSec < totalEndTime:
                 self._commChannel.sigStopSim.emit()
-
             
+            
+
+    def updateWFContLimits(self):
+        # contLimitsList = []
+        for i in range(len(self._widget.viewer.layers)):
+            if 'WF' in self._widget.viewer.layers[i].name:
+                # contLimitsList.append([self._widget.viewer.layers[i].name, self._widget.viewer.layers[i]._contrast_limits])
+                self.setSharedAttr('Channel Contrast Limits', self._widget.viewer.layers[i].name, self._widget.viewer.layers[i]._contrast_limits)
+        
 
     def mainSIMLoop(self, processor, errorLock):
         # saveOneTime = self.saveOneTime
@@ -360,6 +368,8 @@ class SIMController(ImConWidgetController):
                 processor.reconstructSIMStackBackgroundLBF()
 
             if self.tilePreview and self.isTiling:
+                # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+                #     self.updateWFContLimits()
                 self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
         
             if self.isRecordRaw:
@@ -736,6 +746,7 @@ class SIMController(ImConWidgetController):
         #     detector.stopAcquisition()
         self._commChannel.sigSIMAcqToggled.emit(True)
         self.active = True
+
         simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
@@ -761,7 +772,7 @@ class SIMController(ImConWidgetController):
         self.num_grid_x = int(self.sharedAttrs[('Tiling Settings','Steps - X')])
         self.num_grid_y = int(self.sharedAttrs[('Tiling Settings','Steps - Y')])
         self.overlap = float(self.sharedAttrs[('Tiling Settings','Overlap')])
-        self.reconFramesSkipped = int(self.sharedAttrs[('Tiling Settings','Tiling Repetitions')])
+        self.reconFramesSkipped = int(self.sharedAttrs[('Timing Settings','Repetitions')])
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
                              QCheckBox, QLabel, QLineEdit, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
 import napari
 
 class TimingWidget(NapariHybridWidget):
@@ -35,9 +35,18 @@ class TimingWidget(NapariHybridWidget):
         self.timingDuration_textedit.setPlaceholderText('Blank or 0 is continuous')
         self.timingDuration_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration', value))
         self.timingDurationUnit = QtWidgets.QComboBox()
+
+        self.tilingReps_label = QLabel("Repetitions")
+        self.tilingReps_textedit = QLineEdit("")
+        self.validator = QIntValidator(0,10000,self)
+        self.tilingReps_textedit.setValidator(self.validator)
+        self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings',"Repetitions", value))
+
+
+
         
         self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Unit', value))
-        self.timingUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration Unit', value))
+        self.timingDurationUnit.currentTextChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration Unit', value))
 
 
         row = 0
@@ -47,6 +56,8 @@ class TimingWidget(NapariHybridWidget):
         timingLayout.addWidget(self.timingDuration_label, row+1, 0)
         timingLayout.addWidget(self.timingDuration_textedit, row+1, 1)
         timingLayout.addWidget(self.timingDurationUnit, row+1, 2)
+        timingLayout.addWidget(self.tilingReps_label, row+2, 0)
+        timingLayout.addWidget(self.tilingReps_textedit, row+2, 1)
 
     # def getPeriodInSec(self):
     #     timingPeriodBox = self.timingPeriod_textedit.text()

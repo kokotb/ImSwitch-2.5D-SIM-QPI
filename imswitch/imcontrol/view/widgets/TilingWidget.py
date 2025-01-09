@@ -49,11 +49,11 @@ class TilingWidget(NapariHybridWidget):
         self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
 
-        self.tilingReps_label = QLabel("Tiling Repetitions")
-        self.tilingReps_textedit = QLineEdit("")
-        self.validator = QIntValidator(0,10000,self)
-        self.tilingReps_textedit.setValidator(self.validator)
-        self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
+        # self.tilingReps_label = QLabel("Tiling Repetitions")
+        # self.tilingReps_textedit = QLineEdit("")
+        # self.validator = QIntValidator(0,10000,self)
+        # self.tilingReps_textedit.setValidator(self.validator)
+        # self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
 
         self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
@@ -71,10 +71,12 @@ class TilingWidget(NapariHybridWidget):
         gridScanLayout.addWidget(self.numGridY_textedit, row+1, 1)
         gridScanLayout.addWidget(self.overlap_label, row+2, 0)
         gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
-        gridScanLayout.addWidget(self.tilingReps_label, row+3, 0)
-        gridScanLayout.addWidget(self.tilingReps_textedit, row+3, 1)
-        gridScanLayout.addWidget(self.checkbox_tiling, row+4, 0)
-        gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 1)
+        # gridScanLayout.addWidget(self.tilingReps_label, row+3, 0)
+        # gridScanLayout.addWidget(self.tilingReps_textedit, row+3, 1)
+        # gridScanLayout.addWidget(self.checkbox_tiling, row+4, 0)
+        # gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 1)
+        gridScanLayout.addWidget(self.checkbox_tiling, row+3, 0)
+        gridScanLayout.addWidget(self.checkbox_tilepreview, row+3, 1)
 
         
     def toggleRunTilingActive(self):
@@ -83,6 +85,10 @@ class TilingWidget(NapariHybridWidget):
              self.checkbox_tilepreview.setEnabled(False)
         else: self.checkbox_tilepreview.setEnabled(True)
 
+    def toggleRunTilingButton(self, state):
+        state = not state
+        self.checkbox_tiling.setEnabled(state)
+
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")
@@ -90,7 +96,7 @@ class TilingWidget(NapariHybridWidget):
         # self.validator = QDoubleValidator(0.0, 1.0, 1)
         # self.validator.setRange(0,1,1)
         # self.overlap_textedit.setValidator(self.validator)
-        self.tilingReps_textedit.setText("1")
+        # self.tilingReps_textedit.setText("1")
         self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", '0') # Checkboxes initialize a little different from QLineEdit. This sends a signal to register value with sharedAttrs
 
     def createTilingWindow(self):

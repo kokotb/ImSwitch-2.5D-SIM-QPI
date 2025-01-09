@@ -478,11 +478,11 @@ class SIMWidget(NapariHybridWidget):
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
-        self.beta_textedit.setInputMask("0 .00;0;_")
+        self.beta_textedit.setInputMask("0.00;0;_")
         
         self.w_label = QLabel("")
         self.w_textedit = QLineEdit("")
-        self.w_textedit.setInputMask("0 .00;0;_")
+        self.w_textedit.setInputMask("0.00;0;_")
 
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
