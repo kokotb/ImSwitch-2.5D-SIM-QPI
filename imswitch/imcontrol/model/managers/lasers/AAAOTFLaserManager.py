@@ -32,7 +32,7 @@ class AAAOTFLaserManager(LaserManager):
             value = 0
         cmd = 'L' + str(self._channel) + 'O' + str(value)
         ans = self._rs232manager.query(cmd)
-        print(ans)
+        # print(ans)
 
     def setValue(self, percentPower):
         """Handles output power.
@@ -46,14 +46,14 @@ class AAAOTFLaserManager(LaserManager):
         ans = self._rs232manager.query(cmd)
         print(ans)
 
-    # def closeingEvent(self):
+    # def closingEvent(self):
 
 
     def externalControl(self):
         """Switch the channel to external control""" 
         cmd = 'L' + str(self._channel) + 'I1' #1=external, 0=internal
         ans = self._rs232manager.query(cmd)
-        print(ans)
+        # print(ans)
 
     def powerPercentTodBm(self,maxdBm,power):
         try:

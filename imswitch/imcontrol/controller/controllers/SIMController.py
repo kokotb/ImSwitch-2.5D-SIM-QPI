@@ -318,10 +318,6 @@ class SIMController(ImConWidgetController):
             print(f'total time: {totalEndTime}')
             
 
-
-            
-            
-
     def updateWFContLimits(self):
         # contLimitsList = []
         for i in range(len(self._widget.viewer.layers)):
