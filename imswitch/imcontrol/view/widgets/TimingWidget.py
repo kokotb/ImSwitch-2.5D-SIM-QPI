@@ -83,7 +83,10 @@ class TimingWidget(NapariHybridWidget):
 
 
 
-
+    def toggleCheckboxes(self, state):
+        state = not state
+        self.checkbox_tilingReps.setEnabled(state)
+        self.checkbox_timingDuration.setEnabled(state)
 
     def toggleDuration(self):
         self.durCheckState = not self.durCheckState

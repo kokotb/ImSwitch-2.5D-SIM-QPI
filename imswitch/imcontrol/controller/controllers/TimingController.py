@@ -23,6 +23,7 @@ class TimingController(ImConWidgetController):
         self._widget.tilingReps_textedit.setText("1")
         self._widget.sigTimingCheckChanged.emit('Timing Settings','Rep Checkbox', 0)
         self._widget.sigTimingCheckChanged.emit('Timing Settings','Duration Checkbox', 0)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
 
 
     def valueChanged(self, attrCategory, parameterName, value):
