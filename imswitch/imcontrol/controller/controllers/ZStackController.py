@@ -13,9 +13,25 @@ class ZStackController(ImConWidgetController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        self.sharedAttrs = self._commChannel.sharedAttrs._data
+        r'' = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
         self._widget.initZStackInfo()   
+
+    def calcZStepArray(self):
+        stepDist = self._widget.zStepDistance_textedit.text()
+        totalDist = self._widget.totalZ_textedit.text()
+        startSpot = self._widget.zStackStart.currentText()
+        currentZ = self.sharedAttrs['Positioner','Z','Z','Position']
+
+        # if startSpot == 'Center':
+
+        # elif startSpot == 'Bottom':
+
+        # elif startSpot == 'Top':
+
+
+
+
 
 
     def valueChanged(self, attrCategory, parameterName, value):

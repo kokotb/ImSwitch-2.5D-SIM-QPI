@@ -24,7 +24,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit = QLineEdit("")
         self.validator = QDoubleValidator()
         self.zStepDistance_textedit.setValidator(self.validator)
-        self.zStepDistance_textedit.setToolTip('Number of images in the series')  
+        self.zStepDistance_textedit.setToolTip('Size between steps in microns.')  
         # self.zSteps_textedit.setPlaceholderText('Blank or 0 is max frame rate')
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Distance", value))
 
