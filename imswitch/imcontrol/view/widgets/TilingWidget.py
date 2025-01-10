@@ -88,6 +88,10 @@ class TilingWidget(NapariHybridWidget):
     def toggleRunTilingButton(self, state):
         state = not state
         self.checkbox_tiling.setEnabled(state)
+        if state == False and self.checkbox_tiling.checkState()==2:
+            self.checkbox_tilepreview.setEnabled(False)
+        if state == True and self.checkbox_tiling.checkState()==2:
+            self.checkbox_tilepreview.setEnabled(True)
 
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
