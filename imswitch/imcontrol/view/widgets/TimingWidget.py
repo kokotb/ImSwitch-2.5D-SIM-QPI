@@ -31,7 +31,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingUnit = QtWidgets.QComboBox()
 
         self.checkbox_timingDuration = QCheckBox('Duration')
-        self.timingDuration_label = QLabel("Duration")
+        # self.timingDuration_label = QLabel("Duration")
         self.timingDuration_textedit = QLineEdit("")
         self.timingDuration_textedit.setEnabled(False)
         self.validator = QDoubleValidator()

@@ -14,7 +14,8 @@ class ZStackController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
-
+        self._widget.sigZStackInfoChanged.connect(self.valueChanged)
+        self._widget.initZStackInfo()   
 
 
     def valueChanged(self, attrCategory, parameterName, value):
