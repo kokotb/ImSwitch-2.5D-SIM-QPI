@@ -53,7 +53,7 @@ class ZStackController(ImConWidgetController):
 
         if centerCheckbox == 2:
 
-            startZ = currentZ - zScanSign * totalDist / 2
+            startZ = currentZ - zScanSign * float(self._widget.zOffset_textedit.text())
             zScanList.append(round(startZ,1))
 
             for i in range(floorSteps):

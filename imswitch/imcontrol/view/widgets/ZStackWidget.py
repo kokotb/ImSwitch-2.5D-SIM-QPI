@@ -99,7 +99,11 @@ class ZStackWidget(NapariHybridWidget):
     #     self.zOffset_textedit.setText(str(totalDist))
 
     def updateStartOffset(self, totalDist):
-        self.zOffset_textedit.setText(str(totalDist/2))
+        if self.checkbox_zStackCenter.checkState() == 2:
+            self.zOffset_textedit.setText(str(totalDist/2))
+
+        elif self.checkbox_zStackCenter.checkState() == 0:
+            self.zOffset_textedit.setText(str(0))
     
 
     def floorTotalZ(self):
