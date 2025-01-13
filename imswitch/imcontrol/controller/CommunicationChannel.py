@@ -112,6 +112,10 @@ class CommunicationChannel(SignalInterface):
 
     sigNewFrame = Signal()
 
+    sigZScanList = Signal(list)
+
+    # sigCalcZStack = Signal()
+
     # sigSaving = Signal()
 
     # useq-schema related signals

@@ -35,6 +35,7 @@ class MasterController:
             'rs232sManager': self.rs232sManager
         }
         self.tilingManager = TilingManager()
+
         self.detectorsManager = DetectorsManager(self.__setupInfo.detectors, updatePeriod=100,
                                                  **lowLevelManagers)
         self.lasersManager = LasersManager(self.__setupInfo.lasers,

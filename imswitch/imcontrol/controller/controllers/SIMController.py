@@ -102,6 +102,7 @@ class SIMController(ImConWidgetController):
         # Communication channels signls (signals sent elsewhere in the program)
         # self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)
+        self._commChannel.sigZScanList.connect(self.zScanList)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
@@ -140,7 +141,11 @@ class SIMController(ImConWidgetController):
         self.tileOrigin = positions[-1]
         if self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Checkbox')] == '0':
             positions = [self.tileOrigin]
-            
+        
+        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
+            zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
+        elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+            zList = self.zList
 
 
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
@@ -500,6 +505,10 @@ class SIMController(ImConWidgetController):
         wfFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_WF.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
+
+    def zScanList(self, zScanList):
+        self.zList = zScanList
+
 
     def recordWFFunc(self,j,im, processor, isTiling, tilingRep):
         if isTiling:

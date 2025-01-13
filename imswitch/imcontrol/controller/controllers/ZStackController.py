@@ -5,6 +5,7 @@ from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcommon.framework import Signal
 import threading
 import ctypes
+import math
 
 class ZStackController(ImConWidgetController):
 
@@ -15,19 +16,63 @@ class ZStackController(ImConWidgetController):
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
-        self._widget.initZStackInfo()   
+        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
+        self._widget.initZStackInfo()
+        self._widget.runZStackToggle.connect(self.runZStackToggle)
+
+    def runZStackToggle(self, state):
+        if state == 0:
+            self._widget.zStepDistance_textedit.setEnabled(False)
+            self._widget.totalZ_textedit.setEnabled(False)
+            self._widget.checkbox_zStackCenter.setEnabled(False)
+            self._widget.zStackScanDir.setEnabled(False)
+
+        if state == 2:
+            self._widget.zStepDistance_textedit.setEnabled(True)
+            self._widget.totalZ_textedit.setEnabled(True)
+            self._widget.checkbox_zStackCenter.setEnabled(True)
+            self._widget.zStackScanDir.setEnabled(True)
+
+
 
     def calcZStepArray(self):
-        stepDist = self._widget.zStepDistance_textedit.text()
-        totalDist = self._widget.totalZ_textedit.text()
-        startSpot = self._widget.zStackStart.currentText()
-        currentZ = self.sharedAttrs['Positioner','Z','Z','Position']
 
-        # if startSpot == 'Center':
+        stepDist = float(self._widget.zStepDistance_textedit.text())
+        totalDist = float(self._widget.totalZ_textedit.text())
+        zScanDir = self._widget.zStackScanDir.currentText()
+        currentZ = self.sharedAttrs['Positioner','Z','Z','Position'] #stored as float in sharedattrs
+        centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
 
-        # elif startSpot == 'Bottom':
+        if zScanDir == 'Up':
+            zScanSign = -1
+        elif zScanDir == 'Down':
+            zScanSign = 1
 
-        # elif startSpot == 'Top':
+        floorSteps = math.floor(totalDist / stepDist)
+        zScanList = []
+
+        if centerCheckbox == 2:
+
+            startZ = currentZ - zScanSign * totalDist / 2
+            zScanList.append(round(startZ,1))
+
+            for i in range(floorSteps):
+                zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
+
+        else:
+            zScanList.append(round(currentZ,1))
+
+            for i in range(floorSteps):
+                zScanList.append(round(currentZ+zScanSign*((i+1)*stepDist),1))
+
+
+
+
+        self._commChannel.sigZScanList.emit(zScanList)
+
+        return zScanList
+
+
 
 
 

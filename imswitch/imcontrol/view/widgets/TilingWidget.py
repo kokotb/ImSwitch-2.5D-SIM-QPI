@@ -27,6 +27,7 @@ class TilingWidget(NapariHybridWidget):
         self.numGridX_textedit = QLineEdit("")
         self.validator = QIntValidator(0,1000,self)
         self.numGridX_textedit.setValidator(self.validator)
+        self.numGridX_textedit.setFixedWidth(100)
         self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
 
         self.numGridY_label = QLabel("Steps - Y")
