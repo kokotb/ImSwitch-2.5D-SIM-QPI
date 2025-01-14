@@ -120,6 +120,7 @@ class CommunicationChannel(SignalInterface):
 
     # useq-schema related signals
     # sigSetXYPosition = Signal(float, float)
+    sigUpdateXYPosition = Signal(str,str)
     sigUpdateZPosition = Signal(str,str)
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)

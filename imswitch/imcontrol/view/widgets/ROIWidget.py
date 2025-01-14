@@ -12,22 +12,86 @@ from PyQt5.QtCore import Qt
 class ROIWidget(NapariHybridWidget):
 
     sigROIInfoChanged = QtCore.Signal(str, str, str)
+    sigAddROI = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
 
-        overallLayout = QtWidgets.QVBoxLayout()
+        listLayout = QtWidgets.QVBoxLayout()
 
+        self.ROIList = QListWidget()
+        # QListWidgetItem("ROI 1", self.ROIList)
+        # QListWidgetItem("ROI 2", self.ROIList)
+        # QListWidgetItem("ROI 3", self.ROIList)
+        listLayout.addWidget(self.ROIList)
+
+
+        buttonLayout = QtWidgets.QVBoxLayout()
+
+        self.addButton = QPushButton("Add")
+        buttonLayout.addWidget(self.addButton)
+        self.delButton = QPushButton("Delete")
+        buttonLayout.addWidget(self.delButton)
+        self.upButton = QPushButton("Move Up")
+        buttonLayout.addWidget(self.upButton)
+        self.downButton = QPushButton("Move Down")
+        buttonLayout.addWidget(self.downButton)
+        self.gotoButton = QPushButton("Go To")
+        buttonLayout.addWidget(self.gotoButton)
+
+        overallLayout = QtWidgets.QHBoxLayout()
         self.setLayout(overallLayout)
 
-        ROIList = QListWidget()
-        QListWidgetItem("ROI 1", ROIList)
-        QListWidgetItem("ROI 2", ROIList)
-        QListWidgetItem("ROI 3", ROIList)
-        overallLayout.addWidget(ROIList)
+        overallLayout.addLayout(listLayout)
+        overallLayout.addLayout(buttonLayout)
 
-        # self.saveSettings = QPushButton("Test")
-        # overallLayout.addWidget(self.saveSettings)
+
+        self.delButton.clicked.connect(self.delItem)
+        self.upButton.clicked.connect(self.moveUp)
+        self.downButton.clicked.connect(self.moveDown)
+        # self.gotoButton.clicked.connect(self.functiontogetintowidget)
+        self.addButton.clicked.connect(self.sigAddROI.emit)
+
+
+    # def functiontogetintowidget(self):
+    #     print('made it')
+
+    def addROI(self, name):
+        self.ROIList.addItem(name)
+
+
+    def getCurrentIndex(self):
+        currentIndex = self.ROIList.currentRow()
+        return currentIndex
+    
+    def delItem(self):
+        currentIndex = self.ROIList.currentRow()
+        self.ROIList.takeItem(currentIndex)
+
+    def moveUp(self):
+        currentIndex = self.ROIList.currentRow()
+        newIndex = currentIndex - 1
+        currentName = self.ROIList.currentItem().text()
+        if currentIndex != 0:
+            self.ROIList.takeItem(currentIndex)
+            self.ROIList.insertItem(newIndex, currentName)
+            self.ROIList.setCurrentRow(newIndex)
+
+    def moveDown(self):
+        currentIndex = self.ROIList.currentRow()
+        newIndex = currentIndex + 1
+        currentName = self.ROIList.currentItem().text()
+        count = self.ROIList.count()
+        if (currentIndex + 1) < count:
+            self.ROIList.takeItem(currentIndex)
+            self.ROIList.insertItem(newIndex, currentName)
+            self.ROIList.setCurrentRow(newIndex)
+
+    def getCurrentName(self):
+        currentName = self.ROIList.currentItem().text()
+        return currentName
+
+    
         
 
 
