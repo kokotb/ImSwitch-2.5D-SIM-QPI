@@ -28,7 +28,6 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit.setValidator(self.validator)
         self.zStepDistance_textedit.setToolTip('Size between steps in microns.') 
         self.zStepDistance_textedit.setEnabled(False)
-        # self.zSteps_textedit.setPlaceholderText('Blank or 0 is max frame rate')
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
         self.zStepDistance_textedit.textChanged.connect(self.floorTotalZ)
 
@@ -129,6 +128,11 @@ class ZStackWidget(NapariHybridWidget):
         self.updateStartOffset(newTotalDist)
         
         return newTotalDist
+    
+
+    def toggleRunZStackEnabled(self, state):
+        state = not state
+        self.checkbox_zStack.setEnabled(state)
                 
                 
 

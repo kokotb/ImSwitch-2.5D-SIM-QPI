@@ -260,55 +260,77 @@ class SIMController(ImConWidgetController):
 
 
             while j < len(positions):
-                
-                # for processor in self.processors:
-                    # processor.setRecordingMode(self.isRecordRecon)
-                    # processor.setReconstructionMode(self.isReconstruction)
-                    # processor.setWavelength(processor.handle, self.sim_parameters)
                 self.j = j
                 self.nextPos = positions[self.j]
                 self.currentPos = positions[self.j-1]
-                # timestartdwell = time.time()
-                timestart = time.time()
                 self.positionerXY.checkBusyLoop()
                 if j == 0 and self.completeFrameSets != 0 and self.isTiling:
                     time.sleep(.5) #TODO: Change to calibrate by distance needed to move
                 else:
                     time.sleep(.05) #can probablz reduct slightly
+                f = 0
+                while f < len(zList):
+                # for f in range(len(zList)):
+                    if self.zScanActive:
+                        self.positioner.setPosition(zList[f], 'Z')
+                        self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                    # for processor in self.processors:
+                        # processor.setRecordingMode(self.isRecordRecon)
+                        # processor.setReconstructionMode(self.isReconstruction)
+                        # processor.setWavelength(processor.handle, self.sim_parameters)
 
-                # print(time.time()-timestartdwell)
-                                
-                # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
+                    # timestartdwell = time.time()
+                    timestart = time.time()
 
-                self._master.arduinoManager.trigOneSequenceWriteOnly()
-                
 
-                errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                self.errorQ = [] #List to be populated with error results from within processor threads
-                self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
-                with ThreadPoolExecutor(max_workers=4) as executor: #
-                    if self.isTiling:
-                        executor.submit(self.tilingMoveThread)
-                    for processor in self.activeProcessors:
-                            executor.submit(self.mainSIMLoop, processor, errorLock)
+                    # print(time.time()-timestartdwell)
+                                    
+                    # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
 
-                self.numAllFrames += 1 # increment even if an acquisition was broken.
-                if True not in self.errorQ:
-                    self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                    j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                    self._master.arduinoManager.trigOneSequenceWriteOnly()
+                    
 
-                self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
-                    self._widget.stop_button.setChecked(False)
-                    return
+                    errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
+                    self.errorQ = [] #List to be populated with error results from within processor threads
+                    self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
+
+                    with ThreadPoolExecutor(max_workers=4) as executor: #
+                        if self.isTiling:
+                            executor.submit(self.tilingMoveThread)
+                        for processor in self.activeProcessors:
+                                executor.submit(self.mainSIMLoop, processor, errorLock)
+
+                    if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                        self._widget.stop_button.setChecked(False)
+                        return
+
+                    self.numAllFrames += 1
+                    if True not in self.errorQ:
+                        self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                        f += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                    loopEndTime = time.time()-timestart
+                    print(loopEndTime)
+                    self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
+                    self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                    
+
+                 # increment even if an acquisition was broken.
+                # if True not in self.errorQ:
+                #     self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                #     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+
+                # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+
+                # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
+                # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+
                 
                 
                 if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                     self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
-                loopEndTime = time.time()-timestart
-                print(loopEndTime)
+
                 totalEndTime = time.time()-time_global_start
                 remainder = self.completeFrameSets % len(positions)
 
@@ -511,8 +533,9 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
-    def zScanList(self, zScanList):
+    def zScanList(self, zScanList, zOrigin):
         self.zList = zScanList
+        self.zOrigin = zOrigin
 
 
     def recordWFFunc(self,j,im, processor, isTiling, tilingRep):
@@ -767,6 +790,10 @@ class SIMController(ImConWidgetController):
         if self.isTiling:
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
+        if self.zScanActive:
+            self.positioner.setPosition(self.zOrigin, 'Z')
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+        
 
 
 

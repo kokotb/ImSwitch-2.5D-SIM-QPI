@@ -36,6 +36,7 @@ class PositionerController(ImConWidgetController):
   
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
+        self._commChannel.sigUpdateZPosition.connect(self.updatePosition)
         # self._commChannel.sigSetSpeed.connect(lambda absPos: self.setAbsPosGUI(speed)) #commented when changing speed function to AbsPos
 
         # Connect PositionerWidget signals

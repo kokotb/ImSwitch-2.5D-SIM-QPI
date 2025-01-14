@@ -112,15 +112,15 @@ class CommunicationChannel(SignalInterface):
 
     sigNewFrame = Signal()
 
-    sigZScanList = Signal(list)
+    sigZScanList = Signal(list, float)
 
     # sigCalcZStack = Signal()
 
     # sigSaving = Signal()
 
     # useq-schema related signals
-    sigSetXYPosition = Signal(float, float)
-    sigSetZPosition = Signal(float)
+    # sigSetXYPosition = Signal(float, float)
+    sigUpdateZPosition = Signal(str,str)
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
 

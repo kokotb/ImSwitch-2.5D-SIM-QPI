@@ -19,6 +19,7 @@ class ZStackController(ImConWidgetController):
         self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.initZStackInfo()
         self._widget.runZStackToggle.connect(self.runZStackToggle)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
 
     def runZStackToggle(self, state):
         if state == 0:
@@ -32,6 +33,8 @@ class ZStackController(ImConWidgetController):
             self._widget.totalZ_textedit.setEnabled(True)
             self._widget.checkbox_zStackCenter.setEnabled(True)
             self._widget.zStackScanDir.setEnabled(True)
+
+
 
 
 
@@ -68,7 +71,7 @@ class ZStackController(ImConWidgetController):
 
 
 
-        self._commChannel.sigZScanList.emit(zScanList)
+        self._commChannel.sigZScanList.emit(zScanList, currentZ)
 
         return zScanList
 
