@@ -114,12 +114,16 @@ class ImConMainView(QtWidgets.QMainWindow):
             self.docks['Settings'].container().setStretch(3, 5)
         if 'SIM' in self.docks:
             self.docks['SIM'].setStretch(1, 5)
+        if 'Laser' in self.docks:
+            self.docks['Laser'].setStretch(1, 0.6)
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
             self.docks['Image'].setStretch(10, 1)
         if 'ZStack' in self.docks:
             self.docks['ZStack'].setStretch(1, 0.5)
+        if 'Positioner' in self.docks:
+            self.docks['Positioner'].setStretch(1, 0.6)
         if 'Timing' in self.docks:
             self.docks['Timing'].setStretch(1, 0.5)
         if 'InfoGathering' in self.docks:

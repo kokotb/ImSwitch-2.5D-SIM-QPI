@@ -34,6 +34,7 @@ class TilingWidget(NapariHybridWidget):
         self.numGridY_textedit = QLineEdit("")
         self.validator = QIntValidator(0,1000,self)
         self.numGridY_textedit.setValidator(self.validator)
+        self.numGridY_textedit.setFixedWidth(100)
         self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
 
         # self.overlap_label = QLabel("Overlap")
@@ -47,6 +48,7 @@ class TilingWidget(NapariHybridWidget):
         self.overlap_textedit = QLineEdit("")
         # self.validator = QIntValidator(0,100,self)
         # self.overlap_textedit.setValidator(self.validator)
+        self.overlap_textedit.setFixedWidth(100)
         self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
 

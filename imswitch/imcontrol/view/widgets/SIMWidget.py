@@ -325,8 +325,10 @@ class SIMWidget(NapariHybridWidget):
     
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
+
         self.stop_button = QPushButton("Stop")
         self.stop_button.setCheckable(True)
+        self.stop_button.setEnabled(False)
         self.calibrateButton = QPushButton("Calibrate")
         self.saveOneSetButton = QPushButton("Snapshot")
         button_layout = QtWidgets.QGridLayout()

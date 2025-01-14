@@ -245,7 +245,7 @@ class SIMController(ImConWidgetController):
             self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
             # Scan over all positions generated for grid
             j = 0 # Position iterator
-            
+
             if self.completeFrameSets != 0 and timingPeriodInSec is not None:
                 repTimer = time.time() - repTimerStart
                 while repTimer < timingPeriodInSec:
@@ -779,6 +779,8 @@ class SIMController(ImConWidgetController):
 
     def stopSIM(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
+        self._widget.stop_button.setEnabled(False)
+        self._widget.start_button.setEnabled(True)
         self.active = False
         self.simThread.join()
         for laser in self.lasers:
@@ -809,6 +811,8 @@ class SIMController(ImConWidgetController):
         # for detector in self.detectors:
         #     detector.stopAcquisition()
         self._commChannel.sigSIMAcqToggled.emit(True)
+        self._widget.stop_button.setEnabled(True)
+        self._widget.start_button.setEnabled(False)
         self.active = True
 
         simParametersFromGUI = self.getSIMParametersFromGUI()
