@@ -123,11 +123,13 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'ZStack' in self.docks:
             self.docks['ZStack'].setStretch(1, 0.5)
         if 'Positioner' in self.docks:
-            self.docks['Positioner'].setStretch(1, 0.6)
+            self.docks['Positioner'].setStretch(1, 0.7)
         if 'Timing' in self.docks:
             self.docks['Timing'].setStretch(1, 0.5)
+        if 'Tiling' in self.docks:
+            self.docks['Tiling'].setStretch(1, 0.5)
         if 'InfoGathering' in self.docks:
-            self.docks['InfoGathering'].setStretch(1, 0.5)
+            self.docks['InfoGathering'].setStretch(1, 3)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 

@@ -38,21 +38,25 @@ class PositionerWidget(Widget):
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['Position' + parNameSuffix].setFixedWidth(100)
         self.wholeZLayout.addWidget(self.pars['Label' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['Position' + parNameSuffix])
 
 
         self.gridZCoarseFine = QtWidgets.QGridLayout()
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('+')
+
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('-')
         self.pars['UpButtonCoarse' + parNameSuffix] = guitools.BetterPushButton('+')
         self.pars['DownButtonCoarse' + parNameSuffix] = guitools.BetterPushButton('-')
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(str(initialValueFine))
+        self.pars['StepEdit' + parNameSuffix].setFixedWidth(50)
         self.pars['StepEdit' + parNameSuffix].setToolTip('Hold Ctrl while using scroll wheel to focus in fine steps. Mouse must be anywhere in Positioner box')  
         self.validator = QDoubleValidator()
         self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['StepEditCoarse' + parNameSuffix] = QtWidgets.QLineEdit(str(initialValueCoarse))
+        self.pars['StepEditCoarse' + parNameSuffix].setFixedWidth(50)
         self.pars['StepEditCoarse' + parNameSuffix].setToolTip('Hold Shift while using scroll wheel to focus in coarse steps. Mouse must be anywhere in Positioner box')  
         self.validator = QIntValidator()
         self.pars['StepEditCoarse' + parNameSuffix].setValidator(self.validator)
@@ -74,6 +78,7 @@ class PositionerWidget(Widget):
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
         self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
         self.validator = QDoubleValidator()
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
@@ -81,7 +86,7 @@ class PositionerWidget(Widget):
         self.wholeZLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
-        self.wholeZLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+        # self.wholeZLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
 
         self.posLayout.addLayout(self.wholeZLayout)
 
@@ -124,10 +129,13 @@ class PositionerWidget(Widget):
         self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix].setFixedWidth(120)
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('→')
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('←')
+
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
+        self.pars['StepEdit' + parNameSuffix].setMaximumWidth(50)
         self.validator = QDoubleValidator()
         self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
@@ -135,6 +143,7 @@ class PositionerWidget(Widget):
         self.pars['AbsPos' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
         self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
         self.validator = QDoubleValidator()
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
@@ -151,7 +160,7 @@ class PositionerWidget(Widget):
         self.wholeXLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeXLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
         self.wholeXLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
-        self.wholeXLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+        # self.wholeXLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
 
         self.posLayout.addLayout(self.wholeXLayout)
 
@@ -183,10 +192,13 @@ class PositionerWidget(Widget):
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.pars['Position' + parNameSuffix].setFixedWidth(120)
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('↑')
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('↓')
+
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
         self.validator = QDoubleValidator()
+        self.pars['StepEdit' + parNameSuffix].setMaximumWidth(50)
         self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Pos:</strong>')
@@ -194,6 +206,7 @@ class PositionerWidget(Widget):
         self.pars['ButtonAbsPosEnter' + parNameSuffix] = guitools.BetterPushButton('Enter')
 
         self.pars['AbsPosEdit' + parNameSuffix] = QtWidgets.QLineEdit('0.0')
+        self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
         self.validator = QDoubleValidator()
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         # validator = QDoubleValidator()
@@ -215,7 +228,7 @@ class PositionerWidget(Widget):
         self.wholeYLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeYLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
         self.wholeYLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
-        self.wholeYLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+        # self.wholeYLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
 
 
 

@@ -452,11 +452,13 @@ class SIMWidget(NapariHybridWidget):
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
+        # self.ReconWL1_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL1_textedit.setValidator(self.validator)
 
         self.ReconWL2_label = QLabel("")
         self.ReconWL2_textedit = QLineEdit("")
+        # self.ReconWL2_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL2_textedit.setValidator(self.validator)
 
@@ -469,14 +471,12 @@ class SIMWidget(NapariHybridWidget):
         self.NA_textedit = QLineEdit("")
         self.NA_textedit.setInputMask("B.9;0;_")
 
-
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
 
         self.alpha_label = QLabel("")
         self.alpha_textedit = QLineEdit("")
         self.alpha_textedit.setInputMask("0.0;0;_")
-
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")

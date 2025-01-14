@@ -20,43 +20,32 @@ class TilingWidget(NapariHybridWidget):
         self.tilingViewBool = False
         self.runTilingActiveBool = False
         # Grid scan settings bn
-        gridScanLayout = QtWidgets.QGridLayout()
-        self.setLayout(gridScanLayout)
+        overallLayout = QtWidgets.QVBoxLayout()
+        # gridScanLayout = QtWidgets.QGridLayout()
+        self.setLayout(overallLayout)
 
         self.numGridX_label = QLabel("Steps - X")
+        # self.numGridX_label.setFixedWidth(100)
         self.numGridX_textedit = QLineEdit("")
         self.validator = QIntValidator(0,1000,self)
         self.numGridX_textedit.setValidator(self.validator)
-        self.numGridX_textedit.setFixedWidth(100)
+        self.numGridX_textedit.setFixedWidth(50)
         self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
 
         self.numGridY_label = QLabel("Steps - Y")
         self.numGridY_textedit = QLineEdit("")
         self.validator = QIntValidator(0,1000,self)
         self.numGridY_textedit.setValidator(self.validator)
-        self.numGridY_textedit.setFixedWidth(100)
+        self.numGridY_textedit.setFixedWidth(50)
         self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
-
-        # self.overlap_label = QLabel("Overlap")
-        # self.overlap_textedit = QLineEdit("")
-        # pattern = r"^[0-1]{1}.[0-9]{1}"
-        # regexp = QRegExp(pattern)
-        # self.validator = QRegExpValidator(regexp, self.overlap_textedit)
-        # self.overlap_textedit.setValidator(self.validator)
 
         self.overlap_label = QLabel("Overlap")
         self.overlap_textedit = QLineEdit("")
         # self.validator = QIntValidator(0,100,self)
         # self.overlap_textedit.setValidator(self.validator)
-        self.overlap_textedit.setFixedWidth(100)
+        self.overlap_textedit.setFixedWidth(50)
         self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
-
-        # self.tilingReps_label = QLabel("Tiling Repetitions")
-        # self.tilingReps_textedit = QLineEdit("")
-        # self.validator = QIntValidator(0,10000,self)
-        # self.tilingReps_textedit.setValidator(self.validator)
-        # self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Repetitions", value))
 
         self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
@@ -66,20 +55,32 @@ class TilingWidget(NapariHybridWidget):
 
 
 
-        row = 0
+        stepsXLayout = QtWidgets.QHBoxLayout()
+        stepsXLayout.addWidget(self.numGridX_label)
+        stepsXLayout.addWidget(self.numGridX_textedit)
+        stepsXLayout.setContentsMargins(0, 0, 400, 0)
 
-        gridScanLayout.addWidget(self.numGridX_label, row, 0)
-        gridScanLayout.addWidget(self.numGridX_textedit, row, 1)
-        gridScanLayout.addWidget(self.numGridY_label, row+1, 0)
-        gridScanLayout.addWidget(self.numGridY_textedit, row+1, 1)
-        gridScanLayout.addWidget(self.overlap_label, row+2, 0)
-        gridScanLayout.addWidget(self.overlap_textedit, row+2, 1)
-        # gridScanLayout.addWidget(self.tilingReps_label, row+3, 0)
-        # gridScanLayout.addWidget(self.tilingReps_textedit, row+3, 1)
-        # gridScanLayout.addWidget(self.checkbox_tiling, row+4, 0)
-        # gridScanLayout.addWidget(self.checkbox_tilepreview, row+4, 1)
-        gridScanLayout.addWidget(self.checkbox_tiling, row+3, 0)
-        gridScanLayout.addWidget(self.checkbox_tilepreview, row+3, 1)
+        stepsYLayout = QtWidgets.QHBoxLayout()
+        stepsYLayout.addWidget(self.numGridY_label)
+        stepsYLayout.addWidget(self.numGridY_textedit)
+
+        overlapLayout = QtWidgets.QHBoxLayout()
+        overlapLayout.addWidget(self.overlap_label)
+        overlapLayout.addWidget(self.overlap_textedit)
+
+        checkboxLayout = QtWidgets.QHBoxLayout()
+        checkboxLayout.addWidget(self.checkbox_tiling)
+        checkboxLayout.addWidget(self.checkbox_tilepreview)
+
+
+
+        overallLayout.addLayout(stepsXLayout)
+        overallLayout.addLayout(stepsYLayout)
+        overallLayout.addLayout(overlapLayout)
+        overallLayout.addLayout(checkboxLayout)
+        
+
+
 
         
     def toggleRunTilingActive(self):

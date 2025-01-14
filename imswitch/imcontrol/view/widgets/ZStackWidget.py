@@ -28,6 +28,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit.setValidator(self.validator)
         self.zStepDistance_textedit.setToolTip('Size between steps in microns.') 
         self.zStepDistance_textedit.setEnabled(False)
+        self.zStepDistance_textedit.setFixedWidth(50)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
         self.zStepDistance_textedit.textChanged.connect(self.floorTotalZ)
 
@@ -39,6 +40,7 @@ class ZStackWidget(NapariHybridWidget):
         self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calcualted. 10.9 steps = 10 steps.')  
         self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z (/um)", value))
         self.totalZ_textedit.setText("0")
+        self.totalZ_textedit.setFixedWidth(50)
         self.totalZ_textedit.setEnabled(False)
         self.totalZ_textedit.editingFinished.connect(self.floorTotalZ)
 
@@ -59,11 +61,13 @@ class ZStackWidget(NapariHybridWidget):
         self.validator = QDoubleValidator()
         self.zOffset_textedit.setValidator(self.validator)
         self.zOffset_textedit.setToolTip('Offset from current position to scan start position')
+        self.zOffset_textedit.setFixedWidth(50)
         # self.zOffset_textedit.setReadOnly(True)
         self.zOffset_textedit.setEnabled(False)
         self.zOffset_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
 
         self.zStackScanDir = QtWidgets.QComboBox()
+        self.zStackScanDir.setFixedWidth(75)
         self.zStackScanDir.setEnabled(False)
         self.zStackScanDir.currentTextChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', value))
 
