@@ -43,7 +43,7 @@ class InfoGatheringController(ImConWidgetController):
                             ('SIM Parameters', 'Alpha'),('SIM Parameters', 'Beta'),('SIM Parameters', 'w'),('SIM Parameters', 'eta'),
                             ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM SLM', 'SLM Running Order'),('User Dir Info', 'Working Directory'), ('User Dir Info', 'Current Path'),
                             ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name'),('Z-Stack Settings', 'Step Size'),('Z-Stack Settings', 'Total Z (/um)'),('Z-Stack Settings', 'Z-Stack Checkbox'),
-                            ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset')]
+                            ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List')]
 
 
     def updateSharedAttributes(self):

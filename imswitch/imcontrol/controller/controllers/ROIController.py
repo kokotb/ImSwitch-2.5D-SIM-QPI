@@ -26,7 +26,7 @@ class ROIController(ImConWidgetController):
             elif self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
 
-        # self.numTiledImages = 0
+
         
 
 

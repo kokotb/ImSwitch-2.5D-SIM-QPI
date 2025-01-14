@@ -11,7 +11,7 @@ from PyQt5.QtCore import Qt
 
 class ROIWidget(NapariHybridWidget):
 
-    sigROIInfoChanged = QtCore.Signal(str, str, str)
+    sigROIInfoChanged = QtCore.Signal(str, str, list)
     sigAddROI = QtCore.Signal()
 
     def __post_init__(self):
@@ -20,9 +20,7 @@ class ROIWidget(NapariHybridWidget):
         listLayout = QtWidgets.QVBoxLayout()
 
         self.ROIList = QListWidget()
-        # QListWidgetItem("ROI 1", self.ROIList)
-        # QListWidgetItem("ROI 2", self.ROIList)
-        # QListWidgetItem("ROI 3", self.ROIList)
+
         listLayout.addWidget(self.ROIList)
 
 
@@ -49,8 +47,13 @@ class ROIWidget(NapariHybridWidget):
         self.delButton.clicked.connect(self.delItem)
         self.upButton.clicked.connect(self.moveUp)
         self.downButton.clicked.connect(self.moveDown)
-        # self.gotoButton.clicked.connect(self.functiontogetintowidget)
         self.addButton.clicked.connect(self.sigAddROI.emit)
+
+        self.delButton.clicked.connect(self.getListAllROIs)
+        self.upButton.clicked.connect(self.getListAllROIs)
+        self.downButton.clicked.connect(self.getListAllROIs)
+        self.addButton.clicked.connect(self.getListAllROIs)
+
 
 
     # def functiontogetintowidget(self):
@@ -90,6 +93,16 @@ class ROIWidget(NapariHybridWidget):
     def getCurrentName(self):
         currentName = self.ROIList.currentItem().text()
         return currentName
+    
+    def getListAllROIs(self):
+        roiCount = self.ROIList.count()
+        roiList = []
+        for i in range(roiCount):
+            currentName = self.ROIList.item(i).text()
+            roiList.append([i,currentName])
+        self.sigROIInfoChanged.emit('ROI List', 'List', roiList)
+
+        return roiList
 
     
         
