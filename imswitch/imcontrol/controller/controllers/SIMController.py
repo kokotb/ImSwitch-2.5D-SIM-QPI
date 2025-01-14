@@ -142,10 +142,15 @@ class SIMController(ImConWidgetController):
         if self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Checkbox')] == '0':
             positions = [self.tileOrigin]
         
+        #Get Z-Stack list
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
+            self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
+
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+            self.zScanActive = True
             zList = self.zList
+            #zOrigin stored as self.zOrigin already
 
 
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
