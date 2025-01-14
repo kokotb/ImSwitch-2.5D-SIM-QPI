@@ -21,6 +21,7 @@ from .PositionerController import PositionerController
 from .SettingsController import SettingsController
 # from .SLMController import SLMController
 from .TilingController import TilingController
+from .ROIController import ROIController
 from .TimingController import TimingController
 # from .ULensesController import ULensesController
 from .ViewController import ViewController

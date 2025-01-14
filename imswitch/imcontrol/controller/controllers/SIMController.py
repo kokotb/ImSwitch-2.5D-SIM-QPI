@@ -86,6 +86,7 @@ class SIMController(ImConWidgetController):
         self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
+
         # Signals connecting SIMWidget actions with functions in SIMController
         self._widget.start_button.clicked.connect(self.startSIM)
         self._widget.stop_button.clicked.connect(self.stopSIM)
@@ -122,10 +123,9 @@ class SIMController(ImConWidgetController):
         Run snake scan for larger FOVs.
         """
         
-        self.isReconstructing = False # Is this line needed, all other references to this variable are in SIMProcessor
-        # for processor in self.processors:
-        #     processor.isCalibrated = False
-        self.sim_parameters = sim_parameters
+        # self.isReconstructing = False # Is this line needed, all other references to this variable are in SIMProcessor
+
+        self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
 
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []

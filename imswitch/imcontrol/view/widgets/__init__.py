@@ -29,3 +29,4 @@ from .ViewWidget import ViewWidget
 from .SIMWidget import SIMWidget
 from .InfoGatheringWidget import InfoGatheringWidget
 from .ZStackWidget import ZStackWidget
+from .ROIWidget import ROIWidget

@@ -6,7 +6,7 @@ from imswitch.imcommon.model import VFileItem, initLogger
 
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, PositionersManager, RS232sManager, 
-     SLMManager, SLM4DDManager, ArduinoManager, TilingManager  
+     SLMManager, SLM4DDManager, ArduinoManager, TilingManager, ROIManager 
 )
 
 
@@ -35,6 +35,7 @@ class MasterController:
             'rs232sManager': self.rs232sManager
         }
         self.tilingManager = TilingManager()
+        self.roiManager = ROIManager()
 
         self.detectorsManager = DetectorsManager(self.__setupInfo.detectors, updatePeriod=100,
                                                  **lowLevelManagers)

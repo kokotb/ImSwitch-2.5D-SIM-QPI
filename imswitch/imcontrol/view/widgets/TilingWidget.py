@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QCheckBox, QLabel, QLineEdit, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtCore import Qt
 
 import napari
 
@@ -25,11 +26,13 @@ class TilingWidget(NapariHybridWidget):
         self.setLayout(overallLayout)
 
         self.numGridX_label = QLabel("Steps - X")
-        # self.numGridX_label.setFixedWidth(100)
+        self.numGridX_label.setMaximumWidth(100)
+        # self.numGridX_label.setAlignment(Qt.AlignLeft)
         self.numGridX_textedit = QLineEdit("")
         self.validator = QIntValidator(0,1000,self)
         self.numGridX_textedit.setValidator(self.validator)
         self.numGridX_textedit.setFixedWidth(50)
+        # self.numGridX_textedit.setAlignment(Qt.AlignLeft)
         self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
 
         self.numGridY_label = QLabel("Steps - Y")
@@ -58,7 +61,7 @@ class TilingWidget(NapariHybridWidget):
         stepsXLayout = QtWidgets.QHBoxLayout()
         stepsXLayout.addWidget(self.numGridX_label)
         stepsXLayout.addWidget(self.numGridX_textedit)
-        stepsXLayout.setContentsMargins(0, 0, 400, 0)
+        # stepsXLayout.setContentsMargins(0, 0, 400, 0)
 
         stepsYLayout = QtWidgets.QHBoxLayout()
         stepsYLayout.addWidget(self.numGridY_label)

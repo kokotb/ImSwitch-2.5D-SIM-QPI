@@ -61,7 +61,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Tiling': _DockInfo(name='Tiling', yPosition=2),
             'Timing': _DockInfo(name='Timing', yPosition=3),
             'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5)
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5),
+            'ROI': _DockInfo(name = 'ROI List', yPosition = 6)
             
         }
         leftDockInfos = {
@@ -129,7 +130,9 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'Tiling' in self.docks:
             self.docks['Tiling'].setStretch(1, 0.5)
         if 'InfoGathering' in self.docks:
-            self.docks['InfoGathering'].setStretch(1, 3)
+            self.docks['InfoGathering'].setStretch(1, 0.5)
+        if 'ROI' in self.docks:
+            self.docks['ROI'].setStretch(1, 2)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 

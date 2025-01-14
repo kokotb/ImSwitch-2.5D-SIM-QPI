@@ -16,3 +16,4 @@ from .SLM4DDManager import SLM4DDManager
 # from .SLM4DDManagerMock import SLM4DDManagerMock
 from .ArduinoManager import ArduinoManager
 from .TilingManager import TilingManager
+from .ROIManager import ROIManager

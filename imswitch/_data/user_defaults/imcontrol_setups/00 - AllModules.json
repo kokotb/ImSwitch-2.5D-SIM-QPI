@@ -250,6 +250,7 @@
     "Tiling",
     "Timing",
     "ZStack",
-    "InfoGathering"
+    "InfoGathering",
+    "ROI"
   ]
 }
