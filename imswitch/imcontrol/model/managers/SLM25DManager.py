@@ -20,7 +20,7 @@ class SLM25DManager(SignalInterface):
     def __init__(self, SLM25DInfo, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
-        self.openSLMResource()
+        # self.openSLMResource()
         if SLM25DInfo is None:
             return
 
@@ -47,7 +47,8 @@ class SLM25DManager(SignalInterface):
         assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
 
 
-    def openSLMResource(self):
+    def openSLMResource(self, state):
+        
         self.slm = slmdisplaysdk.SLMInstance()
         if not self.slm.requiresVersion(5):
             exit(1)

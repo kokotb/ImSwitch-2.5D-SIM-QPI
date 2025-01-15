@@ -52,9 +52,17 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUpClicked.connect(self.recalculateZernikePhaseMask)
         self._widget.sigStepDownClicked.connect(self.recalculateZernikePhaseMask)
 
+        
+
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self._widget.sigDisplayZernike.connect(self.projectZernike)
         self.slm25DManager = self._master.slm25DManager
+
+        self._widget.sigActivateSLM.connect(self.openSLMResourceControl)
+
+    def openSLMResourceControl(self, state):
+        self._widget.activate25DSLM.setEnabled(False)
+        self.slm25DManager.openSLMResource(state)
 
 
         # self.zPositioner.setPosition(SETVALUE, ['Z'])

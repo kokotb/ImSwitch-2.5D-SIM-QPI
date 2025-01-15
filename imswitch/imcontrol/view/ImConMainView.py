@@ -56,21 +56,23 @@ class ImConMainView(QtWidgets.QMainWindow):
 
         # Dock area
         rightDockInfos = {
-            # 'Laser': _DockInfo(name='Laser Control', yPosition=0),
-            'Positioner': _DockInfo(name='Positioner', yPosition=0),
-            # 'Tiling': _DockInfo(name='Tiling', yPosition=2),
-            # 'Timing': _DockInfo(name='Timing', yPosition=3),
-            # 'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
-            # 'InfoGathering': _DockInfo(name = 'Info', yPosition = 5),
-            # 'ROI': _DockInfo(name = 'ROI List', yPosition = 6)
-            'SLM25D': _DockInfo(name='SLM25D', yPosition=1)
+            'Laser': _DockInfo(name='Laser Control', yPosition=0),
+            'Positioner': _DockInfo(name='Positioner', yPosition=1),
+            'Tiling': _DockInfo(name='Tiling', yPosition=2),
+            'Timing': _DockInfo(name='Timing', yPosition=3),
+            'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 6),
+            'ROI': _DockInfo(name = 'ROI List', yPosition = 5)
+            
             
         }
         leftDockInfos = {
             'View': _DockInfo(name='Image Controls', yPosition=0),
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             # 'Recording': _DockInfo(name='Recording', yPosition=2),
-            'SIM': _DockInfo(name = 'SIM', yPosition = 2),
+            'SLM25D': _DockInfo(name='SLM25D', yPosition=2),
+            'SIM': _DockInfo(name = 'SIM', yPosition = 2)
+
             # 'Console': _DockInfo(name='Console', yPosition=5)
             
         }
@@ -115,13 +117,15 @@ class ImConMainView(QtWidgets.QMainWindow):
             self.docks['Settings'].setStretch(1, 5)
             self.docks['Settings'].container().setStretch(3, 5)
         if 'SIM' in self.docks:
-            self.docks['SIM'].setStretch(1, 5)
+            self.docks['SIM'].setStretch(1, 6)
+        if 'SLM25D' in self.docks:
+            self.docks['SLM25D'].setStretch(1, 6)
         if 'Laser' in self.docks:
             self.docks['Laser'].setStretch(1, 0.6)
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
-            self.docks['Image'].setStretch(10, 1)
+            self.docks['Image'].setStretch(15, 1)
         if 'ZStack' in self.docks:
             self.docks['ZStack'].setStretch(1, 0.5)
         if 'Positioner' in self.docks:
