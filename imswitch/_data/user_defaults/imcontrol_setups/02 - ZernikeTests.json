@@ -1,0 +1,191 @@
+{ "SIMslm":{
+  "path": "dlls\\SLM4DD\\lib\\R4CommLib-1.7-x64.dll",
+  "port": "COM4",
+  "width":1080,
+  "height":1920,
+  "pixelSize":13.62,
+  "managerName": "SLM4DDManager",
+  "mock": false
+
+},
+
+"SLM25D":{
+  "width":1080,
+  "height":1920,
+  "managerName": "SLM25DManager",
+  "mock": false,
+  "monitorIdx": 1
+
+},
+"Arduino":{
+  "managerName": "ArduinoManager",
+  "managerProperties": {
+    "rs232device": "arduino"
+  }
+},
+  "sim": {
+  "monitorIdx": 2,
+  "width": 1920,
+  "height": 1080,
+  "ReconWL1": 512,
+  "ReconWL2": 573,
+  "ReconWL3": 678,
+  "NA": 0.8,
+  "Pixelsize": 2.74,
+  "Alpha": 0.5,
+  "Beta": 0.98,
+  "w": 0.15,
+  "eta": 0.6,
+  "n": 1.0,
+  "Magnification": 22.22,
+  "saveDir": "D:\\SIM_Data\\",
+  "nRotations": 3,
+  "nPhases": 3,
+  "isSimulation": 0,
+  "isMock": false
+},
+
+
+"lasers": {
+  "488AOTF": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "AAAOTFLaserManager",
+      "managerProperties": {
+        "rs232device": "aaaotf",
+        "channel": 2
+      },
+      "wavelength": 488,
+      "valueRangeMin": 0,
+      "valueRangeMax": 100,
+      "valueRangeStep": 2,
+      "valueInit": 100,
+      "maxdBmValue": 18.1
+      
+      },
+  "561AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 3
+    },
+    "wavelength": 561,
+    "valueRangeMin": 0,
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 20.5
+    },
+  "640AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 4
+    },
+    "wavelength": 640,
+    "valueRangeMin": 0,
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+
+    "maxdBmValue": 22.1
+    }
+    
+},
+  "positioners": {
+    "Z": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "QueensgatePiezoManager",
+      "managerProperties": {
+        "rs232device": "zpiezo"
+      },
+      "axes": ["Z"],
+      "limits":[-45,450],
+      "forPositioning": true,
+      "forScanning": true
+    },
+    "XY": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM3",
+        "zeroOnStartup": false
+      },
+      "axes": ["X","Y"],
+      "limits":[22000,10000],
+      "forPositioning": true,
+      "forScanning": true
+    }
+},
+
+  "rs232devices": {
+    "aaaotf": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM6",
+        "encoding": "ascii",
+        "recv_termination": "\n\r",
+        "send_termination": "\r",
+        "baudrate": 19200,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+        }
+    },
+    "zpiezo": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM11",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 9600,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    },
+    "arduino": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM7",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 9600,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    }
+    },
+  "availableWidgets": [
+    "SIM",
+    "Laser",
+    "View",
+    "Image",
+    "Settings",
+    "Positioner",
+    "Tiling",
+    "Timing",
+    "ZStack",
+    "InfoGathering",
+    "ROI",
+    "SLM25D"
+  ]
+}

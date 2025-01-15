@@ -44,6 +44,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUpClickedZernike.connect(self.updateZernikePhaseMask)
         self._widget.sigStepDownClickedZernike.connect(self.updateZernikePhaseMask)
 
+        self._widget.updateMaskZernike.connect(self.projectZernike)
+        self._widget.sigStepUpClickedZernike.connect(self.projectZernike)
+        self._widget.sigStepDownClickedZernike.connect(self.projectZernike)
+
         self._widget.updateMask.connect(self.recalculateZernikePhaseMask)
         self._widget.sigStepUpClicked.connect(self.recalculateZernikePhaseMask)
         self._widget.sigStepDownClicked.connect(self.recalculateZernikePhaseMask)
@@ -56,12 +60,14 @@ class SLM25DController(ImConWidgetController):
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
         # currentPos = self.zPositioner.get_abs()
 
-    def projectZernike(self):
+    def projectZernike(self, _):
         self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
 
 
     def reshapeMask(self, mask):
-        maskReshaped = np.reshape(mask,(1080, 1920), order='F')
+        maskFlipped = np.fliplr(mask)
+        maskReshaped = np.reshape(maskFlipped,(1080, 1920), order='F')
+        # maskFlipped = np.flipud(maskReshaped)
 
         return maskReshaped
 
@@ -300,6 +306,22 @@ class SLM25DController(ImConWidgetController):
         self._widget.vbZernike.addItem(self._widget.imgZernike)
         self._widget.vbZernike.setAspectLocked(True)
 
+    def valueChanged(self, attrCategory, parameterName, value):
+        self.setSharedAttr(attrCategory, parameterName, value)
+
+    def setSharedAttr(self, attrCategory, parameterName, value):
+        """Sending attribute to shared attributes
+
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
+        finally:
+            self.settingAttr = False
 
 
 
