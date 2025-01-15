@@ -32,7 +32,7 @@ class ROIController(ImConWidgetController):
 
     def gotoSelectedROI(self):
         currentName = self._widget.getCurrentName()
-        currentX, currentY, currentZ = self.parseCurrentName(currentName)
+        currentX, currentY, currentZ = self.parseCurrentSelection(currentName)
         self.positionerXY.setPositionXY(currentX, currentY)
         self.positioner.setPosition(currentZ, 'Z')
         self._commChannel.sigUpdateZPosition.emit('Z','Z')
@@ -51,7 +51,7 @@ class ROIController(ImConWidgetController):
         currentString = f'X:{currentX}-Y:{currentY}-Z:{currentZ}'
         return currentString
     
-    def parseCurrentName(self, currentName):
+    def parseCurrentSelection(self, currentName):
         x ,y, z = currentName.split('-')
         currentX = float(x.split(':')[1])
         currentY = float(y.split(':')[1])

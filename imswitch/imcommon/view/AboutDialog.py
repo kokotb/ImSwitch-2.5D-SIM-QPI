@@ -19,6 +19,7 @@ class AboutDialog(QtWidgets.QDialog):
             f'https://github.com/kasasxav/ImSwitch'
             f'</a>'
             f'<br />Licensed under the GNU General Public License v3.0.'
+            f'<br />Modification made by Dr. Štrancar''s Lab of Biophysics'
         )
         self.label.setWordWrap(True)
         self.label.setTextFormat(QtCore.Qt.RichText)
