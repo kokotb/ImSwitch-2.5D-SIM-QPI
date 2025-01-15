@@ -8,6 +8,15 @@
   "mock": false
 
 },
+
+"SLM25D":{
+  "width":1080,
+  "height":1920,
+  "managerName": "SLM25DManager",
+  "mock": false,
+  "monitorIdx": 1
+
+},
 "Arduino":{
   "managerName": "ArduinoManager",
   "managerProperties": {
@@ -251,6 +260,7 @@
     "Timing",
     "ZStack",
     "InfoGathering",
-    "ROI"
+    "ROI",
+    "SLM25D"
   ]
 }

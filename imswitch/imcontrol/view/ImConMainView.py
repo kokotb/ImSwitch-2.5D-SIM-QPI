@@ -56,13 +56,14 @@ class ImConMainView(QtWidgets.QMainWindow):
 
         # Dock area
         rightDockInfos = {
-            'Laser': _DockInfo(name='Laser Control', yPosition=0),
-            'Positioner': _DockInfo(name='Positioner', yPosition=1),
-            'Tiling': _DockInfo(name='Tiling', yPosition=2),
-            'Timing': _DockInfo(name='Timing', yPosition=3),
-            'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5),
-            'ROI': _DockInfo(name = 'ROI List', yPosition = 6)
+            # 'Laser': _DockInfo(name='Laser Control', yPosition=0),
+            # 'Positioner': _DockInfo(name='Positioner', yPosition=1),
+            # 'Tiling': _DockInfo(name='Tiling', yPosition=2),
+            # 'Timing': _DockInfo(name='Timing', yPosition=3),
+            # 'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
+            # 'InfoGathering': _DockInfo(name = 'Info', yPosition = 5),
+            # 'ROI': _DockInfo(name = 'ROI List', yPosition = 6)
+            'SLM25D': _DockInfo(name='SLM25D', yPosition=0)
             
         }
         leftDockInfos = {

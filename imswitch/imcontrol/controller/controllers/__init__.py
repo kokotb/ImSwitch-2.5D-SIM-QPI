@@ -21,6 +21,7 @@ from .PositionerController import PositionerController
 from .SettingsController import SettingsController
 # from .SLMController import SLMController
 from .TilingController import TilingController
+from .SLM25DController import SLM25DController
 from .ROIController import ROIController
 from .TimingController import TimingController
 # from .ULensesController import ULensesController

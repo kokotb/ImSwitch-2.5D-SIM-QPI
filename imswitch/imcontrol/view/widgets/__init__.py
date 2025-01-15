@@ -23,6 +23,7 @@ from .SettingsWidget import SettingsWidget
 # from .SLMWidget import SLMWidget
 from .TilingWidget import TilingWidget
 from .TimingWidget import TimingWidget
+from .SLM25DWidget import SLM25DWidget
 # from .ULensesWidget import ULensesWidget
 from .ViewWidget import ViewWidget
 # from .WatcherWidget import WatcherWidget

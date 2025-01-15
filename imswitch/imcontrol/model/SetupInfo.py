@@ -231,6 +231,22 @@ class ScanInfo:
     """
 
 @dataclass(frozen=True)
+class SLM25DInfo:
+    mock: bool
+
+    width: int
+    """ Width of SLM, in pixels. """
+
+    height: int
+    """ Height of SLM, in pixels. """
+
+    managerName: str
+    """ Manager name in string. """
+
+    monitorIdx: int
+    """Check if this is needed at all"""
+
+@dataclass(frozen=True)
 class EtSTEDInfo:
     detectorFast: str
     """ Name of the STED detector to use. """
@@ -396,6 +412,9 @@ class SetupInfo:
 
     etSTED: Optional[EtSTEDInfo] = field(default_factory=lambda: None)
     """ EtSTED settings. Required to be defined to use etSTED functionality. """
+    
+    SLM25D: Optional[SLM25DInfo] = field(default_factory=lambda: None)
+    """ SLM for 2.5D settings. Required to be defined to use SLM(2.5D) functionality. """
 
     rotators: Optional[Dict[str, DeviceInfo]] = field(default_factory=lambda: None)
     """ Standa motorized rotator mounts settings. Required to be defined to use rotator functionality. """
