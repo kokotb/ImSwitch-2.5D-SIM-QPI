@@ -18,7 +18,9 @@ class ROIController(ImConWidgetController):
         self._widget.sigROIInfoChanged.connect(self.valueChanged)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigAddROI.connect(self.addPositionToROIList)
+        self._widget.sigReplaceROI.connect(self.replaceROI)
         self._widget.gotoButton.clicked.connect(self.gotoSelectedROI)
+        # self._widget.initSharedAttributes()
 
         for key in self._master.positionersManager._subManagers:
             if self._master.positionersManager._subManagers[key].axes == ['Z']:
@@ -28,16 +30,25 @@ class ROIController(ImConWidgetController):
 
 
         
-
+    def replaceROI(self):
+        currentIndex = self._widget.ROIList.currentRow()
+        if currentIndex > -1:
+            self._widget.ROIList.takeItem(currentIndex)
+            currentX = self.sharedAttrs['Positioner','XY','X','Position']
+            currentY = self.sharedAttrs['Positioner','XY','Y','Position']
+            currentZ = self.sharedAttrs['Positioner','Z','Z','Position']
+            currentString = self.formatCurrentROIData(currentX, currentY, currentZ)
+            self._widget.ROIList.insertItem(currentIndex, currentString)
 
     def gotoSelectedROI(self):
         currentName = self._widget.getCurrentName()
-        currentX, currentY, currentZ = self.parseCurrentSelection(currentName)
-        self.positionerXY.setPositionXY(currentX, currentY)
-        self.positioner.setPosition(currentZ, 'Z')
-        self._commChannel.sigUpdateZPosition.emit('Z','Z')
-        self._commChannel.sigUpdateXYPosition.emit('XY','X')
-        self._commChannel.sigUpdateXYPosition.emit('XY','Y')
+        if currentName != None:
+            currentX, currentY, currentZ = self.parseCurrentSelection(currentName)
+            self.positionerXY.setPositionXY(currentX, currentY)
+            self.positioner.setPosition(currentZ, 'Z')
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            self._commChannel.sigUpdateXYPosition.emit('XY','X')
+            self._commChannel.sigUpdateXYPosition.emit('XY','Y')
 
 
     def addPositionToROIList(self):
@@ -48,11 +59,11 @@ class ROIController(ImConWidgetController):
         self._widget.addROI(currentString)
 
     def formatCurrentROIData(self, currentX, currentY, currentZ):
-        currentString = f'X:{currentX}-Y:{currentY}-Z:{currentZ}'
+        currentString = f'X:{currentX} | Y:{currentY} | Z:{currentZ}'
         return currentString
     
     def parseCurrentSelection(self, currentName):
-        x ,y, z = currentName.split('-')
+        x ,y, z = currentName.split(' | ')
         currentX = float(x.split(':')[1])
         currentY = float(y.split(':')[1])
         currentZ = float(z.split(':')[1])

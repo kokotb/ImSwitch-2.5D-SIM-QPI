@@ -13,6 +13,7 @@ class ROIWidget(NapariHybridWidget):
 
     sigROIInfoChanged = QtCore.Signal(str, str, list)
     sigAddROI = QtCore.Signal()
+    sigReplaceROI = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -20,6 +21,7 @@ class ROIWidget(NapariHybridWidget):
         listLayout = QtWidgets.QVBoxLayout()
 
         self.ROIList = QListWidget()
+        self.ROIList.setMaximumWidth(400)
 
         listLayout.addWidget(self.ROIList)
 
@@ -28,6 +30,8 @@ class ROIWidget(NapariHybridWidget):
 
         self.addButton = QPushButton("Add")
         buttonLayout.addWidget(self.addButton)
+        self.replaceButton = QPushButton("Replace")
+        buttonLayout.addWidget(self.replaceButton)
         self.delButton = QPushButton("Delete")
         buttonLayout.addWidget(self.delButton)
         self.upButton = QPushButton("Move Up")
@@ -36,6 +40,11 @@ class ROIWidget(NapariHybridWidget):
         buttonLayout.addWidget(self.downButton)
         self.gotoButton = QPushButton("Go To")
         buttonLayout.addWidget(self.gotoButton)
+        # self.replaceButton = QPushButton("Replace")
+        # buttonLayout.addWidget(self.replaceButton)
+
+        # self.scanROIList = QCheckBox('Scan ROIs')
+        # buttonLayout.addWidget(self.scanROIList)
 
         overallLayout = QtWidgets.QHBoxLayout()
         self.setLayout(overallLayout)
@@ -48,6 +57,7 @@ class ROIWidget(NapariHybridWidget):
         self.upButton.clicked.connect(self.moveUp)
         self.downButton.clicked.connect(self.moveDown)
         self.addButton.clicked.connect(self.sigAddROI.emit)
+        self.replaceButton.clicked.connect(self.sigReplaceROI.emit)
 
         self.delButton.clicked.connect(self.getListAllROIs)
         self.upButton.clicked.connect(self.getListAllROIs)
@@ -58,6 +68,9 @@ class ROIWidget(NapariHybridWidget):
 
     # def functiontogetintowidget(self):
     #     print('made it')
+
+    # def initSharedAttributes(self):
+    #      self.scanROIList.setChecked(False)
 
     def addROI(self, name):
         self.ROIList.addItem(name)
@@ -74,8 +87,8 @@ class ROIWidget(NapariHybridWidget):
     def moveUp(self):
         currentIndex = self.ROIList.currentRow()
         newIndex = currentIndex - 1
-        currentName = self.ROIList.currentItem().text()
-        if currentIndex != 0:
+        if currentIndex > 0:
+            currentName = self.ROIList.currentItem().text()
             self.ROIList.takeItem(currentIndex)
             self.ROIList.insertItem(newIndex, currentName)
             self.ROIList.setCurrentRow(newIndex)
@@ -83,15 +96,18 @@ class ROIWidget(NapariHybridWidget):
     def moveDown(self):
         currentIndex = self.ROIList.currentRow()
         newIndex = currentIndex + 1
-        currentName = self.ROIList.currentItem().text()
         count = self.ROIList.count()
         if (currentIndex + 1) < count:
+            currentName = self.ROIList.currentItem().text()
             self.ROIList.takeItem(currentIndex)
             self.ROIList.insertItem(newIndex, currentName)
             self.ROIList.setCurrentRow(newIndex)
 
     def getCurrentName(self):
-        currentName = self.ROIList.currentItem().text()
+        try:
+            currentName = self.ROIList.currentItem().text()
+        except AttributeError:
+            currentName = None
         return currentName
     
     def getListAllROIs(self):
