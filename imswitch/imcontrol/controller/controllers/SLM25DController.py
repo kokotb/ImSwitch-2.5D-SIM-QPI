@@ -31,7 +31,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self.Params = self.getAllWidgetParams()
         self.matrix25d = self._widget.matrix25d
-        
+            
         self._widget.updateMask.connect(self.updateCenterPhaseMask)
         self._widget.sigStepUpClicked.connect(self.updateCenterPhaseMask)
         self._widget.sigStepDownClicked.connect(self.updateCenterPhaseMask)
@@ -49,9 +49,21 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepDownClicked.connect(self.recalculateZernikePhaseMask)
 
         self.zPositioner = self._master.positionersManager._subManagers['Z']
+        self._widget.sigDisplayZernike.connect(self.projectZernike)
+        self.slm25DManager = self._master.slm25DManager
+
 
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
         # currentPos = self.zPositioner.get_abs()
+
+    def projectZernike(self):
+        self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
+
+
+    def reshapeMask(self, mask):
+        maskReshaped = np.reshape(mask,(1080, 1920), order='F')
+
+        return maskReshaped
 
     def getAllWidgetParams(self):
 
@@ -121,9 +133,9 @@ class SLM25DController(ImConWidgetController):
             # add to mask
             self.ZernikeAllMasksSumFloat += zernikeMask * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
 
-        ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
+        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
         self.zernikeParametersOld = zernikeParametersNew
-        return ZernikeAllMasksSum
+        return self.ZernikeAllMasksSum
 
     def calculateNewZernikePhaseMask(self):
         parameters = self.getAllWidgetParams()
@@ -168,9 +180,9 @@ class SLM25DController(ImConWidgetController):
             # add to mask
             self.ZernikeAllMasksSumFloat += zernikeMask * zernikeParametersNew[name] * 255
 
-        ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
+        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
         self.zernikeParametersOld = zernikeParametersNew
-        return ZernikeAllMasksSum
+        return self.ZernikeAllMasksSum
 
 
     def calculateCenterPhaseMask(self):

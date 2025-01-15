@@ -17,6 +17,7 @@ class SLM25DWidget(Widget):
     sigStepUpClickedZernike = QtCore.Signal(str)
     sigStepDownClickedZernike = QtCore.Signal(str)
     updateMaskZernike = QtCore.Signal(str)
+    sigDisplayZernike = QtCore.Signal()
 
 
     def __init__(self, *args, **kwargs):
@@ -109,6 +110,10 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
             self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
             self.pars['ButtonAbsPosEnter' + name].clicked.connect(lambda *args, name=name: self.updateMask.emit(name))
+
+        self.displayButton = guitools.BetterPushButton('Display')
+        self.grid.addWidget(self.displayButton, 3, 12)
+        self.displayButton.clicked.connect(self.sigDisplayZernike.emit)
 
         self.numParams = 2
         # SETTING PHASE MASK PARAMETERS =========================================================================

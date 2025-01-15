@@ -9,16 +9,19 @@ from scipy import signal as sg
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
+# import detect_heds_module_path
+from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path
+
 
 
 class SLM25DManager(SignalInterface):
     sigSLMMaskUpdated = Signal(object)  # (maskCombined)
 
-    def __init__(self, slmInfo, *args, **kwargs):
+    def __init__(self, SLM25DInfo, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
-
-        if slmInfo is None:
+        self.openSLMResource()
+        if SLM25DInfo is None:
             return
 
         self.__slmInfo = slmInfo
@@ -38,6 +41,19 @@ class SLM25DManager(SignalInterface):
         self.__masksTilt = [self.__maskTiltLeft, self.__maskTiltRight]
 
         self.update(maskChange=True, tiltChange=True, aberChange=True)
+
+    def projectMask(self, mask):
+        error = self.slm.showData(mask)
+        assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+
+
+    def openSLMResource(self):
+        self.slm = slmdisplaysdk.SLMInstance()
+        if not self.slm.requiresVersion(5):
+            exit(1)
+        error = self.slm.open()
+        assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+        showSLMPreview.showSLMPreview(self.slm, scale=0.0)
 
     def saveState(self, state_general=None, state_pos=None, state_aber=None):
         if state_general is not None:
