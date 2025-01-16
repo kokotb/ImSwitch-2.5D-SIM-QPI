@@ -10,7 +10,7 @@ from scipy import signal as sg
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
 # import detect_heds_module_path
-from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path
+from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
 
 
 
@@ -41,20 +41,26 @@ class SLM25DManager(SignalInterface):
         self.__masksTilt = [self.__maskTiltLeft, self.__maskTiltRight]
 
         self.update(maskChange=True, tiltChange=True, aberChange=True)
+        self.slmActive = False
 
     def projectMask(self, mask):
         error = self.slm.showData(mask)
         assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
 
 
-    def openSLMResource(self, state):
-        
-        self.slm = slmdisplaysdk.SLMInstance()
-        if not self.slm.requiresVersion(5):
-            exit(1)
-        error = self.slm.open()
-        assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
-        showSLMPreview.showSLMPreview(self.slm, scale=0.0)
+    def toggleSLMResource(self, state):
+        if state == True:
+            self.slm = slmdisplaysdk.SLMInstance()
+            if not self.slm.requiresVersion(5):
+                exit(1)
+            error = self.slm.open()
+            assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+            showSLMPreview.showSLMPreview(self.slm, scale=0.0)
+            self.slmActive = True
+        if state == False:
+            self.slm = None
+            self.slmActive = False
+        return self.slmActive
 
     def saveState(self, state_general=None, state_pos=None, state_aber=None):
         if state_general is not None:

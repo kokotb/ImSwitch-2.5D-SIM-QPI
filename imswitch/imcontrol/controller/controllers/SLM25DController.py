@@ -58,11 +58,14 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigDisplayZernike.connect(self.projectZernike)
         self.slm25DManager = self._master.slm25DManager
 
-        self._widget.sigActivateSLM.connect(self.openSLMResourceControl)
+        self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
 
-    def openSLMResourceControl(self, state):
-        self._widget.activate25DSLM.setEnabled(False)
-        self.slm25DManager.openSLMResource(state)
+    def toggleSLMFromButton(self, state):
+        # self._widget.activate25DSLM.setEnabled(False)
+        self.toggleSLMResource(state)
+
+    def toggleSLMResource(self, state):
+        self.slmActive = self.slm25DManager.toggleSLMResource(state)
 
 
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
