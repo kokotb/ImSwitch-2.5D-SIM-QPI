@@ -65,8 +65,11 @@ class SLM25DController(ImConWidgetController):
         self.slm25DManager.openPreviewWindow()
 
     def toggleSLMFromButton(self, state):
-        # self._widget.activate25DSLM.setEnabled(False)
-        self.toggleSLMResource(state)
+        try:
+            self.toggleSLMResource(state)
+        except:
+            self._widget.activate25DSLM.setChecked(False)
+
 
     def toggleSLMResource(self, state):
         self.slmActive = self.slm25DManager.toggleSLMResource(state)
