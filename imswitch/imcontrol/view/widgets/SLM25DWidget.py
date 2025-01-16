@@ -5,6 +5,7 @@ from qtpy import QtCore, QtWidgets
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QWheelEvent , QDoubleValidator
 
 
 class SLM25DWidget(Widget):
@@ -19,6 +20,7 @@ class SLM25DWidget(Widget):
     updateMaskZernike = QtCore.Signal(str)
     sigDisplayZernike = QtCore.Signal()
     sigToggleSLM = QtCore.Signal(bool)
+    sigOpenPreviewButton = QtCore.Signal()
 
 
     def __init__(self, *args, **kwargs):
@@ -26,6 +28,7 @@ class SLM25DWidget(Widget):
 
         # Zernike mask image
         self.slmFrameZernike = pg.GraphicsLayoutWidget()
+        self.slmFrameZernike.setEnabled(False)
         self.vbZernike = self.slmFrameZernike.addViewBox(row=0, col=1)
         self.imgZernike = pg.ImageItem()
         self.matrixZernike = np.ones((1920, 1080)) * 255
@@ -36,6 +39,7 @@ class SLM25DWidget(Widget):
 
         # Centering mask image
         self.slmFrameCenter = pg.GraphicsLayoutWidget()
+        self.slmFrameCenter.setEnabled(False)
         self.vbCenter = self.slmFrameCenter.addViewBox(row=13, col=1)
         self.imgCenter = pg.ImageItem()
         self.matrixCenter = np.ones((1920, 1080)) * 255
@@ -46,6 +50,7 @@ class SLM25DWidget(Widget):
         
         # 2.5D mask image
         self.slmFrame25d = pg.GraphicsLayoutWidget()
+        self.slmFrame25d.setEnabled(False)
         self.vb25d = self.slmFrame25d.addViewBox(row=14, col=1)
         self.img25d = pg.ImageItem()
         self.matrix25d = np.ones((1920, 1080)) * 255
@@ -57,9 +62,10 @@ class SLM25DWidget(Widget):
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
         self.slmPreview = QPushButton("Preview SLM")
-        # self.slmPreview.clicked.connect(self.openSLMPreview)
+        self.slmPreview.setEnabled(False)
+        self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
 
-        self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
+        # self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
 
         # parentLayout = QVBoxLayout()
         self.grid = QtWidgets.QGridLayout()
@@ -94,12 +100,18 @@ class SLM25DWidget(Widget):
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
             self.pars['UpButton' + name] = guitools.BetterPushButton('+')
             self.pars['DownButton' + name] = guitools.BetterPushButton('-')
-            # self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
-            # self.pars['StepEdit' + name].setFixedWidth(50)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit(AbsInitialValue)
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
-            
 
+            self.pars['Label' + name].setEnabled(False)
+            self.pars['UpButton' + name].setEnabled(False)
+            self.pars['DownButton' + name].setEnabled(False)
+            self.pars['AbsPosEdit' + name].setEnabled(False)
+
+            self.validator = QDoubleValidator(-5,5,1)
+            self.pars['AbsPosEdit' + name].setValidator(self.validator)
+            # self.pars['AbsPosEdit' + name].setInputMask("0.0;0;_")
+            
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
@@ -117,7 +129,7 @@ class SLM25DWidget(Widget):
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
-        self.numParams = 25
+        self.numParams = 26
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         AbsaxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "0.006"}
         StepaxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.001"}
@@ -145,6 +157,14 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
 
+            self.pars['Label' + name].setEnabled(False)
+            self.pars['UpButton' + name].setEnabled(False)
+            self.pars['DownButton' + name].setEnabled(False)
+            self.pars['StepEdit' + name].setEnabled(False)
+            self.pars['StepUnit' + name].setEnabled(False)
+            self.pars['AbsPosEdit' + name].setEnabled(False)
+            self.pars['AbsPosUnit' + name].setEnabled(False)
+
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams, 1)
@@ -157,8 +177,8 @@ class SLM25DWidget(Widget):
             # Connect buttons to signals
             self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
             self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
-            self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
-            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
+            self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))
+            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMask.emit(name))
 
 
         # self.stepLabel = QtWidgets.QLabel(f'<strong>Step</strong>')
@@ -166,6 +186,7 @@ class SLM25DWidget(Widget):
         # self.grid.addWidget(self.stepLabel, 4, 3)
 
         self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
+        self.valLabel.setEnabled(False)
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid.addWidget(self.valLabel, 4, 4)
 
@@ -176,6 +197,52 @@ class SLM25DWidget(Widget):
         self.sigStepUpClickedZernike.connect(self.incrementZern)
         self.sigStepDownClickedZernike.connect(self.decrementZern)
         
+
+    def disableAll(self):
+        self.slmPreview.setEnabled(False)
+        self.valLabel.setEnabled(False)
+        self.slmFrameZernike.setEnabled(False)
+        self.slmFrameCenter.setEnabled(False)
+        self.slmFrame25d.setEnabled(False)
+        for i in range(len(self.ZernikeCoefficientNames)):
+            name = self.ZernikeCoefficientNames[i]
+            self.pars['Label' + name].setEnabled(False)
+            self.pars['UpButton' + name].setEnabled(False)
+            self.pars['DownButton' + name].setEnabled(False)
+            self.pars['AbsPosEdit' + name].setEnabled(False)
+
+        for i in range(len(self.paramNames)):
+            name = self.paramNames[i]
+            self.pars['Label' + name].setEnabled(False)
+            self.pars['UpButton' + name].setEnabled(False)
+            self.pars['DownButton' + name].setEnabled(False)
+            self.pars['StepEdit' + name].setEnabled(False)
+            self.pars['StepUnit' + name].setEnabled(False)
+            self.pars['AbsPosEdit' + name].setEnabled(False)
+            self.pars['AbsPosUnit' + name].setEnabled(False)
+
+    def enableAll(self):
+        self.slmPreview.setEnabled(True)
+        self.valLabel.setEnabled(True)
+        self.slmFrameZernike.setEnabled(True)
+        self.slmFrameCenter.setEnabled(True)
+        self.slmFrame25d.setEnabled(True)
+        for i in range(len(self.ZernikeCoefficientNames)):
+            name = self.ZernikeCoefficientNames[i]
+            self.pars['Label' + name].setEnabled(True)
+            self.pars['UpButton' + name].setEnabled(True)
+            self.pars['DownButton' + name].setEnabled(True)
+            self.pars['AbsPosEdit' + name].setEnabled(True)
+
+        for i in range(len(self.paramNames)):
+            name = self.paramNames[i]
+            self.pars['Label' + name].setEnabled(True)
+            self.pars['UpButton' + name].setEnabled(True)
+            self.pars['DownButton' + name].setEnabled(True)
+            self.pars['StepEdit' + name].setEnabled(True)
+            self.pars['StepUnit' + name].setEnabled(True)
+            self.pars['AbsPosEdit' + name].setEnabled(True)
+            self.pars['AbsPosUnit' + name].setEnabled(True)
 
     def increment(self, name):
         stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
@@ -201,8 +268,6 @@ class SLM25DWidget(Widget):
         newVal = str(round(currentVal-stepVal,4))
         self.pars['AbsPosEdit' + name].setText(newVal)
 
-    # def openSLMPreview(self):
-    #     showSLMPreview.showSLMPreview(self.slm, scale=0.0)
 
 
 

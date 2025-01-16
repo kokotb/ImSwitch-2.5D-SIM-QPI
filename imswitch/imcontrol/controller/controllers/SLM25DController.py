@@ -54,11 +54,15 @@ class SLM25DController(ImConWidgetController):
 
         
 
-        self.zPositioner = self._master.positionersManager._subManagers['Z']
-        self._widget.sigDisplayZernike.connect(self.projectZernike)
+        # self.zPositioner = self._master.positionersManager._subManagers['Z']
+        # self._widget.sigDisplayZernike.connect(self.projectZernike)
         self.slm25DManager = self._master.slm25DManager
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
+        self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+
+    def openPreviewWindow(self):
+        self.slm25DManager.openPreviewWindow()
 
     def toggleSLMFromButton(self, state):
         # self._widget.activate25DSLM.setEnabled(False)
@@ -66,7 +70,10 @@ class SLM25DController(ImConWidgetController):
 
     def toggleSLMResource(self, state):
         self.slmActive = self.slm25DManager.toggleSLMResource(state)
-
+        if self.slmActive == True:
+            self._widget.enableAll()
+        if self.slmActive == False:
+            self._widget.disableAll()
 
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
         # currentPos = self.zPositioner.get_abs()
@@ -258,8 +265,8 @@ class SLM25DController(ImConWidgetController):
         yleftcenter = parameters["Left Center-Y"]
         xrightcenter = parameters["Right Center-X"]
         yrightcenter = parameters["Right Center-Y"]
-        gamma = parameters["gamma"]
-        psi = parameters["psi"]
+        gamma = parameters["Gamma"]
+        psi = parameters["Psi"]
 
         
         # SLM screen size parameters

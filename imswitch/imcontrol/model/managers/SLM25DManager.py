@@ -47,6 +47,12 @@ class SLM25DManager(SignalInterface):
         error = self.slm.showData(mask)
         assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
 
+    def openPreviewWindow(self):
+        if self.slmActive == False:
+            pass
+        if self.slmActive == True:
+            showSLMPreview.showSLMPreview(self.slm, scale=0.0)
+    
 
     def toggleSLMResource(self, state):
         if state == True:
