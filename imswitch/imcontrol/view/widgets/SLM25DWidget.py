@@ -13,12 +13,19 @@ class SLM25DWidget(Widget):
 
     sigStepUpClicked = QtCore.Signal(str)
     sigStepDownClicked = QtCore.Signal(str)
+
+    sigStepUpCenterClicked = QtCore.Signal(str)
+    sigStepDownCenterClicked = QtCore.Signal(str)
+
     updateMask = QtCore.Signal(str)
+    updateCenterMask = QtCore.Signal(str)
 
     sigStepUpClickedZernike = QtCore.Signal(str)
     sigStepDownClickedZernike = QtCore.Signal(str)
     updateMaskZernike = QtCore.Signal(str)
-    sigDisplayZernike = QtCore.Signal()
+    
+    # sigDisplayZernike = QtCore.Signal()
+
     sigToggleSLM = QtCore.Signal(bool)
     sigOpenPreviewButton = QtCore.Signal()
 
@@ -175,10 +182,19 @@ class SLM25DWidget(Widget):
             self.grid.addWidget(self.pars['AbsPosUnit' + name], self.numParams, 6)
 
             # Connect buttons to signals
-            self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
-            self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
-            self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))
-            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMask.emit(name))
+
+            if name == ('Gamma' or 'Psi'):
+                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
+                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
+                # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))
+                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMask.emit(name))
+            else:
+                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
+                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
+                # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
+                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
+
+
 
 
         # self.stepLabel = QtWidgets.QLabel(f'<strong>Step</strong>')
@@ -193,6 +209,8 @@ class SLM25DWidget(Widget):
         # Connect received signals to funcions
         self.sigStepUpClicked.connect(self.increment)
         self.sigStepDownClicked.connect(self.decrement)
+        self.sigStepUpCenterClicked.connect(self.increment)
+        self.sigStepDownCenterClicked.connect(self.decrement)
 
         self.sigStepUpClickedZernike.connect(self.incrementZern)
         self.sigStepDownClickedZernike.connect(self.decrementZern)

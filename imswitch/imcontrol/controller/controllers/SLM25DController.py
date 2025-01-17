@@ -31,28 +31,20 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self.Params = self.getAllWidgetParams()
         self.matrix25d = self._widget.matrix25d
+        
             
-        self._widget.updateMask.connect(self.updateCenterPhaseMask)
-        self._widget.sigStepUpClicked.connect(self.updateCenterPhaseMask)
-        self._widget.sigStepDownClicked.connect(self.updateCenterPhaseMask)
+        self._widget.updateCenterMask.connect(self.updateAll)
+        self._widget.sigStepUpCenterClicked.connect(self.updateAll)
+        self._widget.sigStepDownCenterClicked.connect(self.updateAll)
 
         self._widget.updateMask.connect(self.updatePhaseMask)
         self._widget.sigStepUpClicked.connect(self.updatePhaseMask)
         self._widget.sigStepDownClicked.connect(self.updatePhaseMask)
-
-        self._widget.updateMaskZernike.connect(self.updateZernikePhaseMask)
-        self._widget.sigStepUpClickedZernike.connect(self.updateZernikePhaseMask)
-        self._widget.sigStepDownClickedZernike.connect(self.updateZernikePhaseMask)
-
-        self._widget.updateMaskZernike.connect(self.projectZernike)
-        self._widget.sigStepUpClickedZernike.connect(self.projectZernike)
-        self._widget.sigStepDownClickedZernike.connect(self.projectZernike)
-
-        self._widget.updateMask.connect(self.recalculateZernikePhaseMask)
-        self._widget.sigStepUpClicked.connect(self.recalculateZernikePhaseMask)
-        self._widget.sigStepDownClicked.connect(self.recalculateZernikePhaseMask)
-
-        
+    
+        self._widget.updateMaskZernike.connect(self.updateZernike)
+        self._widget.sigStepUpClickedZernike.connect(self.updateZernike)
+        self._widget.sigStepDownClickedZernike.connect(self.updateZernike)
+       
 
         # self.zPositioner = self._master.positionersManager._subManagers['Z']
         # self._widget.sigDisplayZernike.connect(self.projectZernike)
@@ -60,6 +52,16 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+
+    def updateZernike(self):
+        self.updateZernikePhaseMask()
+        self.projectZernike()
+
+    def updateAll(self):
+        self.updateCenterPhaseMask()
+        self.updatePhaseMask()
+        self.recalculateZernikePhaseMask()
+        self.projectZernike()
 
     def openPreviewWindow(self):
         self.slm25DManager.openPreviewWindow()
@@ -81,7 +83,7 @@ class SLM25DController(ImConWidgetController):
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
         # currentPos = self.zPositioner.get_abs()
 
-    def projectZernike(self, _):
+    def projectZernike(self):
         self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
 
 
