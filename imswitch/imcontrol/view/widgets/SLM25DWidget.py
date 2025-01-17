@@ -34,40 +34,68 @@ class SLM25DWidget(Widget):
         super().__init__(*args, **kwargs)
 
         # Zernike mask image
-        self.slmFrameZernike = pg.GraphicsLayoutWidget()
-        self.slmFrameZernike.setEnabled(False)
-        self.vbZernike = self.slmFrameZernike.addViewBox(row=0, col=1)
+        self.slmFrame = pg.GraphicsLayoutWidget()
+        self.slmFrame.setEnabled(False)
+        self.vbZernike = self.slmFrame.addViewBox(row=0, col=0)
+        self.vb25D = self.slmFrame.addViewBox(row=0, col=1)
         self.imgZernike = pg.ImageItem()
-        self.matrixZernike = np.ones((1920, 1080)) * 255
-        self.imgZernike.setImage(self.matrixZernike, autoLevels=True, autoDownsample=True,
-                          autoRange=True)
+        self.img25d = pg.ImageItem()
+
+        self.matrixZernike = np.zeros((1920, 1080))
+        self.matrix25d = np.zeros((1920, 1080))
+        # self.imgZernike.setImage(self.matrixZernike, autoLevels=True, autoDownsample=True,
+        #                   autoRange=True)
+        # self.img25d.setImage(self.matrix25d, autoLevels=True, autoDownsample=True,
+        #                   autoRange=True)
+
+        self.imgZernike.setImage(self.matrixZernike)
+        self.img25d.setImage(self.matrix25d)
+        
         self.vbZernike.addItem(self.imgZernike)
         self.vbZernike.setAspectLocked(True)
+        self.slmFrame.addLabel('Zernike', row=1, col=0)
+
+        self.vb25D.addItem(self.img25d)
+        self.vb25D.setAspectLocked(True)
+        self.slmFrame.addLabel('2.5D Mask', row=1, col=1)
+
 
         # Centering mask image
-        self.slmFrameCenter = pg.GraphicsLayoutWidget()
-        self.slmFrameCenter.setEnabled(False)
-        self.vbCenter = self.slmFrameCenter.addViewBox(row=13, col=1)
-        self.imgCenter = pg.ImageItem()
-        self.matrixCenter = np.ones((1920, 1080)) * 255
-        self.imgCenter.setImage(self.matrixCenter, autoLevels=True, autoDownsample=True,
-                          autoRange=True)
-        self.vbCenter.addItem(self.imgCenter)
-        self.vbCenter.setAspectLocked(True)
+        # self.slmFrameCenter = pg.GraphicsLayoutWidget()
+        # self.slmFrameCenter.setEnabled(False)
+        # self.vbCenter = self.slmFrameCenter.addViewBox(row=13, col=1)
+        # self.imgCenter = pg.ImageItem()
+        # self.matrixCenter = np.zeros((1920, 1080))
+        # self.imgCenter.setImage(self.matrixCenter, autoLevels=True, autoDownsample=True,
+        #                   autoRange=True)
+        # self.vbCenter.addItem(self.imgCenter)
+        # self.vbCenter.setAspectLocked(True)
+
+
         
-        # 2.5D mask image
-        self.slmFrame25d = pg.GraphicsLayoutWidget()
-        self.slmFrame25d.setEnabled(False)
-        self.vb25d = self.slmFrame25d.addViewBox(row=14, col=1)
-        self.img25d = pg.ImageItem()
-        self.matrix25d = np.ones((1920, 1080)) * 255
-        self.img25d.setImage(self.matrix25d, autoLevels=True, autoDownsample=True,
-                          autoRange=True)
-        self.vb25d.addItem(self.img25d)
-        self.vb25d.setAspectLocked(True)
+        # # 2.5D mask image
+        # self.slmFrame25d = pg.GraphicsLayoutWidget()
+        # self.slmFrame25d.setEnabled(False)
+        # self.vb25d = self.slmFrame25d.addViewBox(row=14, col=1)
+        # self.img25d = pg.ImageItem()
+        # self.matrix25d = np.ones((1920, 1080)) * 255
+        # self.img25d.setImage(self.matrix25d, autoLevels=True, autoDownsample=True,
+        #                   autoRange=True)
+        # self.vb25d.addItem(self.img25d)
+        # self.vb25d.setAspectLocked(True)
+
+
+
+
 
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
+    
+        self.projectZernike = QCheckBox('Project Zernike')
+        self.projectZernike.setEnabled(True)
+        self.project25D = QCheckBox('Project 2.5D Mask')
+        self.project25D.setEnabled(True)
+
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
@@ -79,10 +107,23 @@ class SLM25DWidget(Widget):
         self.setLayout(self.grid)
         # self.grid.addWidget(widgetName, row, column, rowspan, columln)
         self.grid.addWidget(self.activate25DSLM,0,0)
+        self.grid.addWidget(self.projectZernike,0,1)
+        self.grid.addWidget(self.project25D,0,2)
         self.grid.addWidget(self.slmPreview, 0, 3)
-        self.grid.addWidget(self.slmFrameZernike, 1, 0, 3, 6)
-        self.grid.addWidget(self.slmFrameCenter, 19, 0, 3, 6)
-        self.grid.addWidget(self.slmFrame25d, 22, 0, 3, 6)
+        self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
+        # self.grid.addWidget(self.slmFrameCenter, 19, 0, 3, 6)
+        # self.grid.addWidget(self.slmFrame25d, 22, 0, 3, 6)
+
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.HLine)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(200)
+        self.grid.addWidget(self.myframe, 3, 0, 1, 6 )
+        self.myframe2 = QFrame()
+        self.myframe2.setFrameShape(QFrame.HLine)
+        self.myframe2.setFrameShadow(QFrame.Plain)
+        self.myframe2.setLineWidth(200)
+        self.grid.addWidget(self.myframe2, 15, 0, 1, 6 )
 
 
 
@@ -103,10 +144,12 @@ class SLM25DWidget(Widget):
             label = f'{labelNames}'
 
             #Define all widget items
-            self.pars['Label' + name] = QtWidgets.QLabel(f'<strong>{label}</strong>')
+            self.pars['Label' + name] = QtWidgets.QLabel(f'{label}')
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
             self.pars['UpButton' + name] = guitools.BetterPushButton('+')
+            self.pars['UpButton' + name].setFixedWidth(100)
             self.pars['DownButton' + name] = guitools.BetterPushButton('-')
+            self.pars['DownButton' + name].setFixedWidth(100)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit(AbsInitialValue)
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
 
@@ -124,19 +167,19 @@ class SLM25DWidget(Widget):
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
             self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
             # self.grid.addWidget(self.pars['StepEdit' + name], self.numParams, 3)
-            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 4)
+            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 5)
 
 
             # Connect buttons to signals
             self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClickedZernike.emit(name))
             self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClickedZernike.emit(name))
-            self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
+            # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
             self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
 
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
-        self.numParams = 26
+        self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         AbsaxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "0.006"}
         StepaxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.001"}
@@ -151,12 +194,12 @@ class SLM25DWidget(Widget):
             label = f'{name}'
 
             #Define all widget items
-            self.pars['Label' + name] = QtWidgets.QLabel(f'<strong>{label}</strong>')
+            self.pars['Label' + name] = QtWidgets.QLabel(f'{label}')
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
-            self.pars['UpButton' + name] = guitools.BetterPushButton('+')
-            self.pars['UpButton' + name].setFixedWidth(75)
             self.pars['DownButton' + name] = guitools.BetterPushButton('-')
-            self.pars['DownButton' + name].setFixedWidth(75)
+            self.pars['DownButton' + name].setFixedWidth(100)
+            self.pars['UpButton' + name] = guitools.BetterPushButton('+')
+            self.pars['UpButton' + name].setFixedWidth(100)
             self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
             self.pars['StepEdit' + name].setFixedWidth(75)
             self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
@@ -183,7 +226,7 @@ class SLM25DWidget(Widget):
 
             # Connect buttons to signals
 
-            if name == ('Gamma' or 'Psi'):
+            if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
                 self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
                 # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))
@@ -204,7 +247,22 @@ class SLM25DWidget(Widget):
         self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel.setEnabled(False)
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel, 4, 4)
+        self.grid.addWidget(self.valLabel, 4, 5)
+
+        self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
+        self.valLabel2.setEnabled(False)
+        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
+        self.grid.addWidget(self.valLabel2, 16, 5)
+
+        self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
+        self.zernLabel.setEnabled(False)
+        self.zernLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid.addWidget(self.zernLabel, 4, 0)
+
+        self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
+        self.label25D.setEnabled(False)
+        self.label25D.setTextFormat(QtCore.Qt.RichText)
+        self.grid.addWidget(self.label25D, 16, 0)
 
         # Connect received signals to funcions
         self.sigStepUpClicked.connect(self.increment)
@@ -214,14 +272,18 @@ class SLM25DWidget(Widget):
 
         self.sigStepUpClickedZernike.connect(self.incrementZern)
         self.sigStepDownClickedZernike.connect(self.decrementZern)
-        
+         
 
     def disableAll(self):
         self.slmPreview.setEnabled(False)
         self.valLabel.setEnabled(False)
-        self.slmFrameZernike.setEnabled(False)
-        self.slmFrameCenter.setEnabled(False)
-        self.slmFrame25d.setEnabled(False)
+        self.valLabel2.setEnabled(False)
+        self.slmFrame.setEnabled(False)
+        self.zernLabel.setEnabled(False)
+        self.label25D.setEnabled(False)
+
+        # self.slmFrameCenter.setEnabled(False)
+        # self.slmFrame25d.setEnabled(False)
         for i in range(len(self.ZernikeCoefficientNames)):
             name = self.ZernikeCoefficientNames[i]
             self.pars['Label' + name].setEnabled(False)
@@ -242,9 +304,12 @@ class SLM25DWidget(Widget):
     def enableAll(self):
         self.slmPreview.setEnabled(True)
         self.valLabel.setEnabled(True)
-        self.slmFrameZernike.setEnabled(True)
-        self.slmFrameCenter.setEnabled(True)
-        self.slmFrame25d.setEnabled(True)
+        self.valLabel2.setEnabled(True)
+        self.slmFrame.setEnabled(True)
+        self.zernLabel.setEnabled(True)
+        self.label25D.setEnabled(True)
+        # self.slmFrameCenter.setEnabled(True)
+        # self.slmFrame25d.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):
             name = self.ZernikeCoefficientNames[i]
             self.pars['Label' + name].setEnabled(True)

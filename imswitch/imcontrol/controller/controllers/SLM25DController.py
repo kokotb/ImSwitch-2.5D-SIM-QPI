@@ -58,7 +58,7 @@ class SLM25DController(ImConWidgetController):
         self.projectZernike()
 
     def updateAll(self):
-        self.updateCenterPhaseMask()
+        # self.updateCenterPhaseMask()
         self.updatePhaseMask()
         self.recalculateZernikePhaseMask()
         self.projectZernike()
@@ -305,8 +305,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.matrix25d = self.calculatePhaseMask()
         #self._widget.img25d.setImage(self._widget.matrix25d, autoLevels=True, autoDownsample=True, autoRange=True)
         self._widget.img25d.setImage(self._widget.matrix25d, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vb25d.addItem(self._widget.img25d)
-        self._widget.vb25d.setAspectLocked(True)
+        self._widget.vb25D.addItem(self._widget.img25d)
+        self._widget.vb25D.setAspectLocked(True)
     
     def updateCenterPhaseMask(self):
         self._widget.matrixCenter = self.calculateCenterPhaseMask()
