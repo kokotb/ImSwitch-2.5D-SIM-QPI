@@ -5,7 +5,7 @@ from qtpy import QtCore, QtWidgets
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QWheelEvent , QDoubleValidator
+from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 
 class SLM25DWidget(Widget):
@@ -89,12 +89,12 @@ class SLM25DWidget(Widget):
         self.myframe.setFrameShape(QFrame.HLine)
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(200)
-        self.grid.addWidget(self.myframe, 3, 0, 1, 6 )
+        self.grid.addWidget(self.myframe, 3, 0, 1, 7)
         self.myframe2 = QFrame()
         self.myframe2.setFrameShape(QFrame.HLine)
         self.myframe2.setFrameShadow(QFrame.Plain)
         self.myframe2.setLineWidth(200)
-        self.grid.addWidget(self.myframe2, 15, 0, 1, 6 )
+        self.grid.addWidget(self.myframe2, 15, 0, 1, 7)
 
 
 
@@ -186,6 +186,19 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
+            # Integer validator
+            if (name == 'Left Center-X') or (name == 'Left Center-Y') or (name == 'Right Center-X') or (name == 'Right Center-Y'):
+                self.validator = QIntValidator(1,100)
+                self.pars['StepEdit' + name].setValidator(self.validator)
+                self.validator = QIntValidator(1,1920)
+                self.pars['AbsPosEdit' + name].setValidator(self.validator)
+
+            if (name == 'Gamma') or (name == 'Psi') or (name == 'Beam Diameter'):
+                self.validator = QDoubleValidator()
+                self.pars['StepEdit' + name].setValidator(self.validator)
+                self.validator = QDoubleValidator()
+                self.pars['AbsPosEdit' + name].setValidator(self.validator)
+
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams, 1)
@@ -235,6 +248,11 @@ class SLM25DWidget(Widget):
         self.label25D.setTextFormat(QtCore.Qt.RichText)
         self.grid.addWidget(self.label25D, 16, 0)
 
+        self.label25DStep = QtWidgets.QLabel(f'<strong>Step</strong>')
+        self.label25DStep.setEnabled(False)
+        self.label25DStep.setTextFormat(QtCore.Qt.RichText)
+        self.grid.addWidget(self.label25DStep, 16, 3)
+
         # Connect received signals to funcions
         self.sigStepUpClicked.connect(self.increment)
         self.sigStepDownClicked.connect(self.decrement)
@@ -254,6 +272,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
+        self.label25DStep.setEnabled(False)
 
         # self.slmFrameCenter.setEnabled(False)
         # self.slmFrame25d.setEnabled(False)
@@ -283,6 +302,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
+        self.label25DStep.setEnabled(True)
         # self.slmFrameCenter.setEnabled(True)
         # self.slmFrame25d.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):

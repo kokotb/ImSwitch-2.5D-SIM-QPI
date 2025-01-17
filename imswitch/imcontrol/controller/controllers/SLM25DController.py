@@ -222,45 +222,16 @@ class SLM25DController(ImConWidgetController):
         return self.ZernikeAllMasksSum
 
 
-    # def calculateCenterPhaseMask(self):
-    #     parameters = self.getAllWidgetParams()
-    #     rho = parameters["Beam Diameter"]
-    #     xleftcenter = parameters["Left Center-X"]
-    #     yleftcenter = parameters["Left Center-Y"]
-    #     xrightcenter = parameters["Right Center-X"]
-    #     yrightcenter = parameters["Right Center-Y"]
+    def getCurrentCenters(self):
+        valueList = {}
+        wantedParams = ["Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y"]
+        for index in self._widget.paramNames:
+            if index in wantedParams:
+                name = 'AbsPosEdit' + index
+                widgetObject = self._widget.pars[name]
+                valueList[index] = self.axisValTypes[index](widgetObject.text())
 
-    #     # SLM screen size parameters
-    #     numberXpix = 1920
-    #     numberYpix = 1080
-    #     pszSLM = 0.000008 # (in m, 8 um) pixel size
-    #     rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
-    #     rhoPupilAperturePix = rhoPupilAperture/pszSLM
-        
-    #     # ====================================================================================================================================
-    #     y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
-    #     y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
-    #     x_coordsright += 960
-
-    #     rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
-    #     rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
-
-    #     rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
-    #     # ====================================================================================================================================
-
-    #     blurmatrixleft = x_coordsleft + y_coordsleft
-    #     blurmatrixright = x_coordsright + y_coordsright
-    #     blurMask = np.concatenate((blurmatrixleft, blurmatrixright),axis=1)
-    #     blurMask = np.where(blurMask % 2 == 0, 0, 255)
-    #     blurMask = blurMask.astype(np.uint8)
-    #     blurMask = blurMask.transpose()
-
-    #     maskbinary = np.where(rhomatrix >= 1., 50, 255)
-    #     maskbinary = maskbinary.astype(np.uint8)
-    #     maskbinary = maskbinary.transpose()
-
-    #     return maskbinary
-
+        return valueList
 
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
