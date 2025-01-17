@@ -36,56 +36,23 @@ class SLM25DWidget(Widget):
         # Zernike mask image
         self.slmFrame = pg.GraphicsLayoutWidget()
         self.slmFrame.setEnabled(False)
-        self.vbZernike = self.slmFrame.addViewBox(row=0, col=0)
-        self.vb25D = self.slmFrame.addViewBox(row=0, col=1)
+        self.slmFrame.addLabel('Zernike', angle=-90, row=0, col=0)
+        self.vbZernike = self.slmFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+        self.slmFrame.addLabel('2.5D Mask', angle=-90, row=0, col=2)
+        self.vb25D = self.slmFrame.addViewBox(row=0, col=3, enableMouse=False, border='w', lockAspect=True)
         self.imgZernike = pg.ImageItem()
         self.img25d = pg.ImageItem()
 
         self.matrixZernike = np.zeros((1920, 1080))
         self.matrix25d = np.zeros((1920, 1080))
-        # self.imgZernike.setImage(self.matrixZernike, autoLevels=True, autoDownsample=True,
-        #                   autoRange=True)
-        # self.img25d.setImage(self.matrix25d, autoLevels=True, autoDownsample=True,
-        #                   autoRange=True)
 
         self.imgZernike.setImage(self.matrixZernike)
         self.img25d.setImage(self.matrix25d)
         
         self.vbZernike.addItem(self.imgZernike)
-        self.vbZernike.setAspectLocked(True)
-        self.slmFrame.addLabel('Zernike', row=1, col=0)
+
 
         self.vb25D.addItem(self.img25d)
-        self.vb25D.setAspectLocked(True)
-        self.slmFrame.addLabel('2.5D Mask', row=1, col=1)
-
-
-        # Centering mask image
-        # self.slmFrameCenter = pg.GraphicsLayoutWidget()
-        # self.slmFrameCenter.setEnabled(False)
-        # self.vbCenter = self.slmFrameCenter.addViewBox(row=13, col=1)
-        # self.imgCenter = pg.ImageItem()
-        # self.matrixCenter = np.zeros((1920, 1080))
-        # self.imgCenter.setImage(self.matrixCenter, autoLevels=True, autoDownsample=True,
-        #                   autoRange=True)
-        # self.vbCenter.addItem(self.imgCenter)
-        # self.vbCenter.setAspectLocked(True)
-
-
-        
-        # # 2.5D mask image
-        # self.slmFrame25d = pg.GraphicsLayoutWidget()
-        # self.slmFrame25d.setEnabled(False)
-        # self.vb25d = self.slmFrame25d.addViewBox(row=14, col=1)
-        # self.img25d = pg.ImageItem()
-        # self.matrix25d = np.ones((1920, 1080)) * 255
-        # self.img25d.setImage(self.matrix25d, autoLevels=True, autoDownsample=True,
-        #                   autoRange=True)
-        # self.vb25d.addItem(self.img25d)
-        # self.vb25d.setAspectLocked(True)
-
-
-
 
 
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
@@ -94,16 +61,15 @@ class SLM25DWidget(Widget):
         self.projectZernike = QCheckBox('Project Zernike')
         self.projectZernike.setChecked(True)
         self.projectZernike.setEnabled(False)
-        # self.projectZernike.setFixedWidth(100)
 
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(True)
         self.project25D.setEnabled(False)
-        # self.projectZernike.setFixedWidth(100)
 
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
+        self.slmPreview.setFixedWidth(250)
 
         # self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
 
@@ -186,8 +152,8 @@ class SLM25DWidget(Widget):
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        AbsaxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "0.006"}
-        StepaxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.001"}
+        AbsaxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
+        StepaxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         for i in range(len(self.paramNames)):
             self.numParams += 1

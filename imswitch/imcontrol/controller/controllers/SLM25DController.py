@@ -28,7 +28,7 @@ class SLM25DController(ImConWidgetController):
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
 
         # Connect CommunicationChannel signals
-        self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
+        # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self.Params = self.getAllWidgetParams()
         self.matrix25d = self._widget.matrix25d
         
@@ -97,22 +97,23 @@ class SLM25DController(ImConWidgetController):
     def getAllWidgetParams(self):
 
         valueList = {}
-        for axis in self._widget.paramNames:
-            name = 'AbsPosEdit' + axis
+        for index in self._widget.paramNames:
+            name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
-            valueList[axis] = self.axisValTypes[axis](widgetObject.text())
+            if index == 'Beam Diameter': # Want beam diamter in meters, but entry box in millimeters.
+                valueList[index] = self.axisValTypes[index](widgetObject.text()) / 1000
+            else:
+                valueList[index] = self.axisValTypes[index](widgetObject.text())
 
-        # final = list(zip(self._widget.axes,valueList))
-        # print(valueList)
         return valueList
     
     def getAllZernikeParams(self):
 
         valueList = {}
-        for axis in self._widget.ZernikeCoefficientNames:
-            name = 'AbsPosEdit' + axis
+        for index in self._widget.ZernikeCoefficientNames:
+            name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
-            valueList[axis] = self.axisValTypes[axis](widgetObject.text())
+            valueList[index] = self.axisValTypes[index](widgetObject.text())
 
         # final = list(zip(self._widget.axes,valueList))
         # print(valueList)
@@ -221,44 +222,44 @@ class SLM25DController(ImConWidgetController):
         return self.ZernikeAllMasksSum
 
 
-    def calculateCenterPhaseMask(self):
-        parameters = self.getAllWidgetParams()
-        rho = parameters["Beam Diameter"]
-        xleftcenter = parameters["Left Center-X"]
-        yleftcenter = parameters["Left Center-Y"]
-        xrightcenter = parameters["Right Center-X"]
-        yrightcenter = parameters["Right Center-Y"]
+    # def calculateCenterPhaseMask(self):
+    #     parameters = self.getAllWidgetParams()
+    #     rho = parameters["Beam Diameter"]
+    #     xleftcenter = parameters["Left Center-X"]
+    #     yleftcenter = parameters["Left Center-Y"]
+    #     xrightcenter = parameters["Right Center-X"]
+    #     yrightcenter = parameters["Right Center-Y"]
 
-        # SLM screen size parameters
-        numberXpix = 1920
-        numberYpix = 1080
-        pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
-        rhoPupilAperturePix = rhoPupilAperture/pszSLM
+    #     # SLM screen size parameters
+    #     numberXpix = 1920
+    #     numberYpix = 1080
+    #     pszSLM = 0.000008 # (in m, 8 um) pixel size
+    #     rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
+    #     rhoPupilAperturePix = rhoPupilAperture/pszSLM
         
-        # ====================================================================================================================================
-        y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
-        y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
-        x_coordsright += 960
+    #     # ====================================================================================================================================
+    #     y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
+    #     y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
+    #     x_coordsright += 960
 
-        rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
-        rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
+    #     rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
+    #     rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
 
-        rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
-        # ====================================================================================================================================
+    #     rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
+    #     # ====================================================================================================================================
 
-        blurmatrixleft = x_coordsleft + y_coordsleft
-        blurmatrixright = x_coordsright + y_coordsright
-        blurMask = np.concatenate((blurmatrixleft, blurmatrixright),axis=1)
-        blurMask = np.where(blurMask % 2 == 0, 0, 255)
-        blurMask = blurMask.astype(np.uint8)
-        blurMask = blurMask.transpose()
+    #     blurmatrixleft = x_coordsleft + y_coordsleft
+    #     blurmatrixright = x_coordsright + y_coordsright
+    #     blurMask = np.concatenate((blurmatrixleft, blurmatrixright),axis=1)
+    #     blurMask = np.where(blurMask % 2 == 0, 0, 255)
+    #     blurMask = blurMask.astype(np.uint8)
+    #     blurMask = blurMask.transpose()
 
-        maskbinary = np.where(rhomatrix >= 1., 50, 255)
-        maskbinary = maskbinary.astype(np.uint8)
-        maskbinary = maskbinary.transpose()
+    #     maskbinary = np.where(rhomatrix >= 1., 50, 255)
+    #     maskbinary = maskbinary.astype(np.uint8)
+    #     maskbinary = maskbinary.transpose()
 
-        return maskbinary
+    #     return maskbinary
 
 
     
@@ -310,30 +311,27 @@ class SLM25DController(ImConWidgetController):
     
     def updatePhaseMask(self):
         self._widget.matrix25d = self.calculatePhaseMask()
-        #self._widget.img25d.setImage(self._widget.matrix25d, autoLevels=True, autoDownsample=True, autoRange=True)
-        self._widget.img25d.setImage(self._widget.matrix25d, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vb25D.addItem(self._widget.img25d)
+        self._widget.img25d.setImage(self._widget.matrix25d)
+        # self._widget.vb25D.addItem(self._widget.img25d)
         self._widget.vb25D.setAspectLocked(True)
     
-    def updateCenterPhaseMask(self):
-        self._widget.matrixCenter = self.calculateCenterPhaseMask()
-        #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
-        self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vbCenter.addItem(self._widget.imgCenter)
-        self._widget.vbCenter.setAspectLocked(True)
+    # def updateCenterPhaseMask(self):
+    #     self._widget.matrixCenter = self.calculateCenterPhaseMask()
+    #     #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
+    #     self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=False, autoDownsample=False, autoRange=False)
+    #     self._widget.vbCenter.addItem(self._widget.imgCenter)
+    #     self._widget.vbCenter.setAspectLocked(True)
 
     def updateZernikePhaseMask(self):
         self._widget.matrixZernike = self.calculateZernikePhaseMask()
-        #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
-        self._widget.imgZernike.setImage(self._widget.matrixZernike, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vbZernike.addItem(self._widget.imgZernike)
+        self._widget.imgZernike.setImage(self._widget.matrixZernike)
+        # self._widget.vbZernike.addItem(self._widget.imgZernike)
         self._widget.vbZernike.setAspectLocked(True)
 
     def recalculateZernikePhaseMask(self):
         self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
-        #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
-        self._widget.imgZernike.setImage(self._widget.matrixZernike, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vbZernike.addItem(self._widget.imgZernike)
+        self._widget.imgZernike.setImage(self._widget.matrixZernike)
+        # self._widget.vbZernike.addItem(self._widget.imgZernike)
         self._widget.vbZernike.setAspectLocked(True)
 
     def valueChanged(self, attrCategory, parameterName, value):
