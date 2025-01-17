@@ -8,12 +8,12 @@ from imswitch.imcommon.model import dirtools, initLogger
 from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 import zernpol
-<<<<<<< HEAD
+
 from PIL import Image, ImageDraw
 import pyqtgraph as pg
-=======
+
 import time
->>>>>>> 51e39001c18af7326c4a4034fbfddf3a60584c32
+
 
 
 class SLM25DController(ImConWidgetController):
