@@ -30,26 +30,28 @@ class MockSDKPriorDLL(PositionerManager):
 
     def PriorScientificSDK_cmd(self, sessionID, msg_encoded_in_buffer, rx):
         msg = msg_encoded_in_buffer.value.decode()
+        ret = 0
+        value_out = '0,0'
         if msg == "controller.stage.position.get":
             value_x = self._position['X']
             value_y = self._position['Y']
             value_out = str(value_x)+","+str(value_y)
             ret = 0
-        if "controller.stage.goto-position" in msg:
+        elif "controller.stage.goto-position" in msg:
             ret = 0
             value_x = self._position['X']
             value_y = self._position['Y']
             value_out = str(value_x)+","+str(value_y)
-        if "controller.stage.speed.get" in msg:
+        elif "controller.stage.speed.get" in msg:
             ret = 0
             value_out = '1'
-        if "controller.stage.speed.set" in msg:
+        elif "controller.stage.speed.set" in msg:
             ret = 0
             value_out = int(float(msg.split(" ")[1]))
-        if "controller.stage.busy.get" in msg:
+        elif "controller.stage.busy.get" in msg:
             ret = 0
             value_out = '0'
-        if "controller.stage.move-relative " in msg:
+        elif "controller.stage.move-relative " in msg:
             ret = 0
             dist_x = float(msg.split(" ")[1])
             dist_y = float(msg.split(" ")[2])

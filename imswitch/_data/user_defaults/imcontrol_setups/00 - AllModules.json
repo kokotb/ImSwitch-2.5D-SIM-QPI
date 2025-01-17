@@ -13,7 +13,7 @@
   "width":1080,
   "height":1920,
   "managerName": "SLM25DManager",
-  "mock": false,
+  "mock": true,
   "monitorIdx": 1
 
 },
