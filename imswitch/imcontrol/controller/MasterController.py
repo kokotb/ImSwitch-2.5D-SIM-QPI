@@ -6,7 +6,7 @@ from imswitch.imcommon.model import VFileItem, initLogger
 
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, PositionersManager, RS232sManager, 
-     SLM25DManager, SLM4DDManager, ArduinoManager, TilingManager, ROIManager, SLM25DManagerMock
+     SLM25DManager, SLM4DDManager, SLM4DDManagerMock, ArduinoManager, TilingManager, ROIManager, SLM25DManagerMock
 )
 
 
@@ -60,10 +60,10 @@ class MasterController:
         # self.simManager = SIMManager(self.__setupInfo.sim)
         
         if self.__setupInfo.SIMslm:
-            # if self.__setupInfo.SIMslm.mock:
-            #     self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
-            # else:    
-            self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
+            if self.__setupInfo.SIMslm.mock:
+              self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
+            else:    
+                self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,

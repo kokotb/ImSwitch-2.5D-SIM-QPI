@@ -14,7 +14,7 @@ from .SLM25DManagerMock import SLM25DManagerMock
 # from .RotatorsManager import RotatorsManager
 # from .SIMManager import SIMManager 
 from .SLM4DDManager import SLM4DDManager
-# from .SLM4DDManagerMock import SLM4DDManagerMock
+from .SLM4DDManagerMock import SLM4DDManagerMock
 from .ArduinoManager import ArduinoManager
 from .TilingManager import TilingManager
 from .ROIManager import ROIManager
