@@ -46,13 +46,21 @@ class SLM25DWidget(Widget):
         self.matrixZernike = np.zeros((1920, 1080))
         self.matrix25d = np.zeros((1920, 1080))
 
+        self.overlayMatrix25D =  np.ones((1920, 1080)) * 255
+        self.overlayImg25D = pg.ImageItem(self.overlayMatrix25D, opacity=0.5)
+
+
+
         self.imgZernike.setImage(self.matrixZernike)
         self.img25d.setImage(self.matrix25d)
         
         self.vbZernike.addItem(self.imgZernike)
 
+        self.vb25D.addItem(self.img25d) #This line must before addItem(self.overlayImg25D) so transparent overlay is on top of this layer.
+        self.vb25D.addItem(self.overlayImg25D)
+        
 
-        self.vb25D.addItem(self.img25d)
+
 
 
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
@@ -192,7 +200,7 @@ class SLM25DWidget(Widget):
                 self.pars['StepEdit' + name].setValidator(self.validator)
                 self.validator = QIntValidator(1,1920)
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
-
+            # Double validator
             if (name == 'Gamma') or (name == 'Psi') or (name == 'Beam Diameter'):
                 self.validator = QDoubleValidator()
                 self.pars['StepEdit' + name].setValidator(self.validator)

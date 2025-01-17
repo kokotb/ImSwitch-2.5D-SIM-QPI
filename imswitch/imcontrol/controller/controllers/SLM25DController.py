@@ -8,6 +8,8 @@ from imswitch.imcommon.model import dirtools, initLogger
 from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 import zernpol
+from PIL import Image, ImageDraw
+import pyqtgraph as pg
 
 
 class SLM25DController(ImConWidgetController):
@@ -94,7 +96,7 @@ class SLM25DController(ImConWidgetController):
 
         return maskReshaped
 
-    def getAllWidgetParams(self):
+    def getAllWidgetParams(self): #is there a loop somewhere
 
         valueList = {}
         for index in self._widget.paramNames:
@@ -105,7 +107,37 @@ class SLM25DController(ImConWidgetController):
             else:
                 valueList[index] = self.axisValTypes[index](widgetObject.text())
 
+        self.createCenterDotImage()
+
         return valueList
+    
+    def createCenterDotImage(self):
+        lx, ly, rx, ry = self.getCurrentCenters()
+
+        ly = 1080-ly #The pixels are counted from bottom left in other system, so Y needs to be inverted.
+        ry = 1080-ry
+
+        llx = lx - 20 #left side of the left half X
+        rlx = lx + 20
+        lrx = rx - 20
+        rrx = rx + 20
+
+        toply = ly + 20 #left side of the left half X
+        bly = ly - 20
+        topry = ry + 20
+        bry = ry - 20
+
+
+        im = Image.new('RGB', (1920, 1080), (255, 255, 255, 0))
+        draw = ImageDraw.Draw(im)
+        draw.ellipse([llx, bly, rlx, toply], fill=(255, 0, 0))
+        draw.ellipse([lrx, bry, rrx, topry], fill=(255, 0, 0))
+        centerArray = np.array(im)
+        centerArray = np.rot90(centerArray, 3)
+        # self.overlayImg25D = pg.ImageItem(centerArray, opacity=0.5)
+        # self._widget.vb25D.addItem(self.overlayImg25D)
+        self._widget.overlayImg25D.setImage(centerArray)
+
     
     def getAllZernikeParams(self):
 
@@ -223,15 +255,15 @@ class SLM25DController(ImConWidgetController):
 
 
     def getCurrentCenters(self):
-        valueList = {}
+        valueList = []
         wantedParams = ["Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y"]
         for index in self._widget.paramNames:
             if index in wantedParams:
                 name = 'AbsPosEdit' + index
                 widgetObject = self._widget.pars[name]
-                valueList[index] = self.axisValTypes[index](widgetObject.text())
+                valueList.append(self.axisValTypes[index](widgetObject.text()))
 
-        return valueList
+        return valueList[0], valueList[1], valueList[2], valueList[3], 
 
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
