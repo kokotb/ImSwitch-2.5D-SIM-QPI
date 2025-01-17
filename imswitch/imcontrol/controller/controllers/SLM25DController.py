@@ -31,6 +31,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self.Params = self.getAllWidgetParams()
         self.matrix25d = self._widget.matrix25d
+        
             
         self._widget.updateMask.connect(self.updateCenterPhaseMask)
         self._widget.sigStepUpClicked.connect(self.updateCenterPhaseMask)
@@ -40,6 +41,12 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUpClicked.connect(self.updatePhaseMask)
         self._widget.sigStepDownClicked.connect(self.updatePhaseMask)
 
+        self._widget.updateMask.connect(self.updateZernikePhaseMask)
+        self._widget.sigStepUpClicked.connect(self.updateZernikePhaseMask)
+        self._widget.sigStepDownClicked.connect(self.updateZernikePhaseMask)
+        
+
+
         self._widget.updateMaskZernike.connect(self.updateZernikePhaseMask)
         self._widget.sigStepUpClickedZernike.connect(self.updateZernikePhaseMask)
         self._widget.sigStepDownClickedZernike.connect(self.updateZernikePhaseMask)
@@ -47,11 +54,6 @@ class SLM25DController(ImConWidgetController):
         self._widget.updateMaskZernike.connect(self.projectZernike)
         self._widget.sigStepUpClickedZernike.connect(self.projectZernike)
         self._widget.sigStepDownClickedZernike.connect(self.projectZernike)
-
-        self._widget.updateMask.connect(self.recalculateZernikePhaseMask)
-        self._widget.sigStepUpClicked.connect(self.recalculateZernikePhaseMask)
-        self._widget.sigStepDownClicked.connect(self.recalculateZernikePhaseMask)
-
         
 
         # self.zPositioner = self._master.positionersManager._subManagers['Z']
@@ -320,12 +322,12 @@ class SLM25DController(ImConWidgetController):
         self._widget.vbZernike.addItem(self._widget.imgZernike)
         self._widget.vbZernike.setAspectLocked(True)
 
-    def recalculateZernikePhaseMask(self):
-        self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
-        #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
-        self._widget.imgZernike.setImage(self._widget.matrixZernike, autoLevels=False, autoDownsample=False, autoRange=False)
-        self._widget.vbZernike.addItem(self._widget.imgZernike)
-        self._widget.vbZernike.setAspectLocked(True)
+    # def recalculateZernikePhaseMask(self):
+    #     self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
+    #     #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
+    #     self._widget.imgZernike.setImage(self._widget.matrixZernike, autoLevels=False, autoDownsample=False, autoRange=False)
+    #     self._widget.vbZernike.addItem(self._widget.imgZernike)
+    #     self._widget.vbZernike.setAspectLocked(True)
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)

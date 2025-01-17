@@ -24,23 +24,23 @@ class SLM25DManager(SignalInterface):
         if SLM25DInfo is None:
             return
 
-        self.__slmInfo = slmInfo
-        self.__wavelength = self.__slmInfo.wavelength
-        self.__pixelsize = self.__slmInfo.pixelSize
-        self.__slmSize = (self.__slmInfo.width, self.__slmInfo.height)
-        self.__correctionPatternsDir = self.__slmInfo.correctionPatternsDir
-        self.__maskLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
-        self.__maskRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
-        self.__masks = [self.__maskLeft, self.__maskRight]
+        # self.__slmInfo = slmInfo 
+        # self.__wavelength = self.__slmInfo.wavelength
+        # self.__pixelsize = self.__slmInfo.pixelSize
+        # self.__slmSize = (self.__slmInfo.width, self.__slmInfo.height)
+        # self.__correctionPatternsDir = self.__slmInfo.correctionPatternsDir
+        # self.__maskLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
+        # self.__maskRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
+        # self.__masks = [self.__maskLeft, self.__maskRight]
 
-        self.initCorrectionMask()
-        self.initTiltMask()
-        self.initAberrationMask()
+        # self.initCorrectionMask()
+        # self.initTiltMask()
+        # self.initAberrationMask()
 
-        self.__masksAber = [self.__maskAberLeft, self.__maskAberRight]
-        self.__masksTilt = [self.__maskTiltLeft, self.__maskTiltRight]
+        # self.__masksAber = [self.__maskAberLeft, self.__maskAberRight]
+        # self.__masksTilt = [self.__maskTiltLeft, self.__maskTiltRight]
 
-        self.update(maskChange=True, tiltChange=True, aberChange=True)
+        # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
 
     def projectMask(self, mask):

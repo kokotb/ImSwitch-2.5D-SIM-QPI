@@ -18,7 +18,9 @@ class SLM25DWidget(Widget):
     sigStepUpClickedZernike = QtCore.Signal(str)
     sigStepDownClickedZernike = QtCore.Signal(str)
     updateMaskZernike = QtCore.Signal(str)
-    sigDisplayZernike = QtCore.Signal()
+    
+    # sigDisplayZernike = QtCore.Signal()
+
     sigToggleSLM = QtCore.Signal(bool)
     sigOpenPreviewButton = QtCore.Signal()
 

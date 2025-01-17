@@ -47,7 +47,11 @@ class MasterController:
         #                                        **lowLevelManagers)
 
         # self.recordingManager = RecordingManager(self.detectorsManager)
-        self.slm25DManager = SLM25DManager(self.__setupInfo.slm)
+
+        if self.__setupInfo.SLM25D.mock == False:
+            self.slm25DManager = SLM25DManager(self.__setupInfo.SLM25D)
+        elif self.__setupInfo.SLM25D.mock == True:
+            self.slm25DManager = SLM25DManagerMock(self.__setupInfo.SLM25D)
 
         # if self.__setupInfo.microscopeStand:
         #     self.standManager = StandManager(self.__setupInfo.microscopeStand,
