@@ -183,7 +183,7 @@ class SLM25DWidget(Widget):
 
             # Connect buttons to signals
 
-            if name == ('Gamma' or 'Psi'):
+            if (name == 'Gamma') or (name =='Psi'):
                 self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
                 self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
                 # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))

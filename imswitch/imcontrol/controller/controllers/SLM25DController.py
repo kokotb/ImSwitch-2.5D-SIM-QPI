@@ -153,7 +153,10 @@ class SLM25DController(ImConWidgetController):
             zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
             zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-            zernikeMask[np.isnan(zernikeMask)] = 0
+            if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+                zernikeMask[np.isnan(zernikeMask)] = 0
+            else: 
+                zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
             # Normalize and transpose
             zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
@@ -200,7 +203,11 @@ class SLM25DController(ImConWidgetController):
             zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
             zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-            zernikeMask[np.isnan(zernikeMask)] = 0
+            if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+                zernikeMask[np.isnan(zernikeMask)] = 0
+            else: 
+                zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
+
 
             # Normalize and transpose
             zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
