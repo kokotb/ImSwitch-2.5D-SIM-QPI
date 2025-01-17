@@ -8,6 +8,7 @@ from imswitch.imcommon.model import dirtools, initLogger
 from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 import zernpol
+import time
 
 
 class SLM25DController(ImConWidgetController):
@@ -170,6 +171,7 @@ class SLM25DController(ImConWidgetController):
         return self.ZernikeAllMasksSum
 
     def calculateNewZernikePhaseMask(self):
+        t0 = time.time()
         parameters = self.getAllWidgetParams()
 
         # Beam size and position parameters
@@ -193,15 +195,27 @@ class SLM25DController(ImConWidgetController):
 
         xleftnormalized, yleftnormalized = (x_coordsleft - xleftcenter) / rhoPupilAperturePix , (y_coordsleft - yleftcenter) / rhoPupilAperturePix
         xrightnormalized, yrightnormalized = (x_coordsright - xrightcenter) / rhoPupilAperturePix , (y_coordsright - yrightcenter) / rhoPupilAperturePix
+        
+        rholeft = np.sqrt(xleftnormalized**2 + yleftnormalized**2)
+        phileft = np.arctan2(yleftnormalized, xleftnormalized)
+        rhoright = np.sqrt(xrightnormalized**2 + yrightnormalized**2)
+        phiright = np.arctan2(yrightnormalized, xrightnormalized)
+        
         # ====================================================================================================================================
+
+
 
         zernikeParametersNew = self.getAllZernikeParams()
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
         for name in zernikeParametersNew:
             order = eval(name)
 
-            zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
-            zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
+            #zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
+            #zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
+
+            zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft)
+            zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright)
+            
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
             if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
                 zernikeMask[np.isnan(zernikeMask)] = 0
@@ -218,6 +232,8 @@ class SLM25DController(ImConWidgetController):
 
         self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
         self.zernikeParametersOld = zernikeParametersNew
+        t1 = time.time()
+        print("zernike time = " + str(t1 - t0))
         return self.ZernikeAllMasksSum
 
 
