@@ -92,9 +92,14 @@ class SLM25DWidget(Widget):
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
     
         self.projectZernike = QCheckBox('Project Zernike')
-        self.projectZernike.setEnabled(True)
+        self.projectZernike.setChecked(True)
+        self.projectZernike.setEnabled(False)
+        # self.projectZernike.setFixedWidth(100)
+
         self.project25D = QCheckBox('Project 2.5D Mask')
-        self.project25D.setEnabled(True)
+        self.project25D.setChecked(True)
+        self.project25D.setEnabled(False)
+        # self.projectZernike.setFixedWidth(100)
 
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
@@ -107,10 +112,10 @@ class SLM25DWidget(Widget):
         self.setLayout(self.grid)
         # self.grid.addWidget(widgetName, row, column, rowspan, columln)
         self.grid.addWidget(self.activate25DSLM,0,0)
-        self.grid.addWidget(self.projectZernike,0,1)
-        self.grid.addWidget(self.project25D,0,2)
-        self.grid.addWidget(self.slmPreview, 0, 3)
-        self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
+        self.grid.addWidget(self.projectZernike,0,1,1,2)
+        self.grid.addWidget(self.project25D,0,3, 1, 2)
+        self.grid.addWidget(self.slmPreview, 0, 5)
+        self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
         # self.grid.addWidget(self.slmFrameCenter, 19, 0, 3, 6)
         # self.grid.addWidget(self.slmFrame25d, 22, 0, 3, 6)
 
@@ -281,6 +286,8 @@ class SLM25DWidget(Widget):
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
+        self.projectZernike.setEnabled(False)
+        self.project25D.setEnabled(False)
 
         # self.slmFrameCenter.setEnabled(False)
         # self.slmFrame25d.setEnabled(False)
@@ -308,6 +315,8 @@ class SLM25DWidget(Widget):
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)
         self.label25D.setEnabled(True)
+        self.projectZernike.setEnabled(True)
+        self.project25D.setEnabled(True)
         # self.slmFrameCenter.setEnabled(True)
         # self.slmFrame25d.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):
