@@ -132,7 +132,7 @@ class SLM25DController(ImConWidgetController):
         bry = ry - 20
 
 
-        im = Image.new('RGB', (1920, 1080), (255, 255, 255, 0))
+        im = Image.new('RGB', (1920, 1080), (0, 0, 0, 0))
         draw = ImageDraw.Draw(im)
         draw.ellipse([llx, bly, rlx, toply], fill=(255, 0, 0))
         draw.ellipse([lrx, bry, rrx, topry], fill=(255, 0, 0))
