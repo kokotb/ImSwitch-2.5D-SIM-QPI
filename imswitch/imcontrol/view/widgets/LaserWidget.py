@@ -372,7 +372,11 @@ class LaserModule(QtWidgets.QWidget):
         self.slider.valueChanged.connect(
             lambda value: self.sigValueChanged.emit(value)
         )
-        self.setPointEdit.returnPressed.connect(
+        # self.setPointEdit.returnPressed.connect(
+        #     lambda: self.sigValueChanged.emit(self.getValue())
+        # )
+
+        self.setPointEdit.editingFinished.connect(
             lambda: self.sigValueChanged.emit(self.getValue())
         )
 

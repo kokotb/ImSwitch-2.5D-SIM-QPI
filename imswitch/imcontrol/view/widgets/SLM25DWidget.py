@@ -5,11 +5,12 @@ from qtpy import QtCore, QtWidgets
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QLocale
 from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 
 class SLM25DWidget(Widget):
-    """ Widget containing slm interface. """
+    """ Widget containing 2.5D SLM interface. """
 
     sigStepUpClicked = QtCore.Signal(str)
     sigStepDownClicked = QtCore.Signal(str)
@@ -23,6 +24,10 @@ class SLM25DWidget(Widget):
     sigStepUpClickedZernike = QtCore.Signal(str)
     sigStepDownClickedZernike = QtCore.Signal(str)
     updateMaskZernike = QtCore.Signal(str)
+    sigCheckValidityAbsPos = QtCore.Signal(str)
+    sigCheckValidityStep = QtCore.Signal(str)
+    sigResetZern = QtCore.Signal()
+    sigReset25D = QtCore.Signal()
     
     # sigDisplayZernike = QtCore.Signal()
 
@@ -79,6 +84,15 @@ class SLM25DWidget(Widget):
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
         self.slmPreview.setFixedWidth(250)
 
+        self.resetZern = QPushButton("Reset")
+        self.resetZern.setEnabled(False)
+        self.resetZern.clicked.connect(self.sigResetZern.emit)
+
+        self.reset25D = QPushButton("Reset")
+        self.reset25D.setEnabled(False)
+        self.reset25D.clicked.connect(self.sigReset25D.emit)
+
+
         # self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
 
         # parentLayout = QVBoxLayout()
@@ -90,6 +104,8 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.project25D,0,3, 1, 2)
         self.grid.addWidget(self.slmPreview, 0, 5)
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
+        self.grid.addWidget(self.resetZern, 4, 6)
+        self.grid.addWidget(self.reset25D, 16, 6)
         # self.grid.addWidget(self.slmFrameCenter, 19, 0, 3, 6)
         # self.grid.addWidget(self.slmFrame25d, 22, 0, 3, 6)
 
@@ -137,9 +153,14 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
 
-            self.validator = QDoubleValidator(-5,5,1)
+
+            self.validator = QDoubleValidator(0.0,10.0,1)
+            self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
             self.pars['AbsPosEdit' + name].setValidator(self.validator)
-            # self.pars['AbsPosEdit' + name].setInputMask("0.0;0;_")
+
+            # self.validator = QDoubleValidator(-5.0,5.0,1)
+            # self.pars['AbsPosEdit' + name].setValidator(self.validator)
+
             
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
@@ -154,20 +175,21 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClickedZernike.emit(name))
             # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
             self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
+            self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
 
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        AbsaxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
-        StepaxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
+        self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
+        self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         for i in range(len(self.paramNames)):
             self.numParams += 1
             name = self.paramNames[i]
-            StepInitialValue = StepaxisInitialValues[name]
-            AbsInitialValue = AbsaxisInitialValues[name]
+            StepInitialValue = self.stepAxisInitialValues[name]
+            AbsInitialValue = self.absAxisInitialValues[name]
             self.unit = UnitaxisInitialValues[name]
 
             label = f'{name}'
@@ -201,10 +223,19 @@ class SLM25DWidget(Widget):
                 self.validator = QIntValidator(1,1920)
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
             # Double validator
-            if (name == 'Gamma') or (name == 'Psi') or (name == 'Beam Diameter'):
-                self.validator = QDoubleValidator()
+            elif (name == 'Gamma') or (name == 'Psi'):
+                self.validator = QDoubleValidator(0.1,1.0,1)
+                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QDoubleValidator()
+                self.validator = QDoubleValidator(0.0,5.0,1)
+                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+                self.pars['AbsPosEdit' + name].setValidator(self.validator)
+            elif (name == 'Beam Diameter'):
+                self.validator = QDoubleValidator(0.1,2.0,1)
+                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+                self.pars['StepEdit' + name].setValidator(self.validator)
+                self.validator = QDoubleValidator(0.0,8.0,1)
+                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
 
             # Add to widget object
@@ -221,13 +252,15 @@ class SLM25DWidget(Widget):
             if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
                 self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
-                # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMask.emit(name))
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMask.emit(name))
+                self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+                self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
             else:
                 self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
                 self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
-                # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
+                self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+                self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
 
 
 
@@ -269,8 +302,38 @@ class SLM25DWidget(Widget):
 
         self.sigStepUpClickedZernike.connect(self.incrementZern)
         self.sigStepDownClickedZernike.connect(self.decrementZern)
-         
+        self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
+        self.sigCheckValidityStep.connect(self.checkValidityStep)
+        self.sigResetZern.connect(self.resetZernToDefault)
+        self.sigReset25D.connect(self.reset25DToDefault)
 
+    def reset25DToDefault(self):
+        for name in self.paramNames:
+            absInitValue = self.absAxisInitialValues[name]
+            stepInitValue = self.stepAxisInitialValues[name]
+            self.pars['StepEdit' + name].setText(stepInitValue)
+            self.pars['AbsPosEdit' + name].setText(absInitValue)
+        self.updateCenterMask.emit('_')
+
+    def resetZernToDefault(self):
+        for i in range(len(self.ZernikeCoefficientNames)):
+            self.pars['AbsPosEdit' + self.ZernikeCoefficientNames[i]].setText('0.0')
+        self.updateMaskZernike.emit('_')
+
+    def checkValidityAbsPos(self, name):
+        valid = self.pars['AbsPosEdit'+name].hasAcceptableInput()
+        if valid:
+            self.pars['AbsPosEdit'+name].setStyleSheet('')
+        else:
+            self.pars['AbsPosEdit'+name].setStyleSheet("border: 1px solid red;")
+         
+    def checkValidityStep(self, name):
+        valid = self.pars['StepEdit'+name].hasAcceptableInput()
+        if valid:
+            self.pars['StepEdit'+name].setStyleSheet('')
+        else:
+            self.pars['StepEdit'+name].setStyleSheet("border: 1px solid red;")
+         
     def disableAll(self):
         self.slmPreview.setEnabled(False)
         self.valLabel.setEnabled(False)
@@ -281,7 +344,8 @@ class SLM25DWidget(Widget):
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
         self.label25DStep.setEnabled(False)
-
+        self.resetZern.setEnabled(False)
+        self.reset25D.setEnabled(False)
         # self.slmFrameCenter.setEnabled(False)
         # self.slmFrame25d.setEnabled(False)
         for i in range(len(self.ZernikeCoefficientNames)):
@@ -311,6 +375,8 @@ class SLM25DWidget(Widget):
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
         self.label25DStep.setEnabled(True)
+        self.resetZern.setEnabled(True)
+        self.reset25D.setEnabled(True)
         # self.slmFrameCenter.setEnabled(True)
         # self.slmFrame25d.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):

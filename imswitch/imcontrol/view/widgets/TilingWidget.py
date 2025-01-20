@@ -49,6 +49,7 @@ class TilingWidget(NapariHybridWidget):
         self.overlap_textedit.setFixedWidth(50)
         self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
+        
 
         self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
