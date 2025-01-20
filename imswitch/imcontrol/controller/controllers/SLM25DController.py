@@ -66,8 +66,10 @@ class SLM25DController(ImConWidgetController):
     def updateAll(self):
         # self.updateCenterPhaseMask()
         self.updatePhaseMask()
+        # self.createCenterDotImage()
         self.recalculateZernikePhaseMask()
         self.projectZernike()
+
 
     def openPreviewWindow(self):
         self.slm25DManager.openPreviewWindow()
@@ -111,7 +113,7 @@ class SLM25DController(ImConWidgetController):
             else:
                 valueList[index] = self.axisValTypes[index](widgetObject.text())
 
-        self.createCenterDotImage()
+        
 
         return valueList
     
@@ -336,6 +338,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.img25d.setImage(self._widget.matrix25d)
         # self._widget.vb25D.addItem(self._widget.img25d)
         self._widget.vb25D.setAspectLocked(True)
+        self.createCenterDotImage()
     
     # def updateCenterPhaseMask(self):
     #     self._widget.matrixCenter = self.calculateCenterPhaseMask()

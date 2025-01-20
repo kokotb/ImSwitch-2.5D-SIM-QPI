@@ -216,6 +216,7 @@ class SIMWidget(NapariHybridWidget):
         #Layer contrast buttons grouped together
         self.contrastLabel = QtWidgets.QLabel('Layer Contrasts')
         self.contrastLabel.setAlignment(QtCore.Qt.AlignCenter)
+        # self.contrastLabel.setStyleSheet("padding-bottom :5px;") 
         self.contrastRecon = QPushButton("Recons Once")
         self.contrastFSRaw = QPushButton("Raws Full Scale")
         self.contrastRaw = QPushButton("Raws Once")
