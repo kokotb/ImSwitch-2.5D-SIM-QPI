@@ -45,6 +45,7 @@ class TimingWidget(NapariHybridWidget):
         # self.timingDuration_textedit.editingFinished.connect(self.calcReps)
         self.timingDurationUnit = QtWidgets.QComboBox()
         self.timingDurationUnit.setFixedWidth(75)
+        self.timingDurationUnit.setEnabled(False)
 
         self.checkbox_tilingReps = QCheckBox('Reps')
         self.tilingReps_label = QLabel("Repetitions")
@@ -99,10 +100,12 @@ class TimingWidget(NapariHybridWidget):
             self.timingDuration_textedit.setEnabled(True)
             self.tilingReps_textedit.setEnabled(False)
             self.checkbox_tilingReps.setEnabled(False)
+            self.timingDurationUnit.setEnabled(True)
         else:
             self.timingDuration_textedit.setEnabled(False)
             self.tilingReps_textedit.setEnabled(False)
             self.checkbox_tilingReps.setEnabled(True)
+            self.timingDurationUnit.setEnabled(False)
 
     def toggleReps(self):
         self.repCheckState = not self.repCheckState
