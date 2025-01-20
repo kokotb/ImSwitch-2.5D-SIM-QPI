@@ -38,7 +38,7 @@ class SLM25DController(ImConWidgetController):
         self.Params = self.getAllWidgetParams()
         self.matrix25d = self._widget.matrix25d
         
-            
+    
         self._widget.updateCenterMask.connect(self.updateAll)
         self._widget.sigStepUpCenterClicked.connect(self.updateAll)
         self._widget.sigStepDownCenterClicked.connect(self.updateAll)
@@ -50,10 +50,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.updateMaskZernike.connect(self.updateZernike)
         self._widget.sigStepUpClickedZernike.connect(self.updateZernike)
         self._widget.sigStepDownClickedZernike.connect(self.updateZernike)
-       
 
-        # self.zPositioner = self._master.positionersManager._subManagers['Z']
-        # self._widget.sigDisplayZernike.connect(self.projectZernike)
+        self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
+        self._widget.project25D.stateChanged.connect(self.combineAndProject)
+       
         self.slm25DManager = self._master.slm25DManager
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
@@ -61,14 +61,12 @@ class SLM25DController(ImConWidgetController):
 
     def updateZernike(self):
         self.updateZernikePhaseMask()
-        self.projectZernike()
+        self.combineAndProject()
 
     def updateAll(self):
-        # self.updateCenterPhaseMask()
-        self.updatePhaseMask()
-        # self.createCenterDotImage()
+        self.updatePhaseMask(False)
         self.recalculateZernikePhaseMask()
-        self.projectZernike()
+        self.combineAndProject()
 
 
     def openPreviewWindow(self):
@@ -91,8 +89,8 @@ class SLM25DController(ImConWidgetController):
         # self.zPositioner.setPosition(SETVALUE, ['Z'])
         # currentPos = self.zPositioner.get_abs()
 
-    def projectZernike(self):
-        self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
+    # def projectZernike(self):
+    #     self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
 
 
     def reshapeMask(self, mask):
@@ -273,6 +271,27 @@ class SLM25DController(ImConWidgetController):
         t1 = time.time()
         print("zernike time = " + str(t1 - t0))
         return self.ZernikeAllMasksSum
+    
+    def combineAndProject(self):
+        projZernike = self._widget.projectZernike.checkState()
+        proj25D = self._widget.project25D.checkState()
+        if (projZernike == 2) and (proj25D == 2):
+            if ((self._widget.matrixZernike == 0).all()):
+                self._widget.matrixZernike = np.ones((1920, 1080)) * 255
+            projImg = np.multiply(self._widget.matrixZernike, self.mask25D)
+            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+        elif (projZernike == 2) and (proj25D == 0):
+            if ((self._widget.matrixZernike == 0).all()):
+                self._widget.matrixZernike = np.ones((1920, 1080)) * 255
+            projImg = self._widget.matrixZernike
+            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+        elif (projZernike == 0) and (proj25D == 2):
+            projImg = self.mask25D
+            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+        elif (projZernike == 0) and (proj25D == 0):
+            projImg = np.zeros((1920, 1080))
+            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
 
 
     def getCurrentCenters(self):
@@ -333,12 +352,17 @@ class SLM25DController(ImConWidgetController):
 
         return maskbinary
     
-    def updatePhaseMask(self):
+    def updatePhaseMask(self , recalc = True):
         self._widget.matrix25d = self.calculatePhaseMask()
+        
         self._widget.img25d.setImage(self._widget.matrix25d)
+        self.mask25D = self._widget.matrix25d
         # self._widget.vb25D.addItem(self._widget.img25d)
         self._widget.vb25D.setAspectLocked(True)
         self.createCenterDotImage()
+
+        if recalc:
+            self.combineAndProject()
     
     # def updateCenterPhaseMask(self):
     #     self._widget.matrixCenter = self.calculateCenterPhaseMask()

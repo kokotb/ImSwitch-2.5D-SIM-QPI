@@ -28,6 +28,8 @@ class SLM25DWidget(Widget):
     sigCheckValidityStep = QtCore.Signal(str)
     sigResetZern = QtCore.Signal()
     sigReset25D = QtCore.Signal()
+
+    sigUpdateProjection = QtCore.Signal()
     
     # sigDisplayZernike = QtCore.Signal()
 
@@ -48,15 +50,13 @@ class SLM25DWidget(Widget):
         self.imgZernike = pg.ImageItem()
         self.img25d = pg.ImageItem()
 
-        self.matrixZernike = np.zeros((1920, 1080))
+        self.matrixZernike = np.ones((1920, 1080)) * 255
         self.matrix25d = np.zeros((1920, 1080))
 
         self.overlayMatrix25D =  np.zeros((1920, 1080))
         self.overlayImg25D = pg.ImageItem(self.overlayMatrix25D, opacity=0.5)
 
-
-
-        self.imgZernike.setImage(self.matrixZernike)
+        self.imgZernike.setImage(self.matrixZernike) 
         self.img25d.setImage(self.matrix25d)
         
         self.vbZernike.addItem(self.imgZernike)
@@ -74,6 +74,7 @@ class SLM25DWidget(Widget):
         self.projectZernike = QCheckBox('Project Zernike')
         self.projectZernike.setChecked(True)
         self.projectZernike.setEnabled(False)
+        
 
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(True)
@@ -154,7 +155,7 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setEnabled(False)
 
 
-            self.validator = QDoubleValidator(0.0,10.0,1)
+            self.validator = QDoubleValidator(-5.0,5.0,1)
             self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
             self.pars['AbsPosEdit' + name].setValidator(self.validator)
 
@@ -179,7 +180,7 @@ class SLM25DWidget(Widget):
 
 
 
-        # SETTING PHASE MASK PARAMETERS =========================================================================
+        # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
