@@ -24,6 +24,7 @@ class SLM25DController(ImConWidgetController):
         self.__logger = initLogger(self)
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
+        self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
         if self._setupInfo.SLM25D is None:
@@ -58,13 +59,14 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+        self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
 
     def updateZernike(self):
         self.updateZernikePhaseMask()
         self.combineAndProject()
 
     def updateAll(self):
-        self.updatePhaseMask(False)
+        self.updatePhaseMask(False) # False tell this function to not combineAndProject, as that is handled 2 lines later.
         self.recalculateZernikePhaseMask()
         self.combineAndProject()
 
@@ -88,10 +90,12 @@ class SLM25DController(ImConWidgetController):
         except:
             self._widget.activate25DSLM.setChecked(False)
 
+
     def toggleSLMResource(self, state):
         self.slmActive = self.slm25DManager.toggleSLMResource(state)
         if self.slmActive == True:
             self._widget.enableAll()
+            self.combineAndProject()
         if self.slmActive == False:
             self._widget.disableAll()
 
@@ -283,24 +287,29 @@ class SLM25DController(ImConWidgetController):
             if ((self._widget.matrixZernike == 0).all()):
                 self._widget.matrixZernike = np.ones((1920, 1080)) 
             try:
-                projImg = np.multiply(self._widget.matrixZernike, self.mask25D)
+                projImg = np.multiply(self.mask25D, self._widget.matrixZernike)
             except AttributeError:
-                projImg = np.multiply(self._widget.matrixZernike, np.ones((1920, 1080)) )   
-            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+                projImg = np.add(self._widget.matrixZernike, np.ones((1920, 1080)) )
+
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         elif (projZernike == 2) and (proj25D == 0):
             if ((self._widget.matrixZernike == 0).all()):
                 self._widget.matrixZernike = np.ones((1920, 1080)) 
             projImg = self._widget.matrixZernike
-            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         elif (projZernike == 0) and (proj25D == 2):
             projImg = self.mask25D
-            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         elif (projZernike == 0) and (proj25D == 0):
             projImg = np.zeros((1920, 1080))
-            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
         
         
 
@@ -334,7 +343,7 @@ class SLM25DController(ImConWidgetController):
         gamma = parameters["Gamma"]
         psi = parameters["Psi"]
 
-        
+
         # SLM screen size parameters
         numberXpix = 1920
         numberYpix = 1080
@@ -356,7 +365,7 @@ class SLM25DController(ImConWidgetController):
         mask = self.phase_function_fast(gamma, psi, rhomatrix) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        maskbinary = np.where(mask >= 0, 0, 255)
+        maskbinary = np.where(mask >= 0, 255, 0)
         maskbinary = maskbinary.astype(np.uint8)
         maskbinary = maskbinary.transpose()
 

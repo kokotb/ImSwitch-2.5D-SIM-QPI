@@ -25,32 +25,18 @@ class SLM25DManagerMock(SignalInterface):
         if SLM25DInfo is None:
             return
 
-        # self.__slmInfo = slmInfo
-        # self.__wavelength = self.__slmInfo.wavelength
-        # self.__pixelsize = self.__slmInfo.pixelSize
-        # self.__slmSize = (self.__slmInfo.width, self.__slmInfo.height)
-        # self.__correctionPatternsDir = self.__slmInfo.correctionPatternsDir
-        # self.__maskLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
-        # self.__maskRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2), self.__wavelength)
-        # self.__masks = [self.__maskLeft, self.__maskRight]
-
-        # self.initCorrectionMask()
-        # self.initTiltMask()
-        # self.initAberrationMask()
-
-        # self.__masksAber = [self.__maskAberLeft, self.__maskAberRight]
-        # self.__masksTilt = [self.__maskTiltLeft, self.__maskTiltRight]
-
-        # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
         self.rep = 0
 
     def projectMask(self, mask):
+        if self.rep != 0:
+            plt.cla()
+            plt.close()
         mask2 = np.reshape(mask,(1920, 1080), order='F')
         mask3 = np.rot90(mask2, 3)
         mask4 = np.fliplr(mask3)
-        plt.imshow(mask4)
-        if self.rep == 0:
+        if self.rep != 0:
+            plt.imshow(mask4, cmap='gray')
             plt.show()
         self.rep += 1
 
@@ -74,108 +60,108 @@ class SLM25DManagerMock(SignalInterface):
             self.slmActive = False
         return self.slmActive
 
-    def saveState(self, state_general=None, state_pos=None, state_aber=None):
-        if state_general is not None:
-            self.state_general = state_general
-        if state_pos is not None:
-            self.state_pos = state_pos
-        if state_aber is not None:
-            self.state_aber = state_aber
+    # def saveState(self, state_general=None, state_pos=None, state_aber=None):
+    #     if state_general is not None:
+    #         self.state_general = state_general
+    #     if state_pos is not None:
+    #         self.state_pos = state_pos
+    #     if state_aber is not None:
+    #         self.state_aber = state_aber
 
-    def initCorrectionMask(self):
-        # Add correction mask with correction pattern
-        self.__maskCorrection = Mask(self.__slmSize[1], int(self.__slmSize[0]), self.__wavelength)
-        bmpsCorrection = glob.glob(os.path.join(self.__correctionPatternsDir, "*.bmp"))
+    # def initCorrectionMask(self):
+    #     # Add correction mask with correction pattern
+    #     self.__maskCorrection = Mask(self.__slmSize[1], int(self.__slmSize[0]), self.__wavelength)
+    #     bmpsCorrection = glob.glob(os.path.join(self.__correctionPatternsDir, "*.bmp"))
 
-        if len(bmpsCorrection) < 1:
-            self.__logger.error(
-                'No BMP files found in correction patterns directory, cannot initialize correction'
-                ' mask.'
-            )
-            return
+    #     if len(bmpsCorrection) < 1:
+    #         self.__logger.error(
+    #             'No BMP files found in correction patterns directory, cannot initialize correction'
+    #             ' mask.'
+    #         )
+    #         return
 
-        wavelengthCorrection = [int(x[-9: -6]) for x in bmpsCorrection]
-        # Find the closest correction pattern within the list of patterns available
-        wavelengthCorrectionLoad = min(wavelengthCorrection,
-                                       key=lambda x: abs(x - self.__wavelength))
-        self.__maskCorrection.loadBMP("CAL_LSH0701153_" + str(wavelengthCorrectionLoad) + "nm",
-                                      self.__correctionPatternsDir)
+    #     wavelengthCorrection = [int(x[-9: -6]) for x in bmpsCorrection]
+    #     # Find the closest correction pattern within the list of patterns available
+    #     wavelengthCorrectionLoad = min(wavelengthCorrection,
+    #                                    key=lambda x: abs(x - self.__wavelength))
+    #     self.__maskCorrection.loadBMP("CAL_LSH0701153_" + str(wavelengthCorrectionLoad) + "nm",
+    #                                   self.__correctionPatternsDir)
 
-    def initTiltMask(self):
-        # Add blazed grating tilting mask
-        self.__maskTiltLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
-                                   self.__wavelength)
-        self.__maskTiltLeft.setTilt(self.__pixelsize)
-        self.__maskTiltRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
-                                    self.__wavelength)
-        self.__maskTiltRight.setTilt(self.__pixelsize)
+    # def initTiltMask(self):
+    #     # Add blazed grating tilting mask
+    #     self.__maskTiltLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
+    #                                self.__wavelength)
+    #     self.__maskTiltLeft.setTilt(self.__pixelsize)
+    #     self.__maskTiltRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
+    #                                 self.__wavelength)
+    #     self.__maskTiltRight.setTilt(self.__pixelsize)
 
-    def initAberrationMask(self):
-        # Add blazed grating tilting mask
-        self.__maskAberLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
-                                   self.__wavelength)
-        self.__maskAberLeft.setBlack()
-        self.__maskAberRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
-                                    self.__wavelength)
-        self.__maskAberRight.setBlack()
+    # def initAberrationMask(self):
+    #     # Add blazed grating tilting mask
+    #     self.__maskAberLeft = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
+    #                                self.__wavelength)
+    #     self.__maskAberLeft.setBlack()
+    #     self.__maskAberRight = Mask(self.__slmSize[1], int(self.__slmSize[0] / 2),
+    #                                 self.__wavelength)
+    #     self.__maskAberRight.setBlack()
 
-    def setMask(self, mask, maskMode):
-        if self.__masks[mask].mask_type == MaskMode.Black and maskMode != MaskMode.Black:
-            self.__masksTilt[mask].setTilt(self.__pixelsize)
-        if maskMode == maskMode.Donut:
-            self.__masks[mask].setDonut()
-        elif maskMode == maskMode.Tophat:
-            self.__masks[mask].setTophat()
-        elif maskMode == maskMode.Half:
-            self.__masks[mask].setHalf()
-        elif maskMode == maskMode.Gauss:
-            self.__masks[mask].setGauss()
-        elif maskMode == maskMode.Hex:
-            self.__masks[mask].setHex()
-        elif maskMode == maskMode.Quad:
-            self.__masks[mask].setQuad()
-        elif maskMode == maskMode.Split:
-            self.__masks[mask].setSplit()
-        elif maskMode == maskMode.Black:
-            self.__masks[mask].setBlack()
-            self.__masksTilt[mask].setBlack()
-            self.__masksAber[mask].setBlack()
+    # def setMask(self, mask, maskMode):
+    #     if self.__masks[mask].mask_type == MaskMode.Black and maskMode != MaskMode.Black:
+    #         self.__masksTilt[mask].setTilt(self.__pixelsize)
+    #     if maskMode == maskMode.Donut:
+    #         self.__masks[mask].setDonut()
+    #     elif maskMode == maskMode.Tophat:
+    #         self.__masks[mask].setTophat()
+    #     elif maskMode == maskMode.Half:
+    #         self.__masks[mask].setHalf()
+    #     elif maskMode == maskMode.Gauss:
+    #         self.__masks[mask].setGauss()
+    #     elif maskMode == maskMode.Hex:
+    #         self.__masks[mask].setHex()
+    #     elif maskMode == maskMode.Quad:
+    #         self.__masks[mask].setQuad()
+    #     elif maskMode == maskMode.Split:
+    #         self.__masks[mask].setSplit()
+    #     elif maskMode == maskMode.Black:
+    #         self.__masks[mask].setBlack()
+    #         self.__masksTilt[mask].setBlack()
+    #         self.__masksAber[mask].setBlack()
 
-    def moveMask(self, mask, direction, amount):
-        if direction == direction.Up:
-            move_v = np.array([-1, 0]) * amount
-        elif direction == direction.Down:
-            move_v = np.array([1, 0]) * amount
-        elif direction == direction.Left:
-            move_v = np.array([0, -1]) * amount
-        elif direction == direction.Right:
-            move_v = np.array([0, 1]) * amount
+    # def moveMask(self, mask, direction, amount):
+    #     if direction == direction.Up:
+    #         move_v = np.array([-1, 0]) * amount
+    #     elif direction == direction.Down:
+    #         move_v = np.array([1, 0]) * amount
+    #     elif direction == direction.Left:
+    #         move_v = np.array([0, -1]) * amount
+    #     elif direction == direction.Right:
+    #         move_v = np.array([0, 1]) * amount
 
-        self.__masks[mask].moveCenter(move_v)
-        self.__masksTilt[mask].moveCenter(move_v)
-        self.__masksAber[mask].moveCenter(move_v)
+    #     self.__masks[mask].moveCenter(move_v)
+    #     self.__masksTilt[mask].moveCenter(move_v)
+    #     self.__masksAber[mask].moveCenter(move_v)
 
-    def getCenters(self):
-        centerCoords = {"left": self.__masks[0].getCenter(),
-                        "right": self.__masks[1].getCenter()}
-        return centerCoords
+    # def getCenters(self):
+    #     centerCoords = {"left": self.__masks[0].getCenter(),
+    #                     "right": self.__masks[1].getCenter()}
+    #     return centerCoords
 
-    def setCenters(self, centerCoords):
-        for idx, (mask, masktilt, maskaber) in enumerate(zip(self.__masks, self.__masksTilt,
-                                                             self.__masksAber)):
-            if idx == 0:
-                center = (centerCoords["left"]["xcenter"], centerCoords["left"]["ycenter"])
-            elif idx == 1:
-                center = (centerCoords["right"]["xcenter"], centerCoords["right"]["ycenter"])
-            mask.setCenter(center)
-            masktilt.setCenter(center)
-            maskaber.setCenter(center)
+    # def setCenters(self, centerCoords):
+    #     for idx, (mask, masktilt, maskaber) in enumerate(zip(self.__masks, self.__masksTilt,
+    #                                                          self.__masksAber)):
+    #         if idx == 0:
+    #             center = (centerCoords["left"]["xcenter"], centerCoords["left"]["ycenter"])
+    #         elif idx == 1:
+    #             center = (centerCoords["right"]["xcenter"], centerCoords["right"]["ycenter"])
+    #         mask.setCenter(center)
+    #         masktilt.setCenter(center)
+    #         maskaber.setCenter(center)
 
-    def setGeneral(self, general_info):
-        self.setRadius(general_info["radius"])
-        self.setSigma(general_info["sigma"])
-        self.setRotationAngle(general_info["rotationAngle"])
-        self.setTiltAngle(general_info["tiltAngle"])
+    # def setGeneral(self, general_info):
+    #     self.setRadius(general_info["radius"])
+    #     self.setSigma(general_info["sigma"])
+    #     self.setRotationAngle(general_info["rotationAngle"])
+    #     self.setTiltAngle(general_info["tiltAngle"])
 
     def setAberrationFactors(self, aber_info):
         lAberFactors = aber_info["left"]

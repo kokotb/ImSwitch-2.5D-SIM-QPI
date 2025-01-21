@@ -43,6 +43,7 @@ class SLM25DManager(SignalInterface):
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
 
+
     def projectMask(self, mask):
         error = self.slm.showData(mask)
         assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
@@ -60,6 +61,8 @@ class SLM25DManager(SignalInterface):
             if not self.slm.requiresVersion(5):
                 exit(1)
             error = self.slm.open()
+            if error == 0:
+                state = False
             assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
             showSLMPreview.showSLMPreview(self.slm, scale=0.0)
             self.slmActive = True
