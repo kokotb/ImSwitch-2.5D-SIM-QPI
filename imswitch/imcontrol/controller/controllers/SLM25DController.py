@@ -288,11 +288,11 @@ class SLM25DController(ImConWidgetController):
 
         if (projZernike == 2) and (proj25D == 2):
             if ((self._widget.matrixZernike == 0).all()):
-                self._widget.matrixZernike = np.ones((1920, 1080)) 
-            try:
-                projImg = np.multiply(self.mask25D, self._widget.matrixZernike)
-            except AttributeError:
-                projImg = np.add(self._widget.matrixZernike, np.ones((1920, 1080)) )
+                self._widget.matrixZernike = np.ones((1920, 1080))
+
+            
+
+            projImg = np.multiply(self.mask25D, self._widget.matrixZernike) #CTNOTE - This multiply operation inverts the Zernike whites/blacks
 
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
