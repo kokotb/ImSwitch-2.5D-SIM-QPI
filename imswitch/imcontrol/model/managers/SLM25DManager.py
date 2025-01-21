@@ -61,7 +61,7 @@ class SLM25DManager(SignalInterface):
             if not self.slm.requiresVersion(5):
                 exit(1)
             error = self.slm.open()
-            if error == 0:
+            if error == 1:
                 state = False
             assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
             showSLMPreview.showSLMPreview(self.slm, scale=0.0)

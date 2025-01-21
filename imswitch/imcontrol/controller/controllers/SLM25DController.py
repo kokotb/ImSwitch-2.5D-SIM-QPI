@@ -85,14 +85,16 @@ class SLM25DController(ImConWidgetController):
         self.slm25DManager.openPreviewWindow()
 
     def toggleSLMFromButton(self, state):
-        try:
-            self.toggleSLMResource(state)
-        except:
-            self._widget.activate25DSLM.setChecked(False)
+        self.toggleSLMResource(state)
+
 
 
     def toggleSLMResource(self, state):
-        self.slmActive = self.slm25DManager.toggleSLMResource(state)
+        try:
+            self.slmActive = self.slm25DManager.toggleSLMResource(state)
+        except:
+            self._widget.activate25DSLM.setChecked(False)
+
         if self.slmActive == True:
             self._widget.enableAll()
             self.combineAndProject()
@@ -134,7 +136,8 @@ class SLM25DController(ImConWidgetController):
         topry = ry + 20
         bry = ry - 20
 
-        im = Image.new('RGB', (1920, 1080), (0, 0, 0, 0))
+        im = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0))
+
         draw = ImageDraw.Draw(im)
         draw.ellipse([llx, bly, rlx, toply], fill=(255, 0, 0))
         draw.ellipse([lrx, bry, rrx, topry], fill=(255, 0, 0))

@@ -48,7 +48,7 @@ class SLM25DWidget(Widget):
         self.matrixZernike = np.zeros((1920, 1080))
         self.matrix25d = np.zeros((1920, 1080))
         self.overlayMatrix25D =  np.zeros((1920, 1080))
-        self.overlayImg25D = pg.ImageItem(self.overlayMatrix25D, opacity=0.5)
+        self.overlayImg25D = pg.ImageItem(self.overlayMatrix25D)
         self.imgZernike.setImage(self.matrixZernike) 
         self.img25d.setImage(self.matrix25d)
         #Add initially created images to the widget
