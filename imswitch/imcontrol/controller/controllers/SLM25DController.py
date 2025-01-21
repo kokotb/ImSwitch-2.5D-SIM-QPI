@@ -68,6 +68,17 @@ class SLM25DController(ImConWidgetController):
         self.recalculateZernikePhaseMask()
         self.combineAndProject()
 
+    def updatePhaseMask(self , recalc = True):
+        self._widget.matrix25d = self.calculatePhaseMask()
+        
+        self._widget.img25d.setImage(self._widget.matrix25d)
+        self.mask25D = self._widget.matrix25d
+        # self._widget.vb25D.setAspectLocked(True)
+        self.createCenterDotImage()
+
+        if recalc:
+            self.combineAndProject()
+
     def openPreviewWindow(self):
         self.slm25DManager.openPreviewWindow()
 
@@ -109,7 +120,7 @@ class SLM25DController(ImConWidgetController):
         ly = 1080-ly #The pixels are counted from bottom left in other system, so Y needs to be inverted.
         ry = 1080-ry
 
-        llx = lx - 20 #left side of the left half X
+        llx = lx - 20 #left side of the left half X. These values of 20 are controlling the size of the erd dots.
         rlx = lx + 20
         lrx = rx - 20
         rrx = rx + 20
@@ -169,25 +180,29 @@ class SLM25DController(ImConWidgetController):
         # ====================================================================================================================================
 
         zernikeParametersNew = self.getAllZernikeParams()
+        allZeros = all(value == 0.0 for value in zernikeParametersNew.values())
         zernikeParametersDifferences = {key: (self.zernikeParametersOld[key], zernikeParametersNew[key]) for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
-        # zernikeParametersDifferences = {"(0.,0.)": (old_value, new_value)}
-        for name in zernikeParametersDifferences:
-            order = eval(name)
+        if not allZeros:
+            for name in zernikeParametersDifferences:
+                order = eval(name)
 
-            zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
-            zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
-            zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-            if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-                zernikeMask[np.isnan(zernikeMask)] = 0
-            else: 
-                zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
+                zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
+                zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
+                zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
+                if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+                    zernikeMask[np.isnan(zernikeMask)] = 0
+                else: 
+                    zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
-            # Normalize and transpose
-            zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
-            zernikeMask = zernikeMask.transpose()
+                # Normalize and transpose
+                zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask)) 
+                self.zernikeMask = zernikeMask.transpose()
 
-            # add to mask
-            self.ZernikeAllMasksSumFloat += zernikeMask * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
+                # add to mask
+                self.ZernikeAllMasksSumFloat += self.zernikeMask * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
+        else:
+            self.ZernikeAllMasksSumFloat = np.ones((1920, 1080))
+
 
         self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
         self.zernikeParametersOld = zernikeParametersNew
@@ -229,7 +244,7 @@ class SLM25DController(ImConWidgetController):
 
 
         zernikeParametersNew = self.getAllZernikeParams()
-        self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
+        self.ZernikeAllMasksSumFloat = np.ones((1920,1080)) #CTNOTE
         for name in zernikeParametersNew:
             order = eval(name)
 
@@ -248,15 +263,16 @@ class SLM25DController(ImConWidgetController):
 
             # Normalize and transpose
             zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
-            zernikeMask = zernikeMask.transpose()
+            self.zernikeMask = zernikeMask.transpose()
 
             # add to mask
-            self.ZernikeAllMasksSumFloat += zernikeMask * zernikeParametersNew[name] * 255
+            self.ZernikeAllMasksSumFloat += self.zernikeMask * zernikeParametersNew[name] * 255
 
         self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
+        # self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
         self.zernikeParametersOld = zernikeParametersNew
         t1 = time.time()
-        print("zernike time = " + str(t1 - t0))
+        print("Time to calculate new Zernike = " + str(t1 - t0))
         return self.ZernikeAllMasksSum
     
     def combineAndProject(self):
@@ -269,7 +285,7 @@ class SLM25DController(ImConWidgetController):
             try:
                 projImg = np.multiply(self._widget.matrixZernike, self.mask25D)
             except AttributeError:
-                projImg = np.multiply(self._widget.matrixZernike, np.ones((1920, 1080)) )
+                projImg = np.multiply(self._widget.matrixZernike, np.ones((1920, 1080)) )   
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         elif (projZernike == 2) and (proj25D == 0):
@@ -285,11 +301,8 @@ class SLM25DController(ImConWidgetController):
         elif (projZernike == 0) and (proj25D == 0):
             projImg = np.zeros((1920, 1080))
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-        # plt.imshow(projImg)
-        # plt.show()
-
-
+        
+        
 
     def getCurrentCenters(self):
         valueList = []
@@ -349,16 +362,7 @@ class SLM25DController(ImConWidgetController):
 
         return maskbinary
     
-    def updatePhaseMask(self , recalc = True):
-        self._widget.matrix25d = self.calculatePhaseMask()
-        
-        self._widget.img25d.setImage(self._widget.matrix25d)
-        self.mask25D = self._widget.matrix25d
-        # self._widget.vb25D.setAspectLocked(True)
-        self.createCenterDotImage()
 
-        if recalc:
-            self.combineAndProject()
     
     def updateZernikePhaseMask(self):
         self._widget.matrixZernike = self.calculateZernikePhaseMask()
