@@ -6,6 +6,7 @@ import os
 import numpy as np
 from PIL import Image
 from scipy import signal as sg
+import matplotlib.pyplot as plt
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -42,9 +43,17 @@ class SLM25DManagerMock(SignalInterface):
 
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
+        self.rep = 0
 
     def projectMask(self, mask):
-        pass
+        mask2 = np.reshape(mask,(1920, 1080), order='F')
+        mask3 = np.rot90(mask2, 3)
+        mask4 = np.fliplr(mask3)
+        plt.imshow(mask4)
+        if self.rep == 0:
+            plt.show()
+        self.rep += 1
+
 
     def openPreviewWindow(self):
         pass
