@@ -27,7 +27,7 @@ class SLM25DController(ImConWidgetController):
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
         if self._setupInfo.SLM25D is None:
-            self._widget.replaceWithError('SLM is not configured in your setup file.')
+            self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
             return
 
         self.zernikeParametersOld = self.getAllZernikeParams()
@@ -43,13 +43,13 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUpCenterClicked.connect(self.updateAll)
         self._widget.sigStepDownCenterClicked.connect(self.updateAll)
 
-        self._widget.updateMask.connect(self.updatePhaseMask)
-        self._widget.sigStepUpClicked.connect(self.updatePhaseMask)
-        self._widget.sigStepDownClicked.connect(self.updatePhaseMask)
+        self._widget.update25DMask.connect(self.updatePhaseMask)
+        self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
+        self._widget.sigStepDown25DMask.connect(self.updatePhaseMask)
     
-        self._widget.updateMaskZernike.connect(self.updateZernike)
-        self._widget.sigStepUpClickedZernike.connect(self.updateZernike)
-        self._widget.sigStepDownClickedZernike.connect(self.updateZernike)
+        self._widget.updateZernikeMask.connect(self.updateZernike)
+        self._widget.sigStepUpZernike.connect(self.updateZernike)
+        self._widget.sigStepDownZernike.connect(self.updateZernike)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -68,7 +68,6 @@ class SLM25DController(ImConWidgetController):
         self.recalculateZernikePhaseMask()
         self.combineAndProject()
 
-
     def openPreviewWindow(self):
         self.slm25DManager.openPreviewWindow()
 
@@ -78,7 +77,6 @@ class SLM25DController(ImConWidgetController):
         except:
             self._widget.activate25DSLM.setChecked(False)
 
-
     def toggleSLMResource(self, state):
         self.slmActive = self.slm25DManager.toggleSLMResource(state)
         if self.slmActive == True:
@@ -86,17 +84,9 @@ class SLM25DController(ImConWidgetController):
         if self.slmActive == False:
             self._widget.disableAll()
 
-        # self.zPositioner.setPosition(SETVALUE, ['Z'])
-        # currentPos = self.zPositioner.get_abs()
-
-    # def projectZernike(self):
-    #     self.slm25DManager.projectMask(self.reshapeMask(self.ZernikeAllMasksSum))
-
-
     def reshapeMask(self, mask):
         maskFlipped = np.fliplr(mask)
         maskReshaped = np.reshape(maskFlipped,(1080, 1920), order='F')
-        # maskFlipped = np.flipud(maskReshaped)
 
         return maskReshaped
 
@@ -110,8 +100,6 @@ class SLM25DController(ImConWidgetController):
                 valueList[index] = self.axisValTypes[index](widgetObject.text()) / 1000
             else:
                 valueList[index] = self.axisValTypes[index](widgetObject.text())
-
-        
 
         return valueList
     
@@ -130,7 +118,6 @@ class SLM25DController(ImConWidgetController):
         bly = ly - 20
         topry = ry + 20
         bry = ry - 20
-
 
         im = Image.new('RGB', (1920, 1080), (0, 0, 0, 0))
         draw = ImageDraw.Draw(im)
@@ -275,22 +262,32 @@ class SLM25DController(ImConWidgetController):
     def combineAndProject(self):
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
+
         if (projZernike == 2) and (proj25D == 2):
             if ((self._widget.matrixZernike == 0).all()):
-                self._widget.matrixZernike = np.ones((1920, 1080)) * 255
-            projImg = np.multiply(self._widget.matrixZernike, self.mask25D)
+                self._widget.matrixZernike = np.ones((1920, 1080)) 
+            try:
+                projImg = np.multiply(self._widget.matrixZernike, self.mask25D)
+            except AttributeError:
+                projImg = np.multiply(self._widget.matrixZernike, np.ones((1920, 1080)) )
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
         elif (projZernike == 2) and (proj25D == 0):
             if ((self._widget.matrixZernike == 0).all()):
-                self._widget.matrixZernike = np.ones((1920, 1080)) * 255
+                self._widget.matrixZernike = np.ones((1920, 1080)) 
             projImg = self._widget.matrixZernike
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
         elif (projZernike == 0) and (proj25D == 2):
             projImg = self.mask25D
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
         elif (projZernike == 0) and (proj25D == 0):
             projImg = np.zeros((1920, 1080))
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
+        # plt.imshow(projImg)
+        # plt.show()
 
 
 
@@ -357,31 +354,23 @@ class SLM25DController(ImConWidgetController):
         
         self._widget.img25d.setImage(self._widget.matrix25d)
         self.mask25D = self._widget.matrix25d
-        # self._widget.vb25D.addItem(self._widget.img25d)
-        self._widget.vb25D.setAspectLocked(True)
+        # self._widget.vb25D.setAspectLocked(True)
         self.createCenterDotImage()
 
         if recalc:
             self.combineAndProject()
     
-    # def updateCenterPhaseMask(self):
-    #     self._widget.matrixCenter = self.calculateCenterPhaseMask()
-    #     #self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=True, autoDownsample=True, autoRange=True)
-    #     self._widget.imgCenter.setImage(self._widget.matrixCenter, autoLevels=False, autoDownsample=False, autoRange=False)
-    #     self._widget.vbCenter.addItem(self._widget.imgCenter)
-    #     self._widget.vbCenter.setAspectLocked(True)
-
     def updateZernikePhaseMask(self):
         self._widget.matrixZernike = self.calculateZernikePhaseMask()
         self._widget.imgZernike.setImage(self._widget.matrixZernike)
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
-        self._widget.vbZernike.setAspectLocked(True)
+        # self._widget.vbZernike.setAspectLocked(True)
 
     def recalculateZernikePhaseMask(self):
         self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
         self._widget.imgZernike.setImage(self._widget.matrixZernike)
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
-        self._widget.vbZernike.setAspectLocked(True)
+        # self._widget.vbZernike.setAspectLocked(True)
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)

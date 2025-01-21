@@ -11,36 +11,31 @@ from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
-
-    sigStepUpClicked = QtCore.Signal(str)
-    sigStepDownClicked = QtCore.Signal(str)
-
+#Signals for pressing the increment/decrement buttons
+    sigStepUp25DMask = QtCore.Signal(str)
+    sigStepDown25DMask = QtCore.Signal(str)
     sigStepUpCenterClicked = QtCore.Signal(str)
     sigStepDownCenterClicked = QtCore.Signal(str)
-
-    updateMask = QtCore.Signal(str)
+    sigStepUpZernike = QtCore.Signal(str)
+    sigStepDownZernike = QtCore.Signal(str)
+#Signals for updating and eventually projecting images
+    update25DMask = QtCore.Signal(str)
     updateCenterMask = QtCore.Signal(str)
-
-    sigStepUpClickedZernike = QtCore.Signal(str)
-    sigStepDownClickedZernike = QtCore.Signal(str)
-    updateMaskZernike = QtCore.Signal(str)
+    updateZernikeMask = QtCore.Signal(str)
+#Signals to control red highlighting of incorreect QLineEdit entries
     sigCheckValidityAbsPos = QtCore.Signal(str)
     sigCheckValidityStep = QtCore.Signal(str)
+#Reset button signals
     sigResetZern = QtCore.Signal()
     sigReset25D = QtCore.Signal()
-
-    sigUpdateProjection = QtCore.Signal()
-    
-    # sigDisplayZernike = QtCore.Signal()
-
+#Signals to control enabling buttons/SLM/displaying preview window
     sigToggleSLM = QtCore.Signal(bool)
     sigOpenPreviewButton = QtCore.Signal()
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Zernike mask image
+        # Placeholders for both image displays at top of widget.
         self.slmFrame = pg.GraphicsLayoutWidget()
         self.slmFrame.setEnabled(False)
         self.slmFrame.addLabel('Zernike', angle=-90, row=0, col=0)
@@ -49,67 +44,47 @@ class SLM25DWidget(Widget):
         self.vb25D = self.slmFrame.addViewBox(row=0, col=3, enableMouse=False, border='w', lockAspect=True)
         self.imgZernike = pg.ImageItem()
         self.img25d = pg.ImageItem()
-
-        self.matrixZernike = np.ones((1920, 1080)) * 255
+        #Inititally displayed images. Just black.
+        self.matrixZernike = np.zeros((1920, 1080))
         self.matrix25d = np.zeros((1920, 1080))
-
         self.overlayMatrix25D =  np.zeros((1920, 1080))
         self.overlayImg25D = pg.ImageItem(self.overlayMatrix25D, opacity=0.5)
-
         self.imgZernike.setImage(self.matrixZernike) 
         self.img25d.setImage(self.matrix25d)
-        
+        #Add initially created images to the widget
         self.vbZernike.addItem(self.imgZernike)
-
         self.vb25D.addItem(self.img25d) #This line must before addItem(self.overlayImg25D) so transparent overlay is on top of this layer.
         self.vb25D.addItem(self.overlayImg25D)
-        
-
-
-
-
+        #Initialize buttons on top row of the widget + reset buttons
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
-    
         self.projectZernike = QCheckBox('Project Zernike')
         self.projectZernike.setChecked(True)
         self.projectZernike.setEnabled(False)
-        
-
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(True)
         self.project25D.setEnabled(False)
-
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
         self.slmPreview.setFixedWidth(250)
-
         self.resetZern = QPushButton("Reset")
         self.resetZern.setEnabled(False)
         self.resetZern.clicked.connect(self.sigResetZern.emit)
-
         self.reset25D = QPushButton("Reset")
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
-
-        # self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
-
-        # parentLayout = QVBoxLayout()
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
-        # self.grid.addWidget(widgetName, row, column, rowspan, columln)
         self.grid.addWidget(self.activate25DSLM,0,0)
         self.grid.addWidget(self.projectZernike,0,1,1,2)
-        self.grid.addWidget(self.project25D,0,3, 1, 2)
+        self.grid.addWidget(self.project25D,0,3)
         self.grid.addWidget(self.slmPreview, 0, 5)
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
         self.grid.addWidget(self.resetZern, 4, 6)
         self.grid.addWidget(self.reset25D, 16, 6)
-        # self.grid.addWidget(self.slmFrameCenter, 19, 0, 3, 6)
-        # self.grid.addWidget(self.slmFrame25d, 22, 0, 3, 6)
-
+        # Horizontal lines separating logic sections
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.HLine)
         self.myframe.setFrameShadow(QFrame.Plain)
@@ -120,8 +95,6 @@ class SLM25DWidget(Widget):
         self.myframe2.setFrameShadow(QFrame.Plain)
         self.myframe2.setLineWidth(200)
         self.grid.addWidget(self.myframe2, 15, 0, 1, 7)
-
-
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
@@ -144,8 +117,10 @@ class SLM25DWidget(Widget):
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
             self.pars['UpButton' + name] = guitools.BetterPushButton('+')
             self.pars['UpButton' + name].setFixedWidth(100)
+            self.pars['UpButton' + name].setAutoRepeat(True)
             self.pars['DownButton' + name] = guitools.BetterPushButton('-')
             self.pars['DownButton' + name].setFixedWidth(100)
+            self.pars['DownButton' + name].setAutoRepeat(True)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit(AbsInitialValue)
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
 
@@ -154,31 +129,22 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
 
-
             self.validator = QDoubleValidator(-5.0,5.0,1)
             self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
             self.pars['AbsPosEdit' + name].setValidator(self.validator)
-
-            # self.validator = QDoubleValidator(-5.0,5.0,1)
-            # self.pars['AbsPosEdit' + name].setValidator(self.validator)
-
             
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
             self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
-            # self.grid.addWidget(self.pars['StepEdit' + name], self.numParams, 3)
             self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 5)
 
 
             # Connect buttons to signals
-            self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClickedZernike.emit(name))
-            self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClickedZernike.emit(name))
-            # self.pars['AbsPosEdit' + name].returnPressed.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
-            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMaskZernike.emit(name))
+            self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
+            self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
+            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
             self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-
-
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
@@ -223,6 +189,7 @@ class SLM25DWidget(Widget):
                 self.pars['StepEdit' + name].setValidator(self.validator)
                 self.validator = QIntValidator(1,1920)
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
+
             # Double validator
             elif (name == 'Gamma') or (name == 'Psi'):
                 self.validator = QDoubleValidator(0.1,1.0,1)
@@ -231,6 +198,8 @@ class SLM25DWidget(Widget):
                 self.validator = QDoubleValidator(0.0,5.0,1)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
+                self.pars['UpButton' + name].setAutoRepeat(True)
+                self.pars['DownButton' + name].setAutoRepeat(True)
             elif (name == 'Beam Diameter'):
                 self.validator = QDoubleValidator(0.1,2.0,1)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
@@ -251,9 +220,9 @@ class SLM25DWidget(Widget):
             # Connect buttons to signals
 
             if (name == 'Gamma') or (name == 'Psi'):
-                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpClicked.emit(name))
-                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownClicked.emit(name))
-                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateMask.emit(name))
+                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
+                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
+                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
                 self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
                 self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
             else:
@@ -296,13 +265,13 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.label25DStep, 16, 3)
 
         # Connect received signals to funcions
-        self.sigStepUpClicked.connect(self.increment)
-        self.sigStepDownClicked.connect(self.decrement)
+        self.sigStepUp25DMask.connect(self.increment)
+        self.sigStepDown25DMask.connect(self.decrement)
         self.sigStepUpCenterClicked.connect(self.increment)
         self.sigStepDownCenterClicked.connect(self.decrement)
 
-        self.sigStepUpClickedZernike.connect(self.incrementZern)
-        self.sigStepDownClickedZernike.connect(self.decrementZern)
+        self.sigStepUpZernike.connect(self.incrementZern)
+        self.sigStepDownZernike.connect(self.decrementZern)
         self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigResetZern.connect(self.resetZernToDefault)
@@ -319,7 +288,7 @@ class SLM25DWidget(Widget):
     def resetZernToDefault(self):
         for i in range(len(self.ZernikeCoefficientNames)):
             self.pars['AbsPosEdit' + self.ZernikeCoefficientNames[i]].setText('0.0')
-        self.updateMaskZernike.emit('_')
+        self.updateZernikeMask.emit('_')
 
     def checkValidityAbsPos(self, name):
         valid = self.pars['AbsPosEdit'+name].hasAcceptableInput()
