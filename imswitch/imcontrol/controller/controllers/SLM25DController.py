@@ -36,7 +36,7 @@ class SLM25DController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
-        self.Params = self.getAllWidgetParams()
+
         self.matrix25d = self._widget.matrix25d
         
     
@@ -59,7 +59,24 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+        self._widget.sig25DParamChanged.connect(self.valueChanged)
+        self.init25DWidgetValues()
+        # self.Params = self.getAllWidgetParams()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
+        
+
+    def init25DWidgetValues(self):
+        strippedNames = []
+        self._widget.valueDict25D = dict()
+        for i in range(len(self._widget.paramNames)):
+            spaceStripped = self._widget.paramNames[i].replace(' ','')
+            dashStripped = spaceStripped.replace('-','')
+            strippedNames.append(dashStripped)
+        for i in range(len(strippedNames)):
+            self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setText(str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+            self._widget.valueDict25D[self._widget.paramNames[i]] = str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+        
+
 
     def updateZernike(self):
         self.updateZernikePhaseMask()
@@ -255,9 +272,6 @@ class SLM25DController(ImConWidgetController):
         for name in zernikeParametersNew:
             order = eval(name)
 
-            #zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
-            #zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
-
             zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft)
             zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright)
             
@@ -312,7 +326,7 @@ class SLM25DController(ImConWidgetController):
         elif (projZernike == 0) and (proj25D == 0):
             projImg = np.zeros((1920, 1080))
             if self.slmActive:
-                self.slm25DManager.projectMask(self.reshapeMask(projImg))
+                self.slm25DManager.projectMask(self.reshapeMask(projImg), False)
         
         
 

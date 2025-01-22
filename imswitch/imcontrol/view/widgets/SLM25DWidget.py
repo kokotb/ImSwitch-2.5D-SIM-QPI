@@ -11,6 +11,7 @@ from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
+    sig25DParamChanged = QtCore.Signal(str, str, str)
 #Signals for pressing the increment/decrement buttons
     sigStepUp25DMask = QtCore.Signal(str)
     sigStepDown25DMask = QtCore.Signal(str)
@@ -74,7 +75,7 @@ class SLM25DWidget(Widget):
         self.reset25D = QPushButton("Reset")
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
-
+        # Grid layout for the entire widget
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
         self.grid.addWidget(self.activate25DSLM,0,0)
@@ -149,14 +150,14 @@ class SLM25DWidget(Widget):
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
+        # self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
         self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         for i in range(len(self.paramNames)):
             self.numParams += 1
             name = self.paramNames[i]
             StepInitialValue = self.stepAxisInitialValues[name]
-            AbsInitialValue = self.absAxisInitialValues[name]
+            # AbsInitialValue = self.absAxisInitialValues[name]
             self.unit = UnitaxisInitialValues[name]
 
             label = f'{name}'
@@ -171,7 +172,7 @@ class SLM25DWidget(Widget):
             self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
             self.pars['StepEdit' + name].setFixedWidth(75)
             self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
-            self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit(AbsInitialValue)
+            self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
 
@@ -225,12 +226,14 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
                 self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
                 self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+                # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
             else:
                 self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
                 self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
                 self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
                 self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+                # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
 
 
@@ -277,9 +280,12 @@ class SLM25DWidget(Widget):
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
+        self.connect25DSharedAttrSigs()
+
     def reset25DToDefault(self):
+        
         for name in self.paramNames:
-            absInitValue = self.absAxisInitialValues[name]
+            absInitValue = self.valueDict25D[name]
             stepInitValue = self.stepAxisInitialValues[name]
             self.pars['StepEdit' + name].setText(stepInitValue)
             self.pars['AbsPosEdit' + name].setText(absInitValue)
@@ -389,6 +395,15 @@ class SLM25DWidget(Widget):
         currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
         newVal = str(round(currentVal-stepVal,4))
         self.pars['AbsPosEdit' + name].setText(newVal)
+
+    def connect25DSharedAttrSigs(self):
+        self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
+        self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',value))
+        self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',value))
+        self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',value))
+        self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',value))
+        self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',value))
+        self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',value))
 
 
 

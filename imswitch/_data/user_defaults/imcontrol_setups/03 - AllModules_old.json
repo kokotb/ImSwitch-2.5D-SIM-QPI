@@ -12,14 +12,7 @@
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": true,
-  "Gamma": 0.5,
-  "Psi": 0.5,
-  "LeftCenterX": 480,
-  "LeftCenterY": 540,
-  "RightCenterX":1440,
-  "RightCenterY": 540,
-  "BeamDiameter": 6.0
+  "mock": true
 
 },
 "Arduino":{
@@ -29,6 +22,7 @@
   }
 },
   "sim": {
+  "monitorIdx": 2,
   "width": 1920,
   "height": 1080,
   "ReconWL1": 512,
@@ -60,9 +54,9 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 0.0,
+        "Gain": 0.0, 
         "Gamma": 1.0,
-        "ExposureTime": 2000.0
+        "ExposureTime": 2000.0  
       },
       "ROI":{
         "OffsetX": 2296,

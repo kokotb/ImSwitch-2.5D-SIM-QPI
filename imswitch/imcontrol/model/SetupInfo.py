@@ -115,120 +115,120 @@ class RS232Info:
     """ Properties to be read by the RS232 manager. """
 
 
-@dataclass(frozen=True)
-class SLMInfo:
-    monitorIdx: int
-    """ Index of the monitor in the system list of monitors (indexing starts at
-    0). """
+# @dataclass(frozen=True)
+# class SLMInfo:
+#     monitorIdx: int
+#     """ Index of the monitor in the system list of monitors (indexing starts at
+#     0). """
 
-    width: int
-    """ Width of SLM, in pixels. """
+#     width: int
+#     """ Width of SLM, in pixels. """
 
-    height: int
-    """ Height of SLM, in pixels. """
+#     height: int
+#     """ Height of SLM, in pixels. """
 
-    wavelength: int
-    """ Wavelength of the laser line used with the SLM. """
+#     wavelength: int
+#     """ Wavelength of the laser line used with the SLM. """
 
-    pixelSize: float
-    """ Pixel size or pixel pitch of the SLM, in millimetres. """
+#     pixelSize: float
+#     """ Pixel size or pixel pitch of the SLM, in millimetres. """
 
-    angleMount: float
-    """ The angle of incidence and reflection of the laser line that is shaped
-    by the SLM, in radians. For adding a blazed grating to create off-axis
-    holography. """
+#     angleMount: float
+#     """ The angle of incidence and reflection of the laser line that is shaped
+#     by the SLM, in radians. For adding a blazed grating to create off-axis
+#     holography. """
 
-    correctionPatternsDir: str
-    """ Directory of .bmp images provided by Hamamatsu for flatness correction
-    at various wavelengths. A combination will be chosen based on the
-    wavelength. """
-
-
-@dataclass(frozen=True)
-class FocusLockInfo:
-    camera: str
-    """ Detector name. """
-
-    positioner: str
-    """ Positioner name. """
-
-    updateFreq: int
-    """ Update frequency, in milliseconds. """
-
-    frameCropx: int
-    """ Starting X position of camera frame crop. """
-
-    frameCropy: int
-    """ Starting Y position of camera frame crop. """
-
-    frameCropw: int
-    """ Width of camera frame crop. """
-
-    frameCroph: int
-    """ Height of camera frame crop. """
-
-    swapImageAxes: bool
-    """ Swap camera image axes when grabbing camera frame. """
-
-    piKp: float
-    """ Default kp value of feedback loop. """
-
-    piKi: float
-    """ Default ki value of feedback loop. """
-
-@dataclass(frozen=True)
-class AutofocusInfo:
-    camera: str
-    """ Detector name. """
-
-    positioner: str
-    """ Positioner name. """
-
-    updateFreq: int
-    """ Update frequency, in milliseconds. """
-
-    frameCropx: int
-    """ Starting X position of frame crop. """
-
-    frameCropy: int
-    """ Starting Y position of frame crop. """
-
-    frameCropw: int
-    """ Width of frame crop. """
-
-    frameCroph: int
-    """ Height of frame crop. """
+#     correctionPatternsDir: str
+#     """ Directory of .bmp images provided by Hamamatsu for flatness correction
+#     at various wavelengths. A combination will be chosen based on the
+#     wavelength. """
 
 
-@dataclass(frozen=True)
-class ScanInfo:
-    scanWidgetType: str
-    """ Type of scan widget to generate: PointScan/MoNaLISA/Base/etc."""
+# @dataclass(frozen=True)
+# class FocusLockInfo:
+#     camera: str
+#     """ Detector name. """
 
-    scanDesigner: str
-    """ Name of the scan designer class to use. """
+#     positioner: str
+#     """ Positioner name. """
 
-    scanDesignerParams: Dict[str, Any]
-    """ Params to be read by the scan designer. """
+#     updateFreq: int
+#     """ Update frequency, in milliseconds. """
 
-    TTLCycleDesigner: str
-    """ Name of the TTL cycle designer class to use. """
+#     frameCropx: int
+#     """ Starting X position of camera frame crop. """
 
-    TTLCycleDesignerParams: Dict[str, Any]
-    """ Params to be read by the TTL cycle designer. """
+#     frameCropy: int
+#     """ Starting Y position of camera frame crop. """
 
-    sampleRate: int
-    """ Scan sample rate. """
+#     frameCropw: int
+#     """ Width of camera frame crop. """
 
-    lineClockLine: Optional[Union[str, int]]
-    """ Line for line clock output. ``null`` if not wanted or NI-DAQ is not used.
-    If integer, it will be translated to "Dev1/port0/line{lineClockLine}".
-    """
+#     frameCroph: int
+#     """ Height of camera frame crop. """
 
-    frameClockLine: Optional[Union[str, int]]
-    """ Line for frame clock output. ``null`` if not wanted or NI-DAQ is not used.
-    If integer, it will be translated to "Dev1/port0/line{frameClockLine}".
-    """
+#     swapImageAxes: bool
+#     """ Swap camera image axes when grabbing camera frame. """
+
+#     piKp: float
+#     """ Default kp value of feedback loop. """
+
+#     piKi: float
+#     """ Default ki value of feedback loop. """
+
+# @dataclass(frozen=True)
+# class AutofocusInfo:
+#     camera: str
+#     """ Detector name. """
+
+#     positioner: str
+#     """ Positioner name. """
+
+#     updateFreq: int
+#     """ Update frequency, in milliseconds. """
+
+#     frameCropx: int
+#     """ Starting X position of frame crop. """
+
+#     frameCropy: int
+#     """ Starting Y position of frame crop. """
+
+#     frameCropw: int
+#     """ Width of frame crop. """
+
+#     frameCroph: int
+#     """ Height of frame crop. """
+
+
+# @dataclass(frozen=True)
+# class ScanInfo:
+#     scanWidgetType: str
+#     """ Type of scan widget to generate: PointScan/MoNaLISA/Base/etc."""
+
+#     scanDesigner: str
+#     """ Name of the scan designer class to use. """
+
+#     scanDesignerParams: Dict[str, Any]
+#     """ Params to be read by the scan designer. """
+
+#     TTLCycleDesigner: str
+#     """ Name of the TTL cycle designer class to use. """
+
+#     TTLCycleDesignerParams: Dict[str, Any]
+#     """ Params to be read by the TTL cycle designer. """
+
+#     sampleRate: int
+#     """ Scan sample rate. """
+
+#     lineClockLine: Optional[Union[str, int]]
+#     """ Line for line clock output. ``null`` if not wanted or NI-DAQ is not used.
+#     If integer, it will be translated to "Dev1/port0/line{lineClockLine}".
+#     """
+
+#     frameClockLine: Optional[Union[str, int]]
+#     """ Line for frame clock output. ``null`` if not wanted or NI-DAQ is not used.
+#     If integer, it will be translated to "Dev1/port0/line{frameClockLine}".
+#     """
 
 @dataclass(frozen=True)
 class SLM25DInfo:
@@ -240,68 +240,82 @@ class SLM25DInfo:
     height: int
     """ Height of SLM, in pixels. """
 
-    managerName: str
-    """ Manager name in string. """
+    Gamma: float
 
-    monitorIdx: int
-    """Check if this is needed at all"""
+    Psi: float
 
-@dataclass(frozen=True)
-class EtSTEDInfo:
-    detectorFast: str
-    """ Name of the STED detector to use. """
+    LeftCenterX: int
 
-    detectorSlow: str
-    """ Name of the widefield detector to use. """
+    LeftCenterY: int
+    
+    RightCenterX: int
 
-    laserFast: str
-    """ Name of the widefield laser to use. """
+    RightCenterY: int
 
+    BeamDiameter: float
 
-@dataclass(frozen=True)
-class MicroscopeStandInfo:
-    managerName: str
-    """ Name of the manager to use. """
+    # managerName: str
+    # """ Manager name in string. """
 
-    rs232device: str
-    """ Name of the rs232 device to use. """
+    # monitorIdx: int
+    # """Check if this is needed at all"""
 
+# @dataclass(frozen=True)
+# class EtSTEDInfo:
+#     detectorFast: str
+#     """ Name of the STED detector to use. """
 
-@dataclass(frozen=True)
-class NidaqInfo:
-    timerCounterChannel: Optional[Union[str, int]] = None
-    """ Output for Counter for timing purposes. If an integer is specified, it
-    will be translated to "Dev1/ctr{timerCounterChannel}". """
+#     detectorSlow: str
+#     """ Name of the widefield detector to use. """
 
-    startTrigger: bool = False
-    """ Boolean for start triggering for sync. """
-
-    def getTimerCounterChannel(self):
-        """ :meta private: """
-        if isinstance(self.timerCounterChannel, int):
-            return f'Dev1/ctr{self.timerCounterChannel}'  # for backwards compatibility
-        else:
-            return self.timerCounterChannel
+#     laserFast: str
+#     """ Name of the widefield laser to use. """
 
 
-@dataclass(frozen=True)
-class PulseStreamerInfo:
-    ipAddress: Optional[str] = None
-    """ IP address of Pulse Streamer hardware. """
+# @dataclass(frozen=True)
+# class MicroscopeStandInfo:
+#     managerName: str
+#     """ Name of the manager to use. """
+
+#     rs232device: str
+#     """ Name of the rs232 device to use. """
 
 
-@dataclass(frozen=True)
-class PyroServerInfo:
-    name: Optional[str] = 'ImSwitchServer'
-    host: Optional[str] = '127.0.0.1'
-    port: Optional[int] = 54333
-    active: Optional[bool] = False
+# @dataclass(frozen=True)
+# class NidaqInfo:
+#     timerCounterChannel: Optional[Union[str, int]] = None
+#     """ Output for Counter for timing purposes. If an integer is specified, it
+#     will be translated to "Dev1/ctr{timerCounterChannel}". """
+
+#     startTrigger: bool = False
+#     """ Boolean for start triggering for sync. """
+
+#     def getTimerCounterChannel(self):
+#         """ :meta private: """
+#         if isinstance(self.timerCounterChannel, int):
+#             return f'Dev1/ctr{self.timerCounterChannel}'  # for backwards compatibility
+#         else:
+#             return self.timerCounterChannel
+
+
+# @dataclass(frozen=True)
+# class PulseStreamerInfo:
+#     ipAddress: Optional[str] = None
+#     """ IP address of Pulse Streamer hardware. """
+
+
+# @dataclass(frozen=True)
+# class PyroServerInfo:
+#     name: Optional[str] = 'ImSwitchServer'
+#     host: Optional[str] = '127.0.0.1'
+#     port: Optional[int] = 54333
+#     active: Optional[bool] = False
 
 @dataclass(frozen=True)
 class SIMInfo:
-    monitorIdx: int
-    """ Index of the monitor in the system list of monitors (indexing starts at
-    0). """
+    # monitorIdx: int
+    # """ Index of the monitor in the system list of monitors (indexing starts at
+    # 0). """
 
     width: int
     """ Width of SLM, in pixels. """
@@ -396,39 +410,39 @@ class SetupInfo:
     their properties.
     """
 
-    slm: Optional[SLMInfo] = field(default_factory=lambda: None)
-    """ SLM settings. Required to be defined to use SLM functionality. """
+    # slm: Optional[SLMInfo] = field(default_factory=lambda: None)
+    # """ SLM settings. Required to be defined to use SLM functionality. """
 
-    focusLock: Optional[FocusLockInfo] = field(default_factory=lambda: None)
-    """ Focus lock settings. Required to be defined to use focus lock
-    functionality. """
+    # focusLock: Optional[FocusLockInfo] = field(default_factory=lambda: None)
+    # """ Focus lock settings. Required to be defined to use focus lock
+    # functionality. """
     
-    autofocus: Optional[AutofocusInfo] = field(default_factory=lambda: None)
-    """ Autofocus settings. Required to be defined to use autofocus 
-    functionality. """
+    # autofocus: Optional[AutofocusInfo] = field(default_factory=lambda: None)
+    # """ Autofocus settings. Required to be defined to use autofocus 
+    # functionality. """
 
-    scan: Optional[ScanInfo] = field(default_factory=lambda: None)
-    """ Scan settings. Required to be defined to use scan functionality. """
+    # scan: Optional[ScanInfo] = field(default_factory=lambda: None)
+    # """ Scan settings. Required to be defined to use scan functionality. """
 
-    etSTED: Optional[EtSTEDInfo] = field(default_factory=lambda: None)
-    """ EtSTED settings. Required to be defined to use etSTED functionality. """
+    # etSTED: Optional[EtSTEDInfo] = field(default_factory=lambda: None)
+    # """ EtSTED settings. Required to be defined to use etSTED functionality. """
     
     SLM25D: Optional[SLM25DInfo] = field(default_factory=lambda: None)
     """ SLM for 2.5D settings. Required to be defined to use SLM(2.5D) functionality. """
 
-    rotators: Optional[Dict[str, DeviceInfo]] = field(default_factory=lambda: None)
-    """ Standa motorized rotator mounts settings. Required to be defined to use rotator functionality. """
+    # rotators: Optional[Dict[str, DeviceInfo]] = field(default_factory=lambda: None)
+    # """ Standa motorized rotator mounts settings. Required to be defined to use rotator functionality. """
 
-    microscopeStand: Optional[MicroscopeStandInfo] = field(default_factory=lambda: None)
-    """ Microscope stand settings. Required to be defined to use MotCorr widget. """
+    # microscopeStand: Optional[MicroscopeStandInfo] = field(default_factory=lambda: None)
+    # """ Microscope stand settings. Required to be defined to use MotCorr widget. """
 
-    nidaq: NidaqInfo = field(default_factory=NidaqInfo)
-    """ NI-DAQ settings. """
+    # nidaq: NidaqInfo = field(default_factory=NidaqInfo)
+    # """ NI-DAQ settings. """
 
-    pulseStreamer: PulseStreamerInfo = field(default_factory=PulseStreamerInfo)
-    """ Pulse Streamer settings. """
+    # pulseStreamer: PulseStreamerInfo = field(default_factory=PulseStreamerInfo)
+    # """ Pulse Streamer settings. """
 
-    pyroServerInfo: PyroServerInfo = field(default_factory=PyroServerInfo)
+    # pyroServerInfo: PyroServerInfo = field(default_factory=PyroServerInfo)
     
     sim: Optional[SIMInfo] = field(default_factory=lambda: None)
     """ SIM widget settings. Required to be defined to use SIM widget. """

@@ -43,7 +43,9 @@ class InfoGatheringController(ImConWidgetController):
                             ('SIM Parameters', 'Alpha'),('SIM Parameters', 'Beta'),('SIM Parameters', 'w'),('SIM Parameters', 'eta'),
                             ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM SLM', 'SLM Running Order'),('User Dir Info', 'Working Directory'), ('User Dir Info', 'Current Path'),
                             ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name'),('Z-Stack Settings', 'Step Size'),('Z-Stack Settings', 'Total Z (/um)'),('Z-Stack Settings', 'Z-Stack Checkbox'),
-                            ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List')]
+                            ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List'),
+                            ('25D SLM Parameters', 'Gamma'),('25D SLM Parameters', 'Psi'),('25D SLM Parameters', 'Left Center-X'),('25D SLM Parameters', 'Left Center-Y'),('25D SLM Parameters', 'Right Center-X'),
+                            ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter')]
 
 
     def updateSharedAttributes(self):
