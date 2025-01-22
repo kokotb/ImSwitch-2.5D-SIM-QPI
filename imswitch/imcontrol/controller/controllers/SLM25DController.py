@@ -239,7 +239,7 @@ class SLM25DController(ImConWidgetController):
             self.ZernikeAllMasksSumFloat = np.ones((1920, 1080))
 
 
-        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
+        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
         self.zernikeParametersOld = zernikeParametersNew
         return self.ZernikeAllMasksSum
 
@@ -301,7 +301,7 @@ class SLM25DController(ImConWidgetController):
             # add to mask
             self.ZernikeAllMasksSumFloat += self.zernikeMask * zernikeParametersNew[name] * 255
 
-        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8) % 255
+        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
         # self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
         self.zernikeParametersOld = zernikeParametersNew
         t1 = time.time()
