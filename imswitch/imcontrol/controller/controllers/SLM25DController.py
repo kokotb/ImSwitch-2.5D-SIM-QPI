@@ -215,6 +215,13 @@ class SLM25DController(ImConWidgetController):
         # ====================================================================================================================================
 
         zernikeParametersNew = self.getAllZernikeParams()
+################################
+        if self._widget.invert.isChecked():
+            for key in zernikeParametersNew.keys():
+                zernikeParametersNew[key] = - zernikeParametersNew[key]
+######################################
+
+
         allZeros = all(value == 0.0 for value in zernikeParametersNew.values())
         zernikeParametersDifferences = {key: (self.zernikeParametersOld[key], zernikeParametersNew[key]) for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
         if not allZeros:
@@ -275,10 +282,15 @@ class SLM25DController(ImConWidgetController):
         phiright = np.arctan2(yrightnormalized, xrightnormalized)
         
         # ====================================================================================================================================
-
-
-
         zernikeParametersNew = self.getAllZernikeParams()
+        #########################hack
+        if self._widget.invert.isChecked():
+            for key in zernikeParametersNew.keys():
+                zernikeParametersNew[key] = - zernikeParametersNew[key]
+            
+        ########################hack
+
+
         self.ZernikeAllMasksSumFloat = np.ones((1920,1080)) #CTNOTE
         for name in zernikeParametersNew:
             order = eval(name)

@@ -75,6 +75,10 @@ class SLM25DWidget(Widget):
         self.reset25D = QPushButton("Reset")
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
+
+        ##############################################################
+        self.invert = QCheckBox('invert')
+        ##############################################################
         # Grid layout for the entire widget
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
@@ -82,6 +86,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.projectZernike,0,1,1,2)
         self.grid.addWidget(self.project25D,0,3)
         self.grid.addWidget(self.slmPreview, 0, 5)
+        self.grid.addWidget(self.invert, 0, 6)
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
         self.grid.addWidget(self.resetZern, 4, 6)
         self.grid.addWidget(self.reset25D, 16, 6)
