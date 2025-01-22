@@ -29,15 +29,17 @@ class SLM25DManagerMock(SignalInterface):
         self.rep = 0
 
     def projectMask(self, mask):
+
         if self.rep != 0:
-            plt.cla()
-            plt.close()
+            plt.clf()
         mask2 = np.reshape(mask,(1920, 1080), order='F')
         mask3 = np.rot90(mask2, 3)
         mask4 = np.fliplr(mask3)
-        if self.rep != 0:
+        if self.rep == 0:
             plt.imshow(mask4, cmap='gray')
             plt.show()
+        else:
+            plt.imshow(mask4, cmap='gray')
         self.rep += 1
 
 
