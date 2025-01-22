@@ -287,6 +287,7 @@ class SLM25DController(ImConWidgetController):
             zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright)
             
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
+            
             if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
                 zernikeMask[np.isnan(zernikeMask)] = 0
             else: 
@@ -337,7 +338,7 @@ class SLM25DController(ImConWidgetController):
         elif (projZernike == 0) and (proj25D == 0):
             projImg = np.zeros((1920, 1080))
             if self.slmActive:
-                self.slm25DManager.projectMask(self.reshapeMask(projImg), False)
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
         
         
 
