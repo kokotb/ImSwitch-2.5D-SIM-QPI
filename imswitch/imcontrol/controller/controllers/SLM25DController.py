@@ -31,7 +31,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
             return
 
-        self.zernikeParametersOld = self.getAllZernikeParams()
+
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
 
         # Connect CommunicationChannel signals
@@ -61,7 +61,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
         self._widget.sig25DParamChanged.connect(self.valueChanged)
         self.init25DWidgetValues()
-        # self.Params = self.getAllWidgetParams()
+        self.zernikeParametersOld = self.getAllZernikeParams()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
         
 
@@ -75,6 +75,17 @@ class SLM25DController(ImConWidgetController):
         for i in range(len(strippedNames)):
             self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setText(str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
             self._widget.valueDict25D[self._widget.paramNames[i]] = str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+
+        strippedNames = []
+        self._widget.valueDictZern25D = dict()
+        for i in range(len(self._widget.ZernikeAberrationNames)):
+            spaceStripped = self._widget.ZernikeAberrationNames[i].replace(' ','')
+            dashStripped = spaceStripped.replace('-','')
+            strippedNames.append(dashStripped)
+        for i in range(len(strippedNames)):
+            self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i]].setText(str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+            self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i]] = str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            
         
 
 
@@ -293,7 +304,7 @@ class SLM25DController(ImConWidgetController):
         # self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
         self.zernikeParametersOld = zernikeParametersNew
         t1 = time.time()
-        print("Time to calculate new Zernike = " + str(t1 - t0))
+        # print("Time to calculate new Zernike = " + str(t1 - t0))
         return self.ZernikeAllMasksSum
     
     def combineAndProject(self):

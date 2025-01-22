@@ -19,7 +19,17 @@
   "LeftCenterY": 540,
   "RightCenterX":1440,
   "RightCenterY": 540,
-  "BeamDiameter": 6.0
+  "BeamDiameter": 6.0,
+  "Piston": 0.0,
+  "Ytilt": 0.0,
+  "Xtilt": 0.0,
+  "ObliqueAstigmatism": 0.0,
+  "Defocus": 0.0,
+  "VerticalAstigmatism": 0.0,
+  "VerticalTrefoil": 3.0,
+  "VerticalComa": 0.0,
+  "HorizontalComa": 0.0,
+  "HorizontalTrefoil": 0.0
 
 },
 "Arduino":{

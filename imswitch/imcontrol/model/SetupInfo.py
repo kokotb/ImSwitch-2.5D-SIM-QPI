@@ -254,6 +254,17 @@ class SLM25DInfo:
 
     BeamDiameter: float
 
+    Piston: float
+    Ytilt: float
+    Xtilt: float
+    ObliqueAstigmatism: float
+    Defocus: float
+    VerticalAstigmatism: float
+    VerticalTrefoil: float
+    VerticalComa: float
+    HorizontalComa: float
+    HorizontalTrefoil: float
+
     # managerName: str
     # """ Manager name in string. """
 

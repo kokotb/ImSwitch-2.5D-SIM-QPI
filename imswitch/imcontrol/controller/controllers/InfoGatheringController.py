@@ -45,8 +45,10 @@ class InfoGatheringController(ImConWidgetController):
                             ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name'),('Z-Stack Settings', 'Step Size'),('Z-Stack Settings', 'Total Z (/um)'),('Z-Stack Settings', 'Z-Stack Checkbox'),
                             ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List'),
                             ('25D SLM Parameters', 'Gamma'),('25D SLM Parameters', 'Psi'),('25D SLM Parameters', 'Left Center-X'),('25D SLM Parameters', 'Left Center-Y'),('25D SLM Parameters', 'Right Center-X'),
-                            ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter')]
-
+                            ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter'),('Zernike SLM Parameters','Piston'),('Zernike SLM Parameters','Y-tilt'),
+                            ('Zernike SLM Parameters','X-tilt'),('Zernike SLM Parameters','Oblique Astigmatism'),('Zernike SLM Parameters','Defocus'),('Zernike SLM Parameters','Vertical Astigmatism'),
+                            ('Zernike SLM Parameters','Vertical Trefoil'),('Zernike SLM Parameters','Vertical Coma'),('Zernike SLM Parameters','Horizontal Coma'),('Zernike SLM Parameters','Horizontal Trefoil')]
+        
 
     def updateSharedAttributes(self):
         # print('test')
