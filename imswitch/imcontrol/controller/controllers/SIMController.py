@@ -268,11 +268,11 @@ class SIMController(ImConWidgetController):
                     time.sleep(.5) #TODO: Change to calibrate by distance needed to move
                 else:
                     time.sleep(.05) #can probablz reduct slightly
-                f = 0
-                while f < len(zList):
-                # for f in range(len(zList)):
+                z = 0
+                while z < len(zList):
+                # for z in range(len(zList)):
                     if self.zScanActive:
-                        self.positioner.setPosition(zList[f], 'Z')
+                        self.positioner.setPosition(zList[z], 'Z')
                         self._commChannel.sigUpdateZPosition.emit('Z','Z')
                     # for processor in self.processors:
                         # processor.setRecordingMode(self.isRecordRecon)
@@ -299,7 +299,7 @@ class SIMController(ImConWidgetController):
                         if self.isTiling:
                             executor.submit(self.tilingMoveThread)
                         for processor in self.activeProcessors:
-                                executor.submit(self.mainSIMLoop, processor, errorLock)
+                                executor.submit(self.mainSIMLoop, processor, errorLock, z)
 
                     if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                         self._widget.stop_button.setChecked(False)
@@ -308,7 +308,7 @@ class SIMController(ImConWidgetController):
                     self.numAllFrames += 1
                     if True not in self.errorQ:
                         self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                        f += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     loopEndTime = time.time()-timestart
                     print(loopEndTime)
                     self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
@@ -358,9 +358,10 @@ class SIMController(ImConWidgetController):
                 self.setSharedAttr('Channel Contrast Limits', self._widget.viewer.layers[i].name, self._widget.viewer.layers[i]._contrast_limits)
         
 
-    def mainSIMLoop(self, processor, errorLock):
+    def mainSIMLoop(self, processor, errorLock, z):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
+        zLength = self.zLength
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors):
             lastChan = True
@@ -406,8 +407,13 @@ class SIMController(ImConWidgetController):
             with errorLock:
                 self.errorQ.append(False)
             if lastChan:
-                self.waitToMoveEvent.set()
-                print('All images, all channels loaded into buffer')
+                self.lastZ = (z == self.zLength - 1)
+                if self.lastZ:
+            # if lastChan:
+                    self.waitToMoveEvent.set()
+                    print('All images, all channels loaded into buffer')
+                else: 
+                    self.waitToMoveEvent.set()
 
                 
             rawStack = detector._camera.grabFrameSet(self.framesPerDetector) # receive raw image stack
@@ -429,11 +435,11 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
         
             if self.isRecordRaw:
-                self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep)
+                self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z)
             if self.isRecordWF:
-                self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep)
+                self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z)
             if self.isRecordRecon and self.isReconstruction:
-                self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep)
+                self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep, z)
             
             if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
                 self.recordOneSetRaw(self.j, processor)
@@ -449,8 +455,9 @@ class SIMController(ImConWidgetController):
         self.waitToMoveEvent.wait()
         self.waitToMoveEvent.clear()
         if True not in self.errorQ:
+            if self.lastZ:
         # print(f'Thread {threading.current_thread().getName()} started moving')
-            self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
+                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
             # self.positionerXY.checkBusyLoop()
         else:
             pass
@@ -511,7 +518,7 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
-    def recordRawFunc(self,j, processor, isTiling, tilingRep):
+    def recordRawFunc(self,j, processor, isTiling, tilingRep, z):
         if isTiling:
             rawSavePath = os.path.join(self.exptFolderPath, "Tiling", "RawStacks")
         else:
@@ -519,9 +526,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
         if isTiling:
-            rawFilenames = f"f{tilingRep:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            rawFilenames = f"f{tilingRep:04}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         else:
-            rawFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            rawFilenames = f"f{self.numAllFrames:04}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
@@ -536,9 +543,10 @@ class SIMController(ImConWidgetController):
     def zScanList(self, zScanList, zOrigin):
         self.zList = zScanList
         self.zOrigin = zOrigin
+        self.zLength = len(zScanList)
 
 
-    def recordWFFunc(self,j,im, processor, isTiling, tilingRep):
+    def recordWFFunc(self,j,im, processor, isTiling, tilingRep, z):
         if isTiling:
             wfSavePath = os.path.join(self.exptFolderPath,"Tiling", "WF")
         else:
@@ -546,9 +554,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
         if isTiling:
-            wfFilenames = f"f{tilingRep:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            wfFilenames = f"f{tilingRep:04}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         else:
-            wfFilenames = f"f{self.numAllFrames:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            wfFilenames = f"f{self.numAllFrames:04}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
@@ -560,7 +568,7 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,simSavePath, simFilenames)
 
-    def recordSIMFunc(self,pos_num, processor, isTiling, tilingRep):
+    def recordSIMFunc(self,pos_num, processor, isTiling, tilingRep, z):
         if isTiling:
             reconSavePath = os.path.join(self.exptFolderPath,"Tiling", "Recon")
         else:
@@ -568,9 +576,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(reconSavePath):
             os.makedirs(reconSavePath)
         if isTiling:
-            reconFilenames = f"f{tilingRep:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            reconFilenames = f"f{tilingRep:04}_pos{pos_num:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         else:
-            reconFilenames = f"f{self.numAllFrames:04}_pos{pos_num:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            reconFilenames = f"f{self.numAllFrames:04}_pos{pos_num:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
         self.saveImageInBackground(processor.SIMReconstruction, reconSavePath,reconFilenames)
 
@@ -583,7 +591,7 @@ class SIMController(ImConWidgetController):
         dd, hh = divmod(hh,24)
         ss = "{:02d}".format(int(ss))
         mm = "{:02d}".format(int(mm))
-        hh = "{:02d}".format(int(hh))
+        hh = "{:02d}".format(int(hh)) 
         dd = "{:01d}".format(int(dd))
         ms = str(round(Decimal(ms),3))[2:5]
 
