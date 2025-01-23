@@ -104,7 +104,7 @@ def getUniqueNamesByPattern(file_names, pattern):
     return num_names, all_names_unique
 
 
-def metadata_collector():
+def metadataCollector():
     """Grabs all metadata from sharedAttributes and returns metadata
     dictionary and resolution vector
     Returns:
@@ -154,6 +154,7 @@ def metadata_collector():
                     "AcquisitionDate": now_string
                     }
     return resolution, metadata
+
 ##############################
 #      SET PARAMETERS        #
 ##############################
@@ -261,7 +262,7 @@ for exp_name in exp_names:
             single_chan_time_stack.append(tiling)
             if single_chan_tiling:
                 # BK edit - adding metadata
-                resolution_grab, metadata_grab = metadata_collector()
+                resolution_grab, metadata_grab = metadataCollector()
                 
                 tifffile.imwrite(f'{save_path_tiling}\\{name_time}_{ch}_{name_tiling}_{now_string_exp}.tif', 
                                  tiling, resolution = resolution_grab, 

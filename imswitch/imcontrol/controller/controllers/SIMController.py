@@ -899,6 +899,56 @@ class SIMController(ImConWidgetController):
         mystack.append(self.detector.getLatestFrame())
         #print(np.shape(mystack))
 
+    def metadataCollector(self):
+        """Grabs all metadata from sharedAttributes and returns metadata
+        dictionary and resolution vector
+        Returns:
+            tuple: pixelsize in the right format for imageJ to show it
+            dict: dictionary od metadata in OEM format, readable by BioFormats
+        """
+        # --------------------------Set your export--------------------------
+        
+        units = "um"
+        psz = 0.123 # in selected units
+        single_channel_names = ["488"] # If multichannel image, all can names
+        posX = 0.1 # in selected units
+        posY = 0.3 # in selected units
+        posZ = 0.5 # in selected units
+        # Generate the date in right format
+        now = datetime.now()
+        # OEM docs say the date should be in this form, so I am keeping it
+        now_string = "{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(now.year, now.month, now.day, now.hour, now.minute, now.second)
+        # now_string = "{}_{:02d}_{:02d}-{:02d}.{:02d}.{:02d}".format(now.year, now.month, now.day, now.hour, now.minute, now.second)
+        
+        # --------------------------Set your export--------------------------
+        
+        # imageJ metadata format
+        resolution=(1./psz, 1./psz)
+        
+        # mix of imageJ and OEM data format (axes and units are in imageJ format)
+        # TODO: Will maybe need to change to one, I've read there can be conflicts
+        metadata = {
+                        # Not sure where this one is from - same syntax for both
+                        # "axes": "YX",
+                        # ImageJ format export
+                        "Labels": single_channel_names, # ImageJ export
+                        "unit": units, # ImageJ export
+                        # OEM format exports
+                        'Pixels': {
+                            'PhysicalSizeX': psz,
+                            'PhysicalSizeXUnit': units,
+                            'PhysicalSizeY': psz,
+                            'PhysicalSizeYUnit': units
+                        },
+                        "Channel": {"Name": single_channel_names},
+                        'Plane': {
+                            'PositionX': posX, 'PositionXUnit': units,
+                            'PositionY': posY, 'PositionYUnit': units,
+                            'PositionZ': posZ, 'PositionZUnit': units,
+                            },
+                        "AcquisitionDate": now_string
+                        }
+        return resolution, metadata
 
     def saveImageInBackground(self, image, path, filename):
         # print(threading.current_thread())
@@ -907,7 +957,13 @@ class SIMController(ImConWidgetController):
             # self.folder = self._widget.getRecFolder()
             filename = os.path.join(path,filename) 
             image = np.array(image)
-            tif.imwrite(filename, image, imagej=True)
+            
+            # Grab metadata
+            resolution_grab, metadata_grab = self.metadataCollector()
+            
+            tif.imwrite(filename, image, resolution = resolution_grab,
+                        metadata = metadata_grab, imagej=True)
+            # tif.imwrite(filename, image, imagej=True)
             # tif.imwrite(filename, image, metadata=ijmetadata)
             self._logger.debug("Saving file: " + filename)
         except  Exception as e:
