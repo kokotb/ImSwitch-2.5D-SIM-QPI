@@ -16,8 +16,8 @@ class ZStackController(ImConWidgetController):
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
-        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.initZStackInfo()
+        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
 
@@ -90,7 +90,7 @@ class ZStackController(ImConWidgetController):
 
         Args:
             parameterName (str): name of a parameter passed from wdiget
-            attr (_type_): type of a attribute (value, enabled, ...)
+            attr (_type_): type of a attribute (value, enabled, ...)    
             value (_type_): value of the parameter read from wdiget
         """
         self.settingAttr = True

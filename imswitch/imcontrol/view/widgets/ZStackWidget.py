@@ -8,12 +8,16 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 import napari
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtCore import QLocale
 import math
 
 class ZStackWidget(NapariHybridWidget):
 
     sigZStackInfoChanged = QtCore.Signal(str, str, str)
     runZStackToggle = QtCore.Signal(int)
+    sigCheckValidityStep = QtCore.Signal()
+    sigCheckValidityTotal = QtCore.Signal()
+    # sigZStackCalc = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -24,25 +28,29 @@ class ZStackWidget(NapariHybridWidget):
 
         self.zStepDistance_label = QLabel("Step Size (/um)")
         self.zStepDistance_textedit = QLineEdit("")
-        self.validator = QDoubleValidator()
+        self.validator = QDoubleValidator(0.01, 10.00, 2)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
         self.zStepDistance_textedit.setToolTip('Size between steps in microns.') 
         self.zStepDistance_textedit.setEnabled(False)
-        self.zStepDistance_textedit.setFixedWidth(50)
+        self.zStepDistance_textedit.setFixedWidth(75)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
-        self.zStepDistance_textedit.textChanged.connect(self.floorTotalZ)
+        self.zStepDistance_textedit.editingFinished.connect(self.floorTotalZ)
+        self.zStepDistance_textedit.textChanged.connect(self.sigCheckValidityStep.emit)
 
 
         self.totalZ_label = QLabel("Total Z (/um)")
         self.totalZ_textedit = QLineEdit("")
-        # self.validator = QDoubleValidator()
-        # self.totalZ_textedit.setValidator(self.validator)
-        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calcualted. 10.9 steps = 10 steps.')  
+        self.validator = QDoubleValidator(0.00, 450.00, 2)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.totalZ_textedit.setValidator(self.validator)
+        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calculated. 10.9 steps = 10 steps.')  
         self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z (/um)", value))
-        self.totalZ_textedit.setText("0")
-        self.totalZ_textedit.setFixedWidth(50)
+        self.totalZ_textedit.setText("")
+        self.totalZ_textedit.setFixedWidth(75)
         self.totalZ_textedit.setEnabled(False)
         self.totalZ_textedit.editingFinished.connect(self.floorTotalZ)
+        self.totalZ_textedit.textChanged.connect(self.sigCheckValidityTotal.emit)
 
 
         self.checkbox_zStack = QCheckBox('Run Z Stack')
@@ -69,6 +77,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStackScanDir = QtWidgets.QComboBox()
         self.zStackScanDir.setFixedWidth(75)
         self.zStackScanDir.setEnabled(False)
+
         self.zStackScanDir.currentTextChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', value))
 
 
@@ -84,11 +93,27 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.zOffset_label, row+2, 3)
         zStackLayout.addWidget(self.zOffset_textedit, row+2, 4)
 
+        self.sigCheckValidityStep.connect(self.checkValidityStep)
+        self.sigCheckValidityTotal.connect(self.checkValidityTotal)
 
+    def checkValidityStep(self):
+        valid = self.zStepDistance_textedit.hasAcceptableInput()
+        if valid:
+            self.zStepDistance_textedit.setStyleSheet('')
+        else:
+            self.zStepDistance_textedit.setStyleSheet("border: 1px solid red;")
+
+    def checkValidityTotal(self):
+        valid = self.totalZ_textedit.hasAcceptableInput()
+        if valid:
+            self.totalZ_textedit.setStyleSheet('')
+        else:
+            self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
 
     def initZStackInfo(self):
+        # self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', 'Up')
         self.zStepDistance_textedit.setText("1")
-        self.totalZ_textedit.setText("0")
+        self.totalZ_textedit.setText("1")
         self.zOffset_textedit.setText("0")
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", '0')
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", '0')
@@ -102,6 +127,7 @@ class ZStackWidget(NapariHybridWidget):
     #     self.zOffset_textedit.setText(str(totalDist))
 
     def updateStartOffset(self, totalDist):
+        # scanDir = self.zStackScanDir.currentText()
         if self.checkbox_zStackCenter.checkState() == 2:
             self.zOffset_textedit.setText(str(totalDist/2))
 
@@ -112,21 +138,31 @@ class ZStackWidget(NapariHybridWidget):
     def floorTotalZ(self):
         stepDist = float(self.zStepDistance_textedit.text())
         totalDist = float(self.totalZ_textedit.text())
-        floorSteps = math.floor((totalDist / stepDist))
+        try:
+            floorSteps = math.floor((totalDist / stepDist))
+        except ZeroDivisionError:
+            print("Step size is equal to zero.")
+            # floorSteps = 0
 
         if self.checkbox_zStackCenter.checkState() == 0:
-
-            newTotalDist = stepDist * floorSteps
+            if floorSteps == 0:
+                newTotalDist = stepDist
+            else:
+                newTotalDist = stepDist * floorSteps
             self.totalZ_textedit.setText(str(newTotalDist))
 
         elif self.checkbox_zStackCenter.checkState() == 2:
-            # floorSteps = floorSteps + 1
-            if floorSteps % 2 == 0:
-                pass
-            else: 
-                floorSteps = floorSteps + 1
+            if floorSteps == 0:
+                newTotalDist = stepDist * 2
+            else:
 
-            newTotalDist = stepDist * floorSteps
+                if floorSteps % 2 == 0:
+                    pass
+                else: 
+                    floorSteps = floorSteps + 1
+
+                newTotalDist = stepDist * floorSteps
+
             self.totalZ_textedit.setText(str(newTotalDist))
 
         self.updateStartOffset(newTotalDist)

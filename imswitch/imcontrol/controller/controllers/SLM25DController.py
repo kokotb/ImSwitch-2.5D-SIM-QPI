@@ -219,7 +219,7 @@ class SLM25DController(ImConWidgetController):
         if self._widget.invert.isChecked():
             for key in zernikeParametersNew.keys():
                 zernikeParametersNew[key] = - zernikeParametersNew[key]
-######################################
+################################
 
 
         allZeros = all(value == 0.0 for value in zernikeParametersNew.values())
