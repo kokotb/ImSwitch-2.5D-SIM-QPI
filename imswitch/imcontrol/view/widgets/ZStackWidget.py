@@ -161,7 +161,7 @@ class ZStackWidget(NapariHybridWidget):
                 else: 
                     floorSteps = floorSteps + 1
 
-                newTotalDist = stepDist * floorSteps
+                newTotalDist = round(stepDist * floorSteps,2)
 
             self.totalZ_textedit.setText(str(newTotalDist))
 
