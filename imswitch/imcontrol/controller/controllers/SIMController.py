@@ -909,7 +909,7 @@ class SIMController(ImConWidgetController):
             image = np.array(image)
             tif.imwrite(filename, image, imagej=True)
             # tif.imwrite(filename, image, metadata=ijmetadata)
-            self._logger.debug("Saving file: "+filename)
+            self._logger.debug("Saving file: " + filename)
         except  Exception as e:
             self._logger.error(e)
 
