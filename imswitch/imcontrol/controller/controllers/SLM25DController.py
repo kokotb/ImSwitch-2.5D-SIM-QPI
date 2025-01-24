@@ -228,13 +228,13 @@ class SLM25DController(ImConWidgetController):
             for name in zernikeParametersDifferences:
                 order = eval(name)
 
-                zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized)
-                zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized)
+                zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
+                zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
                 zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-                if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-                    zernikeMask[np.isnan(zernikeMask)] = 0
-                else: 
-                    zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
+                # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+                #     zernikeMask[np.isnan(zernikeMask)] = 0
+                # else: 
+                #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
                 # Normalize and transpose
                 zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask)) 
@@ -243,7 +243,7 @@ class SLM25DController(ImConWidgetController):
                 # add to mask
                 self.ZernikeAllMasksSumFloat += self.zernikeMask * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
         else:
-            self.ZernikeAllMasksSumFloat = np.ones((1920, 1080))
+            self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
 
 
         self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
@@ -291,23 +291,26 @@ class SLM25DController(ImConWidgetController):
         ########################hack
 
 
-        self.ZernikeAllMasksSumFloat = np.ones((1920,1080)) #CTNOTE
+        self.ZernikeAllMasksSumFloat = np.zeros((1920,1080)) #CTNOTE
         for name in zernikeParametersNew:
             order = eval(name)
 
-            zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft)
-            zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright)
+            zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
+            zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
             
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
             
-            if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-                zernikeMask[np.isnan(zernikeMask)] = 0
-            else: 
-                zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
+            # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+            #     zernikeMask[np.isnan(zernikeMask)] = 0
+            # else: 
+            #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
 
             # Normalize and transpose
-            zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
+            if np.max(zernikeMask) == np.min(zernikeMask):
+                pass
+            else:
+                zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
             self.zernikeMask = zernikeMask.transpose()
 
             # add to mask
@@ -325,19 +328,16 @@ class SLM25DController(ImConWidgetController):
         proj25D = self._widget.project25D.checkState()
 
         if (projZernike == 2) and (proj25D == 2):
-            if ((self._widget.matrixZernike == 0).all()):
-                self._widget.matrixZernike = np.ones((1920, 1080))
-
-            
-
-            projImg = np.multiply(self.mask25D, self._widget.matrixZernike) #CTNOTE - This multiply operation inverts the Zernike whites/blacks
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080))
+            projImg = self.mask25D + self._widget.matrixZernike 
 
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         elif (projZernike == 2) and (proj25D == 0):
-            if ((self._widget.matrixZernike == 0).all()):
-                self._widget.matrixZernike = np.ones((1920, 1080)) 
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080)) 
             projImg = self._widget.matrixZernike
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
@@ -406,7 +406,7 @@ class SLM25DController(ImConWidgetController):
         mask = self.phase_function_fast(gamma, psi, rhomatrix) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        maskbinary = np.where(mask >= 0, 255, 0)
+        maskbinary = np.where(mask >= 0, 127, 0)
         maskbinary = maskbinary.astype(np.uint8)
         maskbinary = maskbinary.transpose()
 
