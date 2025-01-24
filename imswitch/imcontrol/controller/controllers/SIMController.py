@@ -274,6 +274,7 @@ class SIMController(ImConWidgetController):
                     if self.zScanActive:
                         self.positioner.setPosition(zList[z], 'Z')
                         self._commChannel.sigUpdateZPosition.emit('Z','Z')
+
                     # for processor in self.processors:
                         # processor.setRecordingMode(self.isRecordRecon)
                         # processor.setReconstructionMode(self.isReconstruction)
@@ -289,7 +290,7 @@ class SIMController(ImConWidgetController):
                     # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
 
                     self._master.arduinoManager.trigOneSequenceWriteOnly()
-                    
+
 
                     errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                     self.errorQ = [] #List to be populated with error results from within processor threads
@@ -299,7 +300,7 @@ class SIMController(ImConWidgetController):
                         if self.isTiling:
                             executor.submit(self.tilingMoveThread)
                         for processor in self.activeProcessors:
-                                executor.submit(self.mainSIMLoop, processor, errorLock, z)
+                                executor.submit(self.mainSIMLoop, processor, errorLock, z) 
 
                     if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                         self._widget.stop_button.setChecked(False)
@@ -314,17 +315,8 @@ class SIMController(ImConWidgetController):
                     self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                     self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                     
-
-                 # increment even if an acquisition was broken.
-                # if True not in self.errorQ:
-                #     self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                #     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-
                 # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                 j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-
-                # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
 
                 
                 
@@ -361,7 +353,7 @@ class SIMController(ImConWidgetController):
     def mainSIMLoop(self, processor, errorLock, z):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
-        zLength = self.zLength
+
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors):
             lastChan = True
@@ -400,7 +392,11 @@ class SIMController(ImConWidgetController):
                     detector._camera.clearBuffers()
                 # detector._camera.clearBuffers()
                 if lastChan:
-                    self.waitToMoveEvent.set()
+                    self.lastZ = (z == self.zLength - 1)
+                    if self.lastZ:
+                        self.waitToMoveEvent.set()
+                    else: 
+                        self.waitToMoveEvent.set()
                 break #stop thread execution and waits at end for other threads to finish
 
         if not broken:

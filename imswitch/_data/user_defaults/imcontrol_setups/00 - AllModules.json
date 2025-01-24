@@ -26,7 +26,7 @@
   "ObliqueAstigmatism": 0.0,
   "Defocus": 0.0,
   "VerticalAstigmatism": 0.0,
-  "VerticalTrefoil": 3.0,
+  "VerticalTrefoil": 0.0,
   "VerticalComa": 0.0,
   "HorizontalComa": 0.0,
   "HorizontalTrefoil": 0.0
