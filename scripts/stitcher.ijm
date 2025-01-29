@@ -3,10 +3,10 @@
 // Contact: bostjan.kokot@ijs.si
 // Webpage: lbf.ijs.si
 // Created:  23.01.2025              
-// Modified: 24.01.2025 (save date is more recent)
+// Modified: 28.01.2025 (save date is more recent)
 
 // Script to automatically stitch together tiles for all time points in
-// Currently implemented for one channel
+// Currently implemented for one channel per folder
 // Be aware that each time point can have slightly different sizes due to
 // the nature of the stitcher
 
