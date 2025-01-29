@@ -3,7 +3,7 @@
 // Contact: bostjan.kokot@ijs.si
 // Webpage: lbf.ijs.si
 // Created:  23.01.2025              
-// Modified: 28.01.2025 (save date is more recent)
+// Modified: 29.01.2025 (save date is more recent)
 
 // Script to automatically stitch together tiles for all time points in
 // Currently implemented for one channel per folder
@@ -58,9 +58,12 @@ for (i=0; i<list_in.length; i++) {
 }
 
 // Remove duplicates
+// Initilaze arrays with first value
 list_split = split(list[0], "_");
 list_no_duplicates_compare = newArray(String.join(newArray(list_split[0], list_split[2]),"_"));
 list_no_duplicates_short = newArray(list[0]);
+list_stitcher = newArray(replace(list[0], list_split[list_split_swap_index], list_split_swap));
+// Run script
 for (i=0; i<list.length; i++) {
 		// Only correct patterned files
 		if(startsWith(list[i], pattern_start)){
@@ -74,19 +77,17 @@ for (i=0; i<list.length; i++) {
 				}
 			}
 			if(z==0){
+				// Generate comparing patterns
 				list_no_duplicates_compare = Array.concat(list_no_duplicates_compare, string_compare);
+				// Generate original names witu duplicates
 				list_no_duplicates_short = Array.concat(list_no_duplicates_short,list[i]);
+				// Swap for stitcher naming
+				list_stitcher = Array.concat(list_stitcher,replace(list[i], list_split[list_split_swap_index], list_split_swap));
 			}
 		}
 	}	
 
-// Swap for stitcher naming
-// Would make code faster if included in above for loop
-list_stitcher = newArray();
-for (j=0; j<list_no_duplicates_short.length; j++) {
-	list_split = split(list_no_duplicates_short[j], "_");
-	list_stitcher = Array.concat(list_stitcher,replace(list_no_duplicates_short[j], list_split[list_split_swap_index], list_split_swap));
-}
+
 
 // Run stitcher 
 total_runs = list_stitcher.length;
