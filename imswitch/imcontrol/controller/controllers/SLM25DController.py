@@ -237,7 +237,10 @@ class SLM25DController(ImConWidgetController):
                 #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
                 # Normalize and transpose
-                zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask)) 
+                if name == '(0,0)':
+                     pass
+                else:
+                    zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask)) 
                 self.zernikeMask = zernikeMask.transpose()
 
                 # add to mask
