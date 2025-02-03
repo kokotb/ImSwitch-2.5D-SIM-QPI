@@ -132,7 +132,7 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setSingleStep(0.1)
             self.pars['AbsPosEdit' + name].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
             self.pars['AbsPosEdit' + name].setDecimals(1)
-            self.pars['AbsPosEdit' + name].setValue(0.1)       
+            self.pars['AbsPosEdit' + name].setValue(0.1)
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
 
             self.pars['Label' + name].setEnabled(False)
@@ -300,7 +300,7 @@ class SLM25DWidget(Widget):
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
-        # self.connect25DSharedAttrSigs()
+        self.connect25DSharedAttrSigs()
 
     def reset25DToDefault(self):
         
@@ -417,13 +417,13 @@ class SLM25DWidget(Widget):
         self.pars['AbsPosEdit' + name].setValue(newVal)
 
     def connect25DSharedAttrSigs(self):
-        self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Gamma',value))
-        self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Psi',value))
-        self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Left Center-X',value))
-        self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Left Center-Y',value))
-        self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Right Center-X',value))
-        self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Right Center-Y',value))
-        self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Beam Diameter',value))
+        self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
+        self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',value))
+        self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',value))
+        self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',value))
+        self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',value))
+        self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',value))
+        self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',value))
         self.pars['AbsPosEdit(0,0)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Piston',value))
         self.pars['AbsPosEdit(1,-1)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Y-tilt',value))
         self.pars['AbsPosEdit(1,1)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','X-tilt',value))
