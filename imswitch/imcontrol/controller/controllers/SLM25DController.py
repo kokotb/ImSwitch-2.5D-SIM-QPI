@@ -60,8 +60,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
         self._widget.sig25DParamChanged.connect(self.valueChanged)
-        self.init25DWidgetValues()
+        self.mask25D = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
+        self.init25DWidgetValues()
+
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
         
 
@@ -83,8 +85,8 @@ class SLM25DController(ImConWidgetController):
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i]].setText(str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-            self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i]] = str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i]].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i]] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
             
         
 
@@ -182,7 +184,7 @@ class SLM25DController(ImConWidgetController):
         for index in self._widget.ZernikeCoefficientNames:
             name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
-            valueList[index] = self.axisValTypes[index](widgetObject.text())
+            valueList[index] = self.axisValTypes[index](widgetObject.value())
 
         # final = list(zip(self._widget.axes,valueList))
         # print(valueList)
@@ -216,9 +218,9 @@ class SLM25DController(ImConWidgetController):
 
         zernikeParametersNew = self.getAllZernikeParams()
 ################################
-        if self._widget.invert.isChecked():
-            for key in zernikeParametersNew.keys():
-                zernikeParametersNew[key] = - zernikeParametersNew[key]
+        # if self._widget.invert.isChecked():
+        #     for key in zernikeParametersNew.keys():
+        #         zernikeParametersNew[key] = - zernikeParametersNew[key]
 ################################
 
 
@@ -286,12 +288,7 @@ class SLM25DController(ImConWidgetController):
         
         # ====================================================================================================================================
         zernikeParametersNew = self.getAllZernikeParams()
-        #########################hack
-        if self._widget.invert.isChecked():
-            for key in zernikeParametersNew.keys():
-                zernikeParametersNew[key] = - zernikeParametersNew[key]
-            
-        ########################hack
+ 
 
 
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080)) #CTNOTE

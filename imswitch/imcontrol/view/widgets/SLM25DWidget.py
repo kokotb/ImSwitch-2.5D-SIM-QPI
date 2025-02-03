@@ -125,7 +125,14 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name] = guitools.BetterPushButton('-')
             self.pars['DownButton' + name].setFixedWidth(100)
             self.pars['DownButton' + name].setAutoRepeat(True)
-            self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
+            # self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
+            self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
+     
+            self.pars['AbsPosEdit' + name].setRange(-5.0,5.0)
+            self.pars['AbsPosEdit' + name].setSingleStep(0.1)
+            self.pars['AbsPosEdit' + name].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+            self.pars['AbsPosEdit' + name].setDecimals(1)
+            self.pars['AbsPosEdit' + name].setValue(0.1)       
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
 
             self.pars['Label' + name].setEnabled(False)
@@ -133,22 +140,32 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
 
-            self.validator = QDoubleValidator(-5.0,5.0,1)
-            self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-            self.pars['AbsPosEdit' + name].setValidator(self.validator)
+            # self.validator = QDoubleValidator(-5.0,5.0,1)
+            # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+            # self.pars['AbsPosEdit' + name].setValidator(self.validator)
             
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
             self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
             self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 5)
+            self.pars['AbsPosEdit' + name].setValue(0.1)       
 
 
             # Connect buttons to signals
             self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
             self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
-            self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
-            self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+            self.pars['AbsPosEdit' + name].valueChanged.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
+
+            # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
+            # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+
+        # self.spinTest = QtWidgets.QDoubleSpinBox()
+        # self.spinTest.setRange(-5.0,5.0)
+        # self.spinTest.setSingleStep(0.1)
+        # self.spinTest.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        # self.spinTest.setDecimals(1)
+        # self.grid.addWidget(self.spinTest, 5, 3)
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
@@ -283,7 +300,7 @@ class SLM25DWidget(Widget):
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
-        self.connect25DSharedAttrSigs()
+        # self.connect25DSharedAttrSigs()
 
     def reset25DToDefault(self):
         
@@ -296,7 +313,7 @@ class SLM25DWidget(Widget):
 
     def resetZernToDefault(self):
         for name in self.ZernikeCoefficientNames:
-            self.pars['AbsPosEdit' + name].setText(self.valueDictZern25D[name])
+            self.pars['AbsPosEdit' + name].setValue(self.valueDictZern25D[name])
         self.updateZernikeMask.emit('_')
 
     def checkValidityAbsPos(self, name):
@@ -384,8 +401,8 @@ class SLM25DWidget(Widget):
     def incrementZern(self, name):
         stepVal = 0.1
         currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = str(round(currentVal+stepVal, 4))
-        self.pars['AbsPosEdit' + name].setText(newVal)
+        newVal = round(currentVal+stepVal, 4)
+        self.pars['AbsPosEdit' + name].setValue(newVal)
         
     def decrement(self, name):
         stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
@@ -396,8 +413,8 @@ class SLM25DWidget(Widget):
     def decrementZern(self, name):
         stepVal = 0.1
         currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = str(round(currentVal-stepVal,4))
-        self.pars['AbsPosEdit' + name].setText(newVal)
+        newVal = round(currentVal-stepVal,4)
+        self.pars['AbsPosEdit' + name].setValue(newVal)
 
     def connect25DSharedAttrSigs(self):
         self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('2.5D SLM Parameters','Gamma',value))
