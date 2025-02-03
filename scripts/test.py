@@ -1,5 +1,5 @@
 """
-Tetsing the functionalities of scripting.
+Testing the functionalities of scripting.
 """
 
 # Make functions into a simple functions

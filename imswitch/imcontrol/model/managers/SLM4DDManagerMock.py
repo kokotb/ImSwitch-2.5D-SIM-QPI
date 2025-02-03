@@ -154,7 +154,9 @@ class SLM4DDManagerMock(SignalInterface):
     def getAllRONames(self):
         # Generate digit-ms_whatever format to conform to setting the 
         # timings from ROInames
-        mockROList = ["20ms_mock9", "2ms_mock1", "2ms_mock2", "5ms_mock3", "5ms_mock4", "10ms_mock5", "10ms_mock6", "20ms_mock7", "20ms_mock8"]
+        mockROList = ["20ms_3Ch_All", "2ms_1Ch_488", "2ms_1Ch_561", "5ms_1Ch_561", "5ms_1Ch_640", "10ms_1Ch_488", "10ms_1Ch_640", "20ms_1Ch_488", "20ms_1Ch_561"]
+        # mockROList = [el + "488Ch561Ch640" for el in mockROListIn]
+        
         RONameDict = {}
         for i in range (9):
             # RONameDict[i] = "RO name" + str(i)
