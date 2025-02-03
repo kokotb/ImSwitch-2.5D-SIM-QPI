@@ -86,7 +86,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.slmPreview, 0, 5)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
-        self.grid.addWidget(self.resetZern, 4, 6)
+        self.grid.addWidget(self.resetZern, 4, 2)
         self.grid.addWidget(self.reset25D, 16, 6)
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
@@ -146,15 +146,15 @@ class SLM25DWidget(Widget):
             
             # Add to widget object
             self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
-            self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
-            self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
-            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 5)
-            self.pars['AbsPosEdit' + name].setValue(0.1)       
+            # self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
+            # self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
+            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 1)
+            # self.pars['AbsPosEdit' + name].setValue(0.1)       
 
 
             # Connect buttons to signals
-            self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
-            self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
+            # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
+            # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
             self.pars['AbsPosEdit' + name].valueChanged.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
 
             # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
@@ -265,7 +265,7 @@ class SLM25DWidget(Widget):
         self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel.setEnabled(False)
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel, 4, 5)
+        self.grid.addWidget(self.valLabel, 4, 1)
 
         self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel2.setEnabled(False)
@@ -293,8 +293,8 @@ class SLM25DWidget(Widget):
         self.sigStepUpCenterClicked.connect(self.increment)
         self.sigStepDownCenterClicked.connect(self.decrement)
 
-        self.sigStepUpZernike.connect(self.incrementZern)
-        self.sigStepDownZernike.connect(self.decrementZern)
+        # self.sigStepUpZernike.connect(self.incrementZern)
+        # self.sigStepDownZernike.connect(self.decrementZern)
         self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigResetZern.connect(self.resetZernToDefault)
@@ -398,11 +398,11 @@ class SLM25DWidget(Widget):
         newVal = str(round(currentVal+stepVal, 4))
         self.pars['AbsPosEdit' + name].setText(newVal)
 
-    def incrementZern(self, name):
-        stepVal = 0.1
-        currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = round(currentVal+stepVal, 4)
-        self.pars['AbsPosEdit' + name].setValue(newVal)
+    # def incrementZern(self, name):
+    #     stepVal = 0.1
+    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
+    #     newVal = round(currentVal+stepVal, 4)
+    #     self.pars['AbsPosEdit' + name].setValue(newVal)
         
     def decrement(self, name):
         stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
@@ -410,11 +410,11 @@ class SLM25DWidget(Widget):
         newVal = str(round(currentVal-stepVal,4))
         self.pars['AbsPosEdit' + name].setText(newVal)
 
-    def decrementZern(self, name):
-        stepVal = 0.1
-        currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = round(currentVal-stepVal,4)
-        self.pars['AbsPosEdit' + name].setValue(newVal)
+    # def decrementZern(self, name):
+    #     stepVal = 0.1
+    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
+    #     newVal = round(currentVal-stepVal,4)
+    #     self.pars['AbsPosEdit' + name].setValue(newVal)
 
     def connect25DSharedAttrSigs(self):
         self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
