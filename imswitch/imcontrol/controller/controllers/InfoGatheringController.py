@@ -10,6 +10,8 @@ from imswitch.imcontrol.view import guitools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.model.dirtools import DataFileDirs
 import pandas as pd
+from PyQt5.QtWidgets import QFileDialog
+import json
 
 
 
@@ -49,6 +51,8 @@ class InfoGatheringController(ImConWidgetController):
                             ('Zernike SLM Parameters','X-tilt'),('Zernike SLM Parameters','Oblique Astigmatism'),('Zernike SLM Parameters','Defocus'),('Zernike SLM Parameters','Vertical Astigmatism'),
                             ('Zernike SLM Parameters','Vertical Trefoil'),('Zernike SLM Parameters','Vertical Coma'),('Zernike SLM Parameters','Horizontal Coma'),('Zernike SLM Parameters','Horizontal Trefoil')]
         
+        
+        self._widget.loadSettings.clicked.connect(self.loadJSONFromFile)
 
     def updateSharedAttributes(self):
         # print('test')
@@ -65,6 +69,12 @@ class InfoGatheringController(ImConWidgetController):
     #     #     setupFile.write(self.shared_attributes.to_json(indent=4))
         
     #     self._logger.warning("Attributes saved.")
+
+
+    def loadJSONFromFile(self):
+        jsonObject = self._widget.loadJSON()
+        self._commChannel.sigLoadSettings.emit(jsonObject)
+
 
 
     def getWantedAttrs(self):

@@ -6,13 +6,15 @@ from imswitch.imcontrol.view import guitools
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
-                             QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
+                             QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
                              QCheckBox, QLabel, QLineEdit)
+import json
 
 
 class InfoGatheringWidget(NapariHybridWidget):
     """ Widget containing InfoGathering interface. """
     sigSaveSettings = QtCore.Signal()
+    sigSettingsDialog = QtCore.Signal()
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
@@ -20,7 +22,28 @@ class InfoGatheringWidget(NapariHybridWidget):
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
         self.saveSettings = QPushButton("Save Settings")
-        self.layout.addWidget(self.saveSettings)
+        self.loadSettings = QPushButton("Load Settings")
+        self.layout.addWidget(self.saveSettings, 0, 0)
+        self.layout.addWidget(self.loadSettings, 1, 0)
+
+
+    def openFileDialog(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setNameFilter("JSON (*.json)")
+        dialog.setDirectory(r'C:\VSCode\ImSwitch-2.5D-SIM-QPI')
+        if dialog.exec():
+            filename = dialog.selectedFiles()
+        return filename
+    
+    def loadJSON(self):
+        jsonPath = self.openFileDialog()[0]
+        with open(jsonPath, 'r') as openfile:    
+            # Reading from json file
+            jsonObject = json.load(openfile)
+
+        return jsonObject
+
         
 
 # Copyright (C) 2020-2023 ImSwitch developers

@@ -114,6 +114,10 @@ class CommunicationChannel(SignalInterface):
 
     sigZScanList = Signal(list, float)
 
+    sigLoadSettings = Signal(dict)
+
+
+
     # sigCalcZStack = Signal()
 
     # sigSaving = Signal()
@@ -136,6 +140,10 @@ class CommunicationChannel(SignalInterface):
         self.__logger = initLogger(self)
         self._scriptExecution = False
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
+        self.sigLoadSettings.connect(self.storeLoadedSettings)
+
+    def storeLoadedSettings(self, dict):
+        self.loadedSettings = dict
 
     def getCenterViewbox(self):
         """ Returns the center point of the viewbox, as an (x, y) tuple. """

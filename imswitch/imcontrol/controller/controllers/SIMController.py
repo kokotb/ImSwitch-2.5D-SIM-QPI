@@ -240,9 +240,14 @@ class SIMController(ImConWidgetController):
             # print(self.tilingRep)
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
+            
             # Generate time_step
-
+            # if self.numAllFrames == 0:
+            #     exptTimeElapsed = 0.0
+            # else:
+            #     exptTimeElapsed = time.time() - time_global_start
             # self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+
             # Scan over all positions generated for grid
             j = 0 # Position iterator
 
