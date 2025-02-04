@@ -87,11 +87,13 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.zStepDistance_textedit, row, 1)
         zStackLayout.addWidget(self.totalZ_label, row+1, 0)
         zStackLayout.addWidget(self.totalZ_textedit, row+1, 1)
-        zStackLayout.addWidget(self.checkbox_zStack, row+2, 0)
-        zStackLayout.addWidget(self.checkbox_zStackCenter, row+2, 1)
-        zStackLayout.addWidget(self.zStackScanDir, row+2, 2)
-        zStackLayout.addWidget(self.zOffset_label, row+2, 3)
-        zStackLayout.addWidget(self.zOffset_textedit, row+2, 4)
+        zStackLayout.addWidget(self.zOffset_label, row+2, 0)
+        zStackLayout.addWidget(self.zOffset_textedit, row+2, 1)
+
+        zStackLayout.addWidget(self.checkbox_zStackCenter, row+3, 1)
+        zStackLayout.addWidget(self.zStackScanDir, row+3, 2)
+
+        zStackLayout.addWidget(self.checkbox_zStack, row+3, 0)
 
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigCheckValidityTotal.connect(self.checkValidityTotal)
