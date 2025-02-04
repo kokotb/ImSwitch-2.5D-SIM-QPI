@@ -473,12 +473,12 @@ class SIMWidget(NapariHybridWidget):
 
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
-        self.ReconWL3_textedit._name = "NA"
+        self.NA_textedit._name = "NA"
         self.NA_textedit.setInputMask("B.9;0;_")
 
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
-        self.ReconWL3_textedit._name = "Pixelsize"
+        self.pixelsize_textedit._name = "Pixelsize"
 
         self.alpha_label = QLabel("")
         self.alpha_textedit = QLineEdit("")
