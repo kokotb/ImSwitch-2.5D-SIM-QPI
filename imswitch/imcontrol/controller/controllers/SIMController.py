@@ -584,14 +584,14 @@ class SIMController(ImConWidgetController):
 
         mm, ss = divmod(ss,60)
         hh, mm = divmod(mm,60)
-        dd, hh = divmod(hh,24)
+        _, hh = divmod(hh,24)
         ss = "{:02d}".format(int(ss))
         mm = "{:02d}".format(int(mm))
-        hh = "{:02d}".format(int(hh)) 
-        dd = "{:01d}".format(int(dd))
+        hh = "{:03d}".format(int(hh)) 
+        # dd = "{:01d}".format(int(dd))
         ms = str(round(Decimal(ms),3))[2:5]
 
-        elapsedStr = f"{dd}d{hh}h{mm}m{ss}s{ms}ms"
+        elapsedStr = f"{hh}h{mm}m{ss}s{ms}ms"
         return elapsedStr
 
 

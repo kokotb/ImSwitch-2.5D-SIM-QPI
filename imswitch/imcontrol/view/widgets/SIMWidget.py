@@ -453,49 +453,60 @@ class SIMWidget(NapariHybridWidget):
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
+        self.ReconWL1_textedit._name = "ReconWL1"
         # self.ReconWL1_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL1_textedit.setValidator(self.validator)
 
         self.ReconWL2_label = QLabel("")
         self.ReconWL2_textedit = QLineEdit("")
+        self.ReconWL2_textedit._name = "ReconWL2"
         # self.ReconWL2_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL2_textedit.setValidator(self.validator)
 
         self.ReconWL3_label = QLabel("")
         self.ReconWL3_textedit = QLineEdit("")
+        self.ReconWL3_textedit._name = "ReconWL3"
         self.validator = QIntValidator(100,999)
         self.ReconWL3_textedit.setValidator(self.validator)
 
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
+        self.ReconWL3_textedit._name = "NA"
         self.NA_textedit.setInputMask("B.9;0;_")
 
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
+        self.ReconWL3_textedit._name = "Pixelsize"
 
         self.alpha_label = QLabel("")
         self.alpha_textedit = QLineEdit("")
+        self.alpha_textedit._name = "Alpha"
         self.alpha_textedit.setInputMask("0.0;0;_")
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
+        self.beta_textedit._name = "Beta"
         self.beta_textedit.setInputMask("0.00;0;_")
         
         self.w_label = QLabel("")
         self.w_textedit = QLineEdit("")
+        self.w_textedit._name = "w"
         self.w_textedit.setInputMask("0.00;0;_")
 
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
+        self.eta_textedit._name = "eta"
         self.eta_textedit.setInputMask("0.0;0;_")
 
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
         self.n_label = QLabel("")
         self.n_textedit = QLineEdit("")
+        self.n_textedit._name = "n"
         self.magnification_label = QLabel("")
         self.magnification_textedit = QLineEdit("")
+        self.magnification_textedit._name = "Magnification"
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
 
         row_layout_1 = QHBoxLayout()
@@ -580,17 +591,17 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_textedit.setText(str(setupInfoDict[self.params[10]]))    
 
     def connectSIMSharedAttrSigs(self, params):
-        self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[0],value))
-        self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[1],value))
-        self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[2],value))
-        self.NA_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[3],value))
-        self.pixelsize_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[4],value))
-        self.alpha_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[5],value))
-        self.beta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[6],value))
-        self.w_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[7],value))
-        self.eta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[8],value))
-        self.n_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[9],value))
-        self.magnification_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',params[10],value))
+        self.ReconWL1_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.ReconWL1_textedit._name,value))
+        self.ReconWL2_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.ReconWL2_textedit._name,value))
+        self.ReconWL3_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.ReconWL3_textedit._name,value))
+        self.NA_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.NA_textedit._name,value))
+        self.pixelsize_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.pixelsize_textedit._name,value))
+        self.alpha_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.alpha_textedit._name,value))
+        self.beta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.beta_textedit._name,value))
+        self.w_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.w_textedit._name,value))
+        self.eta_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.eta_textedit._name,value))
+        self.n_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.n_textedit._name,value))
+        self.magnification_textedit.textChanged.connect(lambda value: self.sigSIMParamChanged.emit('SIM Parameters',self.magnification_textedit._name,value))
 
         #editingFinished seems to be a better method, but cannot get to work correctly.
         # self.ReconWL1_textedit.editingFinished.connect(self.sigSIMParamChanged.emit('SIM Parameters',params[0],self.ReconWL1_textedit.text()))

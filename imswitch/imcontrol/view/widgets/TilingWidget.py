@@ -23,7 +23,7 @@ class TilingWidget(NapariHybridWidget):
         self.tilingViewBool = False
         self.runTilingActiveBool = False
         # Grid scan settings bn
-        overallLayout = QtWidgets.QVBoxLayout()
+        overallLayout = QtWidgets.QGridLayout()
         # gridScanLayout = QtWidgets.QGridLayout()
         self.setLayout(overallLayout)
 
@@ -65,29 +65,21 @@ class TilingWidget(NapariHybridWidget):
 
 
 
-        stepsXLayout = QtWidgets.QHBoxLayout()
-        stepsXLayout.addWidget(self.numGridX_label)
-        stepsXLayout.addWidget(self.numGridX_textedit)
+
+        overallLayout.addWidget(self.numGridX_label, 0, 0)
+        overallLayout.addWidget(self.numGridX_textedit, 0 ,2)
         # stepsXLayout.setContentsMargins(0, 0, 400, 0)
 
-        stepsYLayout = QtWidgets.QHBoxLayout()
-        stepsYLayout.addWidget(self.numGridY_label)
-        stepsYLayout.addWidget(self.numGridY_textedit)
-
-        overlapLayout = QtWidgets.QHBoxLayout()
-        overlapLayout.addWidget(self.overlap_label)
-        overlapLayout.addWidget(self.overlap_textedit)
-
-        checkboxLayout = QtWidgets.QHBoxLayout()
-        checkboxLayout.addWidget(self.checkbox_tiling)
-        checkboxLayout.addWidget(self.checkbox_tilepreview)
+        overallLayout.addWidget(self.numGridY_label, 1, 0)
+        overallLayout.addWidget(self.numGridY_textedit, 1, 2)
 
 
+        overallLayout.addWidget(self.overlap_label, 2, 0)
+        overallLayout.addWidget(self.overlap_textedit, 2, 2)
 
-        overallLayout.addLayout(stepsXLayout)
-        overallLayout.addLayout(stepsYLayout)
-        overallLayout.addLayout(overlapLayout)
-        overallLayout.addLayout(checkboxLayout)
+        overallLayout.addWidget(self.checkbox_tiling, 3, 0)
+        overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
+
 
         self.numGridY_textedit.textChanged.connect(lambda *args, name='numGridY': self.sigCheckValidity.emit(name))
         self.numGridX_textedit.textChanged.connect(lambda *args, name='numGridX': self.sigCheckValidity.emit(name))
