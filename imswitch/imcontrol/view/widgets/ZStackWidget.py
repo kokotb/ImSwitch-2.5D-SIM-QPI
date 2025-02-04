@@ -151,7 +151,7 @@ class ZStackWidget(NapariHybridWidget):
                 newTotalDist = stepDist
             else:
                 newTotalDist = stepDist * floorSteps
-            self.totalZ_textedit.setText(str(newTotalDist))
+            self.totalZ_textedit.setText(str(round(newTotalDist, 2)))
 
         elif self.checkbox_zStackCenter.checkState() == 2:
             if floorSteps == 0:
