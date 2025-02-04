@@ -50,7 +50,6 @@ class ZStackController(ImConWidgetController):
             zScanSign = -1
         elif zScanDir == 'Down':
             zScanSign = 1
-
         floorSteps = math.floor(totalDist / stepDist)
         zScanList = []
 
@@ -72,6 +71,8 @@ class ZStackController(ImConWidgetController):
 
 
         self._commChannel.sigZScanList.emit(zScanList, currentZ)
+
+        self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
         return zScanList
 

@@ -64,7 +64,7 @@ class ZStackWidget(NapariHybridWidget):
         self.checkbox_zStackCenter.stateChanged.connect(self.floorTotalZ)
         self.checkbox_zStackCenter.setEnabled(False)
 
-        self.zOffset_label = QLabel("Start Offset") 
+        self.zOffset_label = QLabel("Start Offset (/um)") 
         self.zOffset_textedit = QLineEdit("")
         self.validator = QDoubleValidator()
         self.zOffset_textedit.setValidator(self.validator)
@@ -73,6 +73,13 @@ class ZStackWidget(NapariHybridWidget):
         # self.zOffset_textedit.setReadOnly(True)
         self.zOffset_textedit.setEnabled(False)
         self.zOffset_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
+
+        self.numSteps_label = QLabel("Steps") 
+        self.numSteps_textedit = QLineEdit("1")
+        self.numSteps_textedit.setToolTip('Number of steps in the z-stack')
+        self.numSteps_textedit.setFixedWidth(50)
+        self.numSteps_textedit.setEnabled(False)
+        # self.numSteps_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
 
         self.zStackScanDir = QtWidgets.QComboBox()
         self.zStackScanDir.setFixedWidth(75)
@@ -87,13 +94,18 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.zStepDistance_textedit, row, 1)
         zStackLayout.addWidget(self.totalZ_label, row+1, 0)
         zStackLayout.addWidget(self.totalZ_textedit, row+1, 1)
+
         zStackLayout.addWidget(self.zOffset_label, row+2, 0)
         zStackLayout.addWidget(self.zOffset_textedit, row+2, 1)
 
-        zStackLayout.addWidget(self.checkbox_zStackCenter, row+3, 1)
-        zStackLayout.addWidget(self.zStackScanDir, row+3, 2)
+        zStackLayout.addWidget(self.numSteps_label, row+3, 0)
+        zStackLayout.addWidget(self.numSteps_textedit, row+3, 1)
+        
 
-        zStackLayout.addWidget(self.checkbox_zStack, row+3, 0)
+        zStackLayout.addWidget(self.checkbox_zStackCenter, row+4, 1)
+        zStackLayout.addWidget(self.zStackScanDir, row+4, 2)
+
+        zStackLayout.addWidget(self.checkbox_zStack, row+4, 0)
 
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigCheckValidityTotal.connect(self.checkValidityTotal)
