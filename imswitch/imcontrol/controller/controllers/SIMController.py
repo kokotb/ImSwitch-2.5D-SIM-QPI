@@ -146,10 +146,12 @@ class SIMController(ImConWidgetController):
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
             self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
+            self.zLength = len(zList)
 
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
+            self.zLength = len(zList)
             #zOrigin stored as self.zOrigin already
 
 
@@ -266,6 +268,8 @@ class SIMController(ImConWidgetController):
                 self.positionerXY.checkBusyLoop()
                 if j == 0 and self.completeFrameSets != 0 and self.isTiling:
                     time.sleep(.5) #TODO: Change to calibrate by distance needed to move
+                # elif (j==0) and (self.completeFrameSets == 0):
+                #     pass
                 else:
                     time.sleep(.05) #can probablz reduct slightly
                 z = 0
@@ -539,7 +543,7 @@ class SIMController(ImConWidgetController):
     def zScanList(self, zScanList, zOrigin):
         self.zList = zScanList
         self.zOrigin = zOrigin
-        self.zLength = len(zScanList)
+        
 
 
     def recordWFFunc(self,j,im, processor, isTiling, tilingRep, z):
