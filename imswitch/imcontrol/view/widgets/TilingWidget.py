@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QCheckBox, QLabel, QLineEdit, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QLocale
+
 
 import napari
 
@@ -15,6 +16,7 @@ class TilingWidget(NapariHybridWidget):
 
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
     sigRunTilingActive = QtCore.Signal()
+    sigCheckValidity = QtCore.Signal(str)
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -26,26 +28,30 @@ class TilingWidget(NapariHybridWidget):
         self.setLayout(overallLayout)
 
         self.numGridX_label = QLabel("Steps - X")
-        self.numGridX_label.setMaximumWidth(100)
+        # self.numGridX_label.setMaximumWidth(100)
         # self.numGridX_label.setAlignment(Qt.AlignLeft)
         self.numGridX_textedit = QLineEdit("")
-        self.validator = QIntValidator(0,1000,self)
+        self.validator = QIntValidator(0,500,self)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridX_textedit.setValidator(self.validator)
         self.numGridX_textedit.setFixedWidth(50)
-        # self.numGridX_textedit.setAlignment(Qt.AlignLeft)
         self.numGridX_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - X', value))
 
         self.numGridY_label = QLabel("Steps - Y")
         self.numGridY_textedit = QLineEdit("")
-        self.validator = QIntValidator(0,1000,self)
+        self.validator = QIntValidator(0,500,self)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridY_textedit.setValidator(self.validator)
         self.numGridY_textedit.setFixedWidth(50)
         self.numGridY_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings','Steps - Y', value))
 
         self.overlap_label = QLabel("Overlap")
         self.overlap_textedit = QLineEdit("")
-        # self.validator = QIntValidator(0,100,self)
-        # self.overlap_textedit.setValidator(self.validator)
+
+        self.validator = QDoubleValidator(0.00,1.00,2)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.overlap_textedit.setValidator(self.validator)
+
         self.overlap_textedit.setFixedWidth(50)
         self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
@@ -82,9 +88,25 @@ class TilingWidget(NapariHybridWidget):
         overallLayout.addLayout(stepsYLayout)
         overallLayout.addLayout(overlapLayout)
         overallLayout.addLayout(checkboxLayout)
+
+        self.numGridY_textedit.textChanged.connect(lambda *args, name='numGridY': self.sigCheckValidity.emit(name))
+        self.numGridX_textedit.textChanged.connect(lambda *args, name='numGridX': self.sigCheckValidity.emit(name))
+        self.overlap_textedit.textChanged.connect(lambda *args, name='overlap': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
         
 
-
+    def checkValidity(self, name):
+        if name == 'numGridY':
+            signalOrigin = self.numGridY_textedit
+        elif name == 'numGridX':
+            signalOrigin = self.numGridX_textedit
+        elif name == 'overlap':
+            signalOrigin = self.overlap_textedit
+        valid = signalOrigin.hasAcceptableInput()
+        if valid:
+            signalOrigin.setStyleSheet('')
+        else:
+            signalOrigin.setStyleSheet("border: 1px solid red;")
 
         
     def toggleRunTilingActive(self):

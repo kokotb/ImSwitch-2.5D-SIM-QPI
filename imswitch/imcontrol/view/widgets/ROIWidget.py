@@ -21,7 +21,7 @@ class ROIWidget(NapariHybridWidget):
         listLayout = QtWidgets.QVBoxLayout()
 
         self.ROIList = QListWidget()
-        self.ROIList.setMaximumWidth(400)
+        self.ROIList.setMaximumWidth(250)
 
         listLayout.addWidget(self.ROIList)
 
@@ -29,16 +29,22 @@ class ROIWidget(NapariHybridWidget):
         buttonLayout = QtWidgets.QVBoxLayout()
 
         self.addButton = QPushButton("Add")
+        self.addButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.addButton)
         self.replaceButton = QPushButton("Replace")
+        self.replaceButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.replaceButton)
         self.delButton = QPushButton("Delete")
+        self.delButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.delButton)
         self.upButton = QPushButton("Move Up")
+        self.upButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.upButton)
         self.downButton = QPushButton("Move Down")
+        self.downButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.downButton)
         self.gotoButton = QPushButton("Go To")
+        self.gotoButton.setMinimumWidth(200)
         buttonLayout.addWidget(self.gotoButton)
         # self.replaceButton = QPushButton("Replace")
         # buttonLayout.addWidget(self.replaceButton)

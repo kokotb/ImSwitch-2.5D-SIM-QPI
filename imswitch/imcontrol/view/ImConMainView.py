@@ -58,11 +58,12 @@ class ImConMainView(QtWidgets.QMainWindow):
         rightDockInfos = {
             'Laser': _DockInfo(name='Laser Control', yPosition=0),
             'Positioner': _DockInfo(name='Positioner', yPosition=1),
+            'ROI': _DockInfo(name = 'ROI List', yPosition = 2),
             'Tiling': _DockInfo(name='Tiling', yPosition=2),
             'Timing': _DockInfo(name='Timing', yPosition=3),
             'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 6),
-            'ROI': _DockInfo(name = 'ROI List', yPosition = 5)
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5)
+
             
             
         }
@@ -129,13 +130,13 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'ZStack' in self.docks:
             self.docks['ZStack'].setStretch(1, 0.5)
         if 'Positioner' in self.docks:
-            self.docks['Positioner'].setStretch(1, 0.7)
+            self.docks['Positioner'].setStretch(1, 0.6)
         if 'Timing' in self.docks:
             self.docks['Timing'].setStretch(1, 0.5)
         if 'Tiling' in self.docks:
             self.docks['Tiling'].setStretch(1, 0.5)
         if 'InfoGathering' in self.docks:
-            self.docks['InfoGathering'].setStretch(1, 0.5)
+            self.docks['InfoGathering'].setStretch(1, 0.1)
         if 'ROI' in self.docks:
             self.docks['ROI'].setStretch(1, 2)
         # if 'View' in self.docks:
@@ -175,6 +176,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             self.docks[widgetKey].addWidget(self.widgets[widgetKey])
             if prevDock is None:
                 dockArea.addDock(self.docks[widgetKey], position)
+            elif (widgetKey == 'Tiling') and (prevDock._name == 'ROI List'):
+                dockArea.addDock(self.docks[widgetKey], 'right', prevDock)
             elif dockInfo.yPosition > prevDockYPosition:
                 dockArea.addDock(self.docks[widgetKey], 'bottom', prevDock)
             else:
