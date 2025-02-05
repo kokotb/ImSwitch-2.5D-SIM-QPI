@@ -80,6 +80,18 @@ class InfoGatheringController(ImConWidgetController):
         
         print('wait')
 
+    # def modulesToLoad(self):
+    #     self._widget.loadingPopup.allCheckbox.checkState()
+    #     self._widget.loadingPopup.lasersCheckbox
+    #     self._widget.loadingPopup.positionersCheckbox
+    #     self._widget.loadingPopup.tilingCheckbox
+    #     self._widget.loadingPopup.timingCheckbox
+    #     self._widget.loadingPopup.zstackCheckbox
+    #     self._widget.loadingPopup.detectorsCheckbox
+    #     self._widget.loadingPopup.parameters25DCheckbox
+    #     self._widget.loadingPopup.zernikeParametersCheckbox
+    #     self._widget.loadingPopup.SIMParametersCheckbox
+    #     self._widget.loadingPopup.userDirCheckbox
 
 
     def getWantedAttrs(self):
