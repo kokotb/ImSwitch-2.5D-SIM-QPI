@@ -378,6 +378,23 @@ class SIMProcessor(object):
         # initialize the model
         # self._logger.debug("Processing frames")
         # print(threading.current_thread())
+        
+        # Check if ROIcal matches ROI on cam if not set flags to false
+        ROI_cam_key = ('Detector', self.detObj._DetectorManager__name, 'ROI')
+        ROI_calib_key = ('Detector', self.detObj._DetectorManager__name, 'ROIcal')     
+        ROI_cam = self.sharedAttrs[ROI_cam_key]
+        
+        # Check if key exists to avoid key error
+        if self.sharedAttrs._data.get(ROI_calib_key):
+            ROI_calib = self.sharedAttrs[ROI_calib_key]
+        else:
+            ROI_calib = None
+        
+        # Set the flags to false if ROIs don't match
+        if not ROI_cam == ROI_calib:
+            self.isReconstructing = False
+            self.isCalibrated = False
+        
         if not self.isReconstructing:
             self.isReconstructing=True
             mStack = np.array(self.stack.copy())
@@ -385,6 +402,7 @@ class SIMProcessor(object):
             
             self.setReconstructor()
             self.calibrate(mStack)
+            self.sharedAttrs[ROI_calib_key] = ROI_cam
         self.SIMReconstruction = self.reconstruct(mStack)
 
         self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
@@ -472,6 +490,9 @@ class SIMProcessor(object):
             imageSIM = imgset_next.sim_sr.compute()
             return imageSIM
 
+    def setCurrentSharedAttrs(self, sharedAttrs):
+        # Set shared attributes to local object recieved from SIMController
+        self.sharedAttrs = sharedAttrs
     # def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
     #     Isample = np.zeros((Nx,Ny))
     #     Isample[np.random.random(Isample.shape)>0.999]=1
