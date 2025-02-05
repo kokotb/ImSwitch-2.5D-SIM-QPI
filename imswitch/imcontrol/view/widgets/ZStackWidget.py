@@ -24,10 +24,12 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout = QtWidgets.QGridLayout()
         self.setLayout(zStackLayout)
 
-
+        self.elementList = []
 
         self.zStepDistance_label = QLabel("Step Size (/um)")
         self.zStepDistance_textedit = QLineEdit("")
+        self.zStepDistance_textedit._name = 'Step Size'
+        self.zStepDistance_textedit._type = 'str'
         self.validator = QDoubleValidator(0.01, 10.00, 2)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
@@ -41,11 +43,13 @@ class ZStackWidget(NapariHybridWidget):
 
         self.totalZ_label = QLabel("Total Z (/um)")
         self.totalZ_textedit = QLineEdit("")
+        self.totalZ_textedit._name = 'Total Z /um'
+        self.totalZ_textedit._type = 'str'
         self.validator = QDoubleValidator(0.00, 450.00, 2)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.totalZ_textedit.setValidator(self.validator)
         self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calculated. 10.9 steps = 10 steps.')  
-        self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z (/um)", value))
+        self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z /um", value))
         self.totalZ_textedit.setText("")
         self.totalZ_textedit.setFixedWidth(75)
         self.totalZ_textedit.setEnabled(False)
@@ -54,12 +58,14 @@ class ZStackWidget(NapariHybridWidget):
 
 
         self.checkbox_zStack = QCheckBox('Run Z Stack')
-
+        self.checkbox_zStack._name = 'Z-Stack Checkbox'
+        self.checkbox_zStack._type = 'int'
         self.checkbox_zStack.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", str(value)))
-
         self.checkbox_zStack.stateChanged.connect(lambda value: self.runZStackToggle.emit(value))
         
         self.checkbox_zStackCenter = QCheckBox('Center?')
+        self.checkbox_zStackCenter._name = 'Z-Stack Center?'
+        self.checkbox_zStackCenter._type = 'int'
         self.checkbox_zStackCenter.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", str(value)))
         self.checkbox_zStackCenter.stateChanged.connect(self.floorTotalZ)
         self.checkbox_zStackCenter.setEnabled(False)
@@ -82,10 +88,19 @@ class ZStackWidget(NapariHybridWidget):
         # self.numSteps_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
 
         self.zStackScanDir = QtWidgets.QComboBox()
+        self.zStackScanDir._name = 'Scan Direction'
+        self.zStackScanDir._type = 'combostr'
         self.zStackScanDir.setFixedWidth(75)
         self.zStackScanDir.setEnabled(False)
 
         self.zStackScanDir.currentTextChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', value))
+
+        self.elementList.append(self.zStepDistance_textedit)
+        self.elementList.append(self.totalZ_textedit)
+        self.elementList.append(self.checkbox_zStack)
+        self.elementList.append(self.checkbox_zStackCenter)
+        self.elementList.append(self.zStackScanDir)
+
 
 
         row = 0

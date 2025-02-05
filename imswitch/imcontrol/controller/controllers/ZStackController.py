@@ -20,6 +20,7 @@ class ZStackController(ImConWidgetController):
         self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
     def runZStackToggle(self, state):
         if state == 0:
@@ -77,7 +78,21 @@ class ZStackController(ImConWidgetController):
         return zScanList
 
 
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['zstack']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['Z-Stack Settings']
 
+            for i in range(len(self._widget.elementList)):
+                if self._widget.elementList[i]._type == 'str':
+                    self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
+                elif self._widget.elementList[i]._type == 'int':
+                    self._widget.elementList[i].setChecked(int(params[self._widget.elementList[i]._name]))
+                elif self._widget.elementList[i]._type == 'combostr':
+                    self._widget.elementList[i].setCurrentText(params[self._widget.elementList[i]._name])
 
 
 
