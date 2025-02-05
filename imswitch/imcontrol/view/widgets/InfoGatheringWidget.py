@@ -7,18 +7,21 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
-                             QCheckBox, QLabel, QLineEdit)
+                             QCheckBox, QLabel, QLineEdit, QDialog)
 import json
+
 
 
 class InfoGatheringWidget(NapariHybridWidget):
     """ Widget containing InfoGathering interface. """
-    sigSaveSettings = QtCore.Signal()
-    sigSettingsDialog = QtCore.Signal()
+    # sigSaveSettings = QtCore.Signal()
+    # sigSettingsDialog = QtCore.Signal()
+
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
+        self.loadingPopup = MyInputDialog(self)
 
-        # Main GUI 
+        # Main widget 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
         self.saveSettings = QPushButton("Save Settings")
@@ -26,6 +29,60 @@ class InfoGatheringWidget(NapariHybridWidget):
         self.layout.addWidget(self.saveSettings, 0, 0)
         self.layout.addWidget(self.loadSettings, 1, 0)
 
+
+        self.loadSettings.clicked.connect(self.openLoadWindow)
+
+    
+    def openLoadWindow(self):
+        
+        self.loadingPopup.exec_()
+    
+
+class MyInputDialog(QDialog):
+    def __init__(self, parent: NapariHybridWidget):
+
+        super().__init__(parent)
+
+        self.setWindowTitle("Load Settings")
+
+        self.filePath = QtWidgets.QLineEdit()
+        self.openDialog = QPushButton("Open")
+        self.all = QtWidgets.QCheckBox("All")
+        self.lasers = QtWidgets.QCheckBox('Lasers')
+        self.positioners = QtWidgets.QCheckBox("Positioners")
+        self.tiling = QtWidgets.QCheckBox("Tiling")
+        self.timing = QtWidgets.QCheckBox("Timing")
+        self.zstack = QtWidgets.QCheckBox("Z-Stack")
+        self.detectors = QtWidgets.QCheckBox("Detectors")
+        self.parameters25D = QtWidgets.QCheckBox("2.5D Parameters")
+        self.zernikeParameters = QtWidgets.QCheckBox('Zernike Parameters')
+        self.SIMParameters = QtWidgets.QCheckBox('SIM Parameters')
+        self.userDir = QtWidgets.QCheckBox("User Directory")
+        self.okButton = QPushButton("OK")
+        self.cancelButton = QPushButton("Cancel")
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.filePath, 0, 0)
+        layout.addWidget(self.openDialog, 0, 1)
+        layout.addWidget(self.all, 1, 0)
+        layout.addWidget(self.lasers, 2, 0)
+        layout.addWidget(self.positioners, 3, 0)
+        layout.addWidget(self.tiling, 4, 0)
+        layout.addWidget(self.timing, 5, 0)
+        layout.addWidget(self.zstack, 6, 0)
+        layout.addWidget(self.detectors, 7, 0)
+        layout.addWidget(self.parameters25D, 8, 0)
+        layout.addWidget(self.zernikeParameters, 9, 0)
+        layout.addWidget(self.SIMParameters, 10, 0)
+        layout.addWidget(self.userDir, 11, 0)
+        layout.addWidget(self.okButton, 11, 1)
+        layout.addWidget(self.cancelButton, 11, 0)
+
+        self.setLayout(layout)
+
+        self.openDialog.clicked.connect(self.loadPath)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
 
     def openFileDialog(self):
         dialog = QFileDialog(self)
@@ -36,13 +93,36 @@ class InfoGatheringWidget(NapariHybridWidget):
             filename = dialog.selectedFiles()
         return filename
     
-    def loadJSON(self):
+    def loadPath(self):
         jsonPath = self.openFileDialog()[0]
+        self.filePath.setText(jsonPath)
+
+    def loadJSON(self):
+        jsonPath = self.filePath.text()
         with open(jsonPath, 'r') as openfile:    
             # Reading from json file
             jsonObject = json.load(openfile)
 
+
         return jsonObject
+    
+
+
+
+    
+# class InfoGatheringWidget(NapariHybridWidget):
+#     def __post_init__(self):
+#         self.openSelectionDialog()
+#     def openSelectionDialog(self):
+#         window = QWidget()
+#         # layout = QtWidgets.QGridLayout()
+#         # window.setLayout(self.layout)
+#         # self.testSettings = QPushButton("Test Settings")
+#         # layout.addWidget(self.testSettings, 0, 0)
+#         window.show()
+
+    
+
 
         
 

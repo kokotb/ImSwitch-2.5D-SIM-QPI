@@ -7,11 +7,13 @@ from decimal import Decimal
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.model import configfiletools
 from imswitch.imcontrol.view import guitools
+from imswitch.imcontrol.view.widgets.InfoGatheringWidget import MyInputDialog
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.model.dirtools import DataFileDirs
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog
 import json
+# from PyQt5.QtWidgets import QDialog
 
 
 
@@ -21,6 +23,7 @@ class InfoGatheringController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
+        # inputDialog = MyInputDialog(QDialog)
 
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
@@ -52,7 +55,7 @@ class InfoGatheringController(ImConWidgetController):
                             ('Zernike SLM Parameters','Vertical Trefoil'),('Zernike SLM Parameters','Vertical Coma'),('Zernike SLM Parameters','Horizontal Coma'),('Zernike SLM Parameters','Horizontal Trefoil')]
         
         
-        self._widget.loadSettings.clicked.connect(self.loadJSONFromFile)
+        self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
 
     def updateSharedAttributes(self):
         # print('test')
@@ -72,8 +75,10 @@ class InfoGatheringController(ImConWidgetController):
 
 
     def loadJSONFromFile(self):
-        jsonObject = self._widget.loadJSON()
+        jsonObject = self._widget.loadingPopup.loadJSON()
         self._commChannel.sigLoadSettings.emit(jsonObject)
+        
+        print('wait')
 
 
 
