@@ -15,15 +15,34 @@ class TimingController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
         self._widget.sigTimingInfoChanged.connect(self.valueChanged)
-        self._widget.sigTimingCheckChanged.connect(self.valueChanged)
+        # self._widget.sigTimingCheckChanged.connect(self.valueChanged)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.populateUnitsList()
         self._widget.timingPeriod_textedit.setText("0")
         self._widget.timingDuration_textedit.setText("0")
-        self._widget.tilingReps_textedit.setText("1")
-        self._widget.sigTimingCheckChanged.emit('Timing Settings','Rep Checkbox', 0)
-        self._widget.sigTimingCheckChanged.emit('Timing Settings','Duration Checkbox', 0)
+        self._widget.totalReps_textedit.setText("1")
+        self._widget.sigTimingInfoChanged.emit('Timing Settings','Rep Checkbox', str(0))
+        self._widget.sigTimingInfoChanged.emit('Timing Settings','Duration Checkbox', str(0))
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
+
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['timing']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['Timing Settings']
+
+            for i in range(len(self._widget.elementList)):
+                if self._widget.elementList[i]._type == 'str':
+                    self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
+
+                elif self._widget.elementList[i]._type == 'int':
+                    self._widget.elementList[i].setChecked(int(params[self._widget.elementList[i]._name]))
+
+                if self._widget.elementList[i]._type == 'combostr':
+                    self._widget.elementList[i].setCurrentText(params[self._widget.elementList[i]._name])
 
 
     def valueChanged(self, attrCategory, parameterName, value):
@@ -43,6 +62,8 @@ class TimingController(ImConWidgetController):
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
         finally:
             self.settingAttr = False
+
+    
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

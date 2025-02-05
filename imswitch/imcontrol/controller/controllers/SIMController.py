@@ -82,8 +82,7 @@ class SIMController(ImConWidgetController):
         for detector in self._master.detectorsManager: #detector object list
             self.detectors.append(detector[1])
 
-        # Signals originating from SIMController.py
-        self.sigRawStackReceived.connect(self.displayRawImage)
+        # Signals originating from SIMController.py        self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
@@ -105,6 +104,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStopSim.connect(self.stopSIM)
         self._commChannel.sigZScanList.connect(self.zScanList)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         self.populateAndSelectROList()
@@ -114,6 +114,17 @@ class SIMController(ImConWidgetController):
         self.log_times_loop = []
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['SIM Parameters']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['SIM Parameters']
+
+            for i in range(len(self._widget.elementList)):
+                self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
         
     def performSIMExperimentThread(self, sim_parameters):
         """
@@ -840,6 +851,9 @@ class SIMController(ImConWidgetController):
         
         # Clear logger files before start of experiment
         self.log_times_loop = []
+
+        
+        # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()

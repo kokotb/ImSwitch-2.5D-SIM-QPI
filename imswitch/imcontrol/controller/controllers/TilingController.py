@@ -26,6 +26,7 @@ class TilingController(ImConWidgetController):
         self._widget.checkbox_tilepreview.stateChanged.connect(lambda : self._commChannel.sigTilePreview.emit())
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunTilingButton)
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
         # self.numTiledImages = 0
 
 
@@ -125,6 +126,20 @@ class TilingController(ImConWidgetController):
         EnumWindows(EnumWindowsProc(foreach_window), 0)
         
         return ('Tiling Preview' in titles)
+    
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['tiling']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['Tiling Settings']
+
+            for i in range(len(self._widget.elementList)):
+                if self._widget.elementList[i]._type == 'str':
+                    self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
+                elif self._widget.elementList[i]._type == 'int':
+                    self._widget.elementList[i].setChecked(int(params[self._widget.elementList[i]._name]))
 
 
     # def mainWFTileImage(self, im, coords, name, numChan, chanIndex, frameNum):

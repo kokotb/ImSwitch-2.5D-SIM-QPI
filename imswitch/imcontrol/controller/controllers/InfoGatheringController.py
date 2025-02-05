@@ -35,7 +35,7 @@ class InfoGatheringController(ImConWidgetController):
         self.wantedAttributes = [('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),('Laser', '561AOTF', 'Enabled'),
                             ('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),('Positioner', 'Z', 'Z', 'Position'),
                             ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
-                            ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),
+                            ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Preview'),
                             ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Duration'),
                             ('Timing Settings', 'Duration Unit'),('Timing Settings', 'Repetitions'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Duration Checkbox'), ('Detector', '488 Cam', 'Model'), 
                             ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
@@ -56,6 +56,11 @@ class InfoGatheringController(ImConWidgetController):
         
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
+        ####################################
+        # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
+
+
+
 
     def updateSharedAttributes(self):
         # print('test')
@@ -77,21 +82,21 @@ class InfoGatheringController(ImConWidgetController):
     def loadJSONFromFile(self):
         jsonObject = self._widget.loadingPopup.loadJSON()
         self._commChannel.sigLoadSettings.emit(jsonObject)
+        self.moduleList = self.modulesToLoad()
+        self._commChannel.sigModuleSettings.emit(self.moduleList)
         
-        print('wait')
 
-    # def modulesToLoad(self):
-    #     self._widget.loadingPopup.allCheckbox.checkState()
-    #     self._widget.loadingPopup.lasersCheckbox
-    #     self._widget.loadingPopup.positionersCheckbox
-    #     self._widget.loadingPopup.tilingCheckbox
-    #     self._widget.loadingPopup.timingCheckbox
-    #     self._widget.loadingPopup.zstackCheckbox
-    #     self._widget.loadingPopup.detectorsCheckbox
-    #     self._widget.loadingPopup.parameters25DCheckbox
-    #     self._widget.loadingPopup.zernikeParametersCheckbox
-    #     self._widget.loadingPopup.SIMParametersCheckbox
-    #     self._widget.loadingPopup.userDirCheckbox
+    def modulesToLoad(self):
+        elementList = self._widget.loadingPopup.elementList
+        moduleList = dict()
+
+        for i in range(len(elementList)):
+            moduleList[elementList[i]._name] = elementList[i].checkState()
+
+        return moduleList
+
+
+            
 
 
     def getWantedAttrs(self):
