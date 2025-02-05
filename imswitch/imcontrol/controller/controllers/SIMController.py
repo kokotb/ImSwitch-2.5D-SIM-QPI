@@ -82,7 +82,8 @@ class SIMController(ImConWidgetController):
         for detector in self._master.detectorsManager: #detector object list
             self.detectors.append(detector[1])
 
-        # Signals originating from SIMController.py        self.sigRawStackReceived.connect(self.displayRawImage)
+        # Signals originating from SIMController.py        
+        self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
