@@ -106,6 +106,7 @@ class SLM25DWidget(Widget):
         self.numParams = 4
         self.ZernikeCoefficientNames = ["(0,0)", "(1,-1)", "(1,1)", "(2,-2)", "(2,0)", "(2,2)", "(3,-3)", "(3,-1)", "(3,1)", "(3,3)"]
         self.ZernikeAberrationNames = ["Piston", "Y-tilt", "X-tilt", "Oblique Astigmatism", "Defocus", "Vertical Astigmatism", "Vertical Trefoil", "Vertical Coma", "Horizontal Coma", "Horizontal Trefoil"]
+        self.elementListZern = []
         for i in range(len(self.ZernikeCoefficientNames)):
             self.numParams += 1
             name = self.ZernikeCoefficientNames[i]
@@ -127,6 +128,8 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].setAutoRepeat(True)
             # self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
             self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
+            self.pars['AbsPosEdit' + name]._name = self.ZernikeAberrationNames[i]
+            self.pars['AbsPosEdit' + name]._type = 'flt'
      
             self.pars['AbsPosEdit' + name].setRange(-5.0,5.0)
             self.pars['AbsPosEdit' + name].setSingleStep(0.1)
@@ -139,6 +142,8 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
+
+            self.elementListZern.append(self.pars['AbsPosEdit' + name])
 
             # self.validator = QDoubleValidator(-5.0,5.0,1)
             # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
@@ -160,19 +165,14 @@ class SLM25DWidget(Widget):
             # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
             # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
 
-        # self.spinTest = QtWidgets.QDoubleSpinBox()
-        # self.spinTest.setRange(-5.0,5.0)
-        # self.spinTest.setSingleStep(0.1)
-        # self.spinTest.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        # self.spinTest.setDecimals(1)
-        # self.grid.addWidget(self.spinTest, 5, 3)
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        # self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
+        self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
         self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
+        self.elementList25D = []
         for i in range(len(self.paramNames)):
             self.numParams += 1
             name = self.paramNames[i]
@@ -193,9 +193,11 @@ class SLM25DWidget(Widget):
             self.pars['StepEdit' + name].setFixedWidth(75)
             self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
+            self.pars['AbsPosEdit' + name]._name = name
+            self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
+
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
-
             self.pars['Label' + name].setEnabled(False)
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
@@ -203,6 +205,8 @@ class SLM25DWidget(Widget):
             self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
+
+            self.elementList25D.append(self.pars['AbsPosEdit' + name])
 
             # Integer validator
             if (name == 'Left Center-X') or (name == 'Left Center-Y') or (name == 'Right Center-X') or (name == 'Right Center-Y'):

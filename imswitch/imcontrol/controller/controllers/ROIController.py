@@ -21,12 +21,31 @@ class ROIController(ImConWidgetController):
         self._widget.sigReplaceROI.connect(self.replaceROI)
         self._widget.gotoButton.clicked.connect(self.gotoSelectedROI)
         # self._widget.initSharedAttributes()
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
         for key in self._master.positionersManager._subManagers:
             if self._master.positionersManager._subManagers[key].axes == ['Z']:
                 self.positioner = self._master.positionersManager._subManagers[key]
             elif self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
+
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['roilist']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['ROI List']['List']
+            self._widget.ROIList.clear()
+            for i in range(len(params)):
+                Xstring, Ystring, Zstring = params[i][1:][0].split(' | ')
+                X = Xstring.split(':')[1]
+                Y = Ystring.split(':')[1]
+                Z = Zstring.split(':')[1]
+                self.restoreROIList(X, Y, Z)
+
+
+            
 
 
         
@@ -58,6 +77,13 @@ class ROIController(ImConWidgetController):
         currentString = self.formatCurrentROIData(currentX, currentY, currentZ)
         self._widget.addROI(currentString)
 
+    def restoreROIList(self, X, Y, Z):
+        currentX = X
+        currentY = Y
+        currentZ = Z
+        currentString = self.formatCurrentROIData(currentX, currentY, currentZ)
+        self._widget.addROI(currentString)     
+
     def formatCurrentROIData(self, currentX, currentY, currentZ):
         currentString = f'X:{currentX} | Y:{currentY} | Z:{currentZ}'
         return currentString
@@ -68,6 +94,8 @@ class ROIController(ImConWidgetController):
         currentY = float(y.split(':')[1])
         currentZ = float(z.split(':')[1])
         return currentX, currentY, currentZ
+    
+
 
 
     def valueChanged(self, attrCategory, parameterName, value):

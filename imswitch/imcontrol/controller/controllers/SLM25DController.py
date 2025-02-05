@@ -60,6 +60,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
         self._widget.sig25DParamChanged.connect(self.valueChanged)
+        self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
+        self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self.mask25D = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
         self.init25DWidgetValues()
@@ -425,6 +427,34 @@ class SLM25DController(ImConWidgetController):
         self._widget.imgZernike.setImage(self._widget.matrixZernike)
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
+
+    def loadZernSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['zernike']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings["Zernike SLM Parameters"]
+
+            for i in range(len(self._widget.elementListZern)):
+                if self._widget.elementListZern[i]._type == 'flt':
+                    self._widget.elementListZern[i].setValue(float(params[self._widget.elementListZern[i]._name]))
+
+
+    def load25DSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['parameters25D']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings["25D SLM Parameters"]
+
+            for i in range(len(self._widget.elementList25D)):
+                if self._widget.elementList25D[i]._type == 'str':
+                    self._widget.elementList25D[i].setText(params[self._widget.elementList25D[i]._name])
+
+
+
 
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)

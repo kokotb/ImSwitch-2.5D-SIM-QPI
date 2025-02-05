@@ -116,10 +116,8 @@ class CommunicationChannel(SignalInterface):
 
     sigLoadSettings = Signal(dict)
 
-#######################
-
     sigModuleSettings = Signal(dict)
-#######################
+
 
 
     # sigCalcZStack = Signal()

@@ -323,6 +323,8 @@ class SIMWidget(NapariHybridWidget):
         tabBottomVertLayout1 = QVBoxLayout()
         tabBottomVertLayout2 = QVBoxLayout()
         tabBottomHorLayout = QHBoxLayout()
+
+        self.elementListUser = []
     
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
@@ -360,7 +362,9 @@ class SIMWidget(NapariHybridWidget):
         self.roSelectLayout = QtWidgets.QHBoxLayout()
         self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
         self.roSelectList = QtWidgets.QComboBox()
-        self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM SLM',"SLM Running Order", value))
+        self.roSelectList._name = 'SLM Running Order'
+        self.roSelectList._type = 'combostr'
+        self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM Parameters',"SLM Running Order", value))
         self.roSelectLayout.addWidget(self.roSelectLabel)
         self.roSelectLayout.addWidget(self.roSelectList)
         tabBottomVertLayout1.addLayout(self.roSelectLayout)
@@ -372,12 +376,23 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout = QtWidgets.QGridLayout()
         self.path_label = QLabel("Root Path")
         self.path_edit = QLineEdit("")
+        self.path_edit._name = 'Working Directory'
+        self.path_edit._type = 'str'
         self.user_label = QLabel("User Name")
         self.user_edit = QLineEdit("")
+        self.user_edit._name = 'User Name'
+        self.user_edit._type = 'str'
         self.expt_label = QLabel("Experiment Name")
         self.expt_edit = QLineEdit("")
+        self.expt_edit._name = 'Experiment Name'
+        self.expt_edit._type = 'str'
         self.openFolderButton = guitools.BetterPushButton('Open')
         row = 0
+
+        self.elementListUser.append(self.path_edit)
+        self.elementListUser.append(self.user_edit)
+        self.elementListUser.append(self.expt_edit)
+
         parameters2_layout.addWidget(self.user_label, row, 0)
         parameters2_layout.addWidget(self.user_edit, row, 1)
         parameters2_layout.addWidget(self.expt_label, row+1, 0)
@@ -449,11 +464,12 @@ class SIMWidget(NapariHybridWidget):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
-        self.elementList = []
+        self.elementListSIM = []
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
         self.ReconWL1_textedit._name = "ReconWL1"
+        self.ReconWL1_textedit._type = "str"
         # self.ReconWL1_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL1_textedit.setValidator(self.validator)
@@ -461,6 +477,7 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL2_label = QLabel("")
         self.ReconWL2_textedit = QLineEdit("")
         self.ReconWL2_textedit._name = "ReconWL2"
+        self.ReconWL2_textedit._type = "str"
         # self.ReconWL2_textedit.setFixedWidth(75)
         self.validator = QIntValidator(100,999)
         self.ReconWL2_textedit.setValidator(self.validator)
@@ -468,58 +485,71 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL3_label = QLabel("")
         self.ReconWL3_textedit = QLineEdit("")
         self.ReconWL3_textedit._name = "ReconWL3"
+        self.ReconWL3_textedit._type = "str"
         self.validator = QIntValidator(100,999)
         self.ReconWL3_textedit.setValidator(self.validator)
 
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
         self.NA_textedit._name = "NA"
+        self.NA_textedit._type = "str"
         self.NA_textedit.setInputMask("B.9;0;_")
 
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
         self.pixelsize_textedit._name = "Pixelsize"
+        self.pixelsize_textedit._type = "str"
 
         self.alpha_label = QLabel("")
         self.alpha_textedit = QLineEdit("")
         self.alpha_textedit._name = "Alpha"
+        self.alpha_textedit._type = "str"
         self.alpha_textedit.setInputMask("0.0;0;_")
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
         self.beta_textedit._name = "Beta"
+        self.beta_textedit._type = "str"
         self.beta_textedit.setInputMask("0.00;0;_")
         
         self.w_label = QLabel("")
         self.w_textedit = QLineEdit("")
         self.w_textedit._name = "w"
+        self.w_textedit._type = "str"
         self.w_textedit.setInputMask("0.00;0;_")
 
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
         self.eta_textedit._name = "eta"
+        self.eta_textedit._type = "str"
         self.eta_textedit.setInputMask("0.0;0;_")
 
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
         self.n_label = QLabel("")
         self.n_textedit = QLineEdit("")
         self.n_textedit._name = "n"
+        self.n_textedit._type = "str"
         self.magnification_label = QLabel("")
         self.magnification_textedit = QLineEdit("")
         self.magnification_textedit._name = "Magnification"
+        self.magnification_textedit._type = "str"
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
 
-        self.elementList.append(self.ReconWL1_textedit)
-        self.elementList.append(self.ReconWL2_textedit)
-        self.elementList.append(self.ReconWL3_textedit)
-        self.elementList.append(self.NA_textedit)
-        self.elementList.append(self.pixelsize_textedit)
-        self.elementList.append(self.alpha_textedit)
-        self.elementList.append(self.beta_textedit)
-        self.elementList.append(self.w_textedit)
-        self.elementList.append(self.eta_textedit)
-        self.elementList.append(self.n_textedit)
-        self.elementList.append(self.magnification_textedit)
+        
+
+        self.elementListSIM.append(self.ReconWL1_textedit)
+        self.elementListSIM.append(self.ReconWL2_textedit)
+        self.elementListSIM.append(self.ReconWL3_textedit)
+        self.elementListSIM.append(self.NA_textedit)
+        self.elementListSIM.append(self.pixelsize_textedit)
+        self.elementListSIM.append(self.alpha_textedit)
+        self.elementListSIM.append(self.beta_textedit)
+        self.elementListSIM.append(self.w_textedit)
+        self.elementListSIM.append(self.eta_textedit)
+        self.elementListSIM.append(self.n_textedit)
+        self.elementListSIM.append(self.magnification_textedit)
+
+        self.elementListSIM.append(self.roSelectList)
 
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.ReconWL1_label)

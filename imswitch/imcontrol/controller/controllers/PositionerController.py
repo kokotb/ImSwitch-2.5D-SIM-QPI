@@ -50,6 +50,21 @@ class PositionerController(ImConWidgetController):
         self._widget.sigsetAbsPosClicked.connect(self.setAbsPosGUI)
         # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
+
+
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['positioners']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['Positioner']
+            for i in range(len(self._widget.elementList)):
+                combinedName = self._widget.elementList[i]._name
+                catergory, axis = combinedName.split('--')
+                value = self._commChannel.loadedSettings['Positioner'][catergory][axis]['Position']
+                self.setPos(catergory, axis, value)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(
@@ -149,7 +164,7 @@ class PositionerController(ImConWidgetController):
     def setSharedAttr(self, positionerName, axis, attr, value):
         self.settingAttr = True
         try:
-            self._commChannel.sharedAttrs[(_attrCategory, positionerName, axis, attr)] = value
+            self._commChannel.sharedAttrs[(_attrCategory, positionerName, axis, attr)] = str(value)
         finally:
             self.settingAttr = False
 

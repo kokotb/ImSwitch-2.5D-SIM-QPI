@@ -116,6 +116,8 @@ class ROIWidget(NapariHybridWidget):
             currentName = None
         return currentName
     
+
+    
     def getListAllROIs(self):
         roiCount = self.ROIList.count()
         roiList = []
