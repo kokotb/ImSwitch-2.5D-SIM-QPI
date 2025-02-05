@@ -20,6 +20,7 @@ class TilingWidget(NapariHybridWidget):
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
+        self.elementList = []
         self.tilingViewBool = False
         self.runTilingActiveBool = False
         # Grid scan settings bn
@@ -31,6 +32,8 @@ class TilingWidget(NapariHybridWidget):
         # self.numGridX_label.setMaximumWidth(100)
         # self.numGridX_label.setAlignment(Qt.AlignLeft)
         self.numGridX_textedit = QLineEdit("")
+        self.numGridX_textedit._name = 'Steps - X'
+        self.numGridX_textedit._type = 'str'
         self.validator = QIntValidator(0,500,self)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridX_textedit.setValidator(self.validator)
@@ -39,6 +42,8 @@ class TilingWidget(NapariHybridWidget):
 
         self.numGridY_label = QLabel("Steps - Y")
         self.numGridY_textedit = QLineEdit("")
+        self.numGridY_textedit._name = 'Steps - Y'
+        self.numGridY_textedit._type = 'str'
         self.validator = QIntValidator(0,500,self)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridY_textedit.setValidator(self.validator)
@@ -47,6 +52,8 @@ class TilingWidget(NapariHybridWidget):
 
         self.overlap_label = QLabel("Overlap")
         self.overlap_textedit = QLineEdit("")
+        self.overlap_textedit._name = 'Overlap'
+        self.overlap_textedit._type = 'str'
 
         self.validator = QDoubleValidator(0.00,1.00,2)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
@@ -58,10 +65,23 @@ class TilingWidget(NapariHybridWidget):
         
 
         self.checkbox_tiling =  QCheckBox("Run Tiling")
+        self.checkbox_tiling._name = 'Tiling Checkbox'
+        self.checkbox_tiling._type = 'int'
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
         self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
         self.checkbox_tilepreview =  QCheckBox("Tile Preview")
+        self.checkbox_tilepreview._name = 'Tiling Preview'
+        self.checkbox_tilepreview._type = 'int'
         self.checkbox_tilepreview.setEnabled(False)
+        self.checkbox_tilepreview.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Preview", str(value)))
+
+        self.elementList.append(self.numGridX_textedit)
+        self.elementList.append(self.numGridY_textedit)
+        self.elementList.append(self.overlap_textedit)
+        self.elementList.append(self.checkbox_tiling)
+        self.elementList.append(self.checkbox_tilepreview)
+
+
 
 
 
@@ -119,11 +139,8 @@ class TilingWidget(NapariHybridWidget):
         self.numGridX_textedit.setText("1")
         self.numGridY_textedit.setText("1")
         self.overlap_textedit.setText("0.1")
-        # self.validator = QDoubleValidator(0.0, 1.0, 1)
-        # self.validator.setRange(0,1,1)
-        # self.overlap_textedit.setValidator(self.validator)
-        # self.tilingReps_textedit.setText("1")
         self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", '0') # Checkboxes initialize a little different from QLineEdit. This sends a signal to register value with sharedAttrs
+        self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Preview", '0')
 
     def createTilingWindow(self):
         self.tilingView = napari.Viewer(title='Tiling Preview')

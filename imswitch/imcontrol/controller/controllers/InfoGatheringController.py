@@ -35,7 +35,7 @@ class InfoGatheringController(ImConWidgetController):
         self.wantedAttributes = [('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),('Laser', '561AOTF', 'Enabled'),
                             ('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),('Positioner', 'Z', 'Z', 'Position'),
                             ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
-                            ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),
+                            ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Preview'),
                             ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Duration'),
                             ('Timing Settings', 'Duration Unit'),('Timing Settings', 'Repetitions'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Duration Checkbox'), ('Detector', '488 Cam', 'Model'), 
                             ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
