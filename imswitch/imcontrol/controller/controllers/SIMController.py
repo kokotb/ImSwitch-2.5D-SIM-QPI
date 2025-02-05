@@ -125,7 +125,15 @@ class SIMController(ImConWidgetController):
             params = self._commChannel.loadedSettings['SIM Parameters']
 
             for i in range(len(self._widget.elementListSIM)):
-                self._widget.elementListSIM[i].setText(params[self._widget.elementListSIM[i]._name])
+                if self._widget.elementListSIM[i]._type == 'str':
+                    self._widget.elementListSIM[i].setText(params[self._widget.elementListSIM[i]._name])
+                elif self._widget.elementListSIM[i]._type == 'combostr':
+                    if self._widget.elementListSIM[i]._name == 'SLM Running Order':
+                        try:
+                            self._widget.elementListSIM[i].setCurrentText(params[self._widget.elementListSIM[i]._name])
+                        except:
+                            self._logger.warning('SLM running order could not be set.')
+                            pass #should have a notice that the running order is not available at the moment.
 
     def loadUserSettings(self, moduleDict):
         try:
