@@ -169,7 +169,7 @@ class SLM25DWidget(Widget):
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        # self.absAxisInitialValues = {"Gamma": "0.5", "Psi": "0.5", "Left Center-X": "480", "Left Center-Y": "540", "Right Center-X": "1440", "Right Center-Y": "540", "Beam Diameter": "6.0"}
+        self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
         self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         self.elementList25D = []
@@ -193,9 +193,11 @@ class SLM25DWidget(Widget):
             self.pars['StepEdit' + name].setFixedWidth(75)
             self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
+            self.pars['AbsPosEdit' + name]._name = name
+            self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
+
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
-
             self.pars['Label' + name].setEnabled(False)
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
@@ -203,6 +205,8 @@ class SLM25DWidget(Widget):
             self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
+
+            self.elementList25D.append(self.pars['AbsPosEdit' + name])
 
             # Integer validator
             if (name == 'Left Center-X') or (name == 'Left Center-Y') or (name == 'Right Center-X') or (name == 'Right Center-Y'):

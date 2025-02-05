@@ -449,9 +449,9 @@ class SLM25DController(ImConWidgetController):
         if loadBool:
             params = self._commChannel.loadedSettings["25D SLM Parameters"]
 
-            for i in range(len(self._widget.elementListZern)):
-                if self._widget.elementListZern[i]._type == 'flt':
-                    self._widget.elementListZern[i].setValue(float(params[self._widget.elementListZern[i]._name]))
+            for i in range(len(self._widget.elementList25D)):
+                if self._widget.elementList25D[i]._type == 'str':
+                    self._widget.elementList25D[i].setText(params[self._widget.elementList25D[i]._name])
 
 
 
