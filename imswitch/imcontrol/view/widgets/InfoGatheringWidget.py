@@ -44,6 +44,8 @@ class MyInputDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Load Settings")
+        self.buttonList = []
+
 
         self.filePath = QtWidgets.QLineEdit()
         self.openDialog = QPushButton("Open")
@@ -60,6 +62,29 @@ class MyInputDialog(QDialog):
         self.userDirCheckbox = QtWidgets.QCheckBox("User Directory")
         self.okButton = QPushButton("OK")
         self.cancelButton = QPushButton("Cancel")
+
+        self.buttonList.append(self.allCheckbox)
+        self.buttonList.append(self.lasersCheckbox)
+        self.buttonList.append(self.positionersCheckbox)
+        self.buttonList.append(self.tilingCheckbox)
+        self.buttonList.append(self.timingCheckbox)
+        self.buttonList.append(self.zstackCheckbox)
+        self.buttonList.append(self.detectorsCheckbox)
+        self.buttonList.append(self.parameters25DCheckbox)
+        self.buttonList.append(self.zernikeParametersCheckbox)
+        self.buttonList.append(self.SIMParametersCheckbox)
+        self.buttonList.append(self.userDirCheckbox)
+
+                        
+        
+
+
+
+
+
+
+
+
 
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.filePath, 0, 0)
@@ -83,6 +108,7 @@ class MyInputDialog(QDialog):
         self.openDialog.clicked.connect(self.loadPath)
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.allCheckbox.clicked.connect(self.toggleAllBoxes)
 
     def openFileDialog(self):
         dialog = QFileDialog(self)
@@ -106,6 +132,15 @@ class MyInputDialog(QDialog):
 
         return jsonObject
     
+    def toggleAllBoxes(self):
+        allChecked = self.allCheckbox.checkState()
+        if allChecked == 2:
+            for button in self.buttonList:
+                button.setCheckState(2)
+        if allChecked == 0:
+            for button in self.buttonList:
+                button.setCheckState(0)     
+
 
 
 
