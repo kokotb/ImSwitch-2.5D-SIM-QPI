@@ -59,6 +59,7 @@ class MyInputDialog(QDialog):
         self.parameters25DCheckbox = QtWidgets.QCheckBox("2.5D Parameters")
         self.zernikeParametersCheckbox = QtWidgets.QCheckBox('Zernike Parameters')
         self.SIMParametersCheckbox = QtWidgets.QCheckBox('SIM Parameters')
+        self.ROIListCheckbox = QtWidgets.QCheckBox('ROI List')
         self.userDirCheckbox = QtWidgets.QCheckBox("User Directory")
         self.okButton = QPushButton("OK")
         self.cancelButton = QPushButton("Cancel")
@@ -75,6 +76,7 @@ class MyInputDialog(QDialog):
         self.parameters25DCheckbox._name = 'parameters25D'
         self.zernikeParametersCheckbox._name = 'zernike'
         self.SIMParametersCheckbox._name = 'SIM Parameters'
+        self.ROIListCheckbox._name = 'roilist'
         self.userDirCheckbox._name = 'userDir'
 
         self.elementList.append(self.allCheckbox)
@@ -87,6 +89,7 @@ class MyInputDialog(QDialog):
         self.elementList.append(self.parameters25DCheckbox)
         self.elementList.append(self.zernikeParametersCheckbox)
         self.elementList.append(self.SIMParametersCheckbox)
+        self.elementList.append(self.ROIListCheckbox)
         self.elementList.append(self.userDirCheckbox)
 
         layout = QtWidgets.QGridLayout()
@@ -102,9 +105,10 @@ class MyInputDialog(QDialog):
         layout.addWidget(self.parameters25DCheckbox, 8, 0)
         layout.addWidget(self.zernikeParametersCheckbox, 9, 0)
         layout.addWidget(self.SIMParametersCheckbox, 10, 0)
-        layout.addWidget(self.userDirCheckbox, 11, 0)
-        layout.addWidget(self.okButton, 12, 1)
-        layout.addWidget(self.cancelButton, 12, 0)
+        layout.addWidget(self.ROIListCheckbox, 11, 0)
+        layout.addWidget(self.userDirCheckbox, 12, 0)
+        layout.addWidget(self.okButton, 13, 1)
+        layout.addWidget(self.cancelButton, 13, 0)
 
         self.setLayout(layout)
 

@@ -7,9 +7,7 @@ from imswitch.imcommon.model import initLogger
 
 
 class ROIManager(SignalInterface):
-    """ 
-    Tiling functions
-    """
+
     def __init__(self):
         super().__init__()
         self._logger = initLogger(self)
