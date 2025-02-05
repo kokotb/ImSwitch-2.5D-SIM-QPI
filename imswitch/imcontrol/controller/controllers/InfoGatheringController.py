@@ -87,11 +87,11 @@ class InfoGatheringController(ImConWidgetController):
         
 
     def modulesToLoad(self):
-        buttonList = self._widget.loadingPopup.buttonList
+        elementList = self._widget.loadingPopup.elementList
         moduleList = dict()
 
-        for i in range(len(buttonList)):
-            moduleList[buttonList[i]._name] = buttonList[i].checkState()
+        for i in range(len(elementList)):
+            moduleList[elementList[i]._name] = elementList[i].checkState()
 
         return moduleList
 

@@ -44,6 +44,7 @@ class LaserController(ImConWidgetController):
         self._commChannel.sigScanStarting.connect(lambda: self.scanChanged(True))
         self._commChannel.sigScanBuilt.connect(self.scanBuilt)
         self._commChannel.sigScanEnded.connect(lambda: self.scanChanged(False))
+        self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
         # Connect LaserWidget signals
         self._widget.sigEnableChanged.connect(self.toggleLaser)
@@ -59,6 +60,20 @@ class LaserController(ImConWidgetController):
         # self._widget.sigSavePresetAsClicked.connect(self.savePresetAs)
         # self._widget.sigDeletePresetClicked.connect(self.deletePreset)
         # self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
+
+
+    def loadSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['lasers']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['Laser']
+            keys = list(params.keys())
+            for i in range(len(keys)):
+                value = self._commChannel.loadedSettings['Laser'][keys[i]]['Value']
+                self.valueChanged(keys[i], value)
+
 
     def closeEvent(self):
         # self._master.lasersManager.execOnAll(lambda l: l.setScanModeActive(False))

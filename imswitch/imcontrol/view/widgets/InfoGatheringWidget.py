@@ -44,7 +44,7 @@ class MyInputDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Load Settings")
-        self.buttonList = []
+        self.elementList = []
 
 
         self.filePath = QtWidgets.QLineEdit()
@@ -77,17 +77,17 @@ class MyInputDialog(QDialog):
         self.SIMParametersCheckbox._name = 'SIM Parameters'
         self.userDirCheckbox._name = 'userDir'
 
-        self.buttonList.append(self.allCheckbox)
-        self.buttonList.append(self.lasersCheckbox)
-        self.buttonList.append(self.positionersCheckbox)
-        self.buttonList.append(self.tilingCheckbox)
-        self.buttonList.append(self.timingCheckbox)
-        self.buttonList.append(self.zstackCheckbox)
-        self.buttonList.append(self.detectorsCheckbox)
-        self.buttonList.append(self.parameters25DCheckbox)
-        self.buttonList.append(self.zernikeParametersCheckbox)
-        self.buttonList.append(self.SIMParametersCheckbox)
-        self.buttonList.append(self.userDirCheckbox)
+        self.elementList.append(self.allCheckbox)
+        self.elementList.append(self.lasersCheckbox)
+        self.elementList.append(self.positionersCheckbox)
+        self.elementList.append(self.tilingCheckbox)
+        self.elementList.append(self.timingCheckbox)
+        self.elementList.append(self.zstackCheckbox)
+        self.elementList.append(self.detectorsCheckbox)
+        self.elementList.append(self.parameters25DCheckbox)
+        self.elementList.append(self.zernikeParametersCheckbox)
+        self.elementList.append(self.SIMParametersCheckbox)
+        self.elementList.append(self.userDirCheckbox)
 
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.filePath, 0, 0)
@@ -138,10 +138,10 @@ class MyInputDialog(QDialog):
     def toggleAllBoxes(self):
         allChecked = self.allCheckbox.checkState()
         if allChecked == 2:
-            for button in self.buttonList:
+            for button in self.elementList:
                 button.setCheckState(2)
         if allChecked == 0:
-            for button in self.buttonList:
+            for button in self.elementList:
                 button.setCheckState(0)     
 
 

@@ -123,9 +123,9 @@ class SIMController(ImConWidgetController):
             loadBool = 0
         if loadBool:
             params = self._commChannel.loadedSettings['SIM Parameters']
-            keys = list(params.keys())
-            for i in range(len(self._widget.buttonList)):
-                self._widget.buttonList[i].setText(params[self._widget.buttonList[i]._name])
+
+            for i in range(len(self._widget.elementList)):
+                self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
         
     def performSIMExperimentThread(self, sim_parameters):
         """

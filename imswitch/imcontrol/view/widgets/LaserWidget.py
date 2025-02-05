@@ -49,40 +49,6 @@ class LaserWidget(Widget):
 
         self.layout.addWidget(self.scrollArea, 0, 0)
 
-        # Presets box
-        # self.presetsBox = QtWidgets.QHBoxLayout()
-        # self.presetsLabel = QtWidgets.QLabel('Presets: ')
-        # self.presetsList = QtWidgets.QComboBox()
-        # self.presetsList.currentIndexChanged.connect(
-        #     lambda i: self.sigPresetSelected.emit(self.presetsList.itemData(i))
-        # )
-        # self.loadPresetButton = guitools.BetterPushButton('Load selected')
-        # self.loadPresetButton.clicked.connect(self.sigLoadPresetClicked)
-        # self.savePresetButton = guitools.BetterPushButton('Save to selected')
-        # self.savePresetButton.clicked.connect(self.sigSavePresetClicked)
-        # self.savePresetAsButton = guitools.BetterPushButton('Save as…')
-        # self.savePresetAsButton.clicked.connect(self.sigSavePresetAsClicked)
-        # self.moreButton = QtWidgets.QToolButton()
-        # self.moreButton.setText('More…')
-        # self.moreButton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
-        # self.deletePresetAction = QtWidgets.QAction('Delete selected')
-        # self.deletePresetAction.triggered.connect(self.sigDeletePresetClicked)
-        # self.moreButton.addAction(self.deletePresetAction)
-        # self.presetScanDefaultAction = QtWidgets.QAction('Make selected default for scanning')
-        # self.presetScanDefaultAction.triggered.connect(self.sigPresetScanDefaultToggled)
-        # self.moreButton.addAction(self.presetScanDefaultAction)
-
-        # self.setCurrentPreset(None)
-        # self.setScanDefaultPresetActive(False)
-
-        # self.presetsBox.addWidget(self.presetsLabel)
-        # self.presetsBox.addWidget(self.presetsList, 1)
-        # self.presetsBox.addWidget(self.loadPresetButton)
-        # self.presetsBox.addWidget(self.savePresetButton)
-        # self.presetsBox.addWidget(self.savePresetAsButton)
-        # self.presetsBox.addWidget(self.moreButton)
-
-        # self.layout.addLayout(self.presetsBox, 1, 0)
 
     def addLaser(self, laserName, valueUnits, valueDecimals, wavelength, valueRange=None,
                  valueRangeStep=1, frequencyRange=(0, 0, 0)):
@@ -256,7 +222,7 @@ class LaserModule(QtWidgets.QWidget):
         isModulated = all(num > 0 for num in frequencyRange)
 
         # Graphical elements
-        self.setPointLabel = QtWidgets.QLabel(f'Setpoint [{valueUnits}]')
+        self.setPointLabel = QtWidgets.QLabel(f'Setpoint /{valueUnits}')
         self.setPointLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.setPointEdit = QtWidgets.QLineEdit(str(initialPower))
         self.validator = QIntValidator(0,100,self)
@@ -369,7 +335,7 @@ class LaserModule(QtWidgets.QWidget):
 
         # Connect signals
         self.enableButton.toggled.connect(self.sigEnableChanged)
-        self.slider.valueChanged.connect(
+        self.slider.valueChanged.connect( 
             lambda value: self.sigValueChanged.emit(value)
         )
         # self.setPointEdit.returnPressed.connect(
@@ -394,6 +360,7 @@ class LaserModule(QtWidgets.QWidget):
             self.modulationDutyCycleEdit.returnPressed.connect(
                 lambda: self.sigDutyCycleChanged.emit(self.getDutyCycle())
             )
+
 
     def isActive(self):
         """ Returns whether the laser is powered on. """
