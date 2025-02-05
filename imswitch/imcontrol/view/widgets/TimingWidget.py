@@ -12,17 +12,19 @@ import napari
 class TimingWidget(NapariHybridWidget):
 
     sigTimingInfoChanged = QtCore.Signal(str, str, str)
-    sigTimingCheckChanged = QtCore.Signal(str, str, int)
+    # sigTimingCheckChanged = QtCore.Signal(str, str, int)
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         timingLayout = QtWidgets.QGridLayout()
         self.setLayout(timingLayout)
 
+        self.elementList = []
 
-        
         self.timingPeriod_label = QLabel("Period")
         self.timingPeriod_textedit = QLineEdit("")
+        self.timingPeriod_textedit._name = 'Timing Period'
+        self.timingPeriod_textedit._type = 'str'
         self.validator = QDoubleValidator()  # Range from 0.0 to 2.0 with 2 decimal places
         self.timingPeriod_textedit.setValidator(self.validator)
         self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the image cycle, it will just run as fastest speed possible.')  
@@ -30,11 +32,17 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit.setFixedWidth(50)
         self.timingPeriod_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Timing Period', value))
         self.timingUnit = QtWidgets.QComboBox()
+        self.timingUnit._name = 'Timing Unit'
+        self.timingUnit._type = 'combostr'
         self.timingUnit.setFixedWidth(75)
 
         self.checkbox_timingDuration = QCheckBox('Duration')
+        self.checkbox_timingDuration._name = 'Duration Checkbox'
+        self.checkbox_timingDuration._type = 'int'
         # self.timingDuration_label = QLabel("Duration")
         self.timingDuration_textedit = QLineEdit("")
+        self.timingDuration_textedit._name = 'Duration'
+        self.timingDuration_textedit._type = 'str'
         self.timingDuration_textedit.setEnabled(False)
         self.validator = QDoubleValidator()
         self.timingDuration_textedit.setValidator(self.validator)
@@ -44,18 +52,35 @@ class TimingWidget(NapariHybridWidget):
         self.timingDuration_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration', value))
         # self.timingDuration_textedit.editingFinished.connect(self.calcReps)
         self.timingDurationUnit = QtWidgets.QComboBox()
+        self.timingDurationUnit._name = 'Duration Unit'
+        self.timingDurationUnit._type = 'combostr'
         self.timingDurationUnit.setFixedWidth(75)
         self.timingDurationUnit.setEnabled(False)
 
         self.checkbox_tilingReps = QCheckBox('Reps')
-        self.tilingReps_label = QLabel("Repetitions")
-        self.tilingReps_textedit = QLineEdit("")
-        self.tilingReps_textedit.setEnabled(False)
+        self.checkbox_tilingReps._name = 'Rep Checkbox'
+        self.checkbox_tilingReps._type = 'int'
+        # self.tilingReps_label = QLabel("Repetitions")
+        self.totalReps_textedit = QLineEdit("")
+        self.totalReps_textedit._name = 'Repetitions'
+        self.totalReps_textedit._type = 'str'
+        self.totalReps_textedit.setEnabled(False)
         self.validator = QIntValidator(0,10000,self)
-        self.tilingReps_textedit.setFixedWidth(50)
-        self.tilingReps_textedit.setValidator(self.validator)
-        self.tilingReps_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings',"Repetitions", value))
+        self.totalReps_textedit.setFixedWidth(50)
+        self.totalReps_textedit.setValidator(self.validator)
+        self.totalReps_textedit.textChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings',"Repetitions", value))
         # self.tilingReps_textedit.editingFinished.connect(self.calcDuration)
+
+
+        ################
+        self.elementList.append(self.timingPeriod_textedit)
+        self.elementList.append(self.timingUnit)
+        self.elementList.append(self.checkbox_timingDuration)
+        self.elementList.append(self.timingDuration_textedit)
+        self.elementList.append(self.timingDurationUnit)
+        self.elementList.append(self.checkbox_tilingReps)
+        self.elementList.append(self.totalReps_textedit)
+        ######################
 
 
 
@@ -75,16 +100,16 @@ class TimingWidget(NapariHybridWidget):
         timingLayout.addWidget(self.timingDurationUnit, row+1, 2)
         timingLayout.addWidget(self.checkbox_tilingReps, row+2, 0)
         # timingLayout.addWidget(self.tilingReps_label, row+2, 1)
-        timingLayout.addWidget(self.tilingReps_textedit, row+2, 1)
+        timingLayout.addWidget(self.totalReps_textedit, row+2, 1)
 
         self.repCheckState = False
         self.durCheckState = False
 
         self.checkbox_tilingReps.stateChanged.connect(self.toggleReps)
-        self.checkbox_tilingReps.stateChanged.connect(lambda value: self.sigTimingCheckChanged.emit('Timing Settings','Rep Checkbox', value))
+        self.checkbox_tilingReps.stateChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Rep Checkbox', str(value)))
 
         self.checkbox_timingDuration.stateChanged.connect(self.toggleDuration)
-        self.checkbox_timingDuration.stateChanged.connect(lambda value: self.sigTimingCheckChanged.emit('Timing Settings','Duration Checkbox', value))
+        self.checkbox_timingDuration.stateChanged.connect(lambda value: self.sigTimingInfoChanged.emit('Timing Settings','Duration Checkbox', str(value)))
      
 
 
@@ -98,23 +123,23 @@ class TimingWidget(NapariHybridWidget):
         self.durCheckState = not self.durCheckState
         if self.durCheckState:
             self.timingDuration_textedit.setEnabled(True)
-            self.tilingReps_textedit.setEnabled(False)
+            self.totalReps_textedit.setEnabled(False)
             self.checkbox_tilingReps.setEnabled(False)
             self.timingDurationUnit.setEnabled(True)
         else:
             self.timingDuration_textedit.setEnabled(False)
-            self.tilingReps_textedit.setEnabled(False)
+            self.totalReps_textedit.setEnabled(False)
             self.checkbox_tilingReps.setEnabled(True)
             self.timingDurationUnit.setEnabled(False)
 
     def toggleReps(self):
         self.repCheckState = not self.repCheckState
         if self.repCheckState:
-            self.tilingReps_textedit.setEnabled(True)
+            self.totalReps_textedit.setEnabled(True)
             self.timingDuration_textedit.setEnabled(False)
             self.checkbox_timingDuration.setEnabled(False)
         else:
-            self.tilingReps_textedit.setEnabled(False)
+            self.totalReps_textedit.setEnabled(False)
             self.timingDuration_textedit.setEnabled(False)
             self.checkbox_timingDuration.setEnabled(True)
 

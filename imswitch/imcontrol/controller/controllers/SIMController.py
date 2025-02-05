@@ -82,8 +82,7 @@ class SIMController(ImConWidgetController):
         for detector in self._master.detectorsManager: #detector object list
             self.detectors.append(detector[1])
 
-        # Signals originating from SIMController.py
-        self.sigRawStackReceived.connect(self.displayRawImage)
+        # Signals originating from SIMController.py        self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
@@ -852,6 +851,9 @@ class SIMController(ImConWidgetController):
         
         # Clear logger files before start of experiment
         self.log_times_loop = []
+
+        
+        # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()

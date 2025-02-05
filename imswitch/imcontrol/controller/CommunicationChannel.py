@@ -117,16 +117,7 @@ class CommunicationChannel(SignalInterface):
     sigLoadSettings = Signal(dict)
 
 #######################
-    sigLoadLasersSettings = Signal()
-    sigLoadPositionersSettings = Signal()
-    sigLoadTilingSettings = Signal()
-    sigLoadTimingSettings = Signal()
-    sigLoadZStackSettings = Signal()
-    sigLoadDetectorsSettings = Signal()
-    sigLoadParameters25DSettings = Signal()
-    sigLoadZernikeSettings = Signal()
-    sigLoadSIMParametersSettings = Signal()
-    sigLoadUserDirSettings = Signal()
+
     sigModuleSettings = Signal(dict)
 #######################
 
