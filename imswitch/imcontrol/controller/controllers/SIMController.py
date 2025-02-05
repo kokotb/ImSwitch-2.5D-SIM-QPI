@@ -113,8 +113,6 @@ class SIMController(ImConWidgetController):
         self._widget.setUserDirInfo(setupInfoDict['saveDir'])
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
-        # TODO: Is this really necessary? Can we get around this?
-        # Populate sharedAttrs with initial values of ROIcal
         
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
