@@ -90,7 +90,7 @@ class SuperScanController(ImConWidgetController):
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigToggleBlockScanWidget.connect(lambda block: self.toggleBlockWidget(block))
         self._commChannel.sigRequestScanParameters.connect(self.sendScanParameters)
-        self._commChannel.sigSetAxisCenters.connect(lambda devices, centers: self.setCenterParameters(devices, centers))
+        # self._commChannel.sigSetAxisCenters.connect(lambda devices, centers: self.setCenterParameters(devices, centers))
 
         # Connect ScanWidget signals
         self._widget.sigSaveScanClicked.connect(self.saveScan)

@@ -56,6 +56,11 @@ class InfoGatheringController(ImConWidgetController):
         
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
+        ####################################
+        # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
+
+
+
 
     def updateSharedAttributes(self):
         # print('test')
@@ -77,22 +82,21 @@ class InfoGatheringController(ImConWidgetController):
     def loadJSONFromFile(self):
         jsonObject = self._widget.loadingPopup.loadJSON()
         self._commChannel.sigLoadSettings.emit(jsonObject)
+        self.moduleList = self.modulesToLoad()
+        self._commChannel.sigModuleSettings.emit(self.moduleList)
         
-        print('wait')
 
     def modulesToLoad(self):
+        buttonList = self._widget.loadingPopup.buttonList
+        moduleList = dict()
 
-        all = self._widget.loadingPopup.allCheckbox.checkState()
-        lasers = self._widget.loadingPopup.lasersCheckbox.checkState()
-        positioners = self._widget.loadingPopup.positionersCheckbox.checkState()
-        tiling = self._widget.loadingPopup.tilingCheckbox.checkState()
-        timing = self._widget.loadingPopup.timingCheckbox.checkState()
-        zstack = self._widget.loadingPopup.zstackCheckbox.checkState()
-        detectors = self._widget.loadingPopup.detectorsCheckbox.checkState()
-        parameters25D = self._widget.loadingPopup.parameters25DCheckbox.checkState()
-        zernike = self._widget.loadingPopup.zernikeParametersCheckbox.checkState()
-        SIMParameters = self._widget.loadingPopup.SIMParametersCheckbox.checkState()
-        userDir = self._widget.loadingPopup.userDirCheckbox.checkState()
+        for i in range(len(buttonList)):
+            moduleList[buttonList[i]._name] = buttonList[i].checkState()
+
+        return moduleList
+
+
+            
 
 
     def getWantedAttrs(self):

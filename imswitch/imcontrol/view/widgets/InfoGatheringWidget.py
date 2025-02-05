@@ -63,6 +63,20 @@ class MyInputDialog(QDialog):
         self.okButton = QPushButton("OK")
         self.cancelButton = QPushButton("Cancel")
 
+        self.allCheckbox._name = 'all'
+        self.lasersCheckbox._name = 'lasers'
+
+
+        self.positionersCheckbox._name = 'positioners'
+        self.tilingCheckbox._name = 'tiling'
+        self.timingCheckbox._name = 'timing'
+        self.zstackCheckbox._name = 'zstack'
+        self.detectorsCheckbox._name = 'detectors'
+        self.parameters25DCheckbox._name = 'parameters25D'
+        self.zernikeParametersCheckbox._name = 'zernike'
+        self.SIMParametersCheckbox._name = 'SIM Parameters'
+        self.userDirCheckbox._name = 'userDir'
+
         self.buttonList.append(self.allCheckbox)
         self.buttonList.append(self.lasersCheckbox)
         self.buttonList.append(self.positionersCheckbox)
@@ -74,17 +88,6 @@ class MyInputDialog(QDialog):
         self.buttonList.append(self.zernikeParametersCheckbox)
         self.buttonList.append(self.SIMParametersCheckbox)
         self.buttonList.append(self.userDirCheckbox)
-
-                        
-        
-
-
-
-
-
-
-
-
 
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.filePath, 0, 0)

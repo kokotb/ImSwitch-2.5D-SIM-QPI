@@ -449,7 +449,7 @@ class SIMWidget(NapariHybridWidget):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
-
+        self.buttonList = []
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
@@ -508,6 +508,18 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_textedit = QLineEdit("")
         self.magnification_textedit._name = "Magnification"
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
+
+        self.buttonList.append(self.ReconWL1_textedit)
+        self.buttonList.append(self.ReconWL2_textedit)
+        self.buttonList.append(self.ReconWL3_textedit)
+        self.buttonList.append(self.NA_textedit)
+        self.buttonList.append(self.pixelsize_textedit)
+        self.buttonList.append(self.alpha_textedit)
+        self.buttonList.append(self.beta_textedit)
+        self.buttonList.append(self.w_textedit)
+        self.buttonList.append(self.eta_textedit)
+        self.buttonList.append(self.n_textedit)
+        self.buttonList.append(self.magnification_textedit)
 
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.ReconWL1_label)
