@@ -323,6 +323,8 @@ class SIMWidget(NapariHybridWidget):
         tabBottomVertLayout1 = QVBoxLayout()
         tabBottomVertLayout2 = QVBoxLayout()
         tabBottomHorLayout = QHBoxLayout()
+
+        self.elementListUser = []
     
         # Start/Stop/Calibrate buttons
         self.start_button = QPushButton("Start")
@@ -372,12 +374,23 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout = QtWidgets.QGridLayout()
         self.path_label = QLabel("Root Path")
         self.path_edit = QLineEdit("")
+        self.path_edit._name = 'Working Directory'
+        self.path_edit._type = 'str'
         self.user_label = QLabel("User Name")
         self.user_edit = QLineEdit("")
+        self.user_edit._name = 'User Name'
+        self.user_edit._type = 'str'
         self.expt_label = QLabel("Experiment Name")
         self.expt_edit = QLineEdit("")
+        self.expt_edit._name = 'Experiment Name'
+        self.expt_edit._type = 'str'
         self.openFolderButton = guitools.BetterPushButton('Open')
         row = 0
+
+        self.elementListUser.append(self.path_edit)
+        self.elementListUser.append(self.user_edit)
+        self.elementListUser.append(self.expt_edit)
+
         parameters2_layout.addWidget(self.user_label, row, 0)
         parameters2_layout.addWidget(self.user_edit, row, 1)
         parameters2_layout.addWidget(self.expt_label, row+1, 0)
@@ -449,7 +462,7 @@ class SIMWidget(NapariHybridWidget):
         # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
         # print(self.setupInfoDict)
-        self.elementList = []
+        self.elementListSIM = []
         # create widget per label
         self.ReconWL1_label = QLabel("")
         self.ReconWL1_textedit = QLineEdit("")
@@ -509,17 +522,17 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_textedit._name = "Magnification"
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
 
-        self.elementList.append(self.ReconWL1_textedit)
-        self.elementList.append(self.ReconWL2_textedit)
-        self.elementList.append(self.ReconWL3_textedit)
-        self.elementList.append(self.NA_textedit)
-        self.elementList.append(self.pixelsize_textedit)
-        self.elementList.append(self.alpha_textedit)
-        self.elementList.append(self.beta_textedit)
-        self.elementList.append(self.w_textedit)
-        self.elementList.append(self.eta_textedit)
-        self.elementList.append(self.n_textedit)
-        self.elementList.append(self.magnification_textedit)
+        self.elementListSIM.append(self.ReconWL1_textedit)
+        self.elementListSIM.append(self.ReconWL2_textedit)
+        self.elementListSIM.append(self.ReconWL3_textedit)
+        self.elementListSIM.append(self.NA_textedit)
+        self.elementListSIM.append(self.pixelsize_textedit)
+        self.elementListSIM.append(self.alpha_textedit)
+        self.elementListSIM.append(self.beta_textedit)
+        self.elementListSIM.append(self.w_textedit)
+        self.elementListSIM.append(self.eta_textedit)
+        self.elementListSIM.append(self.n_textedit)
+        self.elementListSIM.append(self.magnification_textedit)
 
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.ReconWL1_label)

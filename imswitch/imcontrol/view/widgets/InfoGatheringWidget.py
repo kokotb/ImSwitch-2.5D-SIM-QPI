@@ -103,8 +103,8 @@ class MyInputDialog(QDialog):
         layout.addWidget(self.zernikeParametersCheckbox, 9, 0)
         layout.addWidget(self.SIMParametersCheckbox, 10, 0)
         layout.addWidget(self.userDirCheckbox, 11, 0)
-        layout.addWidget(self.okButton, 11, 1)
-        layout.addWidget(self.cancelButton, 11, 0)
+        layout.addWidget(self.okButton, 12, 1)
+        layout.addWidget(self.cancelButton, 12, 0)
 
         self.setLayout(layout)
 

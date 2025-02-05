@@ -104,7 +104,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStopSim.connect(self.stopSIM)
         self._commChannel.sigZScanList.connect(self.zScanList)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
-        self._commChannel.sigModuleSettings.connect(self.loadSettings)
+        self._commChannel.sigModuleSettings.connect(self.loadSIMSettings)
+        self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
         
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         self.populateAndSelectROList()
@@ -115,7 +116,7 @@ class SIMController(ImConWidgetController):
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
 
-    def loadSettings(self, moduleDict):
+    def loadSIMSettings(self, moduleDict):
         try:
             loadBool = moduleDict['SIM Parameters']
         except KeyError:
@@ -123,8 +124,19 @@ class SIMController(ImConWidgetController):
         if loadBool:
             params = self._commChannel.loadedSettings['SIM Parameters']
 
-            for i in range(len(self._widget.elementList)):
-                self._widget.elementList[i].setText(params[self._widget.elementList[i]._name])
+            for i in range(len(self._widget.elementListSIM)):
+                self._widget.elementListSIM[i].setText(params[self._widget.elementListSIM[i]._name])
+
+    def loadUserSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['userDir']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['User Dir Info']
+
+            for i in range(len(self._widget.elementListUser)):
+                self._widget.elementListUser[i].setText(params[self._widget.elementListUser[i]._name])
         
     def performSIMExperimentThread(self, sim_parameters):
         """
