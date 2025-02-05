@@ -106,6 +106,7 @@ class SLM25DWidget(Widget):
         self.numParams = 4
         self.ZernikeCoefficientNames = ["(0,0)", "(1,-1)", "(1,1)", "(2,-2)", "(2,0)", "(2,2)", "(3,-3)", "(3,-1)", "(3,1)", "(3,3)"]
         self.ZernikeAberrationNames = ["Piston", "Y-tilt", "X-tilt", "Oblique Astigmatism", "Defocus", "Vertical Astigmatism", "Vertical Trefoil", "Vertical Coma", "Horizontal Coma", "Horizontal Trefoil"]
+        self.elementListZern = []
         for i in range(len(self.ZernikeCoefficientNames)):
             self.numParams += 1
             name = self.ZernikeCoefficientNames[i]
@@ -127,6 +128,8 @@ class SLM25DWidget(Widget):
             self.pars['DownButton' + name].setAutoRepeat(True)
             # self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
             self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
+            self.pars['AbsPosEdit' + name]._name = self.ZernikeAberrationNames[i]
+            self.pars['AbsPosEdit' + name]._type = 'flt'
      
             self.pars['AbsPosEdit' + name].setRange(-5.0,5.0)
             self.pars['AbsPosEdit' + name].setSingleStep(0.1)
@@ -139,6 +142,8 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
+
+            self.elementListZern.append(self.pars['AbsPosEdit' + name])
 
             # self.validator = QDoubleValidator(-5.0,5.0,1)
             # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
@@ -160,12 +165,6 @@ class SLM25DWidget(Widget):
             # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
             # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
 
-        # self.spinTest = QtWidgets.QDoubleSpinBox()
-        # self.spinTest.setRange(-5.0,5.0)
-        # self.spinTest.setSingleStep(0.1)
-        # self.spinTest.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        # self.spinTest.setDecimals(1)
-        # self.grid.addWidget(self.spinTest, 5, 3)
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
         self.numParams = 16
