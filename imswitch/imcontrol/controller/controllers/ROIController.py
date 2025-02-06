@@ -43,14 +43,17 @@ class ROIController(ImConWidgetController):
         except KeyError:
             loadBool = 0
         if loadBool:
-            params = self._commChannel.loadedSettings['ROI List']['List']
+            roiList = self._commChannel.loadedSettings['ROI List']['List']
+            scanParam = self._commChannel.loadedSettings['ROI List']['Checkbox']
+
             self._widget.ROIList.clear()
-            for i in range(len(params)):
-                Xstring, Ystring, Zstring = params[i][1:][0].split(' | ')
+            for i in range(len(roiList)):
+                Xstring, Ystring, Zstring = roiList[i][1:][0].split(' | ')
                 X = Xstring.split(':')[1]
                 Y = Ystring.split(':')[1]
                 Z = Zstring.split(':')[1]
                 self.restoreROIList(X, Y, Z)
+            self.restoreScanParam(scanParam)
         self._widget.getListAllROIs()
 
 
@@ -85,6 +88,10 @@ class ROIController(ImConWidgetController):
         currentZ = self.sharedAttrs['Positioner','Z','Z','Position']
         currentString = self.formatCurrentROIData(currentX, currentY, currentZ)
         self._widget.addROI(currentString)
+
+
+    def restoreScanParam(self, param):
+        self._widget.scanROIList.setChecked(int(param))
 
     def restoreROIList(self, X, Y, Z):
         currentX = X
