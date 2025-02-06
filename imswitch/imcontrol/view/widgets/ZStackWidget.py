@@ -201,7 +201,35 @@ class ZStackWidget(NapariHybridWidget):
 
     def toggleRunZStackEnabled(self, state):
         state = not state
-        self.checkbox_zStack.setEnabled(state)
+        if not state:
+            self.checkbox_zStack.setEnabled(state)
+            self.zStepDistance_label.setEnabled(state)
+            self.totalZ_label.setEnabled(state)
+            self.zOffset_label.setEnabled(state)
+            self.numSteps_label.setEnabled(state)
+            self.zStepDistance_textedit.setEnabled(state)
+            self.totalZ_textedit.setEnabled(state)
+            self.zStackScanDir.setEnabled(state)
+            self.checkbox_zStackCenter.setEnabled(state)
+
+        if state:
+
+            self.zStepDistance_label.setEnabled(state)
+            self.totalZ_label.setEnabled(state)
+            self.zOffset_label.setEnabled(state)
+            self.numSteps_label.setEnabled(state)
+            self.zStepDistance_textedit.setEnabled(state)
+            self.totalZ_textedit.setEnabled(state)
+            self.checkbox_zStack.setEnabled(state)
+
+            if self.checkbox_zStack.checkState() == 2:
+                self.zStackScanDir.setEnabled(True)
+                self.checkbox_zStackCenter.setEnabled(True)
+
+            elif self.checkbox_zStack.checkState() == 0:
+                self.zStackScanDir.setEnabled(False)
+                self.checkbox_zStackCenter.setEnabled(False)
+
                 
                 
 

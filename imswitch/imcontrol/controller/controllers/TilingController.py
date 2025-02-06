@@ -25,7 +25,7 @@ class TilingController(ImConWidgetController):
         self._commChannel.sigTileImage.connect(self.mainWFTileImageThread) # Connect signal to receive image and parameters from SIMController
         self._widget.checkbox_tilepreview.stateChanged.connect(lambda : self._commChannel.sigTilePreview.emit())
         self.sharedAttrs = self._commChannel.sharedAttrs._data
-        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunTilingButton)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
         # self.numTiledImages = 0
 

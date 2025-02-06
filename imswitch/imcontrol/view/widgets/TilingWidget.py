@@ -128,13 +128,31 @@ class TilingWidget(NapariHybridWidget):
              self.checkbox_tilepreview.setEnabled(False)
         else: self.checkbox_tilepreview.setEnabled(True)
 
-    def toggleRunTilingButton(self, state):
+    def toggleEnabled(self, state):
         state = not state
-        self.checkbox_tiling.setEnabled(state)
-        if state == False and self.checkbox_tiling.checkState()==2:
-            self.checkbox_tilepreview.setEnabled(False)
-        if state == True and self.checkbox_tiling.checkState()==2:
-            self.checkbox_tilepreview.setEnabled(True)
+        if not state:
+            self.numGridX_label.setEnabled(state)
+            self.numGridX_textedit.setEnabled(state)
+            self.numGridY_label.setEnabled(state)
+            self.numGridY_textedit.setEnabled(state)
+            self.overlap_label.setEnabled(state)
+            self.overlap_textedit.setEnabled(state)
+            self.checkbox_tiling.setEnabled(state)
+            self.checkbox_tilepreview.setEnabled(state)
+
+        if state:
+            self.numGridX_label.setEnabled(state)
+            self.numGridX_textedit.setEnabled(state)
+            self.numGridY_label.setEnabled(state)
+            self.numGridY_textedit.setEnabled(state)
+            self.overlap_label.setEnabled(state)
+            self.overlap_textedit.setEnabled(state)
+            self.checkbox_tiling.setEnabled(state)
+
+            if self.checkbox_tiling.checkState()==2:
+                self.checkbox_tilepreview.setEnabled(True)
+            if self.checkbox_tiling.checkState()==0:
+                self.checkbox_tilepreview.setEnabled(False)
 
     def initTilingInfo(self):
         self.numGridX_textedit.setText("1")
