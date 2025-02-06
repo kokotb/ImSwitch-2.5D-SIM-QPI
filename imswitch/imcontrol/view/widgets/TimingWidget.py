@@ -34,7 +34,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingUnit = QtWidgets.QComboBox()
         self.timingUnit._name = 'Timing Unit'
         self.timingUnit._type = 'combostr'
-        self.timingUnit.setFixedWidth(75)
+        self.timingUnit.setFixedWidth(30)
 
         self.checkbox_timingDuration = QCheckBox('Duration')
         self.checkbox_timingDuration._name = 'Duration Checkbox'
@@ -54,7 +54,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingDurationUnit = QtWidgets.QComboBox()
         self.timingDurationUnit._name = 'Duration Unit'
         self.timingDurationUnit._type = 'combostr'
-        self.timingDurationUnit.setFixedWidth(75)
+        self.timingDurationUnit.setFixedWidth(30)
         self.timingDurationUnit.setEnabled(False)
 
         self.checkbox_tilingReps = QCheckBox('Reps')

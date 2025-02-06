@@ -12,6 +12,7 @@ from PyQt5.QtCore import Qt
 class ROIWidget(NapariHybridWidget):
 
     sigROIInfoChanged = QtCore.Signal(str, str, list)
+    sigROIIterate = QtCore.Signal(str, str, str)
     sigAddROI = QtCore.Signal()
     sigReplaceROI = QtCore.Signal()
 
@@ -49,8 +50,10 @@ class ROIWidget(NapariHybridWidget):
         # self.replaceButton = QPushButton("Replace")
         # buttonLayout.addWidget(self.replaceButton)
 
-        # self.scanROIList = QCheckBox('Scan ROIs')
-        # buttonLayout.addWidget(self.scanROIList)
+        self.scanROIList = QCheckBox('Scan ROIs')
+        buttonLayout.addWidget(self.scanROIList)
+        # self.scanROIList.stateChanged.connect(self.toggleRunTilingActive)
+        self.scanROIList.stateChanged.connect(lambda value: self.sigROIIterate.emit('ROI List',"Checkbox", str(value)))
 
         overallLayout = QtWidgets.QVBoxLayout()
         self.setLayout(overallLayout)

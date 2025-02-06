@@ -39,7 +39,6 @@ class SLM25DWidget(Widget):
         # Placeholders for both image displays at top of widget.
         self.slmFrame = pg.GraphicsLayoutWidget()
         self.slmFrame.setEnabled(False)
-        self.slmFrame.setMaximumWidth() 
         self.slmFrame.addLabel('Zernike', angle=-90, row=0, col=0)
         self.vbZernike = self.slmFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
         self.slmFrame.addLabel('2.5D Mask', angle=-90, row=0, col=2)

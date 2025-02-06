@@ -69,6 +69,7 @@ class TilingWidget(NapariHybridWidget):
         self.checkbox_tiling._type = 'int'
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
         self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
+        
         self.checkbox_tilepreview =  QCheckBox("Tile Preview")
         self.checkbox_tilepreview._name = 'Tiling Preview'
         self.checkbox_tilepreview._type = 'int'

@@ -85,11 +85,11 @@ class LaserWidget(Widget):
 
         # color = colorutils.wavelengthToHex(wavelength)
         if laserName == '488AOTF':
-            color = '#00d0e1'
+            color = '#00f7ff'
         elif laserName == '561AOTF':
-            color = '#dcff00'
+            color = '#c6ff00'
         elif laserName == '640AOTF':
-            color = '#ff0000'
+            color = '##ff0000'
 
 
         nameLabel.setStyleSheet(
@@ -222,7 +222,7 @@ class LaserModule(QtWidgets.QWidget):
         isModulated = all(num > 0 for num in frequencyRange)
 
         # Graphical elements
-        self.setPointLabel = QtWidgets.QLabel(f'Setpoint /{valueUnits}')
+        self.setPointLabel = QtWidgets.QLabel(f'Setpoint / {valueUnits}')
         self.setPointLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.setPointEdit = QtWidgets.QLineEdit(str(initialPower))
         self.validator = QIntValidator(0,100,self)

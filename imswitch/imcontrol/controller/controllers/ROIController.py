@@ -29,6 +29,9 @@ class ROIController(ImConWidgetController):
             elif self._master.positionersManager._subManagers[key].axes[0] == ['X'] or ['Y']:
                 self.positionerXY = self._master.positionersManager._subManagers[key]
 
+        self._widget.sigROIIterate.connect(self.valueChanged)
+        self._widget.sigROIIterate.emit('ROI List',"Checkbox", '0')
+
     def loadSettings(self, moduleDict):
         try:
             loadBool = moduleDict['roilist']

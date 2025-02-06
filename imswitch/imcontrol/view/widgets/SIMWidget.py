@@ -5,8 +5,8 @@ from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtCore import QLocale
 
 import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
@@ -504,7 +504,10 @@ class SIMWidget(NapariHybridWidget):
         self.alpha_textedit = QLineEdit("")
         self.alpha_textedit._name = "Alpha"
         self.alpha_textedit._type = "str"
-        self.alpha_textedit.setInputMask("0.0;0;_")
+        self.validator = QDoubleValidator(0.1,1.0,1)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.alpha_textedit.setValidator(self.validator)
+        self.alpha_textedit.setInputMask("[0].D;0;_")
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")

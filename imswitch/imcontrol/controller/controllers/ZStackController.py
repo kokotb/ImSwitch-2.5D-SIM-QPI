@@ -44,7 +44,7 @@ class ZStackController(ImConWidgetController):
         stepDist = float(self._widget.zStepDistance_textedit.text())
         totalDist = float(self._widget.totalZ_textedit.text())
         zScanDir = self._widget.zStackScanDir.currentText()
-        currentZ = self.sharedAttrs['Positioner','Z','Z','Position'] #stored as float in sharedattrs
+        currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position'])
         centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
 
         if zScanDir == 'Up':
