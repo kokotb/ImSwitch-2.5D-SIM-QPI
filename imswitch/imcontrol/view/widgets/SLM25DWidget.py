@@ -39,6 +39,7 @@ class SLM25DWidget(Widget):
         # Placeholders for both image displays at top of widget.
         self.slmFrame = pg.GraphicsLayoutWidget()
         self.slmFrame.setEnabled(False)
+        self.slmFrame.setMaximumWidth() 
         self.slmFrame.addLabel('Zernike', angle=-90, row=0, col=0)
         self.vbZernike = self.slmFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
         self.slmFrame.addLabel('2.5D Mask', angle=-90, row=0, col=2)
@@ -85,20 +86,20 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.project25D,0,3)
         self.grid.addWidget(self.slmPreview, 0, 5)
 
-        self.grid.addWidget(self.slmFrame, 1, 0, 2, 7)
+        self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
-        self.grid.addWidget(self.reset25D, 16, 6)
+        self.grid.addWidget(self.reset25D, 16, 5)
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.HLine)
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(200)
-        self.grid.addWidget(self.myframe, 3, 0, 1, 7)
+        self.grid.addWidget(self.myframe, 3, 0, 1, 6)
         self.myframe2 = QFrame()
         self.myframe2.setFrameShape(QFrame.HLine)
         self.myframe2.setFrameShadow(QFrame.Plain)
         self.myframe2.setLineWidth(200)
-        self.grid.addWidget(self.myframe2, 15, 0, 1, 7)
+        self.grid.addWidget(self.myframe2, 15, 0, 1, 6)
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
@@ -191,7 +192,7 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setFixedWidth(100)
             self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
             self.pars['StepEdit' + name].setFixedWidth(75)
-            self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
+            # self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
             self.pars['AbsPosEdit' + name]._name = name
             self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
@@ -202,7 +203,7 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['StepEdit' + name].setEnabled(False)
-            self.pars['StepUnit' + name].setEnabled(False)
+            # self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
@@ -238,9 +239,9 @@ class SLM25DWidget(Widget):
             self.grid.addWidget(self.pars['DownButton' + name], self.numParams, 1)
             self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
             self.grid.addWidget(self.pars['StepEdit' + name], self.numParams, 3)
-            self.grid.addWidget(self.pars['StepUnit' + name], self.numParams, 4)
-            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 5)
-            self.grid.addWidget(self.pars['AbsPosUnit' + name], self.numParams, 6)
+            # self.grid.addWidget(self.pars['StepUnit' + name], self.numParams, 4)
+            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 4)
+            self.grid.addWidget(self.pars['AbsPosUnit' + name], self.numParams, 5)
 
             # Connect buttons to signals
 
@@ -274,7 +275,7 @@ class SLM25DWidget(Widget):
         self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel2.setEnabled(False)
         self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel2, 16, 5)
+        self.grid.addWidget(self.valLabel2, 16, 4)
 
         self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
         self.zernLabel.setEnabled(False)
@@ -361,7 +362,7 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setEnabled(False)
             self.pars['DownButton' + name].setEnabled(False)
             self.pars['StepEdit' + name].setEnabled(False)
-            self.pars['StepUnit' + name].setEnabled(False)
+            # self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
@@ -392,7 +393,7 @@ class SLM25DWidget(Widget):
             self.pars['UpButton' + name].setEnabled(True)
             self.pars['DownButton' + name].setEnabled(True)
             self.pars['StepEdit' + name].setEnabled(True)
-            self.pars['StepUnit' + name].setEnabled(True)
+            # self.pars['StepUnit' + name].setEnabled(True)
             self.pars['AbsPosEdit' + name].setEnabled(True)
             self.pars['AbsPosUnit' + name].setEnabled(True)
 
