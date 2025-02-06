@@ -4,7 +4,7 @@ from qtpy import QtCore, QtWidgets
 from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-
+from imswitch.imcommon.model import initLogger
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
                              QCheckBox, QLabel, QLineEdit, QDialog)
@@ -31,7 +31,25 @@ class InfoGatheringWidget(NapariHybridWidget):
 
 
         self.loadSettings.clicked.connect(self.openLoadWindow)
+        # self.saveSettings.clicked.connect(self.saveFileDialog)
 
+    def toggleLoadButton(self, state):
+        state = not state
+        self.loadSettings.setEnabled(state)
+
+    def saveFileDialog(self, currentRoot):
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle("Save File")
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setViewMode(QFileDialog.ViewMode.Detail)
+        dialog.setNameFilter("JSON (*.json)")
+        dialog.setDirectory(currentRoot)
+        if dialog.exec():
+            selected_file = dialog.selectedFiles()[0]
+            # print("Selected File for Saving:", selected_file)
+        else:
+            selected_file = None
+        return selected_file
     
     def openLoadWindow(self):
         
@@ -42,7 +60,7 @@ class MyInputDialog(QDialog):
     def __init__(self, parent: NapariHybridWidget):
 
         super().__init__(parent)
-
+        self._logger = initLogger(self)
         self.setWindowTitle("Load Settings")
         self.elementList = []
 
@@ -117,6 +135,9 @@ class MyInputDialog(QDialog):
         self.cancelButton.clicked.connect(self.reject)
         self.allCheckbox.clicked.connect(self.toggleAllBoxes)
 
+
+
+
     def openFileDialog(self):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
@@ -132,9 +153,13 @@ class MyInputDialog(QDialog):
 
     def loadJSON(self):
         jsonPath = self.filePath.text()
-        with open(jsonPath, 'r') as openfile:    
-            # Reading from json file
-            jsonObject = json.load(openfile)
+        if jsonPath == '':
+            self._logger.warning('No file path selected')
+            jsonObject = dict()
+        else:
+            with open(jsonPath, 'r') as openfile:    
+                # Reading from json file
+                jsonObject = json.load(openfile)
 
 
         return jsonObject

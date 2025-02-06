@@ -4,7 +4,6 @@ import time
 import threading
 from datetime import datetime
 import tifffile as tif
-import os
 import time
 import numpy as np
 from decimal import Decimal
@@ -30,6 +29,7 @@ class SIMController(ImConWidgetController):
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     sigValueChanged = Signal()
+
     
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -294,10 +294,13 @@ class SIMController(ImConWidgetController):
         timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
+        self.startSettingsSaved = False
         while self.active and poweredLasers != []:
+            
 
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
+            self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
             # Scan over all positions generated for grid
             
@@ -329,6 +332,7 @@ class SIMController(ImConWidgetController):
                     else:
                         exptTimeElapsed = time.time() - time_global_start
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+                    self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
                     self.nextPos = oneROI[self.j]
                     self.currentPos = oneROI[self.j-1]
                     self.positionerXY.checkBusyLoop()
@@ -346,23 +350,8 @@ class SIMController(ImConWidgetController):
                         if self.zScanActive:
                             self.positioner.setPosition(zList[z], 'Z')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                        
-                        print(self.roiIterator)
-                        print(self.j)
-                        # print(z)
-                        print(self.currentPos)
 
-                        # for processor in self.processors:
-                            # processor.setRecordingMode(self.isRecordRecon)
-                            # processor.setReconstructionMode(self.isReconstruction)
-                            # processor.setWavelength(processor.handle, self.sim_parameters)
-
-                        # timestartdwell = time.time()
                         timestart = time.time()
-
-
-
-                        # print(time.time()-timestartdwell)
                                         
                         # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
 
@@ -370,6 +359,7 @@ class SIMController(ImConWidgetController):
 
 
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
+                        saveLock = threading.Lock()
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
@@ -377,7 +367,7 @@ class SIMController(ImConWidgetController):
                             if self.isTiling:
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                    executor.submit(self.mainSIMLoop, processor, errorLock, z) 
+                                    executor.submit(self.mainSIMLoop, processor, errorLock, z, saveLock) 
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             # self.stopSIM()
@@ -425,7 +415,7 @@ class SIMController(ImConWidgetController):
 
         
 
-    def mainSIMLoop(self, processor, errorLock, z):
+    def mainSIMLoop(self, processor, errorLock, z, saveLock):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
 
@@ -507,13 +497,21 @@ class SIMController(ImConWidgetController):
                 # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
                 #     self.updateWFContLimits()
                 self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
-        
+
+            if ((self.isRecordRaw) or (self.isRecordWF) or (self.isRecordRecon)) and not (self.startSettingsSaved):
+                with saveLock:
+                    self._commChannel.sigSaveSettingsFirst.emit()
+                    self.startSettingsSaved = True
+
             if self.isRecordRaw:
                 self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+
             if self.isRecordWF:
                 self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+
             if self.isRecordRecon and self.isReconstruction:
                 self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+
             
             if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
                 self.recordOneSetRaw(self.j, processor)
@@ -677,6 +675,7 @@ class SIMController(ImConWidgetController):
         ms = str(round(Decimal(ms),3))[2:5]
 
         elapsedStr = f"{hh}h{mm}m{ss}s{ms}ms"
+
         return elapsedStr
 
 
@@ -871,6 +870,7 @@ class SIMController(ImConWidgetController):
         self._widget.stop_button.setEnabled(False)
         self._widget.start_button.setEnabled(True)
         self.active = False
+        self._commChannel.updateSIMActive(self.active)
         self.simThread.join()
         for laser in self.lasers:
             laser.setEnabled(False)
@@ -903,6 +903,7 @@ class SIMController(ImConWidgetController):
         self._widget.stop_button.setEnabled(True)
         self._widget.start_button.setEnabled(False)
         self.active = True
+        self._commChannel.updateSIMActive(self.active)
 
         simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()

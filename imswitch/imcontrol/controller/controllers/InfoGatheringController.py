@@ -13,6 +13,7 @@ from imswitch.imcommon.model.dirtools import DataFileDirs
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog
 import json
+import os
 # from PyQt5.QtWidgets import QDialog
 
 
@@ -27,8 +28,10 @@ class InfoGatheringController(ImConWidgetController):
 
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
+        self._commChannel.sigSaveSettingsFirst.connect(self.saveFileDialog)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleLoadButton)
         # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
-        self._widget.saveSettings.clicked.connect(self.getAndSaveJSON)
+        
         
         # Load experimental parameters into local object attribute
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
@@ -56,10 +59,35 @@ class InfoGatheringController(ImConWidgetController):
         
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
+        self._widget.saveSettings.clicked.connect(self.saveFileDialog)
         ####################################
         # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
 
+    def saveFileDialog(self):
+        currentRoot = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
+        fileIndex = 1
+        if not self._commChannel.simActive:
+            filename = self._widget.saveFileDialog(currentRoot)
+            if filename == None:
+                return
+        else:
+            filepath = self._commChannel.activeDir
+            name = self._commChannel.currentTimeString 
+            if not os.path.exists(filepath):
+                os.makedirs(filepath)
+        
+        
+        jsonOutput = self.getWantedAttrs()
+        filename = os.path.join(filepath, name + '.json')
+        if os.path.exists(filename):
+            fileIndex += 1
+            filename = os.path.join(filepath, name + '_' + str(fileIndex) + '.json')
 
+        with open(filename, "w", encoding='utf-8') as outfile:
+            outfile.write(jsonOutput)
+        self.lastSavePath = filename
+        self.lastSaveName = os.path.split(filename)[-1]
+        print(self.lastSaveName)
 
 
     def updateSharedAttributes(self):
@@ -139,11 +167,6 @@ class InfoGatheringController(ImConWidgetController):
         # savePath = os.path.join(self.exptFolderPath,'Snapshot')
         with open("JSONTest.json", "w", encoding='utf-8') as outfile:
             outfile.write(jsonOutput)
-
-    # def saveJSON(self, jsonOutput):
-    #     with open("JSONTest.json", "w", encoding='utf-8') as outfile:
-    #         outfile.write(jsonOutput)
-    #     self._logger.warning("Attributes saved.")
 
 
     def getHDF5Attributes(self):

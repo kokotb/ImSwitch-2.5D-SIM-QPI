@@ -118,6 +118,8 @@ class CommunicationChannel(SignalInterface):
 
     sigModuleSettings = Signal(dict)
 
+    sigSaveSettingsFirst = Signal()
+
     # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
@@ -144,12 +146,23 @@ class CommunicationChannel(SignalInterface):
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
         self.roiList = []
+        self.simActive = False
+        self.activeDir = None
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
 
+    def updateSIMActive(self, active):
+        self.simActive = active
+
     def storeLoadedSettings(self, dict):
         self.loadedSettings = dict
+
+    def updateActiveDirectory(self, dir):
+        self.activeDir = dir
+
+    def storeCurrentTimeString(self, timeString):
+        self.currentTimeString = timeString
 
     def getCenterViewbox(self):
         """ Returns the center point of the viewbox, as an (x, y) tuple. """

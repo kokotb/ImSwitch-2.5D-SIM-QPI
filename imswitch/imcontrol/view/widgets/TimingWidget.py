@@ -116,8 +116,42 @@ class TimingWidget(NapariHybridWidget):
 
     def toggleCheckboxes(self, state):
         state = not state
-        self.checkbox_tilingReps.setEnabled(state)
-        self.checkbox_timingDuration.setEnabled(state)
+        if state == False:
+            self.timingPeriod_label.setEnabled(state)
+            self.checkbox_tilingReps.setEnabled(state)
+            self.checkbox_timingDuration.setEnabled(state)
+            self.totalReps_textedit.setEnabled(state)
+            self.timingDuration_textedit.setEnabled(state)
+            self.timingDurationUnit.setEnabled(state)
+            self.timingPeriod_textedit.setEnabled(state)
+            self.timingUnit.setEnabled(state)
+
+        if state == True:
+            self.timingPeriod_label.setEnabled(state)
+            self.timingPeriod_textedit.setEnabled(state)
+            self.timingUnit.setEnabled(state)
+
+            if self.checkbox_timingDuration.checkState() == 2:
+                self.timingDuration_textedit.setEnabled(state)
+                self.timingDurationUnit.setEnabled(state)
+                self.checkbox_timingDuration.setEnabled(state)
+                self.checkbox_tilingReps.setEnabled(not state)
+                self.totalReps_textedit.setEnabled(not state)
+            
+            elif self.checkbox_tilingReps.checkState() == 2:
+                self.checkbox_tilingReps.setEnabled(state)
+                self.totalReps_textedit.setEnabled(state)
+                self.checkbox_timingDuration.setEnabled(not state)
+                self.timingDuration_textedit.setEnabled(not state)
+                self.timingDurationUnit.setEnabled(not state)
+
+            elif (self.checkbox_tilingReps.checkState() == 0) and (self.checkbox_timingDuration.checkState() == 0):
+                self.checkbox_tilingReps.setEnabled(state)
+                self.checkbox_timingDuration.setEnabled(state)
+                self.totalReps_textedit.setEnabled(not state)
+                self.timingDuration_textedit.setEnabled(not state)
+                self.timingDurationUnit.setEnabled(not state)
+
 
     def toggleDuration(self):
         self.durCheckState = not self.durCheckState
