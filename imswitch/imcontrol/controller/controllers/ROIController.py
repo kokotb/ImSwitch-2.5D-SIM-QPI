@@ -31,6 +31,11 @@ class ROIController(ImConWidgetController):
 
         self._widget.sigROIIterate.connect(self.valueChanged)
         self._widget.sigROIIterate.emit('ROI List',"Checkbox", '0')
+        # self._commChannel.sigGetROIOrigins.connect(self.getOrigins)
+
+
+
+
 
     def loadSettings(self, moduleDict):
         try:
@@ -46,6 +51,7 @@ class ROIController(ImConWidgetController):
                 Y = Ystring.split(':')[1]
                 Z = Zstring.split(':')[1]
                 self.restoreROIList(X, Y, Z)
+        self._widget.getListAllROIs()
 
 
             

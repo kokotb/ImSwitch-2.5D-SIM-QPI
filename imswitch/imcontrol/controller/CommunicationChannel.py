@@ -118,7 +118,7 @@ class CommunicationChannel(SignalInterface):
 
     sigModuleSettings = Signal(dict)
 
-
+    # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
 
@@ -143,6 +143,10 @@ class CommunicationChannel(SignalInterface):
         self._scriptExecution = False
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
+        self.roiList = []
+
+    # def storeROIList(self, roiList):
+    #     self.roiList = roiList
 
     def storeLoadedSettings(self, dict):
         self.loadedSettings = dict

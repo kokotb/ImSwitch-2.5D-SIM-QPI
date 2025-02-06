@@ -147,6 +147,18 @@ class SIMController(ImConWidgetController):
 
             for i in range(len(self._widget.elementListUser)):
                 self._widget.elementListUser[i].setText(params[self._widget.elementListUser[i]._name])
+
+    def getOrigins(self):
+        roiList = self._commChannel.sharedAttrs[('ROI List','List')]
+        originList = []
+        for i in range(len(roiList)):
+            Xstring, Ystring, Zstring = roiList[i][1].split(' | ')
+            X = Xstring.split(':')[1]
+            Y = Ystring.split(':')[1]
+            posTuple = (X, Y)
+            originList.append(posTuple)
+        return originList
+
         
     def performSIMExperimentThread(self, sim_parameters):
         """
@@ -170,17 +182,43 @@ class SIMController(ImConWidgetController):
 
         #Get the parameters that go into the createXYGridPositionArray function
         self.getTilingSettings()
-        positions = self._master.tilingManager.createXYGridPositionArray(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize)
-        self.tileOrigin = positions[-1]
-        if self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Checkbox')] == '0':
-            positions = [self.tileOrigin]
+        # self._commChannel.sigCalcPositionArray.emit()
+        roiOriginList = []
+
+        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
+            self.isTiling = True
+        else:
+            self.isTiling = False
+
+        if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
+            self.isScanROI = True
+        else:
+            self.isScanROI = False
+
+        if self.isScanROI:
+            try:
+                roiOriginList = self.getOrigins()
+            except KeyError:
+                self._logger.warning('ROI list is empty.')
+
+        self.tileOrigins = []
+        positions = self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList)
+        for i in range(len(positions)):
+            self.tileOrigins.append(positions[i][-1])
+        
+        self.tileOrigin = positions[0][-1]
+
+
+
+
+        if not self.isTiling:
+            positions = self.tileOrigins
         
         #Get Z-Stack list
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
             self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
             self.zLength = len(zList)
-
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
@@ -210,10 +248,7 @@ class SIMController(ImConWidgetController):
         self.framesPerDetector = 9
         self.frameCounter = 0
         #Set tiling flag, determines whether program will enter the tiling code.
-        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
-            self.isTiling = True
-        else:
-            self.isTiling = False
+
 
         self.numActiveChannels = len(poweredLasers)
         
@@ -261,28 +296,11 @@ class SIMController(ImConWidgetController):
         totalEndTime = 0
         while self.active and poweredLasers != []:
 
-            # if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
-            #     if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-            #         self._commChannel.sigStopSim.emit()
-            #     if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2':
-            #         remainder = divmod(len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')]),self.completeFrameSets)[1] #not stopping, change divmod, its dumb
-            #         print(remainder)
-            #         if remainder == 0:
-            #             self.stopSIM
-
-            # print(self.tilingRep)
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
-            
-            # Generate time_step
-            # if self.numAllFrames == 0:
-            #     exptTimeElapsed = 0.0
-            # else:
-            #     exptTimeElapsed = time.time() - time_global_start
-            # self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
 
             # Scan over all positions generated for grid
-            j = 0 # Position iterator
+            
 
             if self.completeFrameSets != 0 and timingPeriodInSec is not None:
                 repTimer = time.time() - repTimerStart
@@ -294,98 +312,112 @@ class SIMController(ImConWidgetController):
                         return
             repTimerStart = time.time()
 
+            roiIterator = 0
+
+            while roiIterator < len(positions):
+                j = 0 # Position iterator
+                oneROI = positions[roiIterator]
+
+                if (not self.isTiling) and (not self.isScanROI):
+                    oneROI = [oneROI]
+
+
+                while j < len(oneROI):
+                    self.j = j
+                    if self.numAllFrames == 0:
+                        exptTimeElapsed = 0.0
+                    else:
+                        exptTimeElapsed = time.time() - time_global_start
+                    self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+                    self.nextPos = oneROI[self.j]
+                    self.currentPos = oneROI[self.j-1]
+                    self.positionerXY.checkBusyLoop()
+
+                    print(roiIterator)
+                    print(self.j)
+                    print(self.nextPos)
+
+                    if j == 0 and self.completeFrameSets != 0 and self.isTiling:
+                        time.sleep(.5) #TODO: Change to calibrate by distance needed to move
+                    # elif (j==0) and (self.completeFrameSets == 0):
+                    #     pass
+                    else:
+                        time.sleep(.05) #can probablz reduct slightly
+                    z = 0
+                    while z < len(zList):
+                    # for z in range(len(zList)):
+                        if self.zScanActive:
+                            self.positioner.setPosition(zList[z], 'Z')
+                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+
+                        # for processor in self.processors:
+                            # processor.setRecordingMode(self.isRecordRecon)
+                            # processor.setReconstructionMode(self.isReconstruction)
+                            # processor.setWavelength(processor.handle, self.sim_parameters)
+
+                        # timestartdwell = time.time()
+                        timestart = time.time()
 
 
 
-            while j < len(positions):
-                self.j = j
-                if self.numAllFrames == 0:
-                    exptTimeElapsed = 0.0
-                else:
-                    exptTimeElapsed = time.time() - time_global_start
-                self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
-                self.nextPos = positions[self.j]
-                self.currentPos = positions[self.j-1]
-                self.positionerXY.checkBusyLoop()
-                if j == 0 and self.completeFrameSets != 0 and self.isTiling:
-                    time.sleep(.5) #TODO: Change to calibrate by distance needed to move
-                # elif (j==0) and (self.completeFrameSets == 0):
-                #     pass
-                else:
-                    time.sleep(.05) #can probablz reduct slightly
-                z = 0
-                while z < len(zList):
-                # for z in range(len(zList)):
-                    if self.zScanActive:
-                        self.positioner.setPosition(zList[z], 'Z')
-                        self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                        # print(time.time()-timestartdwell)
+                                        
+                        # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
 
-                    # for processor in self.processors:
-                        # processor.setRecordingMode(self.isRecordRecon)
-                        # processor.setReconstructionMode(self.isReconstruction)
-                        # processor.setWavelength(processor.handle, self.sim_parameters)
-
-                    # timestartdwell = time.time()
-                    timestart = time.time()
+                        self._master.arduinoManager.trigOneSequenceWriteOnly()
 
 
+                        errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
+                        self.errorQ = [] #List to be populated with error results from within processor threads
+                        self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
-                    # print(time.time()-timestartdwell)
-                                    
-                    # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
+                        with ThreadPoolExecutor(max_workers=4) as executor: #
+                            if self.isTiling:
+                                executor.submit(self.tilingMoveThread)
+                            for processor in self.activeProcessors:
+                                    executor.submit(self.mainSIMLoop, processor, errorLock, z) 
 
-                    self._master.arduinoManager.trigOneSequenceWriteOnly()
+                        if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                            # self.stopSIM()
+                            self._widget.stop_button.setChecked(False)
+                            return
+
+                        self.numAllFrames += 1
+                        if True not in self.errorQ:
+                            self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                            z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        loopEndTime = time.time()-timestart
+                        print(loopEndTime)
+                        self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
+                        self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        
+                    # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                    j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
 
 
-                    errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                    self.errorQ = [] #List to be populated with error results from within processor threads
-                    self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
-
-                    with ThreadPoolExecutor(max_workers=4) as executor: #
-                        if self.isTiling:
-                            executor.submit(self.tilingMoveThread)
-                        for processor in self.activeProcessors:
-                                executor.submit(self.mainSIMLoop, processor, errorLock, z) 
-
-                    if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
-                        # self.stopSIM()
-                        self._widget.stop_button.setChecked(False)
-                        return
-
-                    self.numAllFrames += 1
-                    if True not in self.errorQ:
-                        self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                        z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                    loopEndTime = time.time()-timestart
-                    print(loopEndTime)
-                    self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                    self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                     
-                # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                        self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
+
+                    totalEndTime = time.time()-time_global_start
+                    remainder = self.completeFrameSets % len(oneROI)
+
+                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
+                            self._commChannel.sigStopSim.emit()
+                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
+                            self._commChannel.sigStopSim.emit()
 
 
+
+                self.frameCounter += 1
+
+
+                self.tilingRep += 1
+
+                roiIterator += 1
                 
-                if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(positions)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
-                    self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
-
-                totalEndTime = time.time()-time_global_start
-                remainder = self.completeFrameSets % len(positions)
-
-                if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
-                    if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-                        self._commChannel.sigStopSim.emit()
-                    if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
-                        self._commChannel.sigStopSim.emit()
-
-
-
-            self.frameCounter += 1
-
-
-            self.tilingRep += 1
-            
-            print(f'total time: {totalEndTime}')
+                print(f'total time: {totalEndTime}')
             
 
 

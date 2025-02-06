@@ -89,7 +89,7 @@ class LaserWidget(Widget):
         elif laserName == '561AOTF':
             color = '#c6ff00'
         elif laserName == '640AOTF':
-            color = '##ff0000'
+            color = '#ff0000'
 
 
         nameLabel.setStyleSheet(
