@@ -49,7 +49,13 @@ class LucidCamMock:
         pass
 
     def setROI(self, hpos, vpos, hsize, vsize):
-        pass
+        # Change the width and height in properties
+        # Simulating the properties changed on camera
+        self.properties['Height'] = hsize
+        self.properties['Width'] = vsize
+        self.properties['OffsetX'] = hpos
+        self.properties['OffsetY'] = vpos
+        # pass
 
     def setBinning(self, binning):
         pass
@@ -161,6 +167,8 @@ class LucidCamMock:
     
     def grabFrameSet(self, buffer_size):
         #if False:
+        image_size_cam = [self.properties[el] for el in ['Width','Height']]
+        
         if True:
             allImages = []
             # Hardcoded path
@@ -179,6 +187,49 @@ class LucidCamMock:
                 stack_mock_color.append(tif.imread(name))
             #allImages.append(stack_mock_color)
             allImages = np.array(np.divide(stack_mock_color,16).astype(np.uint16))
+                
+            image_size_import = np.shape(allImages)[1:3]
+            image_size_import = [image_size_import[0], image_size_import[1]]
+            
+            if image_size_import != image_size_cam:
+                # filename_test = r"D:\Nextcloud\2022 - 2.5D SIM - share\1 - analysis\test\test.tif"
+                # Calculate sizes for padding/cropping
+                resize_parameters = np.array(image_size_cam) - np.array(image_size_import) 
+                pad_leftright = resize_parameters[0]
+                image_size_leftright = int(image_size_cam[0])
+                pad_topbottom = resize_parameters[1]
+                image_size_topbottom = int(image_size_cam[1])
+                
+                # Pad and crop in right dimensions
+                if pad_leftright >= 0 and pad_topbottom >= 0:
+                    pad_left = int(np.round(pad_leftright/2))
+                    pad_right = pad_leftright - pad_left
+                    pad_top = int(np.round(pad_topbottom/2))
+                    pad_bottom = pad_topbottom - pad_top
+                    allImages_resize = [np.pad(img, [(pad_left, pad_right), (pad_top, pad_bottom)], mode='constant', constant_values=0) for img in allImages]
+                elif pad_leftright >= 0 and pad_topbottom < 0:
+                    pad_left = int(np.round(pad_leftright/2))
+                    pad_right = pad_leftright - pad_left
+                    crop_top = int(abs(np.round(pad_topbottom/2)))
+                    crop_bottom = crop_top + image_size_topbottom
+                    allImages_resize = [np.pad(img, [(pad_left, pad_right), (0, 0)], mode='constant', constant_values=0) for img in allImages]
+                    allImages_resize = [img[crop_top: crop_bottom,0::] for img in allImages_resize]
+                elif pad_leftright < 0 and pad_topbottom >= 0:
+                    crop_left = int(np.round(pad_leftright/2))
+                    crop_right = crop_left + image_size_leftright
+                    pad_top = int(np.round(pad_topbottom/2))
+                    pad_bottom = pad_topbottom - pad_top
+                    allImages_resize = [np.pad(img, [(0, 0), (pad_top, pad_bottom)], mode='constant', constant_values=0) for img in allImages]
+                    allImages_resize = [img[0::,crop_left: crop_right] for img in allImages_resize]
+                else:
+                    crop_left = int(np.round(pad_leftright/2))
+                    crop_right = crop_left + image_size_leftright
+                    crop_top = int(abs(np.round(pad_topbottom/2)))
+                    crop_bottom = crop_top + image_size_topbottom
+                    allImages_resize = [img[crop_top: crop_bottom,crop_left: crop_right] for img in allImages]
+
+                # Set resized image
+                allImages = allImages_resize
         else:
             # Simulate SIM set 
             # Nx = 1024

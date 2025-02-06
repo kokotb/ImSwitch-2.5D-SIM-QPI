@@ -114,6 +114,7 @@ class SIMController(ImConWidgetController):
         self._widget.setUserDirInfo(setupInfoDict['saveDir'])
         #Create log file attributes that get filled during experiment
         self.log_times_loop = []
+        
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
 
@@ -462,7 +463,10 @@ class SIMController(ImConWidgetController):
             imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor?
             imageWF = imageWF.astype(np.uint16)
 
+            
             if self.isReconstruction:
+                # Pass shared attributes to SIMprocessor
+                processor.setCurrentSharedAttrs(self._commChannel.sharedAttrs)
                 processor.reconstructSIMStackBackgroundLBF()
 
             if self.tilePreview and self.isTiling:
