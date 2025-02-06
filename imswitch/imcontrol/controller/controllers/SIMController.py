@@ -312,11 +312,11 @@ class SIMController(ImConWidgetController):
                         return
             repTimerStart = time.time()
 
-            roiIterator = 0
+            self.roiIterator = 0
 
-            while roiIterator < len(positions):
+            while self.roiIterator < len(positions):
                 j = 0 # Position iterator
-                oneROI = positions[roiIterator]
+                oneROI = positions[self.roiIterator]
 
                 if (not self.isTiling) and (not self.isScanROI):
                     oneROI = [oneROI]
@@ -333,9 +333,6 @@ class SIMController(ImConWidgetController):
                     self.currentPos = oneROI[self.j-1]
                     self.positionerXY.checkBusyLoop()
 
-                    print(roiIterator)
-                    print(self.j)
-                    print(self.nextPos)
 
                     if j == 0 and self.completeFrameSets != 0 and self.isTiling:
                         time.sleep(.5) #TODO: Change to calibrate by distance needed to move
@@ -349,6 +346,10 @@ class SIMController(ImConWidgetController):
                         if self.zScanActive:
                             self.positioner.setPosition(zList[z], 'Z')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                        
+                        # print(self.roiIterator)
+                        # print(self.j)
+                        # print(z)
 
                         # for processor in self.processors:
                             # processor.setRecordingMode(self.isRecordRecon)
@@ -415,7 +416,7 @@ class SIMController(ImConWidgetController):
 
                 self.tilingRep += 1
 
-                roiIterator += 1
+                self.roiIterator += 1
                 
                 print(f'total time: {totalEndTime}')
             
@@ -477,10 +478,10 @@ class SIMController(ImConWidgetController):
                 self.errorQ.append(False)
             if lastChan:
                 self.lastZ = (z == self.zLength - 1)
+                # print('All images, all channels loaded into buffer')
                 if self.lastZ:
             # if lastChan:
                     self.waitToMoveEvent.set()
-                    print('All images, all channels loaded into buffer')
                 else: 
                     self.waitToMoveEvent.set()
 
