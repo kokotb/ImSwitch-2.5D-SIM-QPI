@@ -347,9 +347,10 @@ class SIMController(ImConWidgetController):
                             self.positioner.setPosition(zList[z], 'Z')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
                         
-                        # print(self.roiIterator)
-                        # print(self.j)
+                        print(self.roiIterator)
+                        print(self.j)
                         # print(z)
+                        print(self.currentPos)
 
                         # for processor in self.processors:
                             # processor.setRecordingMode(self.isRecordRecon)
