@@ -67,27 +67,30 @@ class InfoGatheringController(ImConWidgetController):
         currentRoot = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
         fileIndex = 1
         if not self._commChannel.simActive:
-            filename = self._widget.saveFileDialog(currentRoot)
-            if filename == None:
+            # name = self._commChannel.currentTimeString
+            filePath = self._widget.saveFileDialog(currentRoot)
+            if filePath == None:
                 return
+            filePathRoot = os.path.split(filePath)[0]
         else:
-            filepath = self._commChannel.activeDir
-            name = self._commChannel.currentTimeString 
-            if not os.path.exists(filepath):
-                os.makedirs(filepath)
-        
+            filePathRoot = self._commChannel.activeDir
+            name = self._commChannel.currentTimeString
+            filePath = os.path.join(filePathRoot, name + '.json')
+            if not os.path.exists(filePathRoot):
+                os.makedirs(filePathRoot)
+            if os.path.exists(filePath):
+                fileIndex += 1
+                filePath = os.path.join(filePathRoot, name + '_' + str(fileIndex) + '.json')
         
         jsonOutput = self.getWantedAttrs()
-        filename = os.path.join(filepath, name + '.json')
-        if os.path.exists(filename):
-            fileIndex += 1
-            filename = os.path.join(filepath, name + '_' + str(fileIndex) + '.json')
+        
 
-        with open(filename, "w", encoding='utf-8') as outfile:
+
+        with open(filePath, "w", encoding='utf-8') as outfile:
             outfile.write(jsonOutput)
-        self.lastSavePath = filename
-        self.lastSaveName = os.path.split(filename)[-1]
-        print(self.lastSaveName)
+        self.lastSavePath = filePath
+        self.lastSaveName = os.path.split(filePath)[-1]
+        print('Settings JSON saved at: ' + self.lastSavePath)
 
 
     def updateSharedAttributes(self):

@@ -278,7 +278,7 @@ class SLM25DController(ImConWidgetController):
         # SLM screen size parameters
         numberXpix = 1920
         numberYpix = 1080
-        pszSLM = 0.000008 # (in m, 8 um) pixel size
+        pszSLM = 0.000008 # (in m, 8 um) pixel sizeupdateZernikeMask
         rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
         rhoPupilAperturePix = rhoPupilAperture/pszSLM
         

@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
                              QCheckBox, QLabel, QLineEdit, QDialog)
 import json
+import os
 
 
 
@@ -43,7 +44,7 @@ class InfoGatheringWidget(NapariHybridWidget):
         dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         dialog.setViewMode(QFileDialog.ViewMode.Detail)
         dialog.setNameFilter("JSON (*.json)")
-        dialog.setDirectory(currentRoot)
+        dialog.setDirectory(os.path.join(currentRoot))
         if dialog.exec():
             selected_file = dialog.selectedFiles()[0]
             # print("Selected File for Saving:", selected_file)
