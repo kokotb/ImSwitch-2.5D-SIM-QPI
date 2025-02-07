@@ -38,6 +38,13 @@ class SLM25DController(ImConWidgetController):
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
 
         self.matrix25d = self._widget.matrix25d
+
+        # {(order) : (min, max), ..... }:
+        self.zernikeNormalizationDict = {(0, 0): (1.0, 1.0), (1, -1): (-1.9968000000000001, 1.9968000000000001), (1, 1): (-1.9968000000000001, 1.9968), (2, -2): (-2.4390490377035388, 2.4390490377035388),
+          (2, 0): (-1.7320508075688772, 1.7319000498665866), (2, 2): (-2.441657646300013, 2.441657646300013), (3, -3): (-2.826475232346454, 2.826475232346454),
+            (3, -1): (-2.8218846978382803, 2.8218846978382803), (3, 1): (-2.8218846978382803, 2.8218846978382803), (3, 3): (-2.826475232346454, 2.826475232346454),
+             (4, -4): (-3.1570215166935713, 3.1570215166935713), (4, -2): (-3.130426605396449, 3.130426605396449), (4, 0): (-1.1180339823972583, 2.23606797749979),
+               (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
     
         self._widget.updateCenterMask.connect(self.updateAll)
@@ -244,7 +251,7 @@ class SLM25DController(ImConWidgetController):
                 if name == '(0,0)':
                      pass
                 else:
-                    zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask)) 
+                    zernikeMask = (zernikeMask-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
                 self.zernikeMask = zernikeMask.transpose()
 
                 # add to mask
@@ -290,8 +297,6 @@ class SLM25DController(ImConWidgetController):
         
         # ====================================================================================================================================
         zernikeParametersNew = self.getAllZernikeParams()
- 
-
 
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080)) #CTNOTE
         for name in zernikeParametersNew:
@@ -299,7 +304,7 @@ class SLM25DController(ImConWidgetController):
 
             zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
             zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
-            
+
             zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
             
             # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
@@ -309,10 +314,11 @@ class SLM25DController(ImConWidgetController):
 
 
             # Normalize and transpose
+
             if np.max(zernikeMask) == np.min(zernikeMask):
                 pass
             else:
-                zernikeMask = (zernikeMask-np.min(zernikeMask))/(np.max(zernikeMask)-np.min(zernikeMask))
+                zernikeMask = (zernikeMask-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
             self.zernikeMask = zernikeMask.transpose()
 
             # add to mask
