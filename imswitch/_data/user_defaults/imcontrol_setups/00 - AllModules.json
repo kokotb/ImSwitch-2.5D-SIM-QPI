@@ -12,8 +12,8 @@
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": true,
-  "Gamma": 0.5,
+  "mock": false,
+  "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 480,
   "LeftCenterY": 540,
@@ -72,11 +72,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 2000.0
+        "ExposureTime": 3000.0
       },
       "ROI":{
-        "OffsetX": 2661,
-        "OffsetY": 1613,
+        "OffsetX": 2632,
+        "OffsetY": 1670,
         "Width": 512,
         "Height": 512
       } 
@@ -123,8 +123,8 @@
           "ExposureTime": 3000.0
         },
         "ROI":{
-          "OffsetX": 2944,
-          "OffsetY": 2820,
+          "OffsetX": 2606,
+          "OffsetY": 2047,
           "Width": 512,
           "Height": 512
         }
@@ -149,7 +149,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.1
+      "maxdBmValue": 18.2
       
       },
   "561AOTF": {
@@ -165,7 +165,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.5
+    "maxdBmValue": 20.8
     },
   "640AOTF": {
     "analogChannel": null,
