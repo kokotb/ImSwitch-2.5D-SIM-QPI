@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -29,7 +29,8 @@
   "VerticalTrefoil": 0.0,
   "VerticalComa": 0.0,
   "HorizontalComa": 0.0,
-  "HorizontalTrefoil": 0.0
+  "HorizontalTrefoil": 0.0,
+  "Spherical": 0.0
 
 },
 "Arduino":{

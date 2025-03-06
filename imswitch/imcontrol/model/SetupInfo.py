@@ -264,6 +264,7 @@ class SLM25DInfo:
     VerticalComa: float
     HorizontalComa: float
     HorizontalTrefoil: float
+    Spherical: float
 
     # managerName: str
     # """ Manager name in string. """

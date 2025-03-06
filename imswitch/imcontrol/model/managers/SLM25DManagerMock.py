@@ -37,7 +37,7 @@ class SLM25DManagerMock(SignalInterface):
         mask4 = np.fliplr(mask3)
         self.mask4 = mask4
         if self.rep == 0:
-            self.imageplot = plt.imshow(mask4, cmap='gray')
+            self.imageplot = plt.imshow(mask4, cmap='gray', vmin=0, vmax=255)
             plt.show()
         else:
             self.imageplot.set_data(mask4)
@@ -46,7 +46,7 @@ class SLM25DManagerMock(SignalInterface):
 
 
     def openPreviewWindow(self):
-        self.imageplot = plt.imshow(self.mask4, cmap='gray')
+        self.imageplot = plt.imshow(self.mask4, cmap='gray', vmin=0, vmax=255)
         # plt.show()
     
 

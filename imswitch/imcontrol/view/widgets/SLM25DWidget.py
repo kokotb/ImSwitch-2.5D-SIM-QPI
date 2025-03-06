@@ -87,7 +87,7 @@ class SLM25DWidget(Widget):
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
-        self.grid.addWidget(self.reset25D, 16, 5)
+        self.grid.addWidget(self.reset25D, 17, 5)
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.HLine)
@@ -98,14 +98,14 @@ class SLM25DWidget(Widget):
         self.myframe2.setFrameShape(QFrame.HLine)
         self.myframe2.setFrameShadow(QFrame.Plain)
         self.myframe2.setLineWidth(200)
-        self.grid.addWidget(self.myframe2, 15, 0, 1, 6)
+        self.grid.addWidget(self.myframe2, 16, 0, 1, 6)
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.numParams = 4
-        self.ZernikeCoefficientNames = ["(0,0)", "(1,-1)", "(1,1)", "(2,-2)", "(2,0)", "(2,2)", "(3,-3)", "(3,-1)", "(3,1)", "(3,3)"]
-        self.ZernikeAberrationNames = ["Piston", "Y-tilt", "X-tilt", "Oblique Astigmatism", "Defocus", "Vertical Astigmatism", "Vertical Trefoil", "Vertical Coma", "Horizontal Coma", "Horizontal Trefoil"]
+        self.ZernikeCoefficientNames = ["(0,0)", "(1,-1)", "(1,1)", "(2,-2)", "(2,0)", "(2,2)", "(3,-3)", "(3,-1)", "(3,1)", "(3,3)", "(4,0)"]
+        self.ZernikeAberrationNames = ["Piston", "Y-tilt", "X-tilt", "Oblique Astigmatism", "Defocus", "Vertical Astigmatism", "Vertical Trefoil", "Vertical Coma", "Horizontal Coma", "Horizontal Trefoil", "Spherical"]
         self.elementListZern = []
         for i in range(len(self.ZernikeCoefficientNames)):
             self.numParams += 1
@@ -167,7 +167,7 @@ class SLM25DWidget(Widget):
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
-        self.numParams = 16
+        self.numParams = 17
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
         self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
@@ -274,7 +274,7 @@ class SLM25DWidget(Widget):
         self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel2.setEnabled(False)
         self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel2, 16, 4)
+        self.grid.addWidget(self.valLabel2, 17, 4)
 
         self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
         self.zernLabel.setEnabled(False)
@@ -284,12 +284,12 @@ class SLM25DWidget(Widget):
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
         self.label25D.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.label25D, 16, 0)
+        self.grid.addWidget(self.label25D, 17, 0)
 
         self.label25DStep = QtWidgets.QLabel(f'<strong>Step</strong>')
         self.label25DStep.setEnabled(False)
         self.label25DStep.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.label25DStep, 16, 3)
+        self.grid.addWidget(self.label25DStep, 17, 3)
 
         # Connect received signals to funcions
         self.sigStepUp25DMask.connect(self.increment)
@@ -438,7 +438,7 @@ class SLM25DWidget(Widget):
         self.pars['AbsPosEdit(3,-1)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Vertical Coma',value))
         self.pars['AbsPosEdit(3,1)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Horizontal Coma',value))
         self.pars['AbsPosEdit(3,3)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Horizontal Trefoil',value))
-
+        self.pars['AbsPosEdit(4,0)'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('Zernike SLM Parameters','Spherical',value))
 
 
 
