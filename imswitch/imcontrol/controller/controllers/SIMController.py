@@ -538,7 +538,7 @@ class SIMController(ImConWidgetController):
         if True not in self.errorQ:
             if self.lastZ:
         # print(f'Thread {threading.current_thread().getName()} started moving')
-                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
+                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos [1])
             # self.positionerXY.checkBusyLoop()
         else:
             pass

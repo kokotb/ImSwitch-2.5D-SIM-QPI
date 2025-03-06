@@ -48,10 +48,14 @@ class MasterController:
 
         # self.recordingManager = RecordingManager(self.detectorsManager)
 
-        if self.__setupInfo.SLM25D.mock == False:
-            self.slm25DManager = SLM25DManager(self.__setupInfo.SLM25D)
-        elif self.__setupInfo.SLM25D.mock == True:
-            self.slm25DManager = SLM25DManagerMock(self.__setupInfo.SLM25D)
+        try:
+                
+            if self.__setupInfo.SLM25D.mock == False:
+                self.slm25DManager = SLM25DManager(self.__setupInfo.SLM25D)
+            elif self.__setupInfo.SLM25D.mock == True:
+                self.slm25DManager = SLM25DManagerMock(self.__setupInfo.SLM25D)
+        except:
+                self.slm25DManager = SLM25DManager(self.__setupInfo.SLM25D)
 
         # if self.__setupInfo.microscopeStand:
         #     self.standManager = StandManager(self.__setupInfo.microscopeStand,

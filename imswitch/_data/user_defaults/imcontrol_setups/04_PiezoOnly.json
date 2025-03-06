@@ -8,6 +8,7 @@
         "rs232device": "zpiezo"
       },
       "axes": ["Z"],
+      "limits":[-45,450],
       "forPositioning": true
     }
 },
