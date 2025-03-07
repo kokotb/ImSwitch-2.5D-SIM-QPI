@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 import pyqtgraph as pg
 
 import time
+import re
 
 
 
@@ -56,8 +57,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepDown25DMask.connect(self.updatePhaseMask)
     
         self._widget.updateZernikeMask.connect(self.updateZernike)
-        self._widget.sigStepUpZernike.connect(self.updateZernike)
-        self._widget.sigStepDownZernike.connect(self.updateZernike)
+        self._widget.sigStepUpZernikeLeft.connect(self.updateZernike)
+        self._widget.sigStepDownZernikeLeft.connect(self.updateZernike)
+        self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
+        self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -97,8 +100,9 @@ class SLM25DController(ImConWidgetController):
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i]].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
-            self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i]] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
+            for side in  self._widget.ZernikeSides:
+                self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+                self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
             
         
 
@@ -194,9 +198,10 @@ class SLM25DController(ImConWidgetController):
 
         valueList = {}
         for index in self._widget.ZernikeCoefficientNames:
-            name = 'AbsPosEdit' + index
-            widgetObject = self._widget.pars[name]
-            valueList[index] = self.axisValTypes[index](widgetObject.value())
+            for side in self._widget.ZernikeSides:
+                name = 'AbsPosEdit' + index + side
+                widgetObject = self._widget.pars[name]
+                valueList[index + side] = self.axisValTypes[index + side](widgetObject.value())
 
         # final = list(zip(self._widget.axes,valueList))
         # print(valueList)
@@ -240,7 +245,8 @@ class SLM25DController(ImConWidgetController):
         zernikeParametersDifferences = {key: (self.zernikeParametersOld[key], zernikeParametersNew[key]) for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
         if not allZeros:
             for name in zernikeParametersDifferences:
-                order = eval(name)
+                bullshit = re.search(r"\((-?\d+),(-?\d+)\)", name)
+                order = (int(bullshit.group(1)), int(bullshit.group(2)))  
                 zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
                 zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
                 zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
@@ -250,8 +256,9 @@ class SLM25DController(ImConWidgetController):
                 #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
                 # Normalize and transpose
-                if name == '(0,0)':
-                     pass
+                # if name == '(0,0)':
+                if order == (0,0):
+                    pass
                 else:
                     zernikeMask = (zernikeMask-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
                 self.zernikeMask = zernikeMask.transpose()
@@ -302,7 +309,11 @@ class SLM25DController(ImConWidgetController):
 
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080)) #CTNOTE
         for name in zernikeParametersNew:
-            order = eval(name)
+            #tuple = re.search(r"\(\d+,\d+\)", name)
+            #order = (int(tuple.group(1)), int(tuple.group(2)))
+            bullshit = re.search(r"\((-?\d+),(-?\d+)\)", name)
+            order = (int(bullshit.group(1)), int(bullshit.group(2)))  
+    
 
             zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
             zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
