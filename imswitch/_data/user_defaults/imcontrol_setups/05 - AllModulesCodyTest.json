@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -113,7 +113,7 @@
       "digitalLine": null,
       "managerName": "LUCIDManager",
       "managerProperties": {
-        "cameraListIndex": 65,
+        "cameraListIndex": 64,
         "wavelength": 640,
         "x0_global": 0,
         "y0_global": 0,
@@ -124,8 +124,8 @@
           "ExposureTime": 3000.0
         },
         "ROI":{
-          "OffsetX": 2810,
-          "OffsetY": 2080,
+          "OffsetX": 2520,
+          "OffsetY": 2110,
           "Width": 512,
           "Height": 512
         }
