@@ -32,8 +32,9 @@ class SLM25DController(ImConWidgetController):
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
             return
 
-
-        self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
+        self.ZernikeAllMasksSumFloatRight = np.zeros((1080, 960))
+        self.ZernikeAllMasksSumFloatLeft = np.zeros((1080, 960))
+        self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
 
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
@@ -65,9 +66,6 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
 
-        self._widget.freezeleft.stateChanged.connect(self.calculateZernikePhaseMask)
-        self._widget.freezeleft.stateChanged.connect(self.calculateNewZernikePhaseMask)
-       
         self.slm25DManager = self._master.slm25DManager
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
@@ -242,39 +240,65 @@ class SLM25DController(ImConWidgetController):
 
 
         allZeros = all(value == 0.0 for value in zernikeParametersNew.values())
-        zernikeParametersDifferences = {key: (self.zernikeParametersOld[key], zernikeParametersNew[key]) for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
+        zernikeParametersDifferences = {key: zernikeParametersNew[key] - self.zernikeParametersOld[key] for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
         if not allZeros:
-            for name in zernikeParametersDifferences:
-                bullshit = re.search(r"\((-?\d+),(-?\d+)\)", name)
-                order = (int(bullshit.group(1)), int(bullshit.group(2)))  
-                zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
-                zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
-                zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-                # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-                #     zernikeMask[np.isnan(zernikeMask)] = 0
-                # else: 
-                #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
+            if zernikeParametersDifferences != {}:
+                for name in zernikeParametersDifferences:
+                    bullshit = re.search(r"\((-?\d+),(-?\d+)\)(\w+)", name)
+                    order = (int(bullshit.group(1)), int(bullshit.group(2)))  
+                    side = bullshit.group(3)
 
-                # Normalize and transpose
-                # if name == '(0,0)':
-                if order == (0,0):
-                    pass
-                else:
-                    zernikeMask = (zernikeMask-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
-                self.zernikeMask = zernikeMask.transpose()
+                    
+                    
+                    
+                    # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
+                    #     zernikeMask[np.isnan(zernikeMask)] = 0
+                    # else: 
+                    #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
 
-                # add to mask
-                self.ZernikeAllMasksSumFloat += self.zernikeMask * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
+                    # Normalize and transpose
+
+                    if side == "Left":
+                        # if name == '(0,0)':
+                        if order == (0,0):
+                            zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
+                            self.ZernikeAllMasksSumFloatLeft = zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) *256
+                        else:
+                            zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
+                            zernikeLeft = (zernikeLeft-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
+                            self.ZernikeAllMasksSumFloatLeft = zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                            
+                    elif side == "Right":
+                        # if name == '(0,0)':
+                        if order == (0,0):
+                            zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
+                            self.ZernikeAllMasksSumFloatRight = zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                        else:
+                            zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
+                            zernikeRight = (zernikeRight-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
+                            self.ZernikeAllMasksSumFloatRight = zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                            
+                            
+                if side == 'Left':
+                    zernikeMaskupdate = np.concatenate((self.ZernikeAllMasksSumFloatLeft, np.zeros((1080, 960))), axis=1)
+                elif side == 'Right':
+                    zernikeMaskupdate = np.concatenate(( np.zeros((1080, 960)), self.ZernikeAllMasksSumFloatRight), axis=1)
+                # zernikeMaskupdate = np.concatenate((self.ZernikeAllMasksSumFloatLeft, self.ZernikeAllMasksSumFloatRight), axis=1)
+                self.zernikeMask = zernikeMaskupdate.transpose()
+                self.ZernikeAllMasksSumFloat += self.zernikeMask
+
         else:
             self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
+            self.ZernikeAllMasksSumFloatLeft = np.zeros((1080, 960))
+            self.ZernikeAllMasksSumFloatRight = np.zeros((1080, 960))
 
-
-        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
+        #zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
+        #self.zernikeMask = zernikeMask.transpose()
+        self.ZernikeAllMasksSum = np.round(self.ZernikeAllMasksSumFloat).astype(np.uint8)
         self.zernikeParametersOld = zernikeParametersNew
         return self.ZernikeAllMasksSum
 
     def calculateNewZernikePhaseMask(self):
-        t0 = time.time()
         parameters = self.getAllWidgetParams()
 
         # Beam size and position parameters
@@ -308,40 +332,41 @@ class SLM25DController(ImConWidgetController):
         zernikeParametersNew = self.getAllZernikeParams()
 
         self.ZernikeAllMasksSumFloat = np.zeros((1920,1080)) #CTNOTE
+        self.ZernikeAllMasksSumFloatLeft = np.zeros((1080, 960)) #CTNOTE
+        self.ZernikeAllMasksSumFloatRight = np.zeros((1080, 960)) #CTNOTE
         for name in zernikeParametersNew:
-            #tuple = re.search(r"\(\d+,\d+\)", name)
-            #order = (int(tuple.group(1)), int(tuple.group(2)))
-            bullshit = re.search(r"\((-?\d+),(-?\d+)\)", name)
+            bullshit = re.search(r"\((-?\d+),(-?\d+)\)(\w+)", name)
             order = (int(bullshit.group(1)), int(bullshit.group(2)))  
-    
+            side = bullshit.group(3)
 
-            zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
-            zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
+            if side == "Left":
+                # if name == '(0,0)':
+                if order == (0,0):
+                    zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
+                    self.ZernikeAllMasksSumFloatLeft += zernikeLeft * (zernikeParametersNew[name]) * 256
+                else:
+                    zernikeLeft = zernpol.Zernpol.func(order, rholeft, phileft, masked=False)
+                    zernikeLeft = (zernikeLeft-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
+                    self.ZernikeAllMasksSumFloatLeft += zernikeLeft * (zernikeParametersNew[name]) * 256
+                    
+            elif side == "Right":
+                # if name == '(0,0)':
+                if order == (0,0):
+                    zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
+                    self.ZernikeAllMasksSumFloatRight += zernikeRight * (zernikeParametersNew[name]) * 256
+                else:
+                    zernikeRight = zernpol.Zernpol.func(order, rhoright, phiright, masked=False)
+                    zernikeRight = (zernikeRight-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
+                    self.ZernikeAllMasksSumFloatRight += zernikeRight * (zernikeParametersNew[name]) * 256
+                    
 
-            zernikeMask = np.concatenate((zernikeLeft, zernikeRight), axis=1)
-            
-            # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-            #     zernikeMask[np.isnan(zernikeMask)] = 0
-            # else: 
-            #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
-
-
-            # Normalize and transpose
-
-            if np.max(zernikeMask) == np.min(zernikeMask):
-                pass
-            else:
-                zernikeMask = (zernikeMask-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
-            self.zernikeMask = zernikeMask.transpose()
-
-            # add to mask
-            self.ZernikeAllMasksSumFloat += self.zernikeMask * zernikeParametersNew[name] * 255
+        zernikeMask = np.concatenate((self.ZernikeAllMasksSumFloatLeft, self.ZernikeAllMasksSumFloatRight), axis=1)
+        self.zernikeMask = zernikeMask.transpose()
+        self.ZernikeAllMasksSumFloat = self.zernikeMask
 
         self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
-        # self.ZernikeAllMasksSumFloat = np.zeros((1920,1080))
         self.zernikeParametersOld = zernikeParametersNew
-        t1 = time.time()
-        # print("Time to calculate new Zernike = " + str(t1 - t0))
+
         return self.ZernikeAllMasksSum
     
     def combineAndProject(self):
@@ -436,22 +461,14 @@ class SLM25DController(ImConWidgetController):
 
     
     def updateZernikePhaseMask(self):
-        freezeL = self._widget.freezeleft.checkState()
-        if (freezeL == 2):
-            self._widget.matrixZernike = self.FrozencalculateZernikePhaseMask()
-        else:
-            self._widget.matrixZernike = self.calculateZernikePhaseMask()
-        self._widget.imgZernike.setImage(self._widget.matrixZernike)
+        self._widget.matrixZernike = self.calculateZernikePhaseMask()
+        self._widget.imgZernike.setImage(self._widget.matrixZernike, levels=(0,255))
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
 
     def recalculateZernikePhaseMask(self):
-        """freezeL = self._widget.freezeleft.checkState()
-        if (freezeL == 2):
-            self._widget.matrixZernike = self.FrozencalculateNewZernikePhaseMask()
-        else:"""
         self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
-        self._widget.imgZernike.setImage(self._widget.matrixZernike)
+        self._widget.imgZernike.setImage(self._widget.matrixZernike, levels=(0,255))
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
 
@@ -523,74 +540,7 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def FrozencalculateZernikePhaseMask(self):
-        parameters = self.getAllWidgetParams()
 
-        # Beam size and position parameters
-        rho = parameters["Beam Diameter"]
-        xleftcenter = parameters["Left Center-X"]
-        yleftcenter = parameters["Left Center-Y"]
-        xrightcenter = parameters["Right Center-X"]
-        yrightcenter = parameters["Right Center-Y"]
-
-        # SLM screen size parameters
-        numberXpix = 1920
-        numberYpix = 1080
-        pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
-        rhoPupilAperturePix = rhoPupilAperture/pszSLM
-        
-        # ====================================================================================================================================
-        #y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
-        y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
-        x_coordsright += 960
-
-        #xleftnormalized, yleftnormalized = (x_coordsleft - xleftcenter) / rhoPupilAperturePix , (y_coordsleft - yleftcenter) / rhoPupilAperturePix
-        xrightnormalized, yrightnormalized = (x_coordsright - xrightcenter) / rhoPupilAperturePix , (y_coordsright - yrightcenter) / rhoPupilAperturePix
-        # ====================================================================================================================================
-
-        zernikeParametersNew = self.getAllZernikeParams()
-################################
-        # if self._widget.invert.isChecked():
-        #     for key in zernikeParametersNew.keys():
-        #         zernikeParametersNew[key] = - zernikeParametersNew[key]
-################################
-
-
-        allZeros = all(value == 0.0 for value in zernikeParametersNew.values())
-        zernikeParametersDifferences = {key: (self.zernikeParametersOld[key], zernikeParametersNew[key]) for key in self.zernikeParametersOld if self.zernikeParametersOld[key] != zernikeParametersNew[key]}
-        if not allZeros:
-            RightUpdate = np.zeros((numberYpix, numberXpix//2))
-            for name in zernikeParametersDifferences:
-                order = eval(name)
-                #zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
-                zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
-                
-                # if np.nanmin(zernikeMask) == np.nanmax(zernikeMask):
-                #     zernikeMask[np.isnan(zernikeMask)] = 0
-                # else: 
-                #     zernikeMask[np.isnan(zernikeMask)] = np.nanmin(zernikeMask)
-
-                # Normalize and transpose
-                if name == '(0,0)':
-                     pass
-                else:
-                    zernikeRight = (zernikeRight-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
-                
-                # add to mask
-                RightUpdate += zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 255
-
-            zernikeMaskupdate = np.concatenate((np.zeros((numberYpix, numberXpix//2)), RightUpdate), axis=1)
-            self.zernikeMask = zernikeMaskupdate.transpose()
-            self.ZernikeAllMasksSumFloat += self.zernikeMask
-
-        else:
-            self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
-
-
-        self.ZernikeAllMasksSum = self.ZernikeAllMasksSumFloat.astype(np.uint8)
-        self.zernikeParametersOld = zernikeParametersNew
-        return self.ZernikeAllMasksSum
 
 
 
