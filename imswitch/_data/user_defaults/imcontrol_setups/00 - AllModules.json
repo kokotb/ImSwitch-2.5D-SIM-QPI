@@ -121,7 +121,7 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 3000.0
+          "ExposureTime": 500.0
         },
         "ROI":{
           "OffsetX": 2810,
@@ -175,7 +175,7 @@
     "managerProperties": {
       "rs232device": "aaaotf",
       "channel": 4
-    },
+    }, 
     "wavelength": 640,
     "valueRangeMin": 0,
     "valueRangeMax": 100,
