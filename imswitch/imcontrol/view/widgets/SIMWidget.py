@@ -293,7 +293,7 @@ class SIMWidget(NapariHybridWidget):
         parentLayout.addWidget(self.hideShowChanLabel)
         parentLayout.addLayout(layersHideShowChannelBoxed)
         parentLayout.addWidget(self.hideShowTypeLabel)
-        parentLayout.addLayout(layersHideShowTypeBoxed)
+        parentLayout.addLayout(layersHideShowTypeBoxed) 
         parentLayout.addWidget(self.hideShowAllLayers)
 
         #Connect all buttons to functions. Lambda syntax used when a argument is needed to be passed with the function.
