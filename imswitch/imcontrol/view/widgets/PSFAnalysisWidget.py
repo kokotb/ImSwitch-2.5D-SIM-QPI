@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
 import json
 import os
 import threading
-
+from PIL import Image
 
 
 class PSFAnalysisWidget(NapariHybridWidget):
@@ -26,7 +26,7 @@ class PSFAnalysisWidget(NapariHybridWidget):
         # Main widget 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
-        self.loadSettings = QPushButton("Load Settings")
+        self.loadSettings = QPushButton("PSF Analysis Popup window")
         self.layout.addWidget(self.loadSettings, 1, 0)
 
 
@@ -55,16 +55,79 @@ class PSFWindow(QMainWindow):
         self.setCentralWidget(self.window) 
         self.window.setLayout(self.layout) 
   
-        self.textbox = QtWidgets.QLineEdit() 
-        self.echo_label = QtWidgets.QLabel('') 
+        self.setWindowTitle("PSF analysis window")
   
-        self.textbox.textChanged.connect(self.textbox_text_changed) 
-  
-        self.layout.addWidget(self.textbox, 0, 0) 
-        self.layout.addWidget(self.echo_label, 1, 0) 
-  
-    def textbox_text_changed(self): 
-        self.echo_label.setText(self.textbox.text()) 
+        self.slmFrame = pg.GraphicsLayoutWidget()
+        self.slmFrame.setEnabled(False)
+        self.slmFrame.addLabel('Z-Stack of images', angle=-90, row=0, col=0)
+        self.vbZernike = self.slmFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+
+        self.imgZernike = pg.ImageItem()
+        self.matrixZernike = np.zeros((1920, 1080))
+        self.imgZernike.setImage(self.matrixZernike, levels=(0, 255))
+        self.vbZernike.addItem(self.imgZernike)
+
+        self.layout.addWidget(self.slmFrame, 1, 0, 2, 6)
+
+        
+
+
+        self.folderPath = QtWidgets.QLineEdit()
+        self.openDialog = QPushButton("Select folder")
+        self.displayImages = QPushButton("Show images")
+        
+
+        self.layout.addWidget(self.folderPath, 3, 0)
+        self.layout.addWidget(self.openDialog, 3, 1)
+        self.layout.addWidget(self.displayImages, 3, 2)
+        
+
+        self.openDialog.clicked.connect(self.loadPath)
+        self.displayImages.clicked.connect(self.displayStackOfImages)
+
+        self.stackOfImages = np.zeros((512,512,10))
+        self.current_index_Z = 0
+    #     self.vbZernike.scene().sigWheelEvent.connect(self.on_scroll_XY)
+
+    # def on_scroll_XY(self, event):
+    #     global current_index_Z
+
+    #     if event.step > 0 and (current_index_Z + 1) < self.stackOfImages.shape[0]:  # Scroll up
+    #         current_index_Z = (current_index_Z + 1)
+    #     elif event.step < 0 and (current_index_Z - 1) >= 0:  # Scroll down
+    #         current_index_Z = (current_index_Z - 1)
+    #     else:
+    #         pass
+    #     self.imgZernike.setImage(self.stackOfImages[current_index_Z,:,:], levels=(0,255))
+    #     #figPSFxy.canvas.draw_idle()
+
+    #     #self.imgZernike.canvas.mpl_connect('scroll_event', on_scroll_XY)
+        
+
+
+    def loadPath(self):
+        folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        self.folderPath.setText(folderpath)
+
+    def displayStackOfImages(self):
+        liststackOfImages = []
+
+        for file in os.listdir(self.folderPath.text()):
+            im = Image.open(os.path.join(self.folderPath.text(), file))
+            imarray = np.array(im)
+            liststackOfImages.append(imarray)
+
+        self.stackOfImages = np.array(liststackOfImages)
+        self.imgZernike.setImage(self.stackOfImages[0,:,:], levels=(0,255))
+
+    
+
+    
+
+    # def toggleLoadButton(self, state):
+    #     state = not state
+    #     self.loadSettings.setEnabled(state)
+
 
     
         

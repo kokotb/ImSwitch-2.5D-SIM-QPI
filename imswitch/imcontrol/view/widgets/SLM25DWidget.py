@@ -90,6 +90,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
         self.grid.addWidget(self.reset25D, 17, 5)
+        
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.HLine)
