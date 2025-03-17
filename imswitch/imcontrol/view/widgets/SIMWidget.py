@@ -28,6 +28,7 @@ class SIMWidget(NapariHybridWidget):
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
     # sigTilingInfoChanged = QtCore.Signal(str, str, str)
     sigROInfoChanged = QtCore.Signal(str, str, str)
+    
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 

@@ -31,3 +31,4 @@ from .SIMWidget import SIMWidget
 from .ZStackWidget import ZStackWidget
 from .ROIWidget import ROIWidget
 from .InfoGatheringWidget import InfoGatheringWidget
+from .PSFAnalysisWidget import PSFAnalysisWidget

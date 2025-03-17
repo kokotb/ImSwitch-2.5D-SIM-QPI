@@ -62,7 +62,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             'Tiling': _DockInfo(name='Tiling', yPosition=2),
             'Timing': _DockInfo(name='Timing', yPosition=3),
             'ZStack': _DockInfo(name='Z-Stack', yPosition=4),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5)
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 5),
+            'PSFAnalysis': _DockInfo(name = 'PSF', yPosition = 6)
 
             
             
@@ -137,6 +138,8 @@ class ImConMainView(QtWidgets.QMainWindow):
             self.docks['Tiling'].setStretch(1, 0.5)
         if 'InfoGathering' in self.docks:
             self.docks['InfoGathering'].setStretch(1, 0.1)
+        if 'PSFAnalysis' in self.docks:
+            self.docks['PSFAnalysis'].setStretch(1, 0.1)
         if 'ROI' in self.docks:
             self.docks['ROI'].setStretch(1, 2)
         # if 'View' in self.docks:
