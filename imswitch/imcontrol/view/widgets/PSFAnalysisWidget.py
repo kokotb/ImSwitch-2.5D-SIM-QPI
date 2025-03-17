@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QCheckBox, QLabel, QLineEdit, QDialog)
 import json
 import os
+import threading
 
 
 
@@ -19,7 +20,7 @@ class PSFAnalysisWidget(NapariHybridWidget):
     # sigSettingsDialog = QtCore.Signal()
 
     def __post_init__(self):
-        #super().__init__(*args, **kwargs)
+        # super().__init__(*args, **kwargs)
         self.loadingPopup = PSFWindow(self)
 
         # Main widget 
@@ -29,7 +30,7 @@ class PSFAnalysisWidget(NapariHybridWidget):
         self.layout.addWidget(self.loadSettings, 1, 0)
 
 
-        self.loadSettings.clicked.connect(self.openLoadWindow)
+        self.loadSettings.clicked.connect(self.openLoadWindowThread)
         # self.saveSettings.clicked.connect(self.saveFileDialog)
 
     def toggleLoadButton(self, state):
@@ -37,86 +38,35 @@ class PSFAnalysisWidget(NapariHybridWidget):
         self.loadSettings.setEnabled(state)
 
    
+    def openLoadWindowThread(self):
+        threading.Thread(target=self.openLoadWindow(), args=(), daemon=True).start()
+
     def openLoadWindow(self):
-        
-        self.loadingPopup.exec_()
-    
+        self.loadingPopup.show()
 
-class PSFWindow(QDialog):
-    def __init__(self, parent: NapariHybridWidget):
-
-        super().__init__(parent)
-        self._logger = initLogger(self)
-        self.setWindowTitle("Load Settings")
-
-        self.filePath = QtWidgets.QLineEdit()
-        self.openDialog = QPushButton("Open")
-        self.okButton = QPushButton("OK")
-        self.cancelButton = QPushButton("Cancel")
-
-
-
-        layout = QtWidgets.QGridLayout()
-        layout.addWidget(self.filePath, 0, 0)
-        layout.addWidget(self.openDialog, 0, 1)
-        layout.addWidget(self.okButton, 1, 1)
-        layout.addWidget(self.cancelButton, 1, 0)
-
-        self.setLayout(layout)
-
-        self.openDialog.clicked.connect(self.loadPath)
-        self.okButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-
-
-
-
-    def openFileDialog(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        dialog.setNameFilter("JSON (*.json)")
-        dialog.setDirectory(r'C:\VSCode\ImSwitch-2.5D-SIM-QPI')
-        if dialog.exec():
-            filename = dialog.selectedFiles()
-        return filename
-    
-    def loadPath(self):
-        jsonPath = self.openFileDialog()[0]
-        self.filePath.setText(jsonPath)
-
-    def loadJSON(self):
-        jsonPath = self.filePath.text()
-        if jsonPath == '':
-            self._logger.warning('No file path selected')
-            jsonObject = dict()
-        else:
-            with open(jsonPath, 'r') as openfile:    
-                # Reading from json file
-                jsonObject = json.load(openfile)
-
-
-        return jsonObject
+class PSFWindow(QMainWindow):
+    def __init__(self, parent = None): 
+        super().__init__(parent) 
+        self.init_gui() 
   
-
-
-
+    def init_gui(self): 
+        self.window = QtWidgets.QWidget() 
+        self.layout = QtWidgets.QGridLayout() 
+        self.setCentralWidget(self.window) 
+        self.window.setLayout(self.layout) 
+  
+        self.textbox = QtWidgets.QLineEdit() 
+        self.echo_label = QtWidgets.QLabel('') 
+  
+        self.textbox.textChanged.connect(self.textbox_text_changed) 
+  
+        self.layout.addWidget(self.textbox, 0, 0) 
+        self.layout.addWidget(self.echo_label, 1, 0) 
+  
+    def textbox_text_changed(self): 
+        self.echo_label.setText(self.textbox.text()) 
 
     
-# class InfoGatheringWidget(NapariHybridWidget):
-#     def __post_init__(self):
-#         self.openSelectionDialog()
-#     def openSelectionDialog(self):
-#         window = QWidget()
-#         # layout = QtWidgets.QGridLayout()
-#         # window.setLayout(self.layout)
-#         # self.testSettings = QPushButton("Test Settings")
-#         # layout.addWidget(self.testSettings, 0, 0)
-#         window.show()
-
-    
-
-
         
 
 # Copyright (C) 2020-2023 ImSwitch developers
