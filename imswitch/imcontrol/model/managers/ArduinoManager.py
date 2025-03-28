@@ -1,4 +1,3 @@
-
 # from imswitch.imcontrol.view.guitools.ViewSetupInfo import ViewSetupInfo as SetupInfo
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -29,7 +28,8 @@ class ArduinoManager(SignalInterface):
         """Sends a trigger to SLM to start a sequence."""
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
-        cmd = 'S'+str(0)
+        cmd = 'S'
+        # +str(0)
         response = self._rs232manager.query(cmd)
         print(response)
 
@@ -37,8 +37,11 @@ class ArduinoManager(SignalInterface):
         """Sends a trigger to SLM to start a sequence."""
         # running_order order as a string
         # FIXME: Needs to be synced with our commands on Arduino
-        cmd = 'S'+str(0)
+        cmd = 'S'
+        # +str(0)
         self._rs232manager.write(cmd)
+        # time.sleep(1)
+
 
 
     def activateSLMWriteOnly(self):
@@ -47,7 +50,7 @@ class ArduinoManager(SignalInterface):
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'A'
         self._rs232manager.write(cmd)
-        time.sleep(0.01)
+        time.sleep(2)
 
 
     def activateSLM(self):
