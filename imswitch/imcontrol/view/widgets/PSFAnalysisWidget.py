@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
 import json
 import os
 import threading
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 class PSFAnalysisWidget(NapariHybridWidget):
@@ -153,6 +153,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFXY = self.PSFXYFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXY = pg.ImageItem()
+        self.imgPSFXY.setImage(np.zeros((512, 512)))
         self.vbPSFXY.addItem(self.imgPSFXY)
 
         # XZ PSF projection view
@@ -163,6 +164,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFXZ = self.PSFXZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXZ = pg.ImageItem()
+        self.imgPSFXZ.setImage(np.zeros((512, 512)))
         self.vbPSFXZ.addItem(self.imgPSFXZ)
 
         # YZ PSF projection view
@@ -173,6 +175,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFYZ = self.PSFYZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFYZ = pg.ImageItem()
+        self.imgPSFYZ.setImage(np.zeros((512, 512)))
         self.vbPSFYZ.addItem(self.imgPSFYZ)
 
 
@@ -195,6 +198,20 @@ class PSFWindow(QMainWindow):
         self.current_indexX = 0
         self.current_indexY = 0
         self.current_indexZ = 0
+
+
+        # Lines in psf view to locate position while scrolling thgough a stack ============================
+        self.overlayMatrixXY =  np.zeros((512, 512))
+        self.overlayImgXY = pg.ImageItem(self.overlayMatrixXY)
+        self.vbPSFXY.addItem(self.overlayImgXY)
+
+        self.overlayMatrixXZ =  np.zeros((512, 512))
+        self.overlayImgXZ = pg.ImageItem(self.overlayMatrixXZ)
+        self.vbPSFXZ.addItem(self.overlayImgXZ)
+
+        self.overlayMatrixYZ =  np.zeros((512, 512))
+        self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
+        self.vbPSFYZ.addItem(self.overlayImgYZ)
         
 
 
@@ -203,20 +220,51 @@ class PSFWindow(QMainWindow):
 
     def updatePSFXYimage(self):
         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
-        self.updateZline()
+        self.updatelines()
 
     def updatePSFXZimage(self):
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
-        self.updateYline()
+        self.updatelines()
 
     def updatePSFYZimage(self):
-        self.imgPSFYZ.setImage(self.PSFstack[:, :, self.current_indexX], levels=(0, 255))
-        self.updateXline()
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.updatelines()
 
 
 
-    def updateZline(self):
-        pass
+    def updatelines(self):
+        shape = np.shape(self.PSFstack)
+        linescale = 9
+        linewidth = 1
+        shapeX, shapeY, shapeZ = (linescale*shape[2], linescale*shape[1], linescale*shape[0])
+
+        currX = linescale*self.current_indexX + linescale // 2
+        currY = linescale*self.current_indexY + linescale // 2
+        currZ = linescale*self.current_indexZ + linescale // 2
+
+        imXY = Image.new('RGBA', (shapeX, shapeY), (0, 0, 0, 0))
+        drawXY = ImageDraw.Draw(imXY)
+        drawXY.line([(currX,0), (currX, shapeY)], fill=(255, 255, 0), width=linewidth)
+        drawXY.line([(0, currY), (shapeX, currY)], fill=(255, 0, 255), width=linewidth)
+        centerArrayXY = np.array(imXY)
+        self.overlayImgXY.setImage(centerArrayXY)
+        self.overlayImgXY.setRect(0, 0, shape[2], shape[1])
+
+        imXZ = Image.new('RGBA', (shapeZ, shapeX), (0, 0, 0, 0))
+        drawXZ = ImageDraw.Draw(imXZ)
+        drawXZ.line([(0, shapeX - currX), (shapeZ, shapeX - currX)], fill=(255, 255, 0), width=linewidth)
+        drawXZ.line([(currZ, 0), (currZ, shapeX)], fill=(0, 255, 255), width=linewidth)
+        centerArrayXZ = np.array(imXZ)
+        self.overlayImgXZ.setImage(centerArrayXZ)
+        self.overlayImgXZ.setRect(0, 0, shape[2], shape[0])
+
+        imYZ = Image.new('RGBA', (shapeZ, shapeY), (0, 0, 0, 0))
+        drawYZ = ImageDraw.Draw(imYZ)
+        drawYZ.line([(0, shapeY - currY), (shapeZ, shapeY - currY)], fill=(255, 0, 255), width=linewidth)
+        drawYZ.line([(currZ, 0), (currZ, shapeY)], fill=(0, 255, 255), width=linewidth)
+        centerArrayYZ = np.array(imYZ)
+        self.overlayImgYZ.setImage(centerArrayYZ)
+        self.overlayImgYZ.setRect(0, 0, shape[1], shape[0])
 
     def updateYline(self):
         pass
@@ -274,8 +322,6 @@ class PSFWindow(QMainWindow):
         local_pos_PSFXZ = global_pos - viewbox_global_pos_PSFXZ
         local_pos_PSFYZ = global_pos - viewbox_global_pos_PSFYZ
 
-        print(global_pos, local_pos_PSFXY, viewbox_global_pos_PSFXY)
-
         if self.vbZStack.boundingRect().contains(local_pos_Zstack):
             num_degrees = event.angleDelta().y() / 120  
             new_index = self.current_index - int(num_degrees)
@@ -327,7 +373,7 @@ class PSFWindow(QMainWindow):
         self.selectedY = int(mapped_pos.x())
 
         #if 0 <= x < self.image_stack.shape[2] and 0 <= y < self.image_stack.shape[1]:
-        print(f"Clicked on coordinates: ({self.selectedX}, {self.selectedY})")
+        # print(f"Clicked on coordinates: ({self.selectedX}, {self.selectedY})")
 
         self.showSelectedPSF()
 
@@ -339,7 +385,8 @@ class PSFWindow(QMainWindow):
         self.PSFstack = self.image_stack[:, self.selectedY - 12 - PSFviewsize//2: self.selectedY -12 + PSFviewsize//2, self.selectedX - PSFviewsize//2 + 12 : self.selectedX + PSFviewsize//2 + 12]
         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
-        self.imgPSFYZ.setImage(self.PSFstack[:, :, self.current_indexX], levels=(0, 255))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.updatelines()
     
 
     # def toggleLoadButton(self, state):
