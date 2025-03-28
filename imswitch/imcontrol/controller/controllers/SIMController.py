@@ -354,8 +354,11 @@ class SIMController(ImConWidgetController):
                         timestart = time.time()
                                         
                         # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
-
+                        
                         self._master.arduinoManager.trigOneSequenceWriteOnly()
+                        # self._master.arduinoManager.trigOneSequence()
+     
+
 
 
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
