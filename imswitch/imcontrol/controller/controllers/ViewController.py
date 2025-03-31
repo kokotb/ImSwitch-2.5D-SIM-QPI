@@ -19,7 +19,7 @@ class ViewController(ImConWidgetController):
         # self._widget.sigTriggerModeToggled.connect(self.setLiveTriggerModeState)
         self._commChannel.sigSIMAcqToggled.connect(self.simStarted)
 
-    def simStarted(self, enabled):
+    def simStarted(self, enabled): #If Liveview is running when SIM is started, Liveview turns off.
         if enabled:
             # self.liveview(False)
             self._widget.setLiveViewActive(not enabled)
