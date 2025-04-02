@@ -1244,7 +1244,7 @@ class SIMController(ImConWidgetController):
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        current25DTiming = '100'
+        current25DTiming = '10'
         self._master.arduinoManager.update25DTimingWriteOnly(current25DTiming)
         # time.sleep(1)
         while self.active and poweredLasers != []:
@@ -1429,7 +1429,7 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
 
             # print(detector)
-            rawStack = detector._camera.grabFrameSet(1) # receive raw image stack
+            rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
             # rawStack = np.random.rand(1024, 1024)*4095
             # print(rawStack)
             self.sigRawStackReceived.emit(np.array(rawStack),f"{processor.handle} Raw") # display raw image stack
