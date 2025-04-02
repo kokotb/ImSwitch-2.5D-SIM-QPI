@@ -35,6 +35,9 @@ class SLM25DWidget(Widget):
     sigToggleSLM = QtCore.Signal(bool)
     sigOpenPreviewButton = QtCore.Signal()
 
+
+    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -59,6 +62,9 @@ class SLM25DWidget(Widget):
         self.vb25D.addItem(self.img25d) #This line must before addItem(self.overlayImg25D) so transparent overlay is on top of this layer.
         self.vb25D.addItem(self.overlayImg25D)
         #Initialize buttons on top row of the widget + reset buttons
+        self.start25D = QPushButton("Start 2.5D")
+        
+        # self.start25D.setFixedWidth(250)
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
         self.projectZernike = QCheckBox('Project Zernike')
@@ -82,8 +88,9 @@ class SLM25DWidget(Widget):
         # Grid layout for the entire widget
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
-        self.grid.addWidget(self.activate25DSLM,0,0)
-        self.grid.addWidget(self.projectZernike,0,1,1,2)
+        self.grid.addWidget(self.start25D,0,0)
+        self.grid.addWidget(self.activate25DSLM,0,1)
+        self.grid.addWidget(self.projectZernike,0,2)
         self.grid.addWidget(self.project25D,0,3)
         self.grid.addWidget(self.slmPreview, 0, 5)
 
@@ -319,6 +326,9 @@ class SLM25DWidget(Widget):
         self.sigReset25D.connect(self.reset25DToDefault)
 
         self.connect25DSharedAttrSigs()
+
+
+
 
     def reset25DToDefault(self):
         

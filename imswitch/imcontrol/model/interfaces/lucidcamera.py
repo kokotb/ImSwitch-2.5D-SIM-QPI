@@ -54,7 +54,7 @@ class LucidCam:
 
 ##Create list with all possible wanted node names from camera
         self.propNodeNames = ['ExposureTime','ExposureAuto', 'Gain','Gamma','AcquisitionFrameRateEnable','AcquisitionFrameRate',
-                           'ADCBitDepth', 'WidthMax', 'HeightMax','TriggerSource','TriggerMode', 'PixelFormat','DeviceStreamChannelPacketSize']
+                           'ADCBitDepth', 'WidthMax', 'HeightMax','TriggerSource','TriggerMode', 'TriggerSelector', 'PixelFormat','DeviceStreamChannelPacketSize']
         self.roiNodeNames = ['OffsetX', 'OffsetY', 'Width', 'Height']
 
 # Get nodes from camera. These are the lists called to change actual cam values
@@ -91,6 +91,9 @@ class LucidCam:
     def start_liveSIM(self, num_buffers):
         self.device.start_stream(num_buffers)
 
+    def start_live25D(self):
+        self.device.start_stream(100)
+
     def stop_live(self):
         self.__logger.info("stop_live")
         self.device.stop_stream()
@@ -109,75 +112,79 @@ class LucidCam:
 
     # def toggleTrigger(self):
 
-    def grabFrame(self):
-        buffer_type = "Mono8"
-        # print('grabframe')
-        # print("grab frame")
-        # print(self.device)
-        buffer = self.device.get_buffer()
-        # print(self.device)
-        # print(buffer)
-        """
-        Copy buffer and requeue to avoid running out of buffers
-        """
-        item = BufferFactory.copy(buffer)
-        self.device.requeue_buffer(buffer)
+    # def grabFrame(self):
+    #     buffer_type = "Mono16"
 
-        # if buffer_type == "Mono16":
-        #     # FIXME: Include this in live view also? Now is hardcoded...
-        #     # Development only done for Mono8 at this point for live view
-        #     """
-        #     Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
-        #     """
-        #     array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
-        #     array = np.ctypeslib.as_array(array, (item.height, item.width))
-        #     frame = array
+    #     print(self.device)
+    #     # waitingBuffers = self.device.getBufferValue()
 
-        #     """
-        #         Destroy the copied item to prevent memory leaks
-        #     """
-        #     # BufferFactory.destroy(item)
-        if buffer_type == "Mono8":
-            
-            buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
-            """
-            Buffer data as cpointers can be accessed using buffer.pbytes
-            """
-            num_channels = 1
-            prev_frame_time = 0
-            array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
-            
-            """
-            Create a reshaped NumPy array to display using OpenCV
-            """
-            frame = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
-            # print(np.shape(frame))
-            # print(buffer_bytes_per_pixel)
-            # width = item.width
-            # height = item.height
-            # depth = 0
+    #     buffer = self.device.get_buffer()
+    #     # # print(self.device)
+    #     # # print(buffer)
+    #     # """
+    #     # Copy buffer and requeue to avoid running out of buffers
+    #     # """
+    #     item = BufferFactory.copy(buffer)
+    #     self.device.requeue_buffer(buffer)
 
-            # fps = str(1/(curr_frame_time - prev_frame_time))
+    #     if buffer_type == "Mono16":
+    #         # pass
+    #         # FIXME: Include this in live view also? Now is hardcoded...
+    #         # Development only done for Mono8 at this point for live view
+    #         """
+    #         Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
+    #         """
+    #         array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+    #         array = np.ctypeslib.as_array(array, (item.height, item.width))
+    #         frame = array
+    #         print(frame)
+
+
+    #         """
+    #             Destroy the copied item to prevent memory leaks
+    #         """
+    #         BufferFactory.destroy(item)
+    #     # if buffer_type == "Mono8":
             
-            # frame, width, height, depth = self.cam.get_image_data()
-            # frame = np.array(frame, dtype='float64')
-            # Check if below is giving the right dimensions out
-            # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
-            #       3D array and taking the first plane of that
-            # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
-            frame = np.transpose(frame)
-            frame = np.moveaxis(frame, 1 , 2)
-            # self.device.stop_stream()
-            """
-                Destroy the copied item to prevent memory leaks
-            """
+    #     #     buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
+    #     #     """
+    #     #     Buffer data as cpointers can be accessed using buffer.pbytes
+    #     #     """
+    #     #     num_channels = 1
+    #     #     prev_frame_time = 0
+    #     #     array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
             
-            # time.sleep(.25)     
-        else:
-            self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
-            frame = None
-        # BufferFactory.destroy(item)
-        return frame
+    #     #     """
+    #     #     Create a reshaped NumPy array to display using OpenCV
+    #     #     """
+    #     #     frame = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
+    #     #     # print(np.shape(frame))
+    #     #     # print(buffer_bytes_per_pixel)
+    #     #     # width = item.width
+    #     #     # height = item.height
+    #     #     # depth = 0
+
+    #     #     # fps = str(1/(curr_frame_time - prev_frame_time))
+            
+    #     #     # frame, width, height, depth = self.cam.get_image_data()
+    #     #     # frame = np.array(frame, dtype='float64')
+    #     #     # Check if below is giving the right dimensions out
+    #     #     # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
+    #     #     #       3D array and taking the first plane of that
+    #     #     # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
+    #     #     frame = np.transpose(frame)
+    #     #     frame = np.moveaxis(frame, 1 , 2)
+    #     #     # self.device.stop_stream()
+    #     #     """
+    #     #         Destroy the copied item to prevent memory leaks
+    #     #     """
+            
+    #     #     # time.sleep(.25)     
+    #     else:
+    #         self.__logger.warning("Unsupported data type! Mono16 currently supported")
+    #         frame = None
+    #     # BufferFactory.destroy(item)
+    #     return (np.random.rand(1024, 1024)*4095).astype(np.int16)
     
     def forceValidROI(self, hpos, vpos, hsize, vsize):
 
@@ -461,13 +468,15 @@ class LucidCam:
         return value
     
 
-    def grabFrameSet(self, buffer_size):
+    def grabFrameSet(self, buffer_size, mode):
         # buffer_size = image number pulled from a cam
         
         buffer_type = "Mono16" #FIXME: do this with getproperty
         # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
 
         buffer_set = self.device.get_buffer(buffer_size) 
+        if mode == '25D':
+            buffer_set = [buffer_set]
         # buffer = self.device.get_buffer() 
         # print(self.device)
         """

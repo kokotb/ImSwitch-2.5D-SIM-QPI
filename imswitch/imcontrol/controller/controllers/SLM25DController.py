@@ -35,6 +35,9 @@ class SLM25DController(ImConWidgetController):
         self.ZernikeAllMasksSumFloatRight = np.zeros((1080, 960))
         self.ZernikeAllMasksSumFloatLeft = np.zeros((1080, 960))
         self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
+        # self._widget.start25D.toggled.connect(self._commChannel.sig25DAcqToggled.emit())
+        # self._widget.start25D.toggled.connect(lambda value: self._commChannel.sig25DAcqToggled.emit(value))
+
 
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
@@ -48,7 +51,7 @@ class SLM25DController(ImConWidgetController):
              (4, -4): (-3.1570215166935713, 3.1570215166935713), (4, -2): (-3.130426605396449, 3.130426605396449), (4, 0): (-1.1180339823972583, 2.23606797749979),
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
-    
+        self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
         self._widget.updateCenterMask.connect(self.updateAll)
         self._widget.sigStepUpCenterClicked.connect(self.updateAll)
         self._widget.sigStepDownCenterClicked.connect(self.updateAll)
@@ -102,7 +105,6 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
             
-        
 
 
     def updateZernike(self):

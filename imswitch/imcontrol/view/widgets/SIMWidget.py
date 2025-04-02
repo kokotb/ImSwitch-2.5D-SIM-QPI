@@ -327,7 +327,7 @@ class SIMWidget(NapariHybridWidget):
         self.elementListUser = []
     
         # Start/Stop/Calibrate buttons
-        self.start_button = QPushButton("Start")
+        self.startSIM_button = QPushButton("Start SIM")
 
         self.stop_button = QPushButton("Stop")
         self.stop_button.setCheckable(True)
@@ -335,10 +335,11 @@ class SIMWidget(NapariHybridWidget):
         self.calibrateButton = QPushButton("Calibrate")
         self.saveOneSetButton = QPushButton("Snapshot")
         button_layout = QtWidgets.QGridLayout()
-        button_layout.addWidget(self.start_button,0,0)
-        button_layout.addWidget(self.stop_button,0,1)
-        button_layout.addWidget(self.calibrateButton,1,0)
-        button_layout.addWidget(self.saveOneSetButton,1,1)
+        button_layout.addWidget(self.startSIM_button,0,0,1,2)
+
+        button_layout.addWidget(self.stop_button,0,2,1,2)
+        button_layout.addWidget(self.calibrateButton,1,0,1,2)
+        button_layout.addWidget(self.saveOneSetButton,1,2,1,2)
         wholeTabVertLayout.addLayout(button_layout)
     
         # Checkbox options
@@ -414,7 +415,7 @@ class SIMWidget(NapariHybridWidget):
         tabBottomHorLayout.addLayout(tabBottomVertLayout1)
         wholeTabVertLayout.addLayout(tabBottomHorLayout)
 
-        self.start_button.toggled.connect(self.sigSIMAcqToggled)
+        self.startSIM_button.toggled.connect(self.sigSIMAcqToggled)
         # self.stop_button.toggled.connect(self._commChannel.sigStopSim.emit())
         
 

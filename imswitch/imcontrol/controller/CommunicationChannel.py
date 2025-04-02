@@ -22,6 +22,8 @@ class CommunicationChannel(SignalInterface):
 
     sigSIMAcqToggled = Signal(bool)
 
+    sig25DAcqToggled = Signal()
+
     sigStopSim = Signal()
 
     sigTileImage = Signal(np.ndarray, list, str, int, int, int)
@@ -145,12 +147,15 @@ class CommunicationChannel(SignalInterface):
         self._scriptExecution = False
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
+        # self.sig25DAcqToggled.connect(self.test)
         self.roiList = []
         self.simActive = False
         self.activeDir = None
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
+    # def test(self, value):
+    #     print(value)
 
     def updateSIMActive(self, active):
         self.simActive = active

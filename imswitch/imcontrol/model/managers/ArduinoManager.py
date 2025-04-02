@@ -61,6 +61,30 @@ class ArduinoManager(SignalInterface):
         response = self._rs232manager.query(cmd)
         print(response)
 
+    def activate25DWriteOnly(self):
+        """Sends a trigger to SLM to put SPO0 high, activating the SLM. Ready for a trigger."""
+
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'D'
+        self._rs232manager.write(cmd)
+        time.sleep(2)
+
+
+    def activate25D(self):
+        """Sends a trigger to SLM to put SPO0 high, activating the SLM. Ready for a trigger."""
+        # running_order order as a string
+        # FIXME: Needs to be synced with our commands on Arduino
+        cmd = 'D'
+        response = self._rs232manager.query(cmd)
+        print(response)
+
+    def update25DTimingWriteOnly(self, cmd):
+        if cmd.isdigit():
+            self._rs232manager.write(cmd)
+        else:
+            print('Wrong data type. Must be string of only numbers.')
+
+
     def deactivateSLMWriteOnly(self):
         """Sends a trigger to SLM to put SPO0 low, deactivating the SLM."""
         # running_order order as a string
