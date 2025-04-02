@@ -468,15 +468,15 @@ class LucidCam:
         return value
     
 
-    def grabFrameSet(self, buffer_size, mode):
+    def grabFrameSet(self, buffer_size):
         # buffer_size = image number pulled from a cam
-        
+        # time.sleep(0.5)
         buffer_type = "Mono16" #FIXME: do this with getproperty
         # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
+        # print(waitingBuffers)
 
-        buffer_set = self.device.get_buffer(buffer_size) 
-        if mode == '25D':
-            buffer_set = [buffer_set]
+        buffer_set = self.device.get_buffer(buffer_size)
+        buffer_set = [buffer_set]
         # buffer = self.device.get_buffer() 
         # print(self.device)
         """

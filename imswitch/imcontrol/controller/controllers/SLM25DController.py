@@ -105,6 +105,8 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
             
+    def start25D(self):
+        print('25D Widget')
 
 
     def updateZernike(self):

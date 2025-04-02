@@ -997,7 +997,7 @@ class SIMController(ImConWidgetController):
     def setCamForExperiment25D(self, detector):
 
 
-        # detector._camera.setPropertyValue('AcquisitionFrameRate', 40.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 150.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
@@ -1009,12 +1009,12 @@ class SIMController(ImConWidgetController):
         # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
         bit_depth = 'Bits12'
-        frame_rate_enable = False
+        frame_rate_enable = True
         buffer_mode = "NewestOnly"
         triggerSelector = 'ExposureActive'
 
         # Set cam parameters
-        dic_parameters = {'AcquisitionFrameRateEnable':frame_rate_enable,  'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'ExposureAuto':exposure_auto,'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = {'AcquisitionFrameRateEnable':frame_rate_enable,  'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1244,8 +1244,9 @@ class SIMController(ImConWidgetController):
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        current25DTiming = '1'
+        current25DTiming = '100'
         self._master.arduinoManager.update25DTimingWriteOnly(current25DTiming)
+        # time.sleep(1)
         while self.active and poweredLasers != []:
             
 
@@ -1379,7 +1380,7 @@ class SIMController(ImConWidgetController):
         
         # Set current detector being used
         detector = processor.detObj
-        time.sleep(0.1)
+        # time.sleep(0.1)
 ######TIMING BUFFER WAITING LOGIC BREAKS DOWN AT FAST SPEEDS. NEED DIFFERENT WAY.
         # time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
         # waitingBuffers = detector._camera.getBufferValue()
@@ -1428,8 +1429,8 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
 
             # print(detector)
-            rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
-            # rawStack = np.random.rand(1024, 1024)*255
+            rawStack = detector._camera.grabFrameSet(1) # receive raw image stack
+            # rawStack = np.random.rand(1024, 1024)*4095
             # print(rawStack)
             self.sigRawStackReceived.emit(np.array(rawStack),f"{processor.handle} Raw") # display raw image stack
             
