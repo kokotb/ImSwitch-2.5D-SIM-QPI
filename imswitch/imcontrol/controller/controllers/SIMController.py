@@ -1462,7 +1462,7 @@ class SIMController(ImConWidgetController):
                     self.startSettingsSaved = True
 
             if self.isRecordRaw:
-                if self.completeFrameSets == 0:
+                # if self.completeFrameSets == 0:
                     # time.sleep(0.1)
                 with saveStackLock:
                     self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
