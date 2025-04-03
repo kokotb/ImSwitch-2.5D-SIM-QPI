@@ -1019,24 +1019,24 @@ class SIMController(ImConWidgetController):
     def setCamForExperiment25D(self, detector):
 
 
-        # detector._camera.setPropertyValue('AcquisitionFrameRate', 150.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 100.0)
         trigger_mode = 'On'
-        # exposure_auto = 'Off'
+        exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line2'
 
         # # Pull the exposure time from settings widget
-        # # exposure_time = self.getParameterValue(detector, 'ExposureTime')
+        exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
         # # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
         bit_depth = 'Bits12'
-        # frame_rate_enable = True
+        frame_rate_enable = True
         buffer_mode = "NewestOnly"
-        triggerSelector = 'ExposureActive'
+        triggerSelector = 'FrameStart'
 
         # Set cam parameters
-        dic_parameters = { 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = { 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1251,8 +1251,8 @@ class SIMController(ImConWidgetController):
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        current25DTiming = '1'
-        self._master.arduinoManager.update25DTimingWriteOnly(current25DTiming)
+        # current25DTiming = '1'
+        
         # time.sleep(1)
         completeZ = 0
         while self.active and poweredLasers != []:
@@ -1268,7 +1268,7 @@ class SIMController(ImConWidgetController):
             if self.completeFrameSets != 0 and timingPeriodInSec is not None:
                 repTimer = time.time() - repTimerStart
                 while repTimer < timingPeriodInSec:
-                    time.sleep(.1)
+                    time.sleep(.05)
                     repTimer = time.time() - repTimerStart
                     if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                         self._widget.stop_button.setChecked(False)
@@ -1307,8 +1307,12 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
                     # for z in range(len(zList)):
+                        self._master.arduinoManager.trigger25DWriteOnly()
                         if self.zScanActive:
-                            self.positioner.setPosition(zList[z], 'Z')
+                            try:
+                                self.positioner.setPosition(zList[z], 'Z')
+                            except:
+                                print('messed up')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
                         timestart = time.time()

@@ -67,7 +67,7 @@ class ArduinoManager(SignalInterface):
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'D'
         self._rs232manager.write(cmd)
-        time.sleep(2)
+        time.sleep(0.1)
 
 
     def activate25D(self):
@@ -83,6 +83,11 @@ class ArduinoManager(SignalInterface):
             self._rs232manager.write(cmd)
         else:
             print('Wrong data type. Must be string of only numbers.')
+
+    def trigger25DWriteOnly(self):
+        cmd = 'T'
+        self._rs232manager.write(cmd)
+
 
 
     def deactivateSLMWriteOnly(self):
