@@ -63,6 +63,9 @@ class SLM25DWidget(Widget):
         self.vb25D.addItem(self.overlayImg25D)
         #Initialize buttons on top row of the widget + reset buttons
         self.start25D = QPushButton("Start 2.5D")
+
+        self.stop25D = QPushButton("Stop 2.5D")
+        self.stop25D.setEnabled(False)
         
         # self.start25D.setFixedWidth(250)
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
@@ -89,9 +92,10 @@ class SLM25DWidget(Widget):
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
         self.grid.addWidget(self.start25D,0,0)
-        self.grid.addWidget(self.activate25DSLM,0,1)
-        self.grid.addWidget(self.projectZernike,0,2)
-        self.grid.addWidget(self.project25D,0,3)
+        self.grid.addWidget(self.stop25D,0,1)
+        self.grid.addWidget(self.activate25DSLM,0,2)
+        self.grid.addWidget(self.projectZernike,0,3)
+        self.grid.addWidget(self.project25D,0,4)
         self.grid.addWidget(self.slmPreview, 0, 5)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
@@ -428,6 +432,14 @@ class SLM25DWidget(Widget):
         currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
         newVal = str(round(currentVal+stepVal, 4))
         self.pars['AbsPosEdit' + name].setText(newVal)
+
+    def SIMToggled(self, boolSIM):
+        self.start25D.setEnabled(not boolSIM)
+        self.stop25D.setEnabled(boolSIM)
+
+    # def toggled25D(self, boolSIM):
+    #     self.stop25D.setEnabled(not boolSIM)
+
 
     # def incrementZern(self, name):
     #     stepVal = 0.1

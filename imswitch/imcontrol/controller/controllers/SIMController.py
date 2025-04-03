@@ -108,13 +108,11 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadSIMSettings)
         self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
-        
+        self._commChannel.sigStop25D.connect(self.stop25D)
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         self.populateAndSelectROList()
         #Get save directory root from config file and populate text box in SIM widget.
         self._widget.setUserDirInfo(setupInfoDict['saveDir'])
-        #Create log file attributes that get filled during experiment
-        self.log_times_loop = []
         
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
@@ -392,7 +390,7 @@ class SIMController(ImConWidgetController):
 
 
                     
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (self.completeFrameSets + 1 < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
 
                     totalEndTime = time.time()-time_global_start
@@ -417,7 +415,6 @@ class SIMController(ImConWidgetController):
             
 
 
-        
 
     def mainSIMLoop(self, processor, errorLock, z, saveLock):
         # saveOneTime = self.saveOneTime
@@ -889,6 +886,26 @@ class SIMController(ImConWidgetController):
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
+    def stop25D(self):
+        self._commChannel.sigSIMAcqToggled.emit(False)
+        self._widget.stop_button.setEnabled(False)
+        self._widget.startSIM_button.setEnabled(True)
+        self.active = False
+        self._commChannel.updateSIMActive(self.active)
+        self.thread25D.join()
+        for laser in self.lasers:
+            laser.setEnabled(False)
+        self._master.arduinoManager.deactivateSLMWriteOnly()
+        for detector in self.detectors:
+            detector.stopAcquisitionSIM()
+            detector._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
+        if self.isTiling:
+            self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
+            self.isTiling = False
+        if self.zScanActive:
+            self.positioner.setPosition(self.zOrigin, 'Z')
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+
 
     def startSIM(self):
 
@@ -905,8 +922,7 @@ class SIMController(ImConWidgetController):
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
         #sim_parameters["useGPU"] = self.getIsUseGPU()
         
-        # Clear logger files before start of experiment
-        self.log_times_loop = []
+
 
         
         # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
@@ -923,14 +939,13 @@ class SIMController(ImConWidgetController):
         self.active = True
         self._commChannel.updateSIMActive(self.active)
         
-        # Clear logger files before start of experiment
-        self.log_times_loop = []
+
 
         
         # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
-        self.simThread = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
-        self.simThread.start()
+        self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
+        self.thread25D.start()
 
 
 
@@ -997,24 +1012,24 @@ class SIMController(ImConWidgetController):
     def setCamForExperiment25D(self, detector):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 150.0)
+        # detector._camera.setPropertyValue('AcquisitionFrameRate', 150.0)
         trigger_mode = 'On'
-        exposure_auto = 'Off'
+        # exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line2'
 
-        # Pull the exposure time from settings widget
-        # exposure_time = self.getParameterValue(detector, 'ExposureTime')
+        # # Pull the exposure time from settings widget
+        # # exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # exposure_time = self.exposure # anything < 19 ms
+        # # exposure_time = self.exposure # anything < 19 ms
         pixel_format = 'Mono16'
         bit_depth = 'Bits12'
-        frame_rate_enable = True
+        # frame_rate_enable = True
         buffer_mode = "NewestOnly"
         triggerSelector = 'ExposureActive'
 
         # Set cam parameters
-        dic_parameters = {'AcquisitionFrameRateEnable':frame_rate_enable,  'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = { 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1244,7 +1259,7 @@ class SIMController(ImConWidgetController):
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        current25DTiming = '10'
+        current25DTiming = '1'
         self._master.arduinoManager.update25DTimingWriteOnly(current25DTiming)
         # time.sleep(1)
         while self.active and poweredLasers != []:
@@ -1339,7 +1354,7 @@ class SIMController(ImConWidgetController):
 
 
                     
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]==2 and not (self.completeFrameSets + 1 < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (self.completeFrameSets + 1 < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self._commChannel.sigStopSim.emit() # Stops tiling reps after all tiles*repetitions is done.
 
                     totalEndTime = time.time()-time_global_start
@@ -1435,7 +1450,7 @@ class SIMController(ImConWidgetController):
             self.sigRawStackReceived.emit(np.array(rawStack),f"{processor.handle} Raw") # display raw image stack
             
             # Set sim stack for reconstruction
-            # processor.setSIMStack(rawStack)
+            processor.setSIMStack(rawStack)
             
             # Average rawe stack to make WF
             # imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor?

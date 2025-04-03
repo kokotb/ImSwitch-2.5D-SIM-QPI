@@ -21,7 +21,7 @@ class SIMWidget(NapariHybridWidget):
     sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
     # sigCalibrateToggled = QtCore.Signal(bool)
-    sigSIMAcqToggled = QtCore.Signal(bool)
+    # sigSIMAcqToggled = QtCore.Signal(bool)
     sigStartSIM = QtCore.Signal()
     sigStopSIM = QtCore.Signal()
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
@@ -415,7 +415,7 @@ class SIMWidget(NapariHybridWidget):
         tabBottomHorLayout.addLayout(tabBottomVertLayout1)
         wholeTabVertLayout.addLayout(tabBottomHorLayout)
 
-        self.startSIM_button.toggled.connect(self.sigSIMAcqToggled)
+        # self.startSIM_button.toggled.connect(self.sigSIMAcqToggled)
         # self.stop_button.toggled.connect(self._commChannel.sigStopSim.emit())
         
 

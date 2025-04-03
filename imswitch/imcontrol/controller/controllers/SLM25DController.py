@@ -76,6 +76,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.sig25DParamChanged.connect(self.valueChanged)
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
+        self._widget.stop25D.clicked.connect(self._commChannel.sigStop25D.emit)
+        # self._commChannel.sig25DAcqToggled.connect(self._widget.toggled25D)
+        # self._widget.stop25D
         self.mask25D = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
         self.init25DWidgetValues()
@@ -105,9 +109,6 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
             
-    def start25D(self):
-        print('25D Widget')
-
 
     def updateZernike(self):
         self.updateZernikePhaseMask()

@@ -22,9 +22,11 @@ class CommunicationChannel(SignalInterface):
 
     sigSIMAcqToggled = Signal(bool)
 
-    sig25DAcqToggled = Signal()
+    sig25DAcqToggled = Signal(bool)
 
     sigStopSim = Signal()
+
+    sigStop25D = Signal()
 
     sigTileImage = Signal(np.ndarray, list, str, int, int, int)
 
