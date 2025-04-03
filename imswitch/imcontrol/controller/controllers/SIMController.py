@@ -397,7 +397,7 @@ class SIMController(ImConWidgetController):
                     totalEndTime = time.time()-time_global_start
                     remainder = self.completeFrameSets % len(oneROI)
 
-                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                         if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
                             self._commChannel.sigStopSim.emit()
                         if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
@@ -1144,14 +1144,6 @@ class SIMController(ImConWidgetController):
         return sim_parameters
     
     def perform25DExperimentThread(self):
-        """
-        Select a sequence on the SLM that will choose laser combination.
-        Run the sequence by sending the trigger to the SLM.
-        Run continuous on a single frame. 
-        Run snake scan for larger FOVs.
-        """
-        
-
 
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
@@ -1247,17 +1239,10 @@ class SIMController(ImConWidgetController):
         # FIXME: Automate buffer size calculation based on image size, it did not work before
         # total_buffer_size_MB = 350 # in MBs
         for detector in self.detectors:
-            # image_size = detector.shape
-            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            # buffer_size = int(total_buffer_size_MB // image_size_MB)
-            # buffer_size = 9
             self.setCamForExperiment25D(detector)
         
 
         time_global_start = time.time()
-        # time_whole_start = time_global_start
-        # self.processors2 = self.processors[0]
-        # self.processors2 = [self.processors2]
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers.
        # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
@@ -1327,14 +1312,12 @@ class SIMController(ImConWidgetController):
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
                         timestart = time.time()
-                                        
-                        # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
-                        
-                        
+                        time.sleep(0.5) #zstack breaks without this. dont know why
   
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
                         saveStackLock = threading.Lock()
+                        displayLock = threading.Lock()
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
@@ -1342,7 +1325,7 @@ class SIMController(ImConWidgetController):
                             if self.isTiling:
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                    executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock,displayLock)
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             # self.stopSIM()
@@ -1350,9 +1333,9 @@ class SIMController(ImConWidgetController):
                             return
 
                         self.numAllFrames += 1
-                        if True not in self.errorQ:
-                            self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                            z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        # if True not in self.errorQ:
+                        self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                        z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                         loopEndTime = time.time()-timestart
                         print(loopEndTime)
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
@@ -1390,11 +1373,11 @@ class SIMController(ImConWidgetController):
                     totalEndTime = time.time()-time_global_start
                     remainder = self.completeFrameSets % len(oneROI)
 
-                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]==2 and durationInSec != 0 and durationInSec < totalEndTime:
+                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                         if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-                            self._commChannel.sigStopSim.emit()
+                            self.stop25D()
                         if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
-                            self._commChannel.sigStopSim.emit()
+                            self.stop25D()
 
 
 
@@ -1411,7 +1394,7 @@ class SIMController(ImConWidgetController):
 
         
 
-    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock):
+    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, displayLock):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
 
@@ -1427,7 +1410,7 @@ class SIMController(ImConWidgetController):
         detector = processor.detObj
         # time.sleep(0.1)
 
-        broken = False
+        # broken = False
         if not broken:
             with errorLock:
                 self.errorQ.append(False)
@@ -1440,42 +1423,42 @@ class SIMController(ImConWidgetController):
                 else: 
                     self.waitToMoveEvent.set()
 
-            # print(detector)
-            rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
-            print(processor.handle, rawStack)
+        # print(detector)
+        rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
 
-            # rawStack = np.random.rand(1024, 1024)*4095
-            # print(rawStack)
-            self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
-            
-            # Set sim stack for saving
-            processor.setSIMStack(rawStack)
-            
-            # if self.tilePreview and self.isTiling:
-            #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
-            #     #     self.updateWFContLimits()
-            #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+        # print(processor.handle,rawStack)
 
-            if ((self.isRecordRaw)) and not (self.startSettingsSaved):
-                with saveLock:
-                    self._commChannel.sigSaveSettingsFirst.emit()
-                    self.startSettingsSaved = True
+        # with displayLock:
+        self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
+        
+        # Set sim stack for saving
+        processor.setSIMStack(rawStack)
+        
+        # if self.tilePreview and self.isTiling:
+        #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+        #     #     self.updateWFContLimits()
+        #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
 
-            if self.isRecordRaw:
-                # if self.completeFrameSets == 0:
-                    # time.sleep(0.1)
-                with saveStackLock:
-                    self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+        if ((self.isRecordRaw)) and not (self.startSettingsSaved):
+            with saveLock:
+                self._commChannel.sigSaveSettingsFirst.emit()
+                self.startSettingsSaved = True
 
-            
-            # if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-            #     self.recordOneSetRaw(self.j, processor)
-            #     # self.recordOneSetWF(self.j, imageWF, processor)
-            #     # if self.isReconstruction:
-            #     #     self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
-            #     processor.saveOneTime = False
+        if self.isRecordRaw:
+            # if self.completeFrameSets == 0:
+                # time.sleep(0.1)
+            with saveStackLock:
+                self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
 
-            processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+        
+        # if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
+        #     self.recordOneSetRaw(self.j, processor)
+        #     # self.recordOneSetWF(self.j, imageWF, processor)
+        #     # if self.isReconstruction:
+        #     #     self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
+        #     processor.saveOneTime = False
+
+        processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
 
