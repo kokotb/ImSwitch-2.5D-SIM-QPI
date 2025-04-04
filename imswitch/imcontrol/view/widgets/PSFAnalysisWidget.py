@@ -241,18 +241,18 @@ class PSFWindow(QMainWindow):
 
 
     def updateZstackImage(self):
-        self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
+        self.imgZStack.setImage(self.image_stack[self.current_index])#, levels=(0, 4095))
 
     def updatePSFXYimage(self):
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
         self.updatelines()
 
     def updatePSFXZimage(self):
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
         self.updatelines()
 
     def updatePSFYZimage(self):
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
         self.updatelines()
 
 
@@ -356,7 +356,9 @@ class PSFWindow(QMainWindow):
             liststackOfImages.append(imarray)
 
         self.image_stack = np.array(liststackOfImages)
-        self.imgZStack.setImage(self.image_stack[0,:,:], levels=(0,255))
+        self.imgZStack.setImage(self.image_stack[0,:,:])#, levels=(0,4095))
+        self.showSelectedPSF()
+        self.updatelines()
 
     def mouseReleaseEvent(self, event):
         if self.imgZStack.image is None:
@@ -386,9 +388,9 @@ class PSFWindow(QMainWindow):
 
         PSFviewsize = int(self.PSFViewSize.text())
         self.PSFstack = self.image_stack[:, self.selectedY - 12 - PSFviewsize//2: self.selectedY -12 + PSFviewsize//2, self.selectedX - PSFviewsize//2 + 12 : self.selectedX + PSFviewsize//2 + 12]
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
         self.updatelines()
     
 
@@ -429,24 +431,44 @@ class PSFWindowRecord(QMainWindow):
         # self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
         self.vbZStack.addItem(self.imgZStack)
         
+
+
         self.labelPSFviewSize = QtWidgets.QLabel(f'<strong>PSF view image size</strong>')
-        self.ZstackLayout.addWidget(self.labelPSFviewSize, 4, 0)
+        self.ZstackLayout.addWidget(self.labelPSFviewSize, 6, 0)
         self.PSFViewSize = QtWidgets.QLineEdit("20")
-        self.ZstackLayout.addWidget(self.PSFViewSize, 4, 1)
+        self.ZstackLayout.addWidget(self.PSFViewSize, 6, 1)
 
         self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
 
         self.folderPath = QtWidgets.QLineEdit()
         self.folderPath.setText("C:/Users/SIM/Desktop/David/PSF_analysis_algorithm/PSFExample/green")
         self.openDialog = QPushButton("Select folder")
-        self.displayImages = QPushButton("Show images")
+        self.recordImages = QPushButton("Record stack")
 
         self.ZstackLayout.addWidget(self.folderPath, 3, 0)
         self.ZstackLayout.addWidget(self.openDialog, 3, 1)
-        self.ZstackLayout.addWidget(self.displayImages, 3, 2)
+        self.ZstackLayout.addWidget(self.recordImages, 3, 2)
+
+        self.labelsaveFolderName = QtWidgets.QLabel(f'<strong>Save Folder Name</strong>')
+        self.ZstackLayout.addWidget(self.labelsaveFolderName, 4, 0)
+        self.saveFolderName = QtWidgets.QLineEdit("experiment")
+        self.ZstackLayout.addWidget(self.saveFolderName, 4, 1)
+        
+
+        self.labelsaveImagesName = QtWidgets.QLabel(f'<strong>Save Images Name</strong>')
+        self.ZstackLayout.addWidget(self.labelsaveImagesName, 5, 0)
+        self.saveImagesName = QtWidgets.QLineEdit("image")
+        self.ZstackLayout.addWidget(self.saveImagesName, 5, 1)
+
+        self.saveZstack = QPushButton("Save Zstack")
+        self.ZstackLayout.addWidget(self.saveZstack, 5, 2)
+        self.savePSFstack = QPushButton("Save PSFstack")
+        self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
 
         self.openDialog.clicked.connect(self.loadPath)
-        self.displayImages.clicked.connect(self.displayStackOfImages)
+        self.recordImages.clicked.connect(self.recordImagesfunc)
+        self.savePSFstack.clicked.connect(self.savePSFfunc)
+        self.saveZstack.clicked.connect(self.saveZstackfunc)
 
         self.psfLayout.addLayout(self.ZstackLayout)
         # ====================================================================================================================
@@ -538,18 +560,18 @@ class PSFWindowRecord(QMainWindow):
 
 
     def updateZstackImage(self):
-        self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
+        self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 4095))
 
     def updatePSFXYimage(self):
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 4095))
         self.updatelines()
 
     def updatePSFXZimage(self):
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 4095))
         self.updatelines()
 
     def updatePSFYZimage(self):
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
         self.updatelines()
 
 
@@ -645,7 +667,7 @@ class PSFWindowRecord(QMainWindow):
         folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
         self.folderPath.setText(folderpath)
 
-    def displayStackOfImages(self):
+    def recordImagesfunc(self):
         liststackOfImages = []
 
         for file in os.listdir(self.folderPath.text()):
@@ -654,8 +676,14 @@ class PSFWindowRecord(QMainWindow):
             liststackOfImages.append(imarray)
 
         self.image_stack = np.array(liststackOfImages)
-        self.imgZStack.setImage(self.image_stack[0,:,:], levels=(0,255))
+        self.imgZStack.setImage(self.image_stack[0,:,:], levels=(0,4095))
 
+    def savePSFfunc(self):
+        pass
+
+    def saveZstackfunc(self):
+        pass
+    
     def mouseReleaseEvent(self, event):
         if self.imgZStack.image is None:
             return
@@ -683,9 +711,9 @@ class PSFWindowRecord(QMainWindow):
 
         PSFviewsize = int(self.PSFViewSize.text())
         self.PSFstack = self.image_stack[:, self.selectedY - 12 - PSFviewsize//2: self.selectedY -12 + PSFviewsize//2, self.selectedX - PSFviewsize//2 + 12 : self.selectedX + PSFviewsize//2 + 12]
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 255))
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 255))
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 255))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 4095))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 4095))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
         self.updatelines()
     
 
