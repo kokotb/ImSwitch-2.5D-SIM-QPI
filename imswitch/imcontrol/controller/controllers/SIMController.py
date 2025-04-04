@@ -1432,6 +1432,11 @@ class SIMController(ImConWidgetController):
 
         # with displayLock:
         self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
+
+        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+                processor.zStack25D.append(rawStack)
+                if z == len(self.zStack):
+                    processor.zStack25D = [rawStack]
         
         # Set sim stack for saving
         processor.setSIMStack(rawStack)

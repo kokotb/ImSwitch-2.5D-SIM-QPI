@@ -76,7 +76,7 @@ class SIMProcessor(object):
         #current parameters is setting for 60x objective 488nm illumination
         self.parent = parent
         # self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
-
+        self.zStack25D = []
         self.NA = simParameters.NA
         self.n = simParameters.n
         self.wavelength = wavelength/1000
@@ -224,6 +224,9 @@ class SIMProcessor(object):
         self.parent.sigWFImageComputed.emit(bfFrame, f"{self.handle} WF")
         return bfFrame
         
+    def setSIMStack(self, stack):
+        self.stack = stack
+
     def setSIMStack(self, stack):
         self.stack = stack
 
