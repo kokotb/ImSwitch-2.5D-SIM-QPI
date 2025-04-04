@@ -1309,14 +1309,12 @@ class SIMController(ImConWidgetController):
                     # for z in range(len(zList)):
                         self._master.arduinoManager.trigger25DWriteOnly()
                         if self.zScanActive:
-                            try:
-                                self.positioner.setPosition(zList[z], 'Z')
-                            except:
-                                print('messed up')
+                            self.positioner.setPosition(zList[z], 'Z')
+
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
                         timestart = time.time()
-                        time.sleep(0.5) #zstack breaks without this. dont know why
+                        time.sleep(0.25) #zstack breaks without this. dont know why##############################################################################################################
   
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
