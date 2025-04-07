@@ -8,6 +8,7 @@ from imswitch.imcommon.model import initLogger
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
                              QCheckBox, QLabel, QLineEdit, QDialog)
+from pyqtgraph.Qt import QtCore, QtGui
 import json
 import os
 import threading
@@ -23,18 +24,22 @@ class PSFAnalysisWidget(NapariHybridWidget):
         # super().__init__(*args, **kwargs)
         self.loadingPopup = PSFWindow(self)
         self.loadingPopupRecord = PSFWindowRecord(self)
+        self.loadingPopupTest = PSFWindowTest(self)
 
         # Main widget 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
         self.loadButton = QPushButton("PSF Analysis Popup window - load images")
         self.recordButton = QPushButton("PSF Analysis Popup window - record images")
+        self.testButton = QPushButton("PSF Analysis Popup window - test images")
         self.layout.addWidget(self.loadButton, 1, 0)
         self.layout.addWidget(self.recordButton, 2, 0)
+        self.layout.addWidget(self.testButton, 3, 0)
 
 
         self.loadButton.clicked.connect(self.openLoadWindowThread)
         self.recordButton.clicked.connect(self.openRecordWindowThread)
+        self.testButton.clicked.connect(self.openTestWindowThread)
         # self.saveSettings.clicked.connect(self.saveFileDialog)
 
         
@@ -42,7 +47,6 @@ class PSFAnalysisWidget(NapariHybridWidget):
     def toggleLoadButton(self, state):
         state = not state
         self.loadButton.setEnabled(state)
-
    
     def openLoadWindowThread(self):
         threading.Thread(target=self.openLoadWindow(), args=(), daemon=True).start()
@@ -50,9 +54,10 @@ class PSFAnalysisWidget(NapariHybridWidget):
     def openLoadWindow(self):
         self.loadingPopup.show()
 
+
     def toggleRecordButton(self, state):
         state = not state
-        self.loadButton.setEnabled(state)
+        self.recordButton.setEnabled(state)
 
     def openRecordWindowThread(self):
         threading.Thread(target=self.openRecordWindow(), args=(), daemon=True).start()
@@ -60,47 +65,58 @@ class PSFAnalysisWidget(NapariHybridWidget):
     def openRecordWindow(self):
         self.loadingPopupRecord.show()
 
-class MovableScatterPlotItem(pg.ScatterPlotItem):
-    def __init__(self, *args, imageSizeXy, **kargs):
-        super().__init__(*args, **kargs)
-        self.target = pg.TargetItem()
-        self.target.setParentItem(self)
-        self.target.sigPositionChanged.connect(self.targetMoved)
-        self.target.hide()
-        self.selectedPoint = None
-        self.coordinateLabel = pg.TextItem()
-        self.coordinateLabel.setParentItem(self.target)
-        self.coordinateLabel.setAnchor((0, 1))
-        self.imageSizeXy = imageSizeXy
 
-    def boundingRect(self):
-        return QtCore.QRectF(0, 0, *self.imageSizeXy)
+    def toggleTestButton(self, state):
+        state = not state
+        self.testButton.setEnabled(state)
 
-    def targetMoved(self, target):
-        if self.target.isVisible() and self.selectedPoint is not None:
-            self.data[["x", "y"]][self.selectedPoint.index()] = tuple(target.pos())
-            self.updateSpots()
-            self.invalidate()
-            label = f"{tuple(map(lambda el: round(el, 2), target.pos()))}"
-            self.coordinateLabel.setHtml("<div style='color: red; background: black;'>%s</div>" % label)
+    def openTestWindowThread(self):
+        threading.Thread(target=self.openTestWindow(), args=(), daemon=True).start()
 
-    def mouseClickEvent(self, ev):
-        if ev.button() == QtCore.Qt.MouseButton.RightButton:
-            points = self.pointsAt(ev.pos())
-            if len(points):
-                self.target.setPos(ev.pos())
-                self.selectedPoint = points[-1]
-                self.target.show()
-                ev.accept()
-        elif ev.button() == QtCore.Qt.MouseButton.LeftButton:
-            if self.target.isVisible():
-                self.target.hide()
-            else:
-                newData = np.r_[np.c_[self.getData()], np.atleast_2d(ev.pos())]
-                self.setData(*newData.T)
-            ev.accept()
-        else:
-            super().mouseClickEvent(ev)
+    def openTestWindow(self):
+        self.loadingPopupTest.show()
+
+# class MovableScatterPlotItem(pg.ScatterPlotItem):
+#     def __init__(self, *args, imageSizeXy, **kargs):
+#         super().__init__(*args, **kargs)
+#         self.target = pg.TargetItem()
+#         self.target.setParentItem(self)
+#         self.target.sigPositionChanged.connect(self.targetMoved)
+#         self.target.hide()
+#         self.selectedPoint = None
+#         self.coordinateLabel = pg.TextItem()
+#         self.coordinateLabel.setParentItem(self.target)
+#         self.coordinateLabel.setAnchor((0, 1))
+#         self.imageSizeXy = imageSizeXy
+
+#     def boundingRect(self):
+#         return QtCore.QRectF(0, 0, *self.imageSizeXy)
+
+#     def targetMoved(self, target):
+#         if self.target.isVisible() and self.selectedPoint is not None:
+#             self.data[["x", "y"]][self.selectedPoint.index()] = tuple(target.pos())
+#             self.updateSpots()
+#             self.invalidate()
+#             label = f"{tuple(map(lambda el: round(el, 2), target.pos()))}"
+#             self.coordinateLabel.setHtml("<div style='color: red; background: black;'>%s</div>" % label)
+
+#     def mouseClickEvent(self, ev):
+#         if ev.button() == QtCore.Qt.MouseButton.RightButton:
+#             points = self.pointsAt(ev.pos())
+#             if len(points):
+#                 self.target.setPos(ev.pos())
+#                 self.selectedPoint = points[-1]
+#                 self.target.show()
+#                 ev.accept()
+#         elif ev.button() == QtCore.Qt.MouseButton.LeftButton:
+#             if self.target.isVisible():
+#                 self.target.hide()
+#             else:
+#                 newData = np.r_[np.c_[self.getData()], np.atleast_2d(ev.pos())]
+#                 self.setData(*newData.T)
+#             ev.accept()
+#         else:
+#             super().mouseClickEvent(ev)
 
 class PSFWindow(QMainWindow):
     def __init__(self, parent = None): 
@@ -119,10 +135,12 @@ class PSFWindow(QMainWindow):
         self.ZstackLayout = QtWidgets.QGridLayout()
   
         self.zStackFrame = pg.GraphicsLayoutWidget()
+        # self.zStackFrame.sigMouseReleased.connect(self.codytestfunction)
         self.zStackFrame.setEnabled(False)
         self.zStackFrame.addLabel('Z-Stack of images', angle=-90, row=0, col=0)
         self.zStackFrame.setMinimumSize(500, 500)
         self.vbZStack = self.zStackFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+        self.vbZStack.setMouseMode(pg.ViewBox.PanMode)
 
         self.imgZStack = pg.ImageItem()
         self.vbZStack.addItem(self.imgZStack)
@@ -237,6 +255,10 @@ class PSFWindow(QMainWindow):
         self.overlayMatrixYZ =  np.zeros((512, 512))
         self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
         self.vbPSFYZ.addItem(self.overlayImgYZ)
+
+
+    # def codytestfunction(self):
+    #     print('fuck')
         
 
 
@@ -308,6 +330,7 @@ class PSFWindow(QMainWindow):
 
     
     def wheelEvent(self, event):
+
         global_pos = event.globalPosition()  
 
         viewbox_global_pos_Zstack = self.vbZStack.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
@@ -321,10 +344,21 @@ class PSFWindow(QMainWindow):
         local_pos_PSFYZ = global_pos - viewbox_global_pos_PSFYZ
 
         if self.vbZStack.boundingRect().contains(local_pos_Zstack):
-            num_degrees = event.angleDelta().y() / 120  
-            new_index = self.current_index - int(num_degrees)
-            self.current_index = max(0, min(len(self.image_stack) - 1, new_index))
-            self.updateZstackImage()
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:    # if ctrl pressed ==> ZOOM
+                mouse_pos = event.pos()
+                mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+                # super().wheelEvent(event)
+                factor = 0.9 if event.angleDelta().y() / 120 > 0 else 1.1
+                self.vbZStack.scaleBy((factor, factor))
+                new_mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+                delta = new_mouse_point - mouse_point
+                self.vbZStack.translateBy(-delta)
+            else:    # if ctrl not pressed ==> zstack scroll
+                num_degrees = event.angleDelta().y() / 120  
+                new_index = self.current_index - int(num_degrees)
+                self.current_index = max(0, min(len(self.image_stack) - 1, new_index))
+                self.updateZstackImage()
         elif self.vbPSFXY.boundingRect().contains(local_pos_PSFXY):
             num_degrees = event.angleDelta().y() / 120  
             new_index = self.current_indexZ - int(num_degrees)
@@ -722,7 +756,73 @@ class PSFWindowRecord(QMainWindow):
     #     self.loadSettings.setEnabled(state)
 
 
+
+
+class PSFWindowTest(QMainWindow):
+    def __init__(self, parent = None): 
+        super().__init__(parent) 
+        self.init_gui() 
+  
+    def init_gui(self): 
+        self.psfLayout = QtWidgets.QHBoxLayout()
+        central_widget = QWidget()
+        central_widget.setLayout(self.psfLayout) # self.psfLayout is main layout
+        self.setCentralWidget(central_widget)
+        self.setWindowTitle("PSF analysis window - load")
+
+
+        # Z Stack Layout - displays whole stack of images at full size (512x512 usually) =====================================
+        self.ZstackLayout = QtWidgets.QGridLayout()
+  
+        self.zStackFrame = pg.GraphicsLayoutWidget()
+        self.zStackFrame.setEnabled(True)
+        self.vbZStack = self.zStackFrame.addViewBox(row=0, col=1, enableMouse=True, border='w', lockAspect=True)
+
+        self.imgZStack = pg.ImageItem()
+        self.vbZStack.addItem(self.imgZStack)
+        self.testarray = np.zeros((100,100))
+        self.testarray[0:20] = 200
+        self.testarray[80:97] = 200
+        self.imgZStack.setImage(self.testarray)
+
+
+        self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
+
+        self.psfLayout.addLayout(self.ZstackLayout)
+
+
+"""class PSFWindowTest(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.init_gui()
+
+    def init_gui(self):
+        self.setWindowTitle("Image Popup Window")
         
+        # Glavna postavitev
+        self.mainLayout = QtWidgets.QHBoxLayout()
+        central_widget = QtWidgets.QWidget()
+        central_widget.setLayout(self.mainLayout)
+        self.setCentralWidget(central_widget)
+        
+        # Layout za prikaz slike
+        self.imageLayout = QtWidgets.QGridLayout()
+        self.imageFrame = pg.GraphicsLayoutWidget()
+        self.viewBox = self.imageFrame.addViewBox(enableMouse=True, border='w', lockAspect=True)
+        
+        # Slika
+        self.imgItem = pg.ImageItem()
+        self.viewBox.addItem(self.imgItem)
+        
+        # Testna slika
+        self.testArray = np.zeros((100, 100))
+        self.testArray[0:20] = 200
+        self.testArray[80:97] = 200
+        self.imgItem.setImage(self.testArray)
+        
+        self.imageLayout.addWidget(self.imageFrame, 0, 0)
+        self.mainLayout.addLayout(self.imageLayout)"""
+        # ====================================================================================================================
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.
