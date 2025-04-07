@@ -30,3 +30,4 @@ from .ViewController import ViewController
 from .SIMController import SIMController
 from .ZStackController import ZStackController
 from .InfoGatheringController import InfoGatheringController
+from .PSFAnalysisController import PSFAnalysisController
