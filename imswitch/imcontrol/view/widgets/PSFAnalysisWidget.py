@@ -260,7 +260,7 @@ class PSFWindow(QMainWindow):
     def updatelines(self):
         shape = np.shape(self.PSFstack)
         linescale = 9
-        linewidth = 1
+        linewidth = 2
         shapeX, shapeY, shapeZ = (linescale*shape[2], linescale*shape[1], linescale*shape[0])
 
         currX = linescale*self.current_indexX + linescale // 2
@@ -579,7 +579,7 @@ class PSFWindowRecord(QMainWindow):
     def updatelines(self):
         shape = np.shape(self.PSFstack)
         linescale = 9
-        linewidth = 1
+        linewidth = 2
         shapeX, shapeY, shapeZ = (linescale*shape[2], linescale*shape[1], linescale*shape[0])
 
         currX = linescale*self.current_indexX + linescale // 2
