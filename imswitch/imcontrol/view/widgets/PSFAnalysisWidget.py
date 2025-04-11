@@ -594,6 +594,7 @@ class PSFWindowRecord(QMainWindow):
     def updateZstackImage(self):
         self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 4095))
 
+
     def updatePSFXYimage(self):
         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 4095))
         self.updatelines()

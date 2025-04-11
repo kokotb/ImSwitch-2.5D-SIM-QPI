@@ -34,9 +34,12 @@ class PSFAnalysisController(ImConWidgetController):
         
     def stopRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(True)
-        self.image_stack = self._commChannel.getPSFStack()
-        self.channelStack = np.array(self.image_stack[0])
-        self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack, levels=(0,4095))
+        image_stack = self._commChannel.getPSFStack()
+
+        # self.image_stack = self._widget.loadingPopupRecord.image_stack DUMB THINGS HERE TOO !!!
+        self.channelStack = np.array(image_stack[0])
+        self._widget.loadingPopupRecord.image_stack = self.channelStack
+        self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack[0], levels=(0,4095))
 
 
 
@@ -44,95 +47,4 @@ class PSFAnalysisController(ImConWidgetController):
     #     # print('test')
     #     self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
     #     # self._logger.warning("Shared attributes updated.")
-        
-    # # def saveAttributesToFile(self):
-    # #     # Filter out only the important attributes?
-        
-    # #     # Save attributes
-    # #     dir_harcoded = 'C:/Users/SIM_admin/Documents/ImSwitchConfig'
-    # #     file_name_hardcoded = "exp_metadata"
-    # #     # with open(os.path.join(dir_harcoded, file_name_hardcoded), 'w') as setupFile:
-    # #     #     setupFile.write(self.shared_attributes.to_json(indent=4))
-        
-    # #     self._logger.warning("Attributes saved.")
 
-
-    # def loadJSONFromFile(self):
-    #     jsonObject = self._widget.loadingPopup.loadJSON()
-    #     self._commChannel.sigLoadSettings.emit(jsonObject)
-    #     self.moduleList = self.modulesToLoad()
-    #     self._commChannel.sigModuleSettings.emit(self.moduleList)
-        
-
-    # def modulesToLoad(self):
-    #     elementList = self._widget.loadingPopup.elementList
-    #     moduleList = dict()
-
-    #     for i in range(len(elementList)):
-    #         moduleList[elementList[i]._name] = elementList[i].checkState()
-
-    #     return moduleList
-
-
-            
-
-
-    # def getWantedAttrs(self):
-    #     """ Returns a JSON representation of this instance. """
-    #     attrs = {}
-    #     for key, value in self.shared_attributes.items():
-    #         if key in self.wantedAttributes:
-    #             parent = attrs
-    #             for i in range(len(key) - 1):
-    #                 if key[i] not in parent:
-    #                     parent[key[i]] = {}
-    #                 parent = parent[key[i]]
-
-    #             parent[key[-1]] = value
-    #         # jsonOutput = json.dumps(attrs)
-    #         jsonOutputPretty = json.dumps(attrs, indent=4)
-
-    #     return jsonOutputPretty
-
-    # def getAllAttrs(self):
-    #     """ Returns a JSON representation of this instance. """
-    #     attrs = {}
-    #     for key, value in self.shared_attributes.items():
-    #         parent = attrs
-    #         for i in range(len(key) - 1):
-    #             if key[i] not in parent:
-    #                 parent[key[i]] = {}
-    #             parent = parent[key[i]]
-
-    #         parent[key[-1]] = value
-    #     # jsonOutput = json.dumps(attrs)
-    #     jsonOutputPretty = json.dumps(attrs, indent=4)
-
-    #     return jsonOutputPretty
-    
-    # def getAndSaveJSON(self):
-    #     jsonOutput = self.getWantedAttrs()
-
-        
-    #     # savePath = os.path.join(self.exptFolderPath,'Snapshot')
-    #     with open("JSONTest.json", "w", encoding='utf-8') as outfile:
-    #         outfile.write(jsonOutput)
-
-
-    # def getHDF5Attributes(self):
-    #     """ Returns a dictionary of HDF5 attributes representing this object.
-    #     """
-    #     attrs = {}
-    #     for key, value in self.shared_attributes.items():
-    #         attrs[':'.join(key)] = value
-
-    #     return attrs
-    
-    # # def saveHDF5Attributes(self):
-    # #     """ Saves a dictionary of HDF5 attributes representing this object.
-    # #     """
-    # #     attrs = {}
-    # #     for key, value in self.shared_attributes.items():
-    # #         attrs[':'.join(key)] = value
-
-    # #     return attrs
