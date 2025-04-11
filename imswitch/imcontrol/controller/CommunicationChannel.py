@@ -162,23 +162,27 @@ class CommunicationChannel(SignalInterface):
     # def test(self, value):
     #     print(value)
 
+    def getPSFStack(self):
+        allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
+        return allPSFStacks
+
     def storeRecPSFStack(self, stack, reset, handle):
         
         if handle == 488:
             if reset == True:
                 self.zStackList488 = []
             self.zStackList488.append(stack)
-            print(handle, len(self.zStackList488))
+
         elif handle == 561:
             if reset == True:
                 self.zStackList561 = []
             self.zStackList561.append(stack)
-            print(handle, len(self.zStackList561))
+
         elif handle == 640:
             if reset == True:
                 self.zStackList640 = []   
             self.zStackList640.append(stack)
-            print(handle, len(self.zStackList640))
+
 
 
     def updateSIMActive(self, active):
