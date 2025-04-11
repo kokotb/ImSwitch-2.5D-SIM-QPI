@@ -1438,7 +1438,7 @@ class SIMController(ImConWidgetController):
                 if z == len(self.zStack):
                     processor.zStack25D = [rawStack]
         
-        # Set sim stack for saving
+        # Set sim stack for saving 
         processor.setSIMStack(rawStack)
         
         # if self.tilePreview and self.isTiling:
