@@ -35,8 +35,8 @@ class PSFAnalysisController(ImConWidgetController):
     def stopRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(True)
         self.image_stack = self._commChannel.getPSFStack()
-
-        self._widget.loadingPopupRecord.imgZStack.setImage(self.image_stack[0][0], levels=(0,4095))
+        self.channelStack = np.array(self.image_stack[0])
+        self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack, levels=(0,4095))
 
 
 

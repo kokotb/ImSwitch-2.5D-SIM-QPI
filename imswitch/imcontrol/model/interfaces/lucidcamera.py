@@ -503,7 +503,7 @@ class LucidCam:
                 nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
                 nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
 
-                reducedArray = np.divide(nparrays,16)
+                reducedArray = np.divide(nparrays[0],16)
                 array16Bit = reducedArray.astype(np.uint16)
             # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
             # array = np.ctypeslib.as_array(array, (item.height, item.width))
