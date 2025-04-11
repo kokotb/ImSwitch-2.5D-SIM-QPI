@@ -1,19 +1,7 @@
-import json
 import numpy as np
-from datetime import datetime
-import tifffile as tif
-import numpy as np
-from decimal import Decimal
-from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
-from imswitch.imcontrol.model import configfiletools
-from imswitch.imcontrol.view import guitools
-from imswitch.imcontrol.view.widgets.InfoGatheringWidget import MyInputDialog
+from imswitch.imcommon.model import initLogger
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
-from imswitch.imcommon.model.dirtools import DataFileDirs
-import pandas as pd
-from PyQt5.QtWidgets import QFileDialog
 import json
-import os
 # from PyQt5.QtWidgets import QDialog
 
 
