@@ -73,13 +73,13 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 500.0
+        "ExposureTime": 2000.0
       },
       "ROI":{
-        "OffsetX": 2632,
-        "OffsetY": 1670,
-        "Width": 2048,
-        "Height": 2048
+        "OffsetX": 2280,
+        "OffsetY": 1388,
+        "Width": 1024,
+        "Height": 1024
       } 
     },
     "forAcquisition": true
@@ -97,13 +97,13 @@
         "TriggerMode": "Off",
         "Gain": 0.0, 
         "Gamma": 1.0,
-        "ExposureTime": 500.0
+        "ExposureTime": 8000.0
       },
       "ROI":{
-        "OffsetX": 2664,
-        "OffsetY": 1778,
-        "Width": 2048,
-        "Height": 2048
+        "OffsetX": 1848,
+        "OffsetY": 1548,
+        "Width": 1024,
+        "Height": 1024
       }
     },
     "forAcquisition": true
@@ -122,13 +122,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 500.0
+          "ExposureTime": 700.0
         },
         "ROI":{
-          "OffsetX": 1600,
-          "OffsetY": 1300,
-          "Width": 2048,
-          "Height": 2048
+          "OffsetX": 1984,
+          "OffsetY": 2092,
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true

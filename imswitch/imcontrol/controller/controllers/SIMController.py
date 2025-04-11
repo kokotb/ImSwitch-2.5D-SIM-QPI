@@ -1319,7 +1319,7 @@ class SIMController(ImConWidgetController):
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
                         saveStackLock = threading.Lock()
-                        displayLock = threading.Lock()
+
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
@@ -1327,7 +1327,7 @@ class SIMController(ImConWidgetController):
                             if self.isTiling:
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock,displayLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock)
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             # self.stopSIM()
@@ -1396,7 +1396,7 @@ class SIMController(ImConWidgetController):
 
         
 
-    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, displayLock):
+    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock):
         # saveOneTime = self.saveOneTime
         # print(saveOneTime)
 
@@ -1426,20 +1426,25 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
 
         # print(detector)
-        rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
+        rawImg = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
 
-        # print(processor.handle,rawStack)
+        # print(processor.handle,rawImg)
 
         # with displayLock:
-        self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
+        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
 
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
-                processor.zStack25D.append(rawStack)
-                if z == len(self.zStack):
-                    processor.zStack25D = [rawStack]
+            if z == 0:
+                resetStack = True
+            else:
+                resetStack = False
+
+            self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
+                
+
         
         # Set sim stack for saving
-        processor.setSIMStack(rawStack)
+        processor.setSIMStack(rawImg)
         
         # if self.tilePreview and self.isTiling:
         #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
