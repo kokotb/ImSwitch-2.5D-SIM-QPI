@@ -1426,20 +1426,22 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
 
         # print(detector)
-        rawStack = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
+        rawImg = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
 
-        # print(processor.handle,rawStack)
+        # print(processor.handle,rawImg)
 
         # with displayLock:
-        self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
+        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
 
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
-                processor.zStack25D.append(rawStack)
-                if z == len(self.zStack):
-                    processor.zStack25D = [rawStack]
+                if z == 0:
+                    resetStack = True
+                self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
+                resetStack = False
+
         
-        # Set sim stack for saving 
-        processor.setSIMStack(rawStack)
+        # Set sim stack for saving
+        processor.setSIMStack(rawImg)
         
         # if self.tilePreview and self.isTiling:
         #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.

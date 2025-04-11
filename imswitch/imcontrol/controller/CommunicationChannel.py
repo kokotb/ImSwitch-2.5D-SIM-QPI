@@ -123,6 +123,8 @@ class CommunicationChannel(SignalInterface):
     sigModuleSettings = Signal(dict)
 
     sigSaveSettingsFirst = Signal()
+ 
+    sigRecPSFStack = Signal(np.ndarray, bool, str)
 
     # sigGetROIOrigins = Signal()
 
@@ -149,6 +151,7 @@ class CommunicationChannel(SignalInterface):
         self._scriptExecution = False
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
+        self.sigRecPSFStack.connect(self.storeRecPSFStack)
         # self.sig25DAcqToggled.connect(self.test)
         self.roiList = []
         self.simActive = False
@@ -158,6 +161,28 @@ class CommunicationChannel(SignalInterface):
     #     self.roiList = roiList
     # def test(self, value):
     #     print(value)
+
+    def storeRecPSFSTack(self, stack, reset, handle):
+        
+        if handle == '488':
+            if reset == True:
+                self.zStackList488 = []
+            else:
+                self.zStackList488.append(stack)
+                print(handle, len(self.zStackList488))
+        elif handle == '561':
+            if reset == True:
+                self.zStackList561 = []
+            else:
+                self.zStackList561.append(stack)
+                print(handle, len(self.zStackList561))
+        elif handle == '640':
+            if reset == True:
+                self.zStackList640 = []   
+            else:
+                self.zStackList640.append(stack)
+                print(handle, len(self.zStackList640))
+
 
     def updateSIMActive(self, active):
         self.simActive = active
