@@ -28,6 +28,8 @@ class CommunicationChannel(SignalInterface):
 
     sigStop25D = Signal()
 
+    sigStart25D = Signal()
+
     sigTileImage = Signal(np.ndarray, list, str, int, int, int)
 
     sigTilePreview = Signal()
@@ -138,6 +140,7 @@ class CommunicationChannel(SignalInterface):
     sigUpdateZPosition = Signal(str,str)
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
+    sigSIMStopped = Signal()
 
     @property
     def sharedAttrs(self):
@@ -187,6 +190,8 @@ class CommunicationChannel(SignalInterface):
 
     def updateSIMActive(self, active):
         self.simActive = active
+        if self.simActive == False:
+            self.sigSIMStopped.emit()
 
     def storeLoadedSettings(self, dict):
         self.loadedSettings = dict

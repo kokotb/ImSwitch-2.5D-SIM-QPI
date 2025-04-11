@@ -109,6 +109,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
+        self._commChannel.sigStart25D.connect(self.start25D)
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         self.populateAndSelectROList()
         #Get save directory root from config file and populate text box in SIM widget.

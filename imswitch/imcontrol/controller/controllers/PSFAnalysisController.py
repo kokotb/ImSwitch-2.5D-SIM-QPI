@@ -24,74 +24,20 @@ class PSFAnalysisController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        # inputDialog = MyInputDialog(QDialog)
+        # self._commChannel.sigStart25D.emit()
+        self._widget.loadingPopupRecord.recordImages.clicked.connect(self.startRecImagesFunc)
+        self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
-    #     # Connect signals to communications channel
-    #     self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
-    #     self._commChannel.sigSaveSettingsFirst.connect(self.saveFileDialog)
-    #     self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleLoadButton)
-    #     # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
+    def startRecImagesFunc(self):
+        self._widget.loadingPopupRecord.recordImages.setEnabled(False)
+        self._commChannel.sigStart25D.emit()
         
-        
-    #     # Load experimental parameters into local object attribute
-    #     self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
-    #     self.wantedAttributes = [('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),('Laser', '561AOTF', 'Enabled'),
-    #                         ('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),('Positioner', 'Z', 'Z', 'Position'),
-    #                         ('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Tiling Settings', 'Steps - X'),
-    #                         ('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Preview'),
-    #                         ('Tiling Settings', 'Tiling Checkbox'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Duration'),
-    #                         ('Timing Settings', 'Duration Unit'),('Timing Settings', 'Repetitions'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Duration Checkbox'), ('Detector', '488 Cam', 'Model'), 
-    #                         ('Detector', '488 Cam', 'ROI'),('Detector', '488 Cam', 'Param', 'ExposureTime'),('Detector', '488 Cam', 'Param', 'Gain'),
-    #                         ('Detector', '488 Cam', 'Param', 'Gamma'),('Detector', '488 Cam', 'Param', 'TriggerMode'),('Detector', '561 Cam', 'Model'),
-    #                         ('Detector', '561 Cam', 'ROI'),('Detector', '561 Cam', 'Param', 'ExposureTime'),('Detector', '561 Cam', 'Param', 'Gain'),
-    #                         ('Detector', '561 Cam', 'Param', 'Gamma'),('Detector', '561 Cam', 'Param', 'TriggerMode'),('Detector', '640 Cam', 'Model'),
-    #                         ('Detector', '640 Cam', 'ROI'),('Detector', '640 Cam', 'Param', 'ExposureTime'),('Detector', '640 Cam', 'Param', 'Gain'),
-    #                         ('Detector', '640 Cam', 'Param', 'Gamma'),('Detector', '640 Cam', 'Param', 'TriggerMode'),('SIM Parameters', 'ReconWL1'),
-    #                         ('SIM Parameters', 'ReconWL2'),('SIM Parameters', 'ReconWL3'),('SIM Parameters', 'NA'),('SIM Parameters', 'Pixelsize'),
-    #                         ('SIM Parameters', 'Alpha'),('SIM Parameters', 'Beta'),('SIM Parameters', 'w'),('SIM Parameters', 'eta'),
-    #                         ('SIM Parameters', 'n'),('SIM Parameters', 'Magnification'),('SIM Parameters',"SLM Running Order"),('User Dir Info', 'Working Directory'), ('User Dir Info', 'Current Path'),
-    #                         ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name'),('Z-Stack Settings', 'Step Size'),('Z-Stack Settings', 'Total Z /um'),('Z-Stack Settings', 'Z-Stack Checkbox'),
-    #                         ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List'), ('ROI List', 'Checkbox'),
-    #                         ('25D SLM Parameters', 'Gamma'),('25D SLM Parameters', 'Psi'),('25D SLM Parameters', 'Left Center-X'),('25D SLM Parameters', 'Left Center-Y'),('25D SLM Parameters', 'Right Center-X'),
-    #                         ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter'),('Zernike SLM Parameters','Piston'),('Zernike SLM Parameters','Y-tilt'),
-    #                         ('Zernike SLM Parameters','X-tilt'),('Zernike SLM Parameters','Oblique Astigmatism'),('Zernike SLM Parameters','Defocus'),('Zernike SLM Parameters','Vertical Astigmatism'),
-    #                         ('Zernike SLM Parameters','Vertical Trefoil'),('Zernike SLM Parameters','Vertical Coma'),('Zernike SLM Parameters','Horizontal Coma'),('Zernike SLM Parameters','Horizontal Trefoil'),
-    #                         ('Zernike SLM Parameters','Spherical')]
-        
-        
-    #     self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
-    #     self._widget.saveSettings.clicked.connect(self.saveFileDialog)
-    #     ####################################
-    #     # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
+    def stopRecImagesFunc(self):
+        self._widget.loadingPopupRecord.recordImages.setEnabled(True)
+        self.image_stack = self._commChannel.getPSFStack()
 
-    # def saveFileDialog(self):
-    #     currentRoot = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
-    #     fileIndex = 1
-    #     if not self._commChannel.simActive:
-    #         # name = self._commChannel.currentTimeString
-    #         filePath = self._widget.saveFileDialog(currentRoot)
-    #         if filePath == None:
-    #             return
-    #         filePathRoot = os.path.split(filePath)[0]
-    #     else:
-    #         filePathRoot = self._commChannel.activeDir
-    #         name = self._commChannel.currentTimeString
-    #         filePath = os.path.join(filePathRoot, name + '.json')
-    #         if not os.path.exists(filePathRoot):
-    #             os.makedirs(filePathRoot)
-    #         if os.path.exists(filePath):
-    #             fileIndex += 1
-    #             filePath = os.path.join(filePathRoot, name + '_' + str(fileIndex) + '.json')
-        
-    #     jsonOutput = self.getWantedAttrs()
-        
+        self._widget.loadingPopupRecord.imgZStack.setImage(self.image_stack[0][0], levels=(0,4095))
 
-
-    #     with open(filePath, "w", encoding='utf-8') as outfile:
-    #         outfile.write(jsonOutput)
-    #     self.lastSavePath = filePath
-    #     self.lastSaveName = os.path.split(filePath)[-1]
-    #     print('Settings JSON saved at: ' + self.lastSavePath)
 
 
     # def updateSharedAttributes(self):

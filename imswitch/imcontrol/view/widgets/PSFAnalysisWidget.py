@@ -42,8 +42,6 @@ class PSFAnalysisWidget(NapariHybridWidget):
         self.testButton.clicked.connect(self.openTestWindowThread)
         # self.saveSettings.clicked.connect(self.saveFileDialog)
 
-        
-
     def toggleLoadButton(self, state):
         state = not state
         self.loadButton.setEnabled(state)
@@ -500,7 +498,7 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
 
         self.openDialog.clicked.connect(self.loadPath)
-        self.recordImages.clicked.connect(self.recordImagesfunc)
+        
         self.savePSFstack.clicked.connect(self.savePSFfunc)
         self.saveZstack.clicked.connect(self.saveZstackfunc)
 
@@ -695,22 +693,12 @@ class PSFWindowRecord(QMainWindow):
         else:
             pass
 
-    
 
     def loadPath(self):
         folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
         self.folderPath.setText(folderpath)
 
-    def recordImagesfunc(self):
-        liststackOfImages = []
 
-        for file in os.listdir(self.folderPath.text()):
-            im = Image.open(os.path.join(self.folderPath.text(), file))
-            imarray = np.array(im)
-            liststackOfImages.append(imarray)
-
-        self.image_stack = np.array(liststackOfImages)
-        self.imgZStack.setImage(self.image_stack[0,:,:], levels=(0,4095))
 
     def savePSFfunc(self):
         pass
