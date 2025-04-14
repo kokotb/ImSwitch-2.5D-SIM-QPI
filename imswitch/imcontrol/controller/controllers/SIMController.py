@@ -1411,7 +1411,8 @@ class SIMController(ImConWidgetController):
         
         # Set current detector being used
         detector = processor.detObj
-        # time.sleep(0.1)
+        
+        waitingBuffers = detector._camera.getBufferValue()
 
         # broken = False
         if not broken:
@@ -1427,7 +1428,7 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
 
         # print(detector)
-        rawImg = detector._camera.grabFrameSet(1, '25D') # receive raw image stack
+        rawImg = detector._camera.grabFrame25D(1, '25D') # receive raw image stack
 
         # print(processor.handle,rawImg)
 

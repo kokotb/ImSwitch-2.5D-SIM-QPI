@@ -67,19 +67,9 @@ class SLM4DDManagerMock(SignalInterface):
 
     def openSLM(self, port):
         #Port input in form of COMX
-        openComPort = self.slmDLL.FDD_DevOpenComPort
-        portb = port.encode('utf-8')
-        ret = openComPort(portb,250,115200,True)
-
-        if ret == 0:
-            retBool = True
-            retStr = 'SLM connected? ' + str(retBool)
-            
-        else:
-            retBool = False
-            retStr = 'SLM connected? ' + str(retBool) + " : " + self.ERROR_Dictionary[ret]
+        retStr = 'SLM connected? False, Mocked'
         print(retStr)
-        return retBool, retStr
+        return retStr
 
 
     def closeSLM(self):
