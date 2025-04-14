@@ -25,9 +25,13 @@ class PSFAnalysisController(ImConWidgetController):
         image_stack = self._commChannel.getPSFStack()
 
         # self.image_stack = self._widget.loadingPopupRecord.image_stack DUMB THINGS HERE TOO !!!
-        self.channelStack = np.array(image_stack[0])
+        self.channelStack = np.array(image_stack[2])
         self._widget.loadingPopupRecord.image_stack = self.channelStack
         self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack[0], levels=(0,4095))
+        # self._widget.loadingPopupRecord.updatePSFXYimage()
+        # self._widget.loadingPopupRecord.updatePSFXZimage()
+        # self._widget.loadingPopupRecord.updatePSFYZimage()
+        self._widget.loadingPopupRecord.showSelectedPSF()
 
 
 
