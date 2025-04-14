@@ -564,6 +564,102 @@ class LucidCam:
             self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
             sim_set = None
         return sim_set
+    
+    def grabFrame25D(self, buffer_size, mode):
+        # buffer_size = image number pulled from a cam
+        # time.sleep(0.5)
+        buffer_type = "Mono16" #FIXME: do this with getproperty
+        # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
+        # print(waitingBuffers)
+        self.device.GET_BUFFER_TIMEOUT_MILLISEC(500)
+        buffer_set = self.device.get_buffer(buffer_size)
+        if mode == '25D':
+            buffer_set = [buffer_set]
+ 
+        """
+        Copy buffer and requeue to avoid running out of buffers
+        """
+        items = []
+        
+        for buffer in buffer_set:        
+            items.append(BufferFactory.copy(buffer))
+        self.device.requeue_buffer(buffer_set)
+        # item = BufferFactory.copy(buffer)
+        # self.device.requeue_buffer(buffer)
+
+        if buffer_type == "Mono16":
+            # Development only done for Mono16 at this point
+            """
+            Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
+            """
+            nparrays = []
+            nparray = []
+            for item in items:
+                # Cast 12bit data to 16 bit format for further processing
+                nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+                nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
+                if mode == '25D':
+                    reducedArray = np.divide(nparrays[0],16)
+                elif mode == 'SIM':
+                    reducedArray = np.divide(nparrays,16)
+                array16Bit = reducedArray.astype(np.uint16)
+            # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
+            # array = np.ctypeslib.as_array(array, (item.height, item.width))
+            sim_set = array16Bit
+
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # FIXME: Include this in the final version?
+            # BufferFactory.destroy(item)
+        elif buffer_type == "Mono8":
+            # FIXME: Do this in proper format - not finished yet
+            # buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
+           
+            
+            buffer_bytes_per_pixel_set = []
+            for item in items:
+                buffer_bytes_per_pixel_set.append(int(len(item.data)/(item.width * item.height)))
+            if max(buffer_bytes_per_pixel_set) > 1:
+                # If buffer_bytes exceed 8bit value, return empty set
+                self.__logger.warning("Data not Mono8! Something went wrong.")
+                sim_set = None
+                return sim_set
+            #  Taken from py_image_buffer_save_mono12_to_png_with_PIL.py
+            """
+            Buffer data as cpointers can be accessed using buffer.pbytes
+           
+            """
+            num_channels = 1
+            prev_frame_time = 0
+
+            # array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
+
+            arrays = []
+            for item in items:
+                arrays.append((ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes)))
+            
+            """
+            Create a reshaped NumPy array to display using OpenCV
+            """
+            # FIXME: check how I need to re-shape the data grabbed to bi output correctly
+            # sim_set = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
+            sim_set = []
+            for k, array in enumerate(arrays):
+                sim_set.append(np.ndarray(buffer=array, dtype=np.uint16, shape=(items[k].height, items[k].width, buffer_bytes_per_pixel_set[k])))
+            
+            # TODO: Remove this, kept just in case it would come in handy.
+            # frame = np.transpose(frame)
+            # frame = np.moveaxis(frame, 1 , 2)
+            """
+                Destroy the copied item to prevent memory leaks
+            """
+            # FIXME: Include this in the final version?
+            # BufferFactory.destroy(item)
+        else:
+            self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
+            sim_set = None
+        return sim_set
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.
