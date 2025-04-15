@@ -99,6 +99,8 @@ class SIMProcessor(object):
         self._nsteps = self.angles_number * self.phases_number
         self._nbands = self.angles_number
 
+        self.saveOneTime = False
+
         # processing parameters
         # self.isRecording = False
         # self.allPatterns = []

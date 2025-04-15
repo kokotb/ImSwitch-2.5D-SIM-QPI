@@ -419,8 +419,6 @@ class SIMController(ImConWidgetController):
 
 
     def mainSIMLoop(self, processor, errorLock, z, saveLock):
-        # saveOneTime = self.saveOneTime
-        # print(saveOneTime)
 
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors):
@@ -1184,7 +1182,7 @@ class SIMController(ImConWidgetController):
         
         self.tileOrigin = positions[0][-1]
 
-
+        
 
 
         if not self.isTiling:
@@ -1199,22 +1197,9 @@ class SIMController(ImConWidgetController):
             self.zScanActive = True
             zList = self.zList
             self.zLength = len(zList)
-            #zOrigin stored as self.zOrigin already
-
-
-        ''' # For nameing tiling squares A1, A2, .....C5 etc.
-        # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
-        # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
-        # test = []
-        # for item in gridNamesY:
-        #     for value in gridNamesX:
-        #         test.append(item+value)
-        '''
         
-        # Datetime string registered when start button is pressed only.
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
+        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
     
-        
         self.numAllFrames = 0 # Number of frames, including dropped frames
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
 
@@ -1234,17 +1219,10 @@ class SIMController(ImConWidgetController):
                     processor.detObj = detector
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
-
-
-
-        # -------------------Set-up cams-------------------
-
-        # FIXME: Automate buffer size calculation based on image size, it did not work before
-        # total_buffer_size_MB = 350 # in MBs
+    
         for detector in self.detectors:
             self.setCamForExperiment25D(detector)
         
-
         time_global_start = time.time()
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers.
@@ -1313,12 +1291,11 @@ class SIMController(ImConWidgetController):
                         self._master.arduinoManager.trigger25DWriteOnly()
                         if self.zScanActive:
                             self.positioner.setPosition(zList[z], 'Z')
-
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                            time.sleep(1)
 
                         timestart = time.time()
-                        # time.sleep(0.3) #zstack breaks without this. dont know why##############################################################################################################
-  
+
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
                         saveStackLock = threading.Lock()
@@ -1401,7 +1378,7 @@ class SIMController(ImConWidgetController):
 
     def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock):
         # saveOneTime = self.saveOneTime
-        # print(saveOneTime)
+
 
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors):
@@ -1487,12 +1464,9 @@ class SIMController(ImConWidgetController):
                 self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
 
         
-        # if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-        #     self.recordOneSetRaw(self.j, processor)
-        #     # self.recordOneSetWF(self.j, imageWF, processor)
-        #     # if self.isReconstruction:
-        #     #     self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
-        #     processor.saveOneTime = False
+        if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
+            self.recordOneSetRaw(self.j, processor)
+            processor.saveOneTime = False
 
         processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
