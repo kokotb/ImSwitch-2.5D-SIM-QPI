@@ -119,7 +119,7 @@ class TilingManager(SignalInterface):
                 
                 # Populate the final list
                 for x in x_list:
-                    positions.append((x,y))
+                    positions.append((round(x,3),round(y,3)))
                     
                 # Truncate the list if the length/the number of created
                 # positions exceeds the specified limit

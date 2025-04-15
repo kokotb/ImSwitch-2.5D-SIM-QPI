@@ -155,15 +155,18 @@ class CommunicationChannel(SignalInterface):
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
         self.sigRecPSFStack.connect(self.storeRecPSFStack)
-        # self.sig25DAcqToggled.connect(self.test)
+        self.sigStop25D.connect(self.updateStop25DCommand)
         self.roiList = []
         self.simActive = False
         self.activeDir = None
+        self.stop25DNow = False
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
     # def test(self, value):
     #     print(value)
+    def updateStop25DCommand(self):
+        self.stop25DNow = True
 
     def getPSFStack(self):
         allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
