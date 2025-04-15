@@ -11,7 +11,7 @@ from .SIMProcessor import SIMProcessor
 from .SIMProcessor import SIMParameters
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-
+import math
 
 from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
@@ -458,7 +458,6 @@ class SIMController(ImConWidgetController):
                     self.errorQ.append(True)
                 for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
                     detector._camera.clearBuffers()
-                # detector._camera.clearBuffers()
                 if lastChan:
                     self.lastZ = (z == self.zLength - 1)
                     if self.lastZ:
@@ -978,7 +977,9 @@ class SIMController(ImConWidgetController):
     def setCamForExperimentSIM(self, detector, num_buffers, expTimeMax):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 15.0)
+        detector._camera.device.GET_BUFFER_TIMEOUT_MILLISEC = math.inf
+
         trigger_source = 'Line2'
         trigger_mode = 'On'
         exposure_auto = 'Off'
@@ -987,7 +988,7 @@ class SIMController(ImConWidgetController):
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # exposure_time = self.exposure # anything < 19 ms
+        # exposure_time = self.exposure # anything < 19 ms)
         pixel_format = 'Mono16'
         bit_depth = 'Bits12'
         frame_rate_enable = True
@@ -1020,11 +1021,12 @@ class SIMController(ImConWidgetController):
     def setCamForExperiment25D(self, detector):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 100.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 30.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line2'
+        detector._camera.device.GET_BUFFER_TIMEOUT_MILLISEC = 1000
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1315,7 +1317,7 @@ class SIMController(ImConWidgetController):
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
                         timestart = time.time()
-                        time.sleep(0.3) #zstack breaks without this. dont know why##############################################################################################################
+                        # time.sleep(0.3) #zstack breaks without this. dont know why##############################################################################################################
   
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
@@ -1413,26 +1415,46 @@ class SIMController(ImConWidgetController):
         detector = processor.detObj
         
         waitingBuffers = detector._camera.getBufferValue()
+        startBufferTime = time.time()
+        totalBufferTime = 0
+        while waitingBuffers != 1:
+
+            time.sleep(0.05)
+            endBufferTime = time.time()
+            totalBufferTime = endBufferTime - startBufferTime
+            waitingBuffers = detector._camera.getBufferValue()
+
+            if waitingBuffers != 1 and totalBufferTime > 0.25:
+
+                self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
+                broken = True
+                with errorLock:
+                    self.errorQ.append(True)
+                for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
+                    detector._camera.clearBuffers()
+                # if lastChan:
+                #     self.lastZ = (z == self.zLength - 1)
+                #     if self.lastZ:
+                #         self.waitToMoveEvent.set()
+                #     else: 
+                #         self.waitToMoveEvent.set()
+                break
 
         # broken = False
         if not broken:
             with errorLock:
                 self.errorQ.append(False)
-            if lastChan:
-                self.lastZ = (z == self.zLength - 1)
-                # print('All images, all channels loaded into buffer')
-                if self.lastZ:
             # if lastChan:
-                    self.waitToMoveEvent.set()
-                else: 
-                    self.waitToMoveEvent.set()
+            #     self.lastZ = (z == self.zLength - 1)
+            #     # print('All images, all channels loaded into buffer')
+            #     if self.lastZ:
+            # # if lastChan:
+            #         self.waitToMoveEvent.set()
+            #     else: 
+            #         self.waitToMoveEvent.set()
 
-        # print(detector)
-        rawImg = detector._camera.grabFrame25D(1, '25D') # receive raw image stack
+        rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
 
-        # print(processor.handle,rawImg)
-
-        # with displayLock:
         self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
 
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
