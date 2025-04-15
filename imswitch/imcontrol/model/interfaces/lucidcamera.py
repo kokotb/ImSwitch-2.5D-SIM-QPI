@@ -92,7 +92,7 @@ class LucidCam:
         self.device.start_stream(num_buffers)
 
     def start_live25D(self):
-        self.device.start_stream(100)
+        self.device.start_stream(1)
 
     def stop_live(self):
         self.__logger.info("stop_live")
@@ -511,11 +511,8 @@ class LucidCam:
             # array = np.ctypeslib.as_array(array, (item.height, item.width))
             sim_set = array16Bit
 
-            """
-                Destroy the copied item to prevent memory leaks
-            """
             # FIXME: Include this in the final version?
-            # BufferFactory.destroy(item)
+            BufferFactory.destroy(item)
         elif buffer_type == "Mono8":
             # FIXME: Do this in proper format - not finished yet
             # buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
@@ -559,22 +556,22 @@ class LucidCam:
                 Destroy the copied item to prevent memory leaks
             """
             # FIXME: Include this in the final version?
-            # BufferFactory.destroy(item)
+            BufferFactory.destroy(item)
         else:
             self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
             sim_set = None
         return sim_set
     
-    def grabFrame25D(self, buffer_size, mode):
+    def grabFrame25D(self, buffer_size):
         # buffer_size = image number pulled from a cam
         # time.sleep(0.5)
         buffer_type = "Mono16" #FIXME: do this with getproperty
         # waitingBuffers = self.device.tl_stream_nodemap['StreamOutputBufferCount']
         # print(waitingBuffers)
-        self.device.GET_BUFFER_TIMEOUT_MILLISEC(500)
+        # self.device.GET_BUFFER_TIMEOUT_MILLISEC = 500
+        # print(self.device.GET_BUFFER_TIMEOUT_MILLISEC())
         buffer_set = self.device.get_buffer(buffer_size)
-        if mode == '25D':
-            buffer_set = [buffer_set]
+        buffer_set = [buffer_set]
  
         """
         Copy buffer and requeue to avoid running out of buffers
@@ -584,8 +581,6 @@ class LucidCam:
         for buffer in buffer_set:        
             items.append(BufferFactory.copy(buffer))
         self.device.requeue_buffer(buffer_set)
-        # item = BufferFactory.copy(buffer)
-        # self.device.requeue_buffer(buffer)
 
         if buffer_type == "Mono16":
             # Development only done for Mono16 at this point
@@ -598,10 +593,7 @@ class LucidCam:
                 # Cast 12bit data to 16 bit format for further processing
                 nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
                 nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
-                if mode == '25D':
-                    reducedArray = np.divide(nparrays[0],16)
-                elif mode == 'SIM':
-                    reducedArray = np.divide(nparrays,16)
+                reducedArray = np.divide(nparrays[0],16)
                 array16Bit = reducedArray.astype(np.uint16)
             # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
             # array = np.ctypeslib.as_array(array, (item.height, item.width))
@@ -611,7 +603,7 @@ class LucidCam:
                 Destroy the copied item to prevent memory leaks
             """
             # FIXME: Include this in the final version?
-            # BufferFactory.destroy(item)
+            BufferFactory.destroy(item)
         elif buffer_type == "Mono8":
             # FIXME: Do this in proper format - not finished yet
             # buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
@@ -655,7 +647,7 @@ class LucidCam:
                 Destroy the copied item to prevent memory leaks
             """
             # FIXME: Include this in the final version?
-            # BufferFactory.destroy(item)
+            BufferFactory.destroy(item)
         else:
             self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
             sim_set = None
