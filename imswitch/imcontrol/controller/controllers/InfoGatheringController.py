@@ -53,10 +53,13 @@ class InfoGatheringController(ImConWidgetController):
                             ('User Dir Info', 'User Name'),('User Dir Info', 'Experiment Name'),('Z-Stack Settings', 'Step Size'),('Z-Stack Settings', 'Total Z /um'),('Z-Stack Settings', 'Z-Stack Checkbox'),
                             ('Z-Stack Settings','Scan Direction'),('Z-Stack Settings','Z-Stack Center?'),('Z-Stack Settings','Scan Start Offset'), ('ROI List', 'List'), ('ROI List', 'Checkbox'),
                             ('25D SLM Parameters', 'Gamma'),('25D SLM Parameters', 'Psi'),('25D SLM Parameters', 'Left Center-X'),('25D SLM Parameters', 'Left Center-Y'),('25D SLM Parameters', 'Right Center-X'),
-                            ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter'),('Zernike SLM Parameters','Piston'),('Zernike SLM Parameters','Y-tilt'),
-                            ('Zernike SLM Parameters','X-tilt'),('Zernike SLM Parameters','Oblique Astigmatism'),('Zernike SLM Parameters','Defocus'),('Zernike SLM Parameters','Vertical Astigmatism'),
-                            ('Zernike SLM Parameters','Vertical Trefoil'),('Zernike SLM Parameters','Vertical Coma'),('Zernike SLM Parameters','Horizontal Coma'),('Zernike SLM Parameters','Horizontal Trefoil'),
-                            ('Zernike SLM Parameters','Spherical')]
+                            ('25D SLM Parameters', 'Right Center-Y'),('25D SLM Parameters', 'Beam Diameter'),('Zernike SLM Parameters','Left', 'Piston'),('Zernike SLM Parameters','Left', 'Y-tilt'),
+                            ('Zernike SLM Parameters','Left', 'X-tilt'),('Zernike SLM Parameters','Left', 'Oblique Astigmatism'),('Zernike SLM Parameters','Left', 'Defocus'),('Zernike SLM Parameters','Left', 'Vertical Astigmatism'),
+                            ('Zernike SLM Parameters','Left', 'Vertical Trefoil'),('Zernike SLM Parameters','Left', 'Vertical Coma'),('Zernike SLM Parameters','Left', 'Horizontal Coma'),('Zernike SLM Parameters','Left', 'Horizontal Trefoil'),
+                            ('Zernike SLM Parameters','Left', 'Spherical'),('Zernike SLM Parameters','Right', 'Piston'),('Zernike SLM Parameters','Right', 'Y-tilt'),
+                            ('Zernike SLM Parameters','Right', 'X-tilt'),('Zernike SLM Parameters','Right', 'Oblique Astigmatism'),('Zernike SLM Parameters','Right', 'Defocus'),('Zernike SLM Parameters','Right', 'Vertical Astigmatism'),
+                            ('Zernike SLM Parameters','Right', 'Vertical Trefoil'),('Zernike SLM Parameters','Right', 'Vertical Coma'),('Zernike SLM Parameters','Right', 'Horizontal Coma'),('Zernike SLM Parameters','Right', 'Horizontal Trefoil'),
+                            ('Zernike SLM Parameters','Right', 'Spherical')]
         
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
