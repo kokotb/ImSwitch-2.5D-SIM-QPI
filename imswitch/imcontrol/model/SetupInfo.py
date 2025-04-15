@@ -241,30 +241,36 @@ class SLM25DInfo:
     """ Height of SLM, in pixels. """
 
     Gamma: float
-
     Psi: float
-
     LeftCenterX: int
-
     LeftCenterY: int
-    
     RightCenterX: int
-
     RightCenterY: int
-
     BeamDiameter: float
 
-    Piston: float
-    Ytilt: float
-    Xtilt: float
-    ObliqueAstigmatism: float
-    Defocus: float
-    VerticalAstigmatism: float
-    VerticalTrefoil: float
-    VerticalComa: float
-    HorizontalComa: float
-    HorizontalTrefoil: float
-    Spherical: float
+    LeftPiston: float
+    LeftYtilt: float
+    LeftXtilt: float
+    LeftObliqueAstigmatism: float
+    LeftDefocus: float
+    LeftVerticalAstigmatism: float
+    LeftVerticalTrefoil: float
+    LeftVerticalComa: float
+    LeftHorizontalComa: float
+    LeftHorizontalTrefoil: float
+    LeftSpherical: float
+
+    RightPiston: float
+    RightYtilt: float
+    RightXtilt: float
+    RightObliqueAstigmatism: float
+    RightDefocus: float
+    RightVerticalAstigmatism: float
+    RightVerticalTrefoil: float
+    RightVerticalComa: float
+    RightHorizontalComa: float
+    RightHorizontalTrefoil: float
+    RightSpherical: float
 
     # managerName: str
     # """ Manager name in string. """
