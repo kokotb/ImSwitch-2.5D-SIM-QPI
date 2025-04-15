@@ -73,7 +73,8 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
         self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
-        self._widget.sig25DParamChanged.connect(self.valueChanged)
+        self._widget.sig25DParamChanged.connect(self.valueChanged25D)
+        self._widget.sigZernParamChanged.connect(self.valueChangedZern)
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
@@ -106,8 +107,8 @@ class SLM25DController(ImConWidgetController):
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
             for side in  self._widget.ZernikeSides:
-                self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
-                self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(strippedNames[i])
+                self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i])) #Set value in widget
+                self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i]) #Initial value dictionary to reset to when 'Reset' is rpessed.
             
 
     def updateZernike(self):
@@ -505,10 +506,10 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def valueChanged(self, attrCategory, parameterName, value):
-        self.setSharedAttr(attrCategory, parameterName, value)
+    def valueChanged25D(self, attrCategory, parameterName, value):
+        self.setSharedAttr25D(attrCategory, parameterName, value)
 
-    def setSharedAttr(self, attrCategory, parameterName, value):
+    def setSharedAttr25D(self, attrCategory, parameterName, value):
         """Sending attribute to shared attributes
 
         Args:
@@ -519,6 +520,23 @@ class SLM25DController(ImConWidgetController):
         self.settingAttr = True
         try:
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
+        finally:
+            self.settingAttr = False
+
+    def valueChangedZern(self, attrCategory, subCategory, parameterName, value):
+        self.setSharedAttrZern(attrCategory, subCategory, parameterName, value)
+
+    def setSharedAttrZern(self, attrCategory, subCategory, parameterName, value):
+        """Sending attribute to shared attributes
+
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(attrCategory, subCategory, parameterName)] = value
         finally:
             self.settingAttr = False
 
