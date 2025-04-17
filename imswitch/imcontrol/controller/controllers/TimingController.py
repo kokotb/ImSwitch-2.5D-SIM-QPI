@@ -17,14 +17,18 @@ class TimingController(ImConWidgetController):
         self._widget.sigTimingInfoChanged.connect(self.valueChanged)
         # self._widget.sigTimingCheckChanged.connect(self.valueChanged)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+
+        #Setup initial values after widget so all values sent to sharedAttrs
         self._widget.populateUnitsList()
         self._widget.timingPeriod_textedit.setText("0")
         self._widget.timingDuration_textedit.setText("0")
         self._widget.totalReps_textedit.setText("1")
+        self._widget.sigTimingInfoChanged.emit('Timing Settings','Period Checkbox', str(0))
         self._widget.sigTimingInfoChanged.emit('Timing Settings','Rep Checkbox', str(0))
         self._widget.sigTimingInfoChanged.emit('Timing Settings','Duration Checkbox', str(0))
-        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes) #Still on sigSIMAcqToggled
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
+        #
 
     def loadSettings(self, moduleDict):
         try:

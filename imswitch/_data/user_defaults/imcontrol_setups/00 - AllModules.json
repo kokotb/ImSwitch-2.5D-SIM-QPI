@@ -16,7 +16,7 @@
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 480,
-  "LeftCenterY": 540,
+  "LeftCenterY": 540, 
   "RightCenterX":1440,
   "RightCenterY": 540,
   "BeamDiameter": 6.0,

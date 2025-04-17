@@ -20,7 +20,7 @@ class SLM4DDManager(SignalInterface):
 # SLM returns code for ERROR in integer form. This is ERROR dictionary used to
 # decode errors in following functions.
     def __init__(self, SIMSLMInfo):
-
+        self._logger = initLogger(self)
         self.ERROR_Dictionary = {
             0 : "FDD_SUCCESS",
             1 : "FDD_MEM_INDEX_OUT_OF_BOUNDS",
@@ -79,11 +79,13 @@ class SLM4DDManager(SignalInterface):
         if ret == 0:
             retBool = True
             retStr = 'SLM connected? ' + str(retBool)
+            self._logger.error(retStr)
             
         else:
             retBool = False
             retStr = 'SLM connected? ' + str(retBool) + " : " + self.ERROR_Dictionary[ret]
-        print(retStr)
+            self._logger.error(retStr)
+            return
         return retBool, retStr
 
 

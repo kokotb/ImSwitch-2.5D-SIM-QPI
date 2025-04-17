@@ -111,7 +111,10 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
-        self.populateAndSelectROList()
+        try:
+            self.populateAndSelectROList()
+        except TypeError:
+            self._logger.error('Running order could not be set on SIM SLM.')
         #Get save directory root from config file and populate text box in SIM widget.
         self._widget.setUserDirInfo(setupInfoDict['saveDir'])
         
@@ -710,13 +713,14 @@ class SIMController(ImConWidgetController):
                 processor.saveOneTime = True
 
     def getPeriodInSec(self):
+        timingSecs = 0.0
         try:
             timingPeriodBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Timing Period')])
         except ValueError:
-            timingPeriodBox = 0
+            timingSecs = 0.0
         except KeyError:
-            timingPeriodBox = None
-        if timingPeriodBox is not None:
+            timingSecs = 0.0
+        if timingPeriodBox > 0.0:
             timingUnit = self._commChannel.sharedAttrs[('Timing Settings', 'Timing Unit')]
             if timingUnit == 's':
                 timingSecs = timingPeriodBox
@@ -725,8 +729,8 @@ class SIMController(ImConWidgetController):
             elif timingUnit == 'h':
 
                 timingSecs = timingPeriodBox * 3600
-            return timingSecs
-        return None
+        return timingSecs
+
     
     def getDurationInSec(self):
         try:
@@ -1152,12 +1156,12 @@ class SIMController(ImConWidgetController):
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
-        projCamPixelSize = 0.12331 # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
+        projCamPixelSize = 0.1233 # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
         #Get the parameters that go into the createXYGridPositionArray function
         self.getTilingSettings()
         # self._commChannel.sigCalcPositionArray.emit()
-        roiOriginList = []
+        
 
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
@@ -1169,6 +1173,7 @@ class SIMController(ImConWidgetController):
         else:
             self.isScanROI = False
 
+        roiOriginList = []
         if self.isScanROI:
             try:
                 roiOriginList = self.getOrigins()
@@ -1226,7 +1231,9 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers.
        # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         self.tilingRep = 0
-        timingPeriodInSec = self.getPeriodInSec()
+        isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
+        if isTimed: timingPeriodInSec = self.getPeriodInSec()
+
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
@@ -1234,25 +1241,25 @@ class SIMController(ImConWidgetController):
         completeZ = 0
         while self.active and poweredLasers != []:
             
-
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
             self._commChannel.updateActiveDirectory(self.exptFolderPath)
-
-            # Scan over all positions generated for grid
             
-            if self.completeFrameSets != 0 and timingPeriodInSec is not None: #Does not exceute on first loop
+            #### For timing period
+            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
+                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while repTimer < timingPeriodInSec:
-                    time.sleep(.05)
+                    time.sleep(0.1)
                     repTimer = time.time() - repTimerStart
-                    if self._widget.stop_button.isChecked(): #allows exit of the loop
-                        self._widget.stop_button.setChecked(False)
+                    if self._commChannel.stop25DNow: #allows exit of the loop
+                        self.stop25D()
                         return
             repTimerStart = time.time()
+            ####
 
             self.roiIterator = 0
-
             while self.roiIterator < len(positions):
                 j = 0 # Position iterator
                 oneROI = positions[self.roiIterator]
@@ -1286,7 +1293,7 @@ class SIMController(ImConWidgetController):
                         if self.zScanActive:
                             self.positioner.setPosition(zList[z], 'Z')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                            time.sleep(1) #TESTING
+                            time.sleep(0.5) #CTNOTE: Will be removed when I can. Not final.
 
                         procTimeStart = time.time()
 
@@ -1304,8 +1311,8 @@ class SIMController(ImConWidgetController):
                             if self.isTiling:
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
+
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
                             self.stop25D()
                             return
@@ -1314,8 +1321,8 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+
                         procTimeDur = round(time.time()-procTimeStart,3)
-                        print(procTimeDur)
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
 
@@ -1341,8 +1348,8 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1
 
                 self.roiIterator += 1
-                
-                print(f'total time: {totalEndTime}')
+                self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                self._logger.info(f'Elapsed time (s): {totalEndTime}')
             
 
 
@@ -1367,8 +1374,6 @@ class SIMController(ImConWidgetController):
         startBufferTime = time.time()
         totalBufferTime = 0
         while waitingBuffers != 1:
-
-            time.sleep(0.1)
             endBufferTime = time.time()
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue()
