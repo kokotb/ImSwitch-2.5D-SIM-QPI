@@ -37,6 +37,7 @@ class PositionerController(ImConWidgetController):
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigUpdateZPosition.connect(self.updatePosition)
+        self._commChannel.sigUpdateZPositionConfirmed.connect(self.updatePositionConfirmedVal)
         self._commChannel.sigUpdateXYPosition.connect(self.updatePosition)
         
 
@@ -146,11 +147,15 @@ class PositionerController(ImConWidgetController):
             
     
     def updatePosition(self, positionerName, axis):
-        newPos = self._master.positionersManager[positionerName].position[axis]
-        newPositions = self.getPos()
-        self._widget.updatePosition(positionerName, axis, float(newPositions[positionerName][axis]))
+        newPos = self._master.positionersManager[positionerName].position[axis] #Actually queries device for position.
+        # newPositions = self.getPos()
+        self._widget.updatePosition(positionerName, axis, float(newPos))
         self.setSharedAttr(positionerName, axis, _positionAttr, newPos)
 
+    def updatePositionConfirmedVal(self, positionerName, axis, newPos):
+
+        self._widget.updatePosition(positionerName, axis, float(newPos))
+        self.setSharedAttr(positionerName, axis, _positionAttr, newPos)
 
     def attrChanged(self, key, value):
         if self.settingAttr or len(key) != 4 or key[0] != _attrCategory:

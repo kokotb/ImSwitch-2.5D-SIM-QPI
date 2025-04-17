@@ -312,8 +312,8 @@ class PositionerWidget(Widget):
 
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         self.pars['Position' + parNameSuffix].setText(f'<strong>{position:.2f} µm</strong>') #Sets value on left side of positioner widget
-        # Updates entry window for absolute position
-        self.updateAbsPos(positionerName, axis, position)
+        
+        self.updateAbsPos(positionerName, axis, position) # Updates entry window for absolute position
 
 
     def _getParNameSuffix(self, positionerName, axis):

@@ -138,6 +138,7 @@ class CommunicationChannel(SignalInterface):
     # sigSetXYPosition = Signal(float, float)
     sigUpdateXYPosition = Signal(str,str)
     sigUpdateZPosition = Signal(str,str)
+    sigUpdateZPositionConfirmed = Signal(str,str, float)
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
     sigSIMStopped = Signal()

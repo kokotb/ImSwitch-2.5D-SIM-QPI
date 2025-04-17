@@ -1289,12 +1289,15 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
                     # for z in range(len(zList)):
-                        self._master.arduinoManager.trigger25DWriteOnly()
+                        
                         if self.zScanActive:
-                            self.positioner.setPosition(zList[z], 'Z')
-                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                            time.sleep(0.5) #CTNOTE: Will be removed when I can. Not final.
+                            success = self.positioner.setPosition(zList[z], 'Z')
+                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z])
+                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
+
+                        self._master.arduinoManager.trigger25DWriteOnly()
+                             
                         procTimeStart = time.time()
 
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
@@ -1325,6 +1328,7 @@ class SIMController(ImConWidgetController):
                         procTimeDur = round(time.time()-procTimeStart,3)
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        self._logger.info(f'Acquisition time (s): {procTimeDur}')
 
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     completeZ += 1
@@ -1348,7 +1352,7 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1
 
                 self.roiIterator += 1
-                self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                
                 self._logger.info(f'Elapsed time (s): {totalEndTime}')
             
 

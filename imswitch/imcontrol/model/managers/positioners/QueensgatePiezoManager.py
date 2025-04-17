@@ -1,4 +1,5 @@
 from .PositionerManager import PositionerManager
+from imswitch.imcommon.model import initLogger
 
 
 class QueensgatePiezoManager(PositionerManager):
@@ -12,6 +13,7 @@ class QueensgatePiezoManager(PositionerManager):
     """
 
     def __init__(self, positionerInfo, name, *args, **lowLevelManagers):
+        self._logger = initLogger(self, tryInheritParent=True)
         if len(positionerInfo.axes) != 1:
             raise RuntimeError(f'{self.__class__.__name__} only supports one axis,'
                                f' {len(positionerInfo.axes)} provided.')
@@ -60,9 +62,15 @@ class QueensgatePiezoManager(PositionerManager):
     
     def setPosition(self, value, _):
         cmd = 'V {}'.format(value)
-        self._rs232Manager.query(cmd)
-        self._position[_] = value
-        print(f"Z position moved to {value}")
+        ret = self._rs232Manager.query(cmd)
+        if ret == 'R': success = True
+        if success:
+            self._position[_] = value
+            self._logger.info(f"Z = {value}")
+        else:
+            success = False
+            self._logger.warning(f"Z move command failed.")
+        return success
 
 
     def getSpeedLow(self):
@@ -86,7 +94,6 @@ class QueensgatePiezoManager(PositionerManager):
         if reply is None:
             reply = self._position[self.axes[0]]
         else:
-            # reply = float(reply.split(' ')[0])
             reply = float(reply)
         self._position[self.axes[0]] = reply
         # print(reply)
