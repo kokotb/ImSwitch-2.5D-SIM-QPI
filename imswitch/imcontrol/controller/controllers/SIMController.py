@@ -1245,19 +1245,19 @@ class SIMController(ImConWidgetController):
             self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
             self._commChannel.updateActiveDirectory(self.exptFolderPath)
             
-            #### For timing period
-            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                repTimer = time.time() - repTimerStart
-                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                while repTimer < timingPeriodInSec:
-                    time.sleep(0.1)
-                    repTimer = time.time() - repTimerStart
-                    if self._commChannel.stop25DNow: #allows exit of the loop
-                        self.stop25D()
-                        return
-            repTimerStart = time.time()
-            ####
+            # #### For timing period
+            # if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+            #     repTimer = time.time() - repTimerStart
+            #     if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+            #         self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+            #     while repTimer < timingPeriodInSec:
+            #         time.sleep(0.1)
+            #         repTimer = time.time() - repTimerStart
+            #         if self._commChannel.stop25DNow: #allows exit of the loop
+            #             self.stop25D()
+            #             return
+            # repTimerStart = time.time()
+            # ####
 
             self.roiIterator = 0
             while self.roiIterator < len(positions):
@@ -1288,8 +1288,24 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-                    # for z in range(len(zList)):
-                        
+
+                        #### For timing period
+                        if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                            repTimer = time.time() - repTimerStart
+                            if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                            while repTimer < timingPeriodInSec:
+                                time.sleep(0.1)
+                                repTimer = time.time() - repTimerStart
+                                if self._commChannel.stop25DNow: #allows exit of the loop
+                                    self.stop25D()
+                                    return
+                        repTimerStart = time.time()
+                        ####
+
+
+
+
                         if self.zScanActive:
                             success = self.positioner.setPosition(zList[z], 'Z')
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z])
