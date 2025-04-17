@@ -1274,8 +1274,10 @@ class SIMController(ImConWidgetController):
                         bestZ = AFList[bestIndex]
                         offsetAF = bestZ - localOrigin
                         print(offsetAF)
+                        self.channelAF = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
                         if bestZ != localOrigin:
                             self.positioner.setPosition(bestZ, 'Z')
+                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
                     ####
 
                     z = 0
@@ -1297,7 +1299,7 @@ class SIMController(ImConWidgetController):
 
                         if self.zScanActive: #Moves piezo for Z stack.
                             success = self.positioner.setPosition(zList[z], 'Z')
-                            if (z == 0): #Small delay for large Z move. Should get speed of piezo and calculate this number.
+                            if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
                                 time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
@@ -1406,6 +1408,12 @@ class SIMController(ImConWidgetController):
 
 
         rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+
+        ##Temporary printing for debug
+        # if processor.handle == self.channelAF:
+        print(processor.handle, " ", self._master.autofocusManager.computeLaplacian(rawImg))
+        time.sleep(0.5)
+        ##
 
         self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
 

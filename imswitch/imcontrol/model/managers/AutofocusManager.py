@@ -18,8 +18,8 @@ class AutofocusManager(SignalInterface):
     def calcAFArray(self, origin):
 
         AFList = []
-        startZ = origin - 1
-        steps = 10
+        startZ = origin - 2
+        steps = 20
         stepSize = 0.2
         AFList.append(startZ)
         for i in range(steps):
@@ -44,6 +44,14 @@ class AutofocusManager(SignalInterface):
 
             
         return scoreArray, maxVal  # Compute variance of Laplacian
+    
+    def computeLaplacian(self, img, toPrint = False):
+
+        laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
+        score = np.var(laplacian)
+        if toPrint:
+            print(f'Laplacian {i}: {score}')           
+        return score
 
 
 
