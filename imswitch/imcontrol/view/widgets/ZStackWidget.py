@@ -1,13 +1,8 @@
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 
-from imswitch.imcontrol.view import guitools
-from .basewidgets import Widget
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
-                             QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,
-                             QCheckBox, QLabel, QLineEdit, QFrame)
+from PyQt5.QtWidgets import (QCheckBox, QLabel, QLineEdit)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-import napari
-from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtCore import QLocale
 import math
 

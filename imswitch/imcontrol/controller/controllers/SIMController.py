@@ -1305,6 +1305,8 @@ class SIMController(ImConWidgetController):
 
                         if self.zScanActive: #Moves piezo for Z stack.
                             success = self.positioner.setPosition(zList[z], 'Z')
+                            if (z == 0): #Small delay for large Z move. Should get speed of piezo and calculate this number.
+                                time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
 
@@ -1346,10 +1348,8 @@ class SIMController(ImConWidgetController):
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     completeZ += 1
 
-                    
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stop25D() # Stops tiling reps after all tiles*repetitions is done.
-
 
                     totalEndTime = round(time.time()-time_global_start,3)
                     remainder = self.completeFrameSets % len(oneROI)
@@ -1368,9 +1368,6 @@ class SIMController(ImConWidgetController):
                 
                 self._logger.info(f'Elapsed time (s): {totalEndTime}')
             
-
-
-        
 
     def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, snapshotLock):
         # saveOneTime = self.saveOneTime
@@ -1434,6 +1431,7 @@ class SIMController(ImConWidgetController):
         #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
         #     #     self.updateWFContLimits()
         #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+        
         with saveLock:
             if ((self.isRecordRaw)) and not (self.startSettingsSaved):
                 self._commChannel.sigSaveSettingsFirst.emit()
@@ -1458,38 +1456,8 @@ class SIMController(ImConWidgetController):
 
 
     
-    # def createLogFile(self):
-    #     if self._widget.checkbox_logging.isChecked():
-    #         dir_save = os.path.join(self.exptFolderPath,"logging")
-    #         if not os.path.exists(dir_save):
-    #             os.makedirs(dir_save)
-    #         export_name = os.path.join(dir_save,"log_file.xlsx")
-            
-    #         # Loop time logging
-    #         t_loop = np.transpose(self.log_times_loop)
-    #         t_loop_column_names = ["frame","loop time [s]"]
-    #         df = pd.DataFrame(data=t_loop, index=t_loop_column_names).T
-    #         df.to_excel(export_name, sheet_name="Sheet1")
-    
-    # def getReconstructionMethod(self):
-    #     return self._widget.SIMReconstructorList.currentText()
-
-    # def getIsUseGPU(self):
-    #     return self._widget.useGPUCheckbox.isChecked()
-    
-    # def valueChanged(self, parameterName, value):
-    #     self.setSharedAttr(parameterName, _valueAttr, value)
-    
-    # def attrChanged(self, key, value):
-    #     #BK EDIT - not sure we will use this in our case
-    #     if self.settingAttr or len(key) != 3 or key[0] != _attrCategory:
-    #         return
-
-    #     parameterName = key[1]
-    #     if key[2] == _valueAttr:
-    #         # FIXME: not set up yet just a place holder
-    #         self.setParameter(parameterName, value)
-    
+   
+   
     def setSharedAttr(self, attrCategory, parameterName, value):
         """Sending attribute to shared attributes
 
