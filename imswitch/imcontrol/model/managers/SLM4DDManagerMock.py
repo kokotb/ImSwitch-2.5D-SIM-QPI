@@ -48,7 +48,7 @@ class SLM4DDManagerMock(SignalInterface):
         self.slmDLL = self.getSLMDLL(path)
         self.openSLM(port)
 
-        #super().__init__(SIMSLMInfo, 'SIMslm')
+        #super().__init__(SIMSLMInfo, 'SLMSIM')
 
     # Opens SLMDLL library ===========================================================
     def getSLMDLL(self, path):

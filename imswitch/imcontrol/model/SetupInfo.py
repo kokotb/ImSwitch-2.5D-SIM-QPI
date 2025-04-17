@@ -465,7 +465,7 @@ class SetupInfo:
     sim: Optional[SIMInfo] = field(default_factory=lambda: None)
     """ SIM widget settings. Required to be defined to use SIM widget. """
     
-    SIMslm: Optional[SIMslmInfo] = field(default_factory=lambda: None)
+    SLMSIM: Optional[SIMslmInfo] = field(default_factory=lambda: None)
     """SIM slm settings. Just testing out."""
     
     Arduino: Optional[ArduinoInfo] = field(default_factory=lambda: None)

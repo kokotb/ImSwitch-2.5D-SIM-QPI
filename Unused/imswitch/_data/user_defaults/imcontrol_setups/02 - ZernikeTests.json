@@ -1,4 +1,4 @@
-{ "SIMslm":{
+{ "SLMSIM":{
   "path": "dlls\\SLM4DD\\lib\\R4CommLib-1.7-x64.dll",
   "port": "COM4",
   "width":1080,

@@ -63,11 +63,11 @@ class MasterController:
             
         # self.simManager = SIMManager(self.__setupInfo.sim)
         
-        if self.__setupInfo.SIMslm:
-            if self.__setupInfo.SIMslm.mock:
-              self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SIMslm)
+        if self.__setupInfo.SLMSIM:
+            if self.__setupInfo.SLMSIM.mock:
+              self.SLM4DDManager = SLM4DDManagerMock(self.__setupInfo.SLMSIM)
             else:    
-                self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SIMslm)
+                self.SLM4DDManager = SLM4DDManager(self.__setupInfo.SLMSIM)
             
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,
