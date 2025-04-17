@@ -1,7 +1,6 @@
 from qtpy import QtCore, QtWidgets
-from PyQt5.QtGui import QWheelEvent , QDoubleValidator
-from PyQt5.QtGui import QIntValidator
-
+from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
+from PyQt5.QtWidgets import QCheckBox
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
 
@@ -219,13 +218,11 @@ class PositionerWidget(Widget):
         self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
         self.validator = QDoubleValidator()
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
-        # validator = QDoubleValidator()
-        # validator.setRange(-10000.0, 9999.0, 1)
-        # self.pars['AbsPosEdit' + parNameSuffix].setMaxLength(8)
-        # self.pars['AbsPosEdit' + parNameSuffix].setValidator(validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
 
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
+
+
 
 
         self.wholeYLayout.addWidget(self.pars['Label' + parNameSuffix])
@@ -238,7 +235,7 @@ class PositionerWidget(Widget):
         self.wholeYLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeYLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
         self.wholeYLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
-        # self.wholeYLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
+
 
         self.elementList.append(self.pars['AbsPosEdit' + parNameSuffix])
 

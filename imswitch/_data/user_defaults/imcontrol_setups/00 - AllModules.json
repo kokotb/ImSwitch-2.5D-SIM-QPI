@@ -292,6 +292,7 @@
     "InfoGathering",
     "ROI",
     "SLM25D",
-    "PSFAnalysis"
+    "PSFAnalysis",
+    "Autofocus"
   ]
 }
