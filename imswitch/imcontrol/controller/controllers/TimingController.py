@@ -1,11 +1,5 @@
 from ..basecontrollers import ImConWidgetController
-from imswitch.imcommon.model import APIExport
-import numpy as np
-from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
-from imswitch.imcommon.framework import Signal
-import threading
-import ctypes
-
+from imswitch.imcommon.model import initLogger
 class TimingController(ImConWidgetController):
 
 

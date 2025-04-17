@@ -46,12 +46,13 @@ class QueensgatePiezoManager(PositionerManager):
         cmd = 'V {}'.format(value)
         ret = self._rs232Manager.query(cmd)
         if ret == 'R': success = True
-        if success:
-            self._position[_] = value
-            self._logger.info(f"Z = {value}")
         else:
             success = False
             self._logger.warning(f"Z move command failed.")
+        if success:
+            self._position[_] = value
+            self._logger.info(f"Z = {value}")
+
         return success
 
 

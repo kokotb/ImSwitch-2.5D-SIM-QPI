@@ -40,6 +40,8 @@ class CommunicationChannel(SignalInterface):
     
     # sigRunAcquireSetStopped = Signal()
 
+    sigRunAutofocus = Signal()
+
     sigScriptExecutionFinished = Signal()
 
     sigAdjustFrame = Signal(object)  # (shape)
@@ -128,6 +130,8 @@ class CommunicationChannel(SignalInterface):
  
     sigRecPSFStack = Signal(np.ndarray, bool, int)
 
+    sigRecAFStack = Signal(np.ndarray, bool, int)
+
     # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
@@ -156,6 +160,7 @@ class CommunicationChannel(SignalInterface):
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
         self.sigRecPSFStack.connect(self.storeRecPSFStack)
+        self.sigRecAFStack.connect(self.storeRecAFStack)
         self.sigStop25D.connect(self.updateStop25DCommand)
         self.roiList = []
         self.simActive = False
@@ -189,6 +194,11 @@ class CommunicationChannel(SignalInterface):
             if reset == True:
                 self.zStackList640 = []   
             self.zStackList640.append(stack)
+
+    def storeRecAFStack(self, stack, reset, handle):
+        if reset == True:
+            self.AFArray = []   
+        self.AFArray.append(stack)
 
 
 

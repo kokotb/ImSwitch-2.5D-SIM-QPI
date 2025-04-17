@@ -138,7 +138,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'Tiling' in self.docks:
             self.docks['Tiling'].setStretch(1, 0.5)
         if 'Autofocus' in self.docks:
-            self.docks['Autofocus'].setStretch(1, 0.5)
+            self.docks['Autofocus'].setStretch(1, 0.1)
         if 'InfoGathering' in self.docks:
             self.docks['InfoGathering'].setStretch(1, 0.1)
         if 'PSFAnalysis' in self.docks:

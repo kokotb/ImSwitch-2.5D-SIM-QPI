@@ -6,7 +6,7 @@ from imswitch.imcommon.model import VFileItem, initLogger
 
 from imswitch.imcontrol.model import (
     DetectorsManager, LasersManager, MultiManager, PositionersManager, RS232sManager, 
-     SLM25DManager, SLM4DDManager, SLM4DDManagerMock, ArduinoManager, TilingManager, ROIManager, SLM25DManagerMock
+     SLM25DManager, SLM4DDManager, SLM4DDManagerMock, ArduinoManager, TilingManager, ROIManager, SLM25DManagerMock, AutofocusManager
 )
 
 
@@ -36,7 +36,7 @@ class MasterController:
         }
         self.tilingManager = TilingManager()
         self.roiManager = ROIManager()
-
+        self.autofocusManager = AutofocusManager()
         self.detectorsManager = DetectorsManager(self.__setupInfo.detectors, updatePeriod=100,
                                                  **lowLevelManagers)
         self.lasersManager = LasersManager(self.__setupInfo.lasers,

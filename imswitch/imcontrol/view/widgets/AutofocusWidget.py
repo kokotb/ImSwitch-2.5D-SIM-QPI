@@ -15,10 +15,22 @@ class AutofocusWidget(NapariHybridWidget):
 
         self.checkbox_Autofocus = QCheckBox('Autofocus')
 
+        self.AFChannel = QtWidgets.QComboBox()
+
+
         row = 0
         autofocusLayout.addWidget(self.checkbox_Autofocus, row, 0)
+        autofocusLayout.addWidget(self.AFChannel, row, 1)
+        
 
         self.checkbox_Autofocus.stateChanged.connect(lambda value: self.sigAutofocusInfoChanged.emit('Autofocus Settings','Autofocus Checkbox', str(value)))
+        self.AFChannel.currentTextChanged.connect(lambda value: self.sigAutofocusInfoChanged.emit('Autofocus Settings','Autofocus Channel', value))
+
+    def initValues(self):
+        self.checkbox_Autofocus.setChecked(True)
+        self.checkbox_Autofocus.setChecked(False)
+        self.AFChannel.addItems(['488', '561','640'])
+        self.AFChannel.setCurrentIndex(2)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

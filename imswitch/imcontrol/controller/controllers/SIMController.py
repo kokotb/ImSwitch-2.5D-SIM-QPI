@@ -110,6 +110,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+        # self._commChannel.sigRunAutofocus.conn
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         try:
             self.populateAndSelectROList()
@@ -787,38 +788,16 @@ class SIMController(ImConWidgetController):
         ostools.openFolderInOS(folder)
 
 
-    # def initFastAPISIM(self, params):
-    #     self.fastAPISIMParams = params
-    #     self.IS_FASTAPISIM = True
-
-    #     # Usage example
-    #     host = self.fastAPISIMParams["host"]
-    #     port = self.fastAPISIMParams["port"]
-    #     tWaitSequence = self.fastAPISIMParams["tWaitSquence"]
-
-    #     if tWaitSequence is None:
-    #         tWaitSequence = 0.1
-    #     if host is None:
-    #         host = "169.254.165.4"
-    #     if port is None:
-    #         port = 8000
-
-    #     # self.SIMClient = SIMClient(URL=host, PORT=port)
-    #     # self.SIMClient.set_pause(tWaitSequence)
-
-
-
-
     def __del__(self):
         pass
         #self.imageComputationThread.quit()
         #self.imageComputationThread.wait()
 
-    def toggleSIMDisplay(self, enabled=True):
-        self._widget.setSIMDisplayVisible(enabled)
+    # def toggleSIMDisplay(self, enabled=True):
+    #     self._widget.setSIMDisplayVisible(enabled)
 
-    def monitorChanged(self, monitor):
-        self._widget.setSIMDisplayMonitor(monitor)
+    # def monitorChanged(self, monitor):
+    #     self._widget.setSIMDisplayMonitor(monitor)
 
     # def patternIDChanged(self, patternID):
     #     wl = self.getpatternWavelength()
@@ -833,14 +812,14 @@ class SIMController(ImConWidgetController):
     #         self._logger.error("The laser wavelength is not implemented")
     #     self.simPatternByID(patternID,laserTag)
 
-    def getpatternWavelength(self):
-        return self._widget.laser_dropdown.currentText()
+    # def getpatternWavelength(self):
+    #     return self._widget.laser_dropdown.currentText()
 
-    def displayMask(self, image):
-        self._widget.updateSIMDisplay(image)
+    # def displayMask(self, image):
+    #     self._widget.updateSIMDisplay(image)
 
-    def setIlluPatternByID(self, iRot, iPhi):
-        self.detector.setIlluPatternByID(iRot, iPhi)
+    # def setIlluPatternByID(self, iRot, iPhi):
+    #     self.detector.setIlluPatternByID(iRot, iPhi)
 
     def displaySIMImage(self, im, name):
         """ Displays the image in the view. """
@@ -1286,6 +1265,19 @@ class SIMController(ImConWidgetController):
                     else:
                         time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
 
+                    ####Autofocus
+                    if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
+                        localOrigin = float(self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')])
+                        AFList = self._master.autofocusManager.calcAFArray(localOrigin)
+                        self.autofocusLoop(AFList)
+                        scoreArray, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
+                        bestZ = AFList[bestIndex]
+                        offsetAF = bestZ - localOrigin
+                        print(offsetAF)
+                        if bestZ != localOrigin:
+                            self.positioner.setPosition(bestZ, 'Z')
+                    ####
+
                     z = 0
                     while z < len(zList):
 
@@ -1453,10 +1445,43 @@ class SIMController(ImConWidgetController):
         processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
+    def autofocusLoop(self, AFList):
+        print("AF START")
+        resetStack = False
+        afIter = 0
+        listLength = len(AFList)
+        startOriginIndex = listLength // 2
+        startOriginValue = AFList[startOriginIndex]
+        channel = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
+        for tempProcessor in self.activeProcessors:
+            if tempProcessor.handle == channel:
+                AFProcessor = tempProcessor
+                break
+        while afIter < len(AFList):
 
 
-    
-   
+            self.positioner.setPosition(AFList[afIter], 'Z')
+            time.sleep(0.1)
+
+            self._master.arduinoManager.trigger25DWriteOnly()
+
+            detector = AFProcessor.detObj
+            rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+
+
+            if afIter == 0:
+                resetStack = True
+            else:
+                resetStack = False
+
+            self._commChannel.sigRecAFStack.emit(rawImg, resetStack, AFProcessor.handle)
+
+            AFProcessor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+            afIter += 1
+
+        self.positioner.setPosition(startOriginValue, 'Z')
+        print("AFEND")
+  
    
     def setSharedAttr(self, attrCategory, parameterName, value):
         """Sending attribute to shared attributes
