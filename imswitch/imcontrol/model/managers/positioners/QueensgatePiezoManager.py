@@ -42,24 +42,6 @@ class QueensgatePiezoManager(PositionerManager):
 
         self._position[self.axes[0]] = self._position[self.axes[0]] + value
 
-    # def move(self, value, _):
-    #     if value == 0:
-    #         return
-    #     elif float(value) > 0:
-    #         cmd = 'MOVRX +' + str(round(float(value), 3))[0:6] + 'u'
-    #     elif float(value) < 0:
-    #         cmd = 'MOVRX -' + str(round(float(value), 3))[1:7] + 'u'
-    #     self._rs232Manager.query(cmd)
-
-    #     self._position[self.axes[0]] = self._position[self.axes[0]] + value
-
-    # def move_to_position(self, value, axis):
-    #     cmd = 'V {}'.format(value)
-    #     self._rs232Manager.query(cmd)
-    #     self._position[axis] = value
-    #     print(value)
-
-    
     def setPosition(self, value, _):
         cmd = 'V {}'.format(value)
         ret = self._rs232Manager.query(cmd)
