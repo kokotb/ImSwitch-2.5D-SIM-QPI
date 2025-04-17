@@ -1303,13 +1303,10 @@ class SIMController(ImConWidgetController):
                         repTimerStart = time.time()
                         ####
 
-
-
-
-                        if self.zScanActive:
+                        if self.zScanActive: #Moves piezo for Z stack.
                             success = self.positioner.setPosition(zList[z], 'Z')
-                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z])
-                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
+                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
 
 
                         self._master.arduinoManager.trigger25DWriteOnly()
