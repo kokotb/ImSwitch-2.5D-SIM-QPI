@@ -81,7 +81,7 @@ class PositionerWidget(Widget):
         self.pars['AbsPosEdit' + parNameSuffix]._name = 'Z--Z'
         self.pars['AbsPosEdit' + parNameSuffix]._type = 'str'
         self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
-        self.validator = QDoubleValidator()
+        self.validator = QDoubleValidator(-45,450,1)
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
@@ -291,7 +291,7 @@ class PositionerWidget(Widget):
         """ Updates the absolute position widget of the specified positioner 
         axis in micrometers. """
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
-        self.pars['AbsPosEdit'+parNameSuffix].setText(str(position))
+        self.pars['AbsPosEdit'+parNameSuffix].setText(str(round(position,1)))
 
     def updateSpeedSize(self, positionerName, axis, speedSize):
         """ Sets the step size of the specified positioner axis to the
