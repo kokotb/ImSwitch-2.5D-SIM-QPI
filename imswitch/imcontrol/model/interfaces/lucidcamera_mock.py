@@ -48,6 +48,9 @@ class LucidCamMock:
     def prepare_live(self):
         pass
 
+    def start_live25D(self):
+        pass
+
     def setROI(self, hpos, vpos, hsize, vsize):
         # Change the width and height in properties
         # Simulating the properties changed on camera
@@ -158,12 +161,21 @@ class LucidCamMock:
     def flushBuffer(self):
         pass 
     
-    def getBufferValue(self):
-        value = 9
+    def getBufferValue(self, mode):
+        if mode == '25D': value = 1
+        elif mode == 'SIM': value = 9
         return value
     
     def setCamForAcquisition(self, buffer_size):
         pass
+
+    def setBufferTimeout(self, timeMS):
+        pass
+
+    def grabFrame25D(self, buffers):
+        time.sleep(0.1)
+        img = np.random.rand(1024,1024)*3500
+        return img
     
     def grabFrameSet(self, buffer_size):
         #if False:

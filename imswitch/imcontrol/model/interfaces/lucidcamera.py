@@ -462,8 +462,7 @@ class LucidCam:
             self.device.requeue_buffer(buffer_set)
 
     
-    def getBufferValue(self):
-        # FIXME: Check if this works alright
+    def getBufferValue(self, mode):
         value = self.tl_stream_nodemap['StreamOutputBufferCount'].value
         return value
     
@@ -652,6 +651,9 @@ class LucidCam:
             self.__logger.warning("Unsupported data type! Mono16 and Mono8 currently supported")
             sim_set = None
         return sim_set
+    
+    def setBufferTimeout(self, timeMS):
+        self.device.GET_BUFFER_TIMEOUT_MILLISEC = timeMS
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

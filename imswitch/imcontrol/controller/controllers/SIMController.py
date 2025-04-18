@@ -436,7 +436,7 @@ class SIMController(ImConWidgetController):
         detector = processor.detObj
 ######TIMING BUFFER WAITING LOGIC BREAKS DOWN AT FAST SPEEDS. NEED DIFFERENT WAY.
         time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
-        waitingBuffers = detector._camera.getBufferValue()
+        waitingBuffers = detector._camera.getBufferValue("SIM")
 
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
@@ -445,7 +445,7 @@ class SIMController(ImConWidgetController):
         # time.sleep(1)
         while waitingBuffers != 9:
             time.sleep(self.expTimeMax/1000000)
-            waitingBuffers = detector._camera.getBufferValue() #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
+            waitingBuffers = detector._camera.getBufferValue("SIM") #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
             if waitingBuffers != waitingBuffersEnd:
                 bufferStartTime = time.time()
                 bufferEndTime = time.time()
@@ -959,7 +959,7 @@ class SIMController(ImConWidgetController):
 
 
         detector._camera.setPropertyValue('AcquisitionFrameRate', 15.0)
-        detector._camera.device.GET_BUFFER_TIMEOUT_MILLISEC = math.inf
+        detector._camera.setBufferTimeout(math.inf)
 
         trigger_source = 'Line2'
         trigger_mode = 'On'
@@ -1007,7 +1007,7 @@ class SIMController(ImConWidgetController):
         exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line2'
-        detector._camera.device.GET_BUFFER_TIMEOUT_MILLISEC = 1000
+        detector._camera.setBufferTimeout(1000)
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1378,13 +1378,13 @@ class SIMController(ImConWidgetController):
         # Set current detector being used
         detector = processor.detObj
         
-        waitingBuffers = detector._camera.getBufferValue()
+        waitingBuffers = detector._camera.getBufferValue('25D')
         startBufferTime = time.time()
         totalBufferTime = 0
         while waitingBuffers != 1:
             endBufferTime = time.time()
             totalBufferTime = endBufferTime - startBufferTime
-            waitingBuffers = detector._camera.getBufferValue()
+            waitingBuffers = detector._camera.getBufferValue('25D')
 
             if waitingBuffers != 1 and totalBufferTime > 0.25:
 
