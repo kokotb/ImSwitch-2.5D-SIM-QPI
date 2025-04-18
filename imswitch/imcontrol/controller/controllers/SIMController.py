@@ -1411,8 +1411,8 @@ class SIMController(ImConWidgetController):
 
         ##Temporary printing for debug
         # if processor.handle == self.channelAF:
-        print(processor.handle, " ", self._master.autofocusManager.computeLaplacian(rawImg))
-        time.sleep(0.5)
+        # print(processor.handle, " ", self._master.autofocusManager.computeLaplacian(rawImg))
+        # time.sleep(0.5)
         ##
 
         self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
