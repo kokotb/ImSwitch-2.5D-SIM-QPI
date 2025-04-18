@@ -31,7 +31,7 @@ class InfoGatheringWidget(NapariHybridWidget):
         self.layout.addWidget(self.loadSettings, 1, 0)
 
 
-        self.loadSettings.clicked.connect(self.openLoadWindow)
+        
         # self.saveSettings.clicked.connect(self.saveFileDialog)
 
     def toggleLoadButton(self, state):
@@ -52,9 +52,8 @@ class InfoGatheringWidget(NapariHybridWidget):
             selected_file = None
         return selected_file
     
-    def openLoadWindow(self):
-        
-        self.loadingPopup.exec_()
+
+
     
 
 class MyInputDialog(QDialog):
@@ -67,7 +66,7 @@ class MyInputDialog(QDialog):
 
 
         self.filePath = QtWidgets.QLineEdit()
-        self.openDialog = QPushButton("Open")
+        self.openDialog = QPushButton("Browse")
         self.allCheckbox = QtWidgets.QCheckBox("All")
         self.lasersCheckbox = QtWidgets.QCheckBox('Lasers')
         self.positionersCheckbox = QtWidgets.QCheckBox("Positioners")
@@ -139,18 +138,24 @@ class MyInputDialog(QDialog):
 
 
 
-    def openFileDialog(self):
+    def openFileDialog(self, path):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setNameFilter("JSON (*.json)")
-        dialog.setDirectory(r'C:\VSCode\ImSwitch-2.5D-SIM-QPI')
+        dialog.setDirectory(path)
         if dialog.exec():
             filename = dialog.selectedFiles()
+        else:
+           filename = None
         return filename
+        
     
     def loadPath(self):
-        jsonPath = self.openFileDialog()[0]
-        self.filePath.setText(jsonPath)
+
+        jsonPath = self.openFileDialog(self.filePath.text())
+        if jsonPath != None:
+            self.filePath.setText(jsonPath[0])
+        else: pass
 
     def loadJSON(self):
         jsonPath = self.filePath.text()

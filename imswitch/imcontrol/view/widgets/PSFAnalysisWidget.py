@@ -143,7 +143,7 @@ class PSFWindow(QMainWindow):
         self.imgZStack = pg.ImageItem()
         self.vbZStack.addItem(self.imgZStack)
 
-        self.image_stack = np.zeros((20, 512, 512))
+        self.image_stack = np.zeros((20, 1024, 1024))
         self.current_index = 0     # scroll through whole Zstack
         # self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
         self.vbZStack.addItem(self.imgZStack)
@@ -185,7 +185,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFXY = self.PSFXYFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXY = pg.ImageItem()
-        self.imgPSFXY.setImage(np.zeros((512, 512)))
+        self.imgPSFXY.setImage(np.zeros((1024, 1024)))
         self.vbPSFXY.addItem(self.imgPSFXY)
 
         # XZ PSF projection view
@@ -196,7 +196,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFXZ = self.PSFXZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXZ = pg.ImageItem()
-        self.imgPSFXZ.setImage(np.zeros((512, 512)))
+        self.imgPSFXZ.setImage(np.zeros((1024, 1024)))
         self.vbPSFXZ.addItem(self.imgPSFXZ)
 
         # YZ PSF projection view
@@ -207,7 +207,7 @@ class PSFWindow(QMainWindow):
         self.vbPSFYZ = self.PSFYZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFYZ = pg.ImageItem()
-        self.imgPSFYZ.setImage(np.zeros((512, 512)))
+        self.imgPSFYZ.setImage(np.zeros((1024, 1024)))
         self.vbPSFYZ.addItem(self.imgPSFYZ)
 
 
@@ -233,7 +233,7 @@ class PSFWindow(QMainWindow):
 
 
         # Lines in psf view to locate position while scrolling thgough a stack ============================
-        self.overlayMatrixZstack =  np.zeros((512, 512))
+        self.overlayMatrixZstack =  np.zeros((1024, 1024))
         self.overlayImgZstack = pg.ImageItem(self.overlayMatrixZstack)
         self.vbZStack.addItem(self.overlayImgZstack)
 
@@ -242,15 +242,15 @@ class PSFWindow(QMainWindow):
         self.overlayImgZstack.setImage(centerArrayZstack)
         self.overlayImgZstack.setRect(0, 0, np.shape(self.image_stack)[2], np.shape(self.image_stack)[1])
 
-        self.overlayMatrixXY =  np.zeros((512, 512))
+        self.overlayMatrixXY =  np.zeros((1024, 1024))
         self.overlayImgXY = pg.ImageItem(self.overlayMatrixXY)
         self.vbPSFXY.addItem(self.overlayImgXY)
 
-        self.overlayMatrixXZ =  np.zeros((512, 512))
+        self.overlayMatrixXZ =  np.zeros((1024, 1024))
         self.overlayImgXZ = pg.ImageItem(self.overlayMatrixXZ)
         self.vbPSFXZ.addItem(self.overlayImgXZ)
 
-        self.overlayMatrixYZ =  np.zeros((512, 512))
+        self.overlayMatrixYZ =  np.zeros((1024, 1024))
         self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
         self.vbPSFYZ.addItem(self.overlayImgYZ)
 
@@ -458,7 +458,7 @@ class PSFWindowRecord(QMainWindow):
         self.imgZStack = pg.ImageItem()
         self.vbZStack.addItem(self.imgZStack)
 
-        self.image_stack = np.zeros((20, 512, 512))
+        self.image_stack = np.zeros((20, 1024, 1024))
         self.current_index = 0     # scroll through whole Zstack
         # self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
         self.vbZStack.addItem(self.imgZStack)
@@ -520,7 +520,7 @@ class PSFWindowRecord(QMainWindow):
         self.vbPSFXY = self.PSFXYFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXY = pg.ImageItem()
-        self.imgPSFXY.setImage(np.zeros((512, 512)))
+        self.imgPSFXY.setImage(np.zeros((1024, 1024)))
         self.vbPSFXY.addItem(self.imgPSFXY)
 
         # XZ PSF projection view
@@ -531,7 +531,7 @@ class PSFWindowRecord(QMainWindow):
         self.vbPSFXZ = self.PSFXZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFXZ = pg.ImageItem()
-        self.imgPSFXZ.setImage(np.zeros((512, 512)))
+        self.imgPSFXZ.setImage(np.zeros((1024, 1024)))
         self.vbPSFXZ.addItem(self.imgPSFXZ)
 
         # YZ PSF projection view
@@ -542,7 +542,7 @@ class PSFWindowRecord(QMainWindow):
         self.vbPSFYZ = self.PSFYZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
 
         self.imgPSFYZ = pg.ImageItem()
-        self.imgPSFYZ.setImage(np.zeros((512, 512)))
+        self.imgPSFYZ.setImage(np.zeros((1024, 1024)))
         self.vbPSFYZ.addItem(self.imgPSFYZ)
 
 
@@ -568,7 +568,7 @@ class PSFWindowRecord(QMainWindow):
 
 
         # Lines in psf view to locate position while scrolling thgough a stack ============================
-        self.overlayMatrixZstack =  np.zeros((512, 512))
+        self.overlayMatrixZstack =  np.zeros((1024, 1024))
         self.overlayImgZstack = pg.ImageItem(self.overlayMatrixZstack)
         self.vbZStack.addItem(self.overlayImgZstack)
 
@@ -577,15 +577,15 @@ class PSFWindowRecord(QMainWindow):
         self.overlayImgZstack.setImage(centerArrayZstack)
         self.overlayImgZstack.setRect(0, 0, np.shape(self.image_stack)[2], np.shape(self.image_stack)[1])
 
-        self.overlayMatrixXY =  np.zeros((512, 512))
+        self.overlayMatrixXY =  np.zeros((1024, 1024))
         self.overlayImgXY = pg.ImageItem(self.overlayMatrixXY)
         self.vbPSFXY.addItem(self.overlayImgXY)
 
-        self.overlayMatrixXZ =  np.zeros((512, 512))
+        self.overlayMatrixXZ =  np.zeros((1024, 1024))
         self.overlayImgXZ = pg.ImageItem(self.overlayMatrixXZ)
         self.vbPSFXZ.addItem(self.overlayImgXZ)
 
-        self.overlayMatrixYZ =  np.zeros((512, 512))
+        self.overlayMatrixYZ =  np.zeros((1024, 1024))
         self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
         self.vbPSFYZ.addItem(self.overlayImgYZ)
         

@@ -134,8 +134,16 @@ class InfoGatheringController(ImConWidgetController):
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
         self._widget.saveSettings.clicked.connect(self.saveFileDialog)
+        self._widget.loadSettings.clicked.connect(self.openLoadWindow)
         ####################################
         # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
+
+    def openLoadWindow(self):
+        self._widget.loadingPopup.filePath.setText(self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')])
+        self._widget.loadingPopup.exec_()
+
+         
+
 
     def saveFileDialog(self):
         currentRoot = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
