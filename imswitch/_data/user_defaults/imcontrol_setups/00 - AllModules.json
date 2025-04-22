@@ -206,11 +206,13 @@
       "analogChannel": null,
       "digitalLine": null,
       "managerName": "QueensgatePiezoManager",
+      "mock": false,
       "managerProperties": {
-        "rs232device": "zpiezo"
+        "port": "ASRLCOM18",
+        "zeroOnStartup": false
       },
       "axes": ["Z"],
-      "limits":[-45,450],
+      "limits":[-40,440],
       "forPositioning": true,
       "forScanning": true
     },
@@ -245,22 +247,6 @@
         "dsrdtr": "false",
         "xonxoff": "false"
         }
-    },
-    "zpiezo": {
-      "managerName": "RS232Manager",
-      "managerProperties": {
-        "port": "ASRLCOM11",
-        "encoding": "ascii",
-        "recv_termination": "\r",
-        "send_termination": "\r",
-        "baudrate": 9600,
-        "bytesize": 8,
-        "parity": "none",
-        "stopbits": 1,
-        "rtscts": "false",
-        "dsrdtr": "false",
-        "xonxoff": "false"
-      }
     },
     "arduino": {
       "managerName": "RS232Manager",

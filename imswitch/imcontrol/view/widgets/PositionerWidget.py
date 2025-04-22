@@ -81,15 +81,14 @@ class PositionerWidget(Widget):
         self.pars['AbsPosEdit' + parNameSuffix]._name = 'Z--Z'
         self.pars['AbsPosEdit' + parNameSuffix]._type = 'str'
         self.pars['AbsPosEdit' + parNameSuffix].setMinimumWidth(100)
-        self.validator = QDoubleValidator(-45,450,1)
+        self.validator = QDoubleValidator()
+        self.validator.setDecimals(1)
         self.pars['AbsPosEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['AbsPosEdit' + parNameSuffix].returnPressed.connect(self.pars['ButtonAbsPosEnter' + parNameSuffix].click)
         self.pars['AbsPosUnit' + parNameSuffix] = QtWidgets.QLabel(' µm')
         self.wholeZLayout.addWidget(self.pars['AbsPos' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosEdit' + parNameSuffix])
         self.wholeZLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
-        # self.wholeZLayout.addWidget(self.pars['ButtonAbsPosEnter' + parNameSuffix])
-
         self.posLayout.addLayout(self.wholeZLayout)
 
         self.elementList.append(self.pars['AbsPosEdit' + parNameSuffix])
