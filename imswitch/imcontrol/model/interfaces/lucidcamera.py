@@ -99,7 +99,7 @@ class LucidCam:
         self.device.stop_stream()
 
     def suspend_live(self):
-        self.__logger.info("suspend_live")
+        self.__logger.info("Suspended")
         # print(self.device)
         self.device.stop_stream()
         

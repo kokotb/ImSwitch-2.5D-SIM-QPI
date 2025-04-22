@@ -69,7 +69,7 @@ class TilingManager(SignalInterface):
         return positions
     
 
-    def createXYGridPositionArrayWithROI(self,grid_x_num, grid_y_num, overlap_xy, startxpos, startypos, projCamPixelSize, roiOriginList):
+    def createXYGridPositionArrayWithROI(self,grid_x_num, grid_y_num, overlap_xy, startxpos, startypos, projCamPixelSize, roiOriginList, shapeList):
 
         if roiOriginList == []:
             x_start = float(startxpos)
@@ -80,11 +80,8 @@ class TilingManager(SignalInterface):
 
         for i in range(len(roiOriginList)):
 
-            imageLeastCommonSize = [512,512] #CTNOTE need programmatic, cant deal with at the moment.
-            # pixelsize = self._commChannel.sharedAttrs._data[('SIM Parameters','Pixel size')]
-            # mag = self._commChannel.sharedAttrs._data[('SIM Parameters','Magnification')]
-            # projCamPixelSize = pixelsize/mag
-            imageSizePixelsX, imageSizePixelsY = imageLeastCommonSize
+            imageSizePixelsX = shapeList[0]
+            imageSizePixelsY = shapeList[1]
 
             xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
             count_limit = 101

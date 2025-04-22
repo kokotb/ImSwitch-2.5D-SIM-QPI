@@ -66,7 +66,7 @@
     "w": 0.15,
     "eta": 0.6,
     "n": 1.0,
-    "Magnification": 22.22,
+    "Magnification": 22.2222,
     "saveDir": "D:\\SIM_Data\\",
     "nRotations": 3,
     "nPhases": 3,
@@ -87,11 +87,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 5000.0
+        "ExposureTime": 15000.0
       },
       "ROI":{
         "OffsetX": 2312,
-        "OffsetY": 1384,
+        "OffsetY": 1584,
         "Width": 1024,
         "Height": 1024
       } 
@@ -136,7 +136,7 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 5000.0
+          "ExposureTime": 100.0
         },
         "ROI":{
           "OffsetX": 2016,
