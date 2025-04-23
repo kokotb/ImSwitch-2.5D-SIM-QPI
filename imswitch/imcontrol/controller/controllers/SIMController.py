@@ -300,7 +300,7 @@ class SIMController(ImConWidgetController):
         totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
-        while self.active and poweredLasers != []:
+        while self.SIMActive and poweredLasers != []:
             
 
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
@@ -850,8 +850,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
-        self.active = False
-        self._commChannel.updateSIMActive(self.active)
+        self.SIMActive = False
+        self._commChannel.updateSIMActive(self.SIMActive)
         try:
             self.simThread.join()
         except:
@@ -871,10 +871,10 @@ class SIMController(ImConWidgetController):
 
     def stop25D(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
-        self._widget.stop_button.setEnabled(True)
+        self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
-        self.active = False
-        self._commChannel.updateSIMActive(self.active)
+        self.active25D = False
+        self._commChannel.updateSIMActive(self.active25D)
         try:
             self.thread25D.join()
         except:
@@ -891,6 +891,7 @@ class SIMController(ImConWidgetController):
         if self.zScanActive:
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            self.zScanActive = False
 
 
     def startSIM(self):
@@ -901,8 +902,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(True)
         self._widget.stop_button.setEnabled(True)
         self._widget.startSIM_button.setEnabled(False)
-        self.active = True
-        self._commChannel.updateSIMActive(self.active)
+        self.SIMActive = True
+        self._commChannel.updateSIMActive(self.SIMActive)
 
         simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
@@ -922,8 +923,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(True)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
-        self.active = True
-        self._commChannel.updateSIMActive(self.active)
+        self.active25D = True
+        self._commChannel.updateSIMActive(self.active25D)
         
 
 
@@ -1225,7 +1226,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
 
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
-        while self.active:
+        while self.active25D:
             self.roiIter = 0
             while self.roiIter < len(positions):
                 
@@ -1244,7 +1245,7 @@ class SIMController(ImConWidgetController):
                 while j < len(currentROI):
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
-                    #### Create time string each 'tiling set' for saving filenames. All Z's are considered at the same time.
+                    #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
                     else:
