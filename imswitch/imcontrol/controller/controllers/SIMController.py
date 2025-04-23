@@ -1194,15 +1194,15 @@ class SIMController(ImConWidgetController):
 
         positions = self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
         for i in range(len(positions)):
-            self.tileOrigins.append(positions[i][0])
+            self.tileOrigins.append(positions[i][-1])
         
-        self.tileOrigin = positions[0][0]
+        self.tileOrigin = positions[0][-1]
 
         
 
 
         if not self.isTiling:
-            positions = self.tileOrigins
+            positions = self.tileOrigins 
         
 
 
@@ -1260,7 +1260,7 @@ class SIMController(ImConWidgetController):
                     self.positionerXY.checkBusyLoop() #Probably move to just before triggering the image
 
 
-                    if j == 0 and self.completeFrameSets != 0 and self.isTiling: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
+                    if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
                         time.sleep(.5) #Wait time for giggle if the stage is moving from end to origin to start another tile.
                     else:
                         time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
@@ -1321,7 +1321,7 @@ class SIMController(ImConWidgetController):
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
                         with ThreadPoolExecutor(max_workers=4) as executor:
-                            if self.isTiling:
+                            if self.isTiling or self.isScanROI:
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
@@ -1399,7 +1399,7 @@ class SIMController(ImConWidgetController):
                 self.errorQ.append(False)
             if lastChan:
                 self.lastZ = (z == self.zLength - 1)
-                if self.lastZ and self.isTiling:
+                if self.lastZ and (self.isTiling or self.isScanROI):
                     self.waitToMoveEvent.set()
                 else: 
                     self.waitToMoveEvent.set()
