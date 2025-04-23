@@ -1224,47 +1224,50 @@ class SIMController(ImConWidgetController):
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
 
+        ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         while self.active:
-            
             self.roiIter = 0
             while self.roiIter < len(positions):
-                j = 0 # Position iterator
-                currentROI = positions[self.roiIter]
+                
+
+                #### Set variables for current and next positions. These will be used to move stage XY.
+                currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
                 try:
-                    nextROI = positions[self.roiIter + 1]
+                    nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
                 except IndexError:
-                    nextROI = positions[0]
-
-
-                if (not self.isTiling) and (not self.isScanROI):
+                    nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
+                if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
                     currentROI = [currentROI]
+                ####
 
-
+                j = 0 # Position (tile) iterator
                 while j < len(currentROI):
-                    self.j = j
+                    self.j = j # Self it for use elsewhere. Kind of sloppy.
+
+                    #### Create time string each 'tiling set' for saving filenames. All Z's are considered at the same time.
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
                     else:
                         exptTimeElapsed = time.time() - time_global_start
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
                     self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
-
-                    self.currentPos = currentROI[self.j]
+                    ####
 
                     try:
-                        self.nextPos = currentROI[self.j+1]
+                        self.nextPos = currentROI[self.j+1] # Next position to move to.
                     except IndexError:
-                        self.nextPos = nextROI[0]
+                        self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
 
                     if self.firstLoop:
-                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
-                    self.positionerXY.checkBusyLoop() #Probably move to just before triggering the image
+                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
-
+                    #### Stage wait times for giggle.
+                    self.positionerXY.checkBusyLoop() # Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
                     if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
                         time.sleep(.5) #Wait time for giggle if the stage is moving from end to origin to start another tile.
                     else:
                         time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
+                    ####
 
                     ####Autofocus
                     if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
@@ -1283,8 +1286,7 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-
-                        #### For timing period
+                        #### For timing period. Check every 1/10s if period time is exceeded yet.
                         if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                             repTimer = time.time() - repTimerStart
                             if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
@@ -1298,25 +1300,26 @@ class SIMController(ImConWidgetController):
                         repTimerStart = time.time()
                         ####
 
-                        if self.zScanActive: #Moves piezo for Z stack.
+                        #### Moves piezo for Z stack.
+                        if self.zScanActive: 
                             success = self.positioner.setPosition(zList[z], 'Z')
                             if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
                                 time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
+                        ####
 
-                        time.sleep(0.1) #CTINFO Testing only
-
-                        self._master.arduinoManager.trigger25DWriteOnly()
+                        self._master.arduinoManager.trigger25DWriteOnly() # Send actual trigger to cams.
                              
-                        procTimeStart = time.time()
+                        procTimeStart = time.time() # For tracking processing time of images. 
 
+                        #### Locks for variables to be thread safe
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
                         saveLock = threading.Lock()
                         saveStackLock = threading.Lock()
                         snapshotLock = threading.Lock()
-                        
                         self.snapshotSettingsSaved = False
+                        ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
@@ -1327,7 +1330,7 @@ class SIMController(ImConWidgetController):
                             for processor in self.activeProcessors:
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
 
-                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
+                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per Z cycle. Basically immediate quitting.
                             self.stop25D()
                             return
 
@@ -1335,44 +1338,43 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                        self.firstLoop = False
-                        print(f"First loop: {self.firstLoop}")
+                        print(f"First loop: {self.firstLoop}") # DELETE
+                        self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
+                        
 
                         
-                        procTimeDur = round(time.time()-procTimeStart,3)
+                        procTimeDur = round(time.time()-procTimeStart,3) # Actual elapsed time for processing images.
+
+                        #### Print timing and frame information.
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                        ####
                         
                     
-                    j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                    completeZ += 1
+                    j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
+                    completeZ += 1 # Count from 0 to infinity complete Z stack only. Similar to j, but is never reset.
 
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
-                        self.stop25D() # Stops tiling reps after all tiles*repetitions is done.
+                        self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
 
                     totalEndTime = round(time.time()-time_global_start,3)
-                    remainder = self.completeFrameSets % len(currentROI)
 
-
-
-                self.frameCounter += 1
-
-                self.tilingRep += 1
-
-                self.roiIter += 1
-                
+                #### Increment counters.
+                self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
+                self.tilingRep += 1 # Used in filenames of saved files.
+                self.roiIter += 1 # Increment roi index
+                ####
                 self._logger.info(f'Elapsed time (s): {totalEndTime}')
+
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
-                self.stop25D()
+                self.stop25D() # Stops system is duration based imaging is selected.
             
 
     def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, snapshotLock):
-        # saveOneTime = self.saveOneTime
-
 
         k = processor.processorIndex
-        if k+1 == len(self.activeProcessors):
+        if k+1 == len(self.activeProcessors): #
             lastChan = True
         else: 
             lastChan = False
