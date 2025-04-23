@@ -97,7 +97,9 @@ class TilingManager(SignalInterface):
             # Step-size based on overlap info
             x_step = (1 - overlap_xy) * frame_size_x
             y_step = (1 - overlap_xy) * frame_size_y
-            assert x_step != 0 and y_step != 0, 'xy_step == 0 - check that xy_overlap is < 1, and that frame_size is > 0'
+            assert x_step != 0 and y_step != 0, 'X or Y step size = 0. Check that tiling overlap > 0 and < 1.'
+            assert grid_y_num != 0 and grid_x_num !=0, 'Number of X or Y steps should not be 0. Click Stop and fix.'
+
             positions = []
             y_list = list(y_start+np.arange(0, grid_y_num, 1)*y_step)
             # ------------Grid scan------------

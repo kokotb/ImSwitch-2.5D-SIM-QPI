@@ -22,7 +22,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit = QLineEdit("")
         self.timingPeriod_textedit._name = 'Timing Period'
         self.timingPeriod_textedit._type = 'str'
-        self.validator = QDoubleValidator()
+        self.validator = QDoubleValidator(0, 1000000)
         self.timingPeriod_textedit.setValidator(self.validator)
         self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the image cycle, it will run as fast as possible.')
         self.timingPeriod_textedit.setFixedWidth(50)
@@ -44,7 +44,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingDuration_textedit._name = 'Duration'
         self.timingDuration_textedit._type = 'str'
         self.timingDuration_textedit.setEnabled(False)
-        self.validator = QDoubleValidator()
+        self.validator = QDoubleValidator(0, 1000000)
         self.timingDuration_textedit.setValidator(self.validator)
         self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
         self.timingDuration_textedit.setFixedWidth(50)
@@ -63,7 +63,7 @@ class TimingWidget(NapariHybridWidget):
         self.totalReps_textedit._name = 'Repetitions'
         self.totalReps_textedit._type = 'str'
         self.totalReps_textedit.setEnabled(False)
-        self.validator = QIntValidator(0,10000,self)
+        self.validator = QIntValidator(0,1000000,self)
         self.totalReps_textedit.setFixedWidth(50)
         self.totalReps_textedit.setValidator(self.validator)
         
