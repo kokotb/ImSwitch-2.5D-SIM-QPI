@@ -541,7 +541,7 @@ class SIMController(ImConWidgetController):
         self.waitToMoveEvent.clear()
         if True not in self.errorQ:
             if self.lastZ:
-                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos [1])
+                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
         else:
             pass
 
@@ -1127,7 +1127,7 @@ class SIMController(ImConWidgetController):
     
     def perform25DExperimentThread(self):
         #Can later be changed to dynamic
-        projCamPixelSize = round(2.74 / (200 / 9),4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
 
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
@@ -1136,6 +1136,7 @@ class SIMController(ImConWidgetController):
                 poweredLasers.append(laser.wavelength)
 
         self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
+        self.numTiles = self.num_grid_x * self.num_grid_y
 
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
@@ -1151,6 +1152,7 @@ class SIMController(ImConWidgetController):
         if self.isScanROI:
             try:
                 roiOriginList = self.getOrigins()
+                roiListLength = len(roiOriginList)
             except KeyError:
                 self._logger.warning('ROI list is empty.')
 
@@ -1192,14 +1194,11 @@ class SIMController(ImConWidgetController):
 
         self.tileOrigins = []
 
-        positions = self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        positions= self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
         for i in range(len(positions)):
-            self.tileOrigins.append(positions[i][-1])
-        
-        self.tileOrigin = positions[0][-1]
+            self.tileOrigins.append(positions[i][0])
 
-        
-
+        self.tileOrigin = positions[0][0]
 
         if not self.isTiling:
             positions = self.tileOrigins 
@@ -1231,6 +1230,7 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         
         completeZ = 0
+        self.firstLoop = True
         while self.active:
             
             self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
@@ -1240,14 +1240,18 @@ class SIMController(ImConWidgetController):
             self.roiIterator = 0
             while self.roiIterator < len(positions):
                 j = 0 # Position iterator
-                oneROI = positions[self.roiIterator]
+                currentROI = positions[self.roiIterator]
+                try:
+                    nextROI = positions[self.roiIterator + 1]
+                except IndexError:
+                    nextROI = positions[0]
 
 
                 if (not self.isTiling) and (not self.isScanROI):
-                    oneROI = [oneROI]
+                    currentROI = [currentROI]
 
 
-                while j < len(oneROI):
+                while j < len(currentROI):
                     self.j = j
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
@@ -1255,8 +1259,16 @@ class SIMController(ImConWidgetController):
                         exptTimeElapsed = time.time() - time_global_start
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
                     self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
-                    self.nextPos = oneROI[self.j]
-                    self.currentPos = oneROI[self.j-1]
+
+                    self.currentPos = currentROI[self.j]
+
+                    try:
+                        self.nextPos = currentROI[self.j+1]
+                    except IndexError:
+                        self.nextPos = nextROI[0]
+
+                    if self.firstLoop:
+                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
                     self.positionerXY.checkBusyLoop() #Probably move to just before triggering the image
 
 
@@ -1321,7 +1333,7 @@ class SIMController(ImConWidgetController):
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
                         with ThreadPoolExecutor(max_workers=4) as executor:
-                            if self.isTiling or self.isScanROI:
+                            if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
@@ -1334,20 +1346,24 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        self.firstLoop = False
+                        print(f"First loop: {self.firstLoop}")
 
+                        
                         procTimeDur = round(time.time()-procTimeStart,3)
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
-
+                        
+                    
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     completeZ += 1
 
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stop25D() # Stops tiling reps after all tiles*repetitions is done.
 
                     totalEndTime = round(time.time()-time_global_start,3)
-                    remainder = self.completeFrameSets % len(oneROI)
+                    remainder = self.completeFrameSets % len(currentROI)
 
 
 
@@ -1401,7 +1417,7 @@ class SIMController(ImConWidgetController):
                 self.lastZ = (z == self.zLength - 1)
                 if self.lastZ and (self.isTiling or self.isScanROI):
                     self.waitToMoveEvent.set()
-                else: 
+                else:
                     self.waitToMoveEvent.set()
 
 
