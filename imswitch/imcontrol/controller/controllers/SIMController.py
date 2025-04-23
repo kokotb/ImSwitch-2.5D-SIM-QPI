@@ -871,7 +871,7 @@ class SIMController(ImConWidgetController):
 
     def stop25D(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
-        self._widget.stop_button.setEnabled(False)
+        self._widget.stop_button.setEnabled(True)
         self._widget.startSIM_button.setEnabled(True)
         self.active = False
         self._commChannel.updateSIMActive(self.active)
@@ -920,7 +920,7 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.stop25DNow = False
         self._commChannel.sigSIMAcqToggled.emit(True)
-        self._widget.stop_button.setEnabled(True)
+        self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
         self.active = True
         self._commChannel.updateSIMActive(self.active)
@@ -1315,7 +1315,7 @@ class SIMController(ImConWidgetController):
 
                         #### Locks for variables to be thread safe
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                        saveLock = threading.Lock()
+                        saveSettingsLock = threading.Lock()
                         saveStackLock = threading.Lock()
                         snapshotLock = threading.Lock()
                         self.snapshotSettingsSaved = False
@@ -1328,7 +1328,7 @@ class SIMController(ImConWidgetController):
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
 
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per Z cycle. Basically immediate quitting.
                             self.stop25D()
@@ -1338,7 +1338,6 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                        print(f"First loop: {self.firstLoop}") # DELETE
                         self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
                         
 
@@ -1371,18 +1370,19 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
             
 
-    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, snapshotLock):
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
 
         k = processor.processorIndex
-        if k+1 == len(self.activeProcessors): #
+        if k+1 == len(self.activeProcessors): # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
             lastChan = True
         else: 
             lastChan = False
 
-        broken = False
-        detector = processor.detObj # Set current detector being used
+        broken = False # Initialize flag
+        detector = processor.detObj # Set current detector object associated with proecssor.
         
-        waitingBuffers = detector._camera.getBufferValue('25D')
+        #### Everything needed to confirm correct amount of images in buffer. If not correct, clear cam buffers and restart Z position.
+        waitingBuffers = detector._camera.getBufferValue('25D') # Arguement is unused by method.
         startBufferTime = time.time()
         totalBufferTime = 0
         while waitingBuffers != 1:
@@ -1390,7 +1390,7 @@ class SIMController(ImConWidgetController):
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue('25D')
 
-            if waitingBuffers != 1 and totalBufferTime > 0.25:
+            if waitingBuffers != 1 and totalBufferTime > 0.25: # Will wait for a quarter second for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
@@ -1399,9 +1399,9 @@ class SIMController(ImConWidgetController):
                 for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
                     detector._camera.clearBuffers()
                 break
-
-        # broken = False
-        if not broken:
+        ####
+        #### If buffers are correct, and thread is for last channel, last Z, move stage.
+        if not broken: 
             with errorLock:
                 self.errorQ.append(False)
             if lastChan:
@@ -1410,9 +1410,10 @@ class SIMController(ImConWidgetController):
                     self.waitToMoveEvent.set()
                 else:
                     self.waitToMoveEvent.set()
+        ####
 
 
-        rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+        rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
         ##Temporary printing for debug
         # if processor.handle == self.channelAF:
@@ -1420,43 +1421,43 @@ class SIMController(ImConWidgetController):
         # time.sleep(0.5)
         ##
         
+        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
 
-        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
-
-        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+        #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
+        if self.zScanActive: 
             if z == 0:
                 resetStack = True
             else:
                 resetStack = False
-
             self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
+        ####
                 
-        processor.setSIMStack(rawImg)
+        # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
         
         # if self.tilePreview and self.isTiling:
         #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
         #     #     self.updateWFContLimits()
         #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
         
-        with saveLock:
+        with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
             if ((self.isRecordRaw)) and not (self.startSettingsSaved):
                 self._commChannel.sigSaveSettingsFirst.emit()
                 self.startSettingsSaved = True
 
-        if self.isRecordRaw:
-            with saveStackLock:
+        if self.isRecordRaw: # Saves raw images.
+            with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
                 self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-            self.recordOneSetRaw(self.j, processor)
+            self.recordOneSetRaw(self.j, processor) # Save one image from each active channel.
             processor.saveOneTime = False
-            with snapshotLock:
+            with snapshotLock: # Needed to only save one settings file per snapshot.
                 if self.snapshotSettingsSaved == False:
                     self._commChannel.sigSaveSettingsFirst.emit()
                     self.snapshotSettingsSaved = True
                 
 
-        processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+        # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
     def autofocusLoop(self, AFList):
