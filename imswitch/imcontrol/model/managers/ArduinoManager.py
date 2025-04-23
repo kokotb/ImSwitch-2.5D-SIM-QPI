@@ -67,7 +67,7 @@ class ArduinoManager(SignalInterface):
         # FIXME: Needs to be synced with our commands on Arduino
         cmd = 'D'
         self._rs232manager.write(cmd)
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 
     def activate25D(self):

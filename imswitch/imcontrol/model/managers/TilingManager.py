@@ -69,7 +69,7 @@ class TilingManager(SignalInterface):
     #     return positions
     
 
-    def createXYGridPositionArrayWithROI(self,grid_x_num, grid_y_num, overlap_xy, startxpos, startypos, projCamPixelSize, roiOriginList, shapeList):
+    def createSnakeArrays(self,grid_x_num, grid_y_num, overlap_xy, startxpos, startypos, projCamPixelSize, roiOriginList, camShapeList):
 
         if roiOriginList == []:
             x_start = float(startxpos)
@@ -80,8 +80,8 @@ class TilingManager(SignalInterface):
 
         for i in range(len(roiOriginList)):
 
-            imageSizePixelsX = shapeList[0]
-            imageSizePixelsY = shapeList[1]
+            imageSizePixelsX = camShapeList[0]
+            imageSizePixelsY = camShapeList[1]
 
             xy_scan_type = 'snake' # or 'quad', not sure what that does yet...
             count_limit = 101

@@ -1126,45 +1126,45 @@ class SIMController(ImConWidgetController):
         return sim_parameters
     
     def perform25DExperimentThread(self):
-        #Can later be changed to dynamic
+        #CTNOTE: Change to dynamic
         projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
 
-        # Check if lasers are set and have power in them select only lasers with powers
+        # Check if lasers are set and have power in them. Only channels with active lasers will be used.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
-        self.getTilingSettings() #Get the parameters that go into the createXYGridPositionArray function
-        self.numTiles = self.num_grid_x * self.num_grid_y
+        self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
 
+        ####Set flags for using in logic later.
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
         else:
             self.isTiling = False
 
+        roiOriginList = []
         if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
             self.isScanROI = True
+            try:
+                roiOriginList = self.getOrigins()
+            except KeyError:
+                self._logger.warning('ROI list is empty.')
         else:
             self.isScanROI = False
 
-        roiOriginList = []
-        if self.isScanROI:
-            try:
-                roiOriginList = self.getOrigins()
-                roiListLength = len(roiOriginList)
-            except KeyError:
-                self._logger.warning('ROI list is empty.')
 
-        #Get Z-Stack list
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
             self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
 
+
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
+        ####
 
+        #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
         for processor in self.processors:
             for detector in self.detectors: # Associate detector object with processor object.
@@ -1173,76 +1173,65 @@ class SIMController(ImConWidgetController):
                     processor.shape = detector._shape
             if processor.handle in poweredLasers:
                 self.activeProcessors.append(processor)
+        shapeList = []
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
-
-
-        shapeList = []
-        for processor in self.activeProcessors:
             shapeList.append(processor.shape)
-        setShapeList = set(shapeList)
+        ####
+            
+        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
             self.stop25D()
             return
-        shapeList = list(setShapeList)[0]
+        shapeList = list(setShapeList)[0] #Put back into list form to be used to calculate tiling positions.
+        ####
 
-
-
-
-
-
+        #### Create XY position array given ROI and tiling settings.
         self.tileOrigins = []
-
-        positions= self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        positions= self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
         for i in range(len(positions)):
             self.tileOrigins.append(positions[i][0])
-
         self.tileOrigin = positions[0][0]
-
         if not self.isTiling:
-            positions = self.tileOrigins 
+            positions = self.tileOrigins
+        ####
         
 
-
+        #### Flags for state control, constant varables, this that need one time initialization.
         self.zLength = len(zList)
-        
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
-    
         self.numAllFrames = 0 # Number of frames, including dropped frames
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
-
         self.frameCounter = 0
-
-        for processor in self.activeProcessors: # Set cams
-            self.setCamForExperiment25D(processor.detObj)
-        
-        time_global_start = time.time()
-
-        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers.
-       # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         self.tilingRep = 0
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
         if isTimed: timingPeriodInSec = self.getPeriodInSec()
-
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        
         completeZ = 0
         self.firstLoop = True
+        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
+        time_global_start = time.time()
+        ####
+
+
+        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
+        for processor in self.activeProcessors: # Set only active cams
+            self.setCamForExperiment25D(processor.detObj)
+        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick) # Path of current experiment folder
+        self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
+        self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
+
         while self.active:
             
-            self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
-            self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
-            self._commChannel.updateActiveDirectory(self.exptFolderPath)
-            
-            self.roiIterator = 0
-            while self.roiIterator < len(positions):
+            self.roiIter = 0
+            while self.roiIter < len(positions):
                 j = 0 # Position iterator
-                currentROI = positions[self.roiIterator]
+                currentROI = positions[self.roiIter]
                 try:
-                    nextROI = positions[self.roiIterator + 1]
+                    nextROI = positions[self.roiIter + 1]
                 except IndexError:
                     nextROI = positions[0]
 
@@ -1371,7 +1360,7 @@ class SIMController(ImConWidgetController):
 
                 self.tilingRep += 1
 
-                self.roiIterator += 1
+                self.roiIter += 1
                 
                 self._logger.info(f'Elapsed time (s): {totalEndTime}')
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
@@ -1454,7 +1443,7 @@ class SIMController(ImConWidgetController):
 
         if self.isRecordRaw:
             with saveStackLock:
-                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIterator)
+                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
             self.recordOneSetRaw(self.j, processor)
