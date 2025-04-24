@@ -25,10 +25,10 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit = QLineEdit("")
         self.zStepDistance_textedit._name = 'Step Size'
         self.zStepDistance_textedit._type = 'str'
-        self.validator = QDoubleValidator(0.01, 10.00, 2)
+        self.validator = QDoubleValidator(0.1, 20.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
-        self.zStepDistance_textedit.setToolTip('Size between steps in microns.') 
+        self.zStepDistance_textedit.setToolTip('Size between steps in microns. Smallest is 0.1 um.') 
         self.zStepDistance_textedit.setEnabled(False)
         self.zStepDistance_textedit.setFixedWidth(50)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
@@ -40,7 +40,7 @@ class ZStackWidget(NapariHybridWidget):
         self.totalZ_textedit = QLineEdit("")
         self.totalZ_textedit._name = 'Total Z /um'
         self.totalZ_textedit._type = 'str'
-        self.validator = QDoubleValidator(0.00, 450.00, 2)
+        self.validator = QDoubleValidator(0.0, 450.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.totalZ_textedit.setValidator(self.validator)
         self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calculated. 10.9 steps = 10 steps.')  
@@ -99,23 +99,19 @@ class ZStackWidget(NapariHybridWidget):
 
 
         row = 0
-        
+        zStackLayout.addWidget(self.checkbox_zStack, row+4, 0)
         zStackLayout.addWidget(self.zStepDistance_label, row, 0)
         zStackLayout.addWidget(self.zStepDistance_textedit, row, 1)
         zStackLayout.addWidget(self.totalZ_label, row+1, 0)
         zStackLayout.addWidget(self.totalZ_textedit, row+1, 1)
-
         zStackLayout.addWidget(self.zOffset_label, row+2, 0)
         zStackLayout.addWidget(self.zOffset_textedit, row+2, 1)
-
         zStackLayout.addWidget(self.numSteps_label, row+3, 0)
         zStackLayout.addWidget(self.numSteps_textedit, row+3, 1)
-        
-
         zStackLayout.addWidget(self.checkbox_zStackCenter, row+4, 1)
         zStackLayout.addWidget(self.zStackScanDir, row+4, 2)
 
-        zStackLayout.addWidget(self.checkbox_zStack, row+4, 0)
+        
 
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigCheckValidityTotal.connect(self.checkValidityTotal)
@@ -135,7 +131,6 @@ class ZStackWidget(NapariHybridWidget):
             self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
 
     def initZStackInfo(self):
-        # self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', 'Up')
         self.zStepDistance_textedit.setText("1")
         self.totalZ_textedit.setText("1")
         self.zOffset_textedit.setText("0")
@@ -144,14 +139,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStackScanDir.addItems(['Up','Down'])
         self.zStackScanDir.setCurrentIndex(0)
 
-    # def centerToggled(self):
-    #     if self.checkbox_zStackCenter.checkState() == 2:
-    #         totalDist = self.floorTotalZ()
-        
-    #     self.zOffset_textedit.setText(str(totalDist))
-
     def updateStartOffset(self, totalDist):
-        # scanDir = self.zStackScanDir.currentText()
         if self.checkbox_zStackCenter.checkState() == 2:
             self.zOffset_textedit.setText(str(totalDist/2))
 
@@ -160,20 +148,24 @@ class ZStackWidget(NapariHybridWidget):
     
 
     def floorTotalZ(self):
-        stepDist = float(self.zStepDistance_textedit.text())
-        totalDist = float(self.totalZ_textedit.text())
         try:
-            floorSteps = math.floor((totalDist / stepDist))
-        except ZeroDivisionError:
-            print("Step size is equal to zero.")
-            # floorSteps = 0
+            stepDist = float(self.zStepDistance_textedit.text())
+            totalDist = float(self.totalZ_textedit.text())
+        except ValueError:
+            print("Step or total Z values incorrect.")
+            return
+        
+        assert stepDist != 0 and totalDist != 0, "Step distance or total Z distance cannot be zero."
+
+
+        floorSteps = math.floor((totalDist / stepDist))
+
+
 
         if self.checkbox_zStackCenter.checkState() == 0:
-            if floorSteps == 0:
-                newTotalDist = stepDist
-            else:
-                newTotalDist = stepDist * floorSteps
+            newTotalDist = stepDist * floorSteps
             self.totalZ_textedit.setText(str(round(newTotalDist, 2)))
+            self.numSteps_textedit.setText(str(round(floorSteps, 0)))
 
         elif self.checkbox_zStackCenter.checkState() == 2:
             if floorSteps == 0:

@@ -717,8 +717,10 @@ class SIMController(ImConWidgetController):
             timingPeriodBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Timing Period')])
         except ValueError:
             timingSecs = 0.0
+            timingPeriodBox = 0.0
         except KeyError:
             timingSecs = 0.0
+            timingPeriodBox = 0.0
         if timingPeriodBox > 0.0:
             timingUnit = self._commChannel.sharedAttrs[('Timing Settings', 'Timing Unit')]
             if timingUnit == 's':
@@ -1213,6 +1215,7 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
+        self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
         dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         time_global_start = time.time()
         ####
@@ -1435,10 +1438,10 @@ class SIMController(ImConWidgetController):
                 
         # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
         
-        # if self.tilePreview and self.isTiling:
-        #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
-        #     #     self.updateWFContLimits()
-        #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+        if self.tilePreview and self.isTiling:
+            # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+            #     self.updateWFContLimits()
+            self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
         
         with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
             if ((self.isRecordRaw)) and not (self.startSettingsSaved):
