@@ -1256,7 +1256,7 @@ class SIMController(ImConWidgetController):
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
                     self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
                     ####
-
+                    self.currentPos = currentROI[self.j]
                     try:
                         self.nextPos = currentROI[self.j+1] # Next position to move to.
                     except IndexError:

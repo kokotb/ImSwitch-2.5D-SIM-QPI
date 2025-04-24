@@ -30,7 +30,7 @@ class CommunicationChannel(SignalInterface):
 
     sigStart25D = Signal()
 
-    sigTileImage = Signal(np.ndarray, list, str, int, int, int)
+    sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
 
