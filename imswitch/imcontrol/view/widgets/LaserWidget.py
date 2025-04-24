@@ -12,16 +12,16 @@ class LaserWidget(Widget):
     sigEnableChanged = QtCore.Signal(str, bool)  # (laserName, enabled)
     sigValueChanged = QtCore.Signal(str, float)  # (laserName, value)
     
-    sigModEnabledChanged = QtCore.Signal(str, bool) # (laserName, modulationEnabled)
-    sigFreqChanged = QtCore.Signal(str, int)        # (laserName, frequency)
-    sigDutyCycleChanged = QtCore.Signal(str, int)   # (laserName, dutyCycle)
+    # sigModEnabledChanged = QtCore.Signal(str, bool) # (laserName, modulationEnabled)
+    # sigFreqChanged = QtCore.Signal(str, int)        # (laserName, frequency)
+    # sigDutyCycleChanged = QtCore.Signal(str, int)   # (laserName, dutyCycle)
 
-    sigPresetSelected = QtCore.Signal(str)  # (presetName)
-    sigLoadPresetClicked = QtCore.Signal()
-    sigSavePresetClicked = QtCore.Signal()
-    sigSavePresetAsClicked = QtCore.Signal()
-    sigDeletePresetClicked = QtCore.Signal()
-    sigPresetScanDefaultToggled = QtCore.Signal()
+    # sigPresetSelected = QtCore.Signal(str)  # (presetName)
+    # sigLoadPresetClicked = QtCore.Signal()
+    # sigSavePresetClicked = QtCore.Signal()
+    # sigSavePresetAsClicked = QtCore.Signal()
+    # sigDeletePresetClicked = QtCore.Signal()
+    # sigPresetScanDefaultToggled = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -343,7 +343,7 @@ class LaserModule(QtWidgets.QWidget):
         # )
 
         self.setPointEdit.editingFinished.connect(
-            lambda: self.sigValueChanged.emit(self.getValue())
+            lambda: self.slider.setValue(self.getValue())
         )
 
         if isModulated:
