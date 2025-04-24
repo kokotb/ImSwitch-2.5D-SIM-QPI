@@ -32,14 +32,14 @@ class AAAOTFLaserManager(LaserManager):
         """Turn on (1) or off (0) laser emission"""
         if enabled:
             value = 1
-            str = 'enabled'
+            status = 'enabled'
         else:
             value = 0
-            str = 'disabled'
+            status = 'disabled'
         cmd = 'L' + str(self._channel) + 'O' + str(value)
         ans = self._rs232manager.query(cmd)
         channel = self.laserDict[ans.split('F')[0].split('l')[1]]
-        self._logger.info(f'{channel} laser {str}')
+        self._logger.info(f'{channel} laser {status}')
 
     def setValue(self, percentPower):
         """Handles output power.
