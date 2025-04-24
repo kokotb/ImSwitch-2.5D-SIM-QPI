@@ -17,7 +17,7 @@ class ZStackController(ImConWidgetController):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
         self._widget.initZStackInfo()
-        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
+        # self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
@@ -69,19 +69,21 @@ class ZStackController(ImConWidgetController):
 
             for i in range(floorSteps):
                 zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
+            self._widget.numSteps_textedit.setText(str(len(zScanList) + 1))
 
         else:
             zScanList.append(round(currentZ,1))
 
             for i in range(floorSteps):
                 zScanList.append(round(currentZ+zScanSign*((i+1)*stepDist),1))
+            self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
 
 
 
         self._commChannel.sigZScanList.emit(zScanList, currentZ)
 
-        self._widget.numSteps_textedit.setText(str(len(zScanList) - 1))
+        
 
         return zScanList
 

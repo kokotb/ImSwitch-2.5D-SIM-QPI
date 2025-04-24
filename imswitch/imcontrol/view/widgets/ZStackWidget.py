@@ -40,7 +40,7 @@ class ZStackWidget(NapariHybridWidget):
         self.totalZ_textedit = QLineEdit("")
         self.totalZ_textedit._name = 'Total Z /um'
         self.totalZ_textedit._type = 'str'
-        self.validator = QDoubleValidator(0.0, 450.0, 1)
+        self.validator = QDoubleValidator(0.2, 450.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.totalZ_textedit.setValidator(self.validator)
         self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calculated. 10.9 steps = 10 steps.')  
@@ -76,7 +76,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zOffset_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
 
         self.numSteps_label = QLabel("Steps") 
-        self.numSteps_textedit = QLineEdit("1")
+        self.numSteps_textedit = QLineEdit("2")
         self.numSteps_textedit.setToolTip('Number of steps in the z-stack')
         self.numSteps_textedit.setFixedWidth(50)
         self.numSteps_textedit.setEnabled(False)
@@ -157,27 +157,25 @@ class ZStackWidget(NapariHybridWidget):
         
         assert stepDist != 0 and totalDist != 0, "Step distance or total Z distance cannot be zero."
 
-
-        floorSteps = math.floor((totalDist / stepDist))
-
-
+        floorDiv = math.floor((totalDist / stepDist))
 
         if self.checkbox_zStackCenter.checkState() == 0:
-            newTotalDist = stepDist * floorSteps
-            self.totalZ_textedit.setText(str(round(newTotalDist, 2)))
-            self.numSteps_textedit.setText(str(round(floorSteps, 0)))
+            newTotalDist = stepDist * floorDiv
+            if stepDist > totalDist:
+                self.totalZ_textedit.setText(str(round(stepDist, 1)))
+            else:    
+                self.totalZ_textedit.setText(str(round(newTotalDist, 1)))
+            self.numSteps_textedit.setText(str(round(floorDiv + 1, 0)))
 
         elif self.checkbox_zStackCenter.checkState() == 2:
-            if floorSteps == 0:
-                newTotalDist = stepDist * 2
-            else:
 
-                if floorSteps % 2 == 0:
-                    pass
-                else: 
-                    floorSteps = floorSteps + 1
+            if floorDiv % 2 == 0:
+                newTotalDist = stepDist * floorDiv
+            else: 
+                floorSteps = floorDiv + 1
 
-                newTotalDist = round(stepDist * floorSteps,2)
+                newTotalDist = round(stepDist * floorSteps,1)
+                self.numSteps_textedit.setText(str(round(floorSteps + 1, 0)))
 
             self.totalZ_textedit.setText(str(newTotalDist))
 
