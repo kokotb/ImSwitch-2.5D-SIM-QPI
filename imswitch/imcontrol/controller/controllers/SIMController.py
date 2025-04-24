@@ -69,6 +69,9 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
+        self.SimProcessorLaser1.roOrder = 1
+        self.SimProcessorLaser2.roOrder = 2
+        self.SimProcessorLaser3.roOrder = 3
         self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3] #processor object list
         self.detectors = []
         for detector in self._master.detectorsManager: #detector object list
@@ -201,14 +204,15 @@ class SIMController(ImConWidgetController):
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
         # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
-        self.expTimeMax, numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
-        self.setActiveSLMChannels(numSLMChannels, chansSLM)
+        self.expTimeMax, self.numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
+        self.setActiveSLMChannels(self.numSLMChannels, chansSLM)
         self.activeProcessors = []
         for processor in self.processors:
             for detector in self.detectors:
                 if processor.handle == detector._wavelength:
                     processor.detObj = detector
                     processor.shape = detector._shape
+                    
             if (processor.slmActive == True) and (processor.handle in poweredLasers):
                 self.activeProcessors.append(processor)
         shapeList = []
@@ -271,7 +275,7 @@ class SIMController(ImConWidgetController):
         totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
-        self.firstLoop = False
+        self.firstLoop = True
         self.zLength = len(zList)
         startLoopTime = time.time()
         
@@ -340,7 +344,7 @@ class SIMController(ImConWidgetController):
                         localOrigin = float(self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')])
                         AFList = self._master.autofocusManager.calcAFArray(localOrigin)
                         self.autofocusLoop(AFList)
-                        scoreArray, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
+                        _, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
                         bestZ = AFList[bestIndex]
                         offsetAF = bestZ - localOrigin
                         print(offsetAF)
@@ -359,9 +363,10 @@ class SIMController(ImConWidgetController):
                             if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
                                 self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                             while repTimer < timingPeriodInSec:
-                                time.sleep(0.1)
+                                time.sleep(timingPeriodInSec / 100)
                                 repTimer = time.time() - repTimerStart
-                                if self._commChannel.stop25DNow: #allows exit of the loop
+                                if self._widget.stop_button.isChecked(): #allows exit of the loop
+                                    self._widget.stop_button.setChecked(False)
                                     self.stopSIM()
                                     return
                         repTimerStart = time.time()
@@ -377,7 +382,7 @@ class SIMController(ImConWidgetController):
                         ####
                         
                         self._master.arduinoManager.trigOneSequenceWriteOnly()
-                        time.sleep(0.5)
+                        # time.sleep(0.5)
                         procTimeStart = time.time()
      
                         #### Locks for variables to be thread safe
@@ -449,6 +454,8 @@ class SIMController(ImConWidgetController):
     def mainSIMLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
 
         k = processor.processorIndex
+        roOrder = processor.roOrder
+
         if k+1 == len(self.activeProcessors):
             lastChan = True
         else: 
@@ -458,15 +465,19 @@ class SIMController(ImConWidgetController):
         
         # Set current detector being used
         detector = processor.detObj
-######TIMING BUFFER WAITING LOGIC BREAKS DOWN AT FAST SPEEDS. NEED DIFFERENT WAY.
-        time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
+
+        if self.numSLMChannels == 3:
+            time.sleep(self.expTimeMax/1000000*(roOrder)*18) #approximately how long it will start for detector to start receiving images in buffer.
+        else:
+            time.sleep(self.expTimeMax/1000000*18)
+
         waitingBuffers = detector._camera.getBufferValue("SIM")
 
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
 
         while waitingBuffers != 9:
-            time.sleep(self.expTimeMax/1000000)
+            # time.sleep(self.expTimeMax/1000000)
             waitingBuffers = detector._camera.getBufferValue("SIM") #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
             if waitingBuffers != waitingBuffersEnd:
                 bufferStartTime = time.time()
@@ -1323,7 +1334,7 @@ class SIMController(ImConWidgetController):
                             if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
                                 self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                             while repTimer < timingPeriodInSec:
-                                time.sleep(0.1)
+                                time.sleep(timingPeriodInSec / 100)
                                 repTimer = time.time() - repTimerStart
                                 if self._commChannel.stop25DNow: #allows exit of the loop
                                     self.stop25D()
