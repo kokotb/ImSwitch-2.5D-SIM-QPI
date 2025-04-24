@@ -215,6 +215,10 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations. Check SLM running order and powered lasers.")
+            self.stopSIM()
+            return
         
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
@@ -268,31 +272,24 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = False
+        self.zLength = len(zList)
+        startLoopTime = time.time()
         
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
         # FIXME: Automate buffer size calculation based on image size, it did not work before
-        total_buffer_size_MB = 350 # in MBs
-        for detector in self.detectors:
-            image_size = detector.shape
-            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            buffer_size = int(total_buffer_size_MB // image_size_MB)
-            # buffer_size = 9
-            self.setCamForExperimentSIM(detector, buffer_size,self.expTimeMax)
+        # total_buffer_size_MB = 350 # in MBs
+        for processor in self.activeProcessors:
+            detector = processor.detObj
+            # image_size = detector.shape
+            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
+            # buffer_size = int(total_buffer_size_MB // image_size_MB)
+            buffer_size = 20 # Slightly more than double expected. If only set at 9, may miss information when it doesn't work well.
+            self.setCamForExperimentSIM(detector, buffer_size, self.expTimeMax)
         self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
         self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
         while self.SIMActive:
-
-            # if self.completeFrameSets != 0 and timingPeriodInSec is not None:
-            #     repTimer = time.time() - repTimerStart
-            #     while repTimer < timingPeriodInSec:
-            #         time.sleep(.1)
-            #         repTimer = time.time() - repTimerStart
-            #         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
-            #             self._widget.stop_button.setChecked(False)
-            #             return
-            # repTimerStart = time.time()
 
             self.roiIter = 0
 
@@ -380,6 +377,7 @@ class SIMController(ImConWidgetController):
                         ####
                         
                         self._master.arduinoManager.trigOneSequenceWriteOnly()
+                        time.sleep(0.5)
                         procTimeStart = time.time()
      
                         #### Locks for variables to be thread safe
@@ -412,8 +410,12 @@ class SIMController(ImConWidgetController):
 
                         procTimeDur = time.time()-procTimeStart
 
+                        endLoopTime = time.time() - startLoopTime
+                        startLoopTime = time.time()
+
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        self._logger.info(f'Loop time (s): {endLoopTime}')
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
@@ -462,9 +464,7 @@ class SIMController(ImConWidgetController):
 
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
-        # broken = False
-        # time.sleep(self.expTimeMax/1000000*16)
-        # time.sleep(1)
+
         while waitingBuffers != 9:
             time.sleep(self.expTimeMax/1000000)
             waitingBuffers = detector._camera.getBufferValue("SIM") #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
@@ -985,8 +985,8 @@ class SIMController(ImConWidgetController):
     def setCamForExperimentSIM(self, detector, num_buffers, expTimeMax):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 15.0)
-        detector._camera.setBufferTimeout(math.inf)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
+        detector._camera.setBufferTimeout(2000)
 
         trigger_source = 'Line2'
         trigger_mode = 'On'
@@ -1199,6 +1199,10 @@ class SIMController(ImConWidgetController):
                     processor.shape = detector._shape
             if processor.handle in poweredLasers:
                 self.activeProcessors.append(processor)
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations.")
+            self.stopSIM()
+            return
         shapeList = []
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
@@ -1359,7 +1363,7 @@ class SIMController(ImConWidgetController):
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             self._widget.stop_button.setChecked(False)
-                            self.stopSIM()
+                            self.stop25D()
                             return
 
                         self.numAllFrames += 1

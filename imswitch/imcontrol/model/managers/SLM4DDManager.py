@@ -79,7 +79,7 @@ class SLM4DDManager(SignalInterface):
         if ret == 0:
             retBool = True
             retStr = 'SLM connected? ' + str(retBool)
-            self._logger.error(retStr)
+            self._logger.info(retStr)
             
         else:
             retBool = False

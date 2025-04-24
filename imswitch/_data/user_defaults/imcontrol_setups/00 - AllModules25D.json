@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 
@@ -268,7 +268,6 @@
   "availableWidgets": [
     "SIM",
     "Laser",
-    "View",
     "Image",
     "Settings",
     "Positioner",

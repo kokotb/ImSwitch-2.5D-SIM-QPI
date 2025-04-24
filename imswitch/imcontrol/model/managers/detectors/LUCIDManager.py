@@ -108,7 +108,7 @@ class LUCIDManager(DetectorManager):
         contain a key with the specified parameter name, an error will be
         raised."""        
         def trigToggle():
-            self._camera.setPropertyValue(name, value)
+            self._camera.setPropertyValue(name, value, False)
         super().setParameter(name, value)
 
         if name not in self._DetectorManager__parameters:

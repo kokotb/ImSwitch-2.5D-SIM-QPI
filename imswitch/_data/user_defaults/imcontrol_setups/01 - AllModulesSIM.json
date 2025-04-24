@@ -1,0 +1,283 @@
+{ "SLMSIM":{
+  "path": "dlls\\SLM4DD\\lib\\R4CommLib-1.7-x64.dll",
+  "port": "COM4",
+  "width":1080,
+  "height":1920,
+  "pixelSize":13.62,
+  "managerName": "SLM4DDManager",
+  "mock": false
+
+},
+
+"SLM25D":{
+  "width":1080,
+  "height":1920,
+  "mock": true,
+  "Gamma": 0.5, 
+  "Psi": 0.5,
+  "LeftCenterX": 480,
+  "LeftCenterY": 540, 
+  "RightCenterX":1440,
+  "RightCenterY": 540,
+  "BeamDiameter": 6.0,
+
+  "LeftPiston": 0.0,
+  "LeftYtilt": 0.0,
+  "LeftXtilt": 0.0,
+  "LeftObliqueAstigmatism": 0.0,
+  "LeftDefocus": 0.0,
+  "LeftVerticalAstigmatism": 0.0,
+  "LeftVerticalTrefoil": 0.0,
+  "LeftVerticalComa": 0.0,
+  "LeftHorizontalComa": 0.0,
+  "LeftHorizontalTrefoil": 0.0,
+  "LeftSpherical": 0.0,
+
+  "RightPiston": 0.0,
+  "RightYtilt": 0.0,
+  "RightXtilt": 0.0,
+  "RightObliqueAstigmatism": 0.0,
+  "RightDefocus": 0.0,
+  "RightVerticalAstigmatism": 0.0,
+  "RightVerticalTrefoil": 0.0,
+  "RightVerticalComa": 0.0,
+  "RightHorizontalComa": 0.0,
+  "RightHorizontalTrefoil": 0.0,
+  "RightSpherical": 0.0
+
+
+},
+"Arduino":{
+  "managerName": "ArduinoManager",
+  "managerProperties": {
+    "rs232device": "arduino"
+  }
+},
+  "sim": {
+    "width": 1920,
+    "height": 1080,
+    "ReconWL1": 512,
+    "ReconWL2": 573,
+    "ReconWL3": 678,
+    "NA": 0.8,
+    "Pixelsize": 2.74,
+    "Alpha": 0.5,
+    "Beta": 0.98,
+    "w": 0.15,
+    "eta": 0.6,
+    "n": 1.0,
+    "Magnification": 22.2222,
+    "saveDir": "D:\\SIM_Data\\",
+    "nRotations": 3,
+    "nPhases": 3,
+    "isSimulation": 0,
+    "isMock": false
+},
+"detectors": {
+  "488 Cam": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "LUCIDManager",
+    "managerProperties": {
+      "cameraListIndex": 55,
+      "wavelength": 488,
+      "x0_global": 0,
+      "y0_global": 0,
+      "camProperties": {
+        "TriggerMode": "Off",
+        "Gain": 0.0,
+        "Gamma": 1.0,
+        "ExposureTime": 15000.0
+      },
+      "ROI":{
+        "OffsetX": 2216,
+        "OffsetY": 1684,
+        "Width": 512,
+        "Height": 512
+      } 
+    },
+    "forAcquisition": true
+  },
+  "561 Cam": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "LUCIDManager",
+    "managerProperties": {
+      "cameraListIndex": 66,
+      "wavelength": 561,
+      "x0_global": 0,
+      "y0_global": 0,
+      "camProperties": {
+        "TriggerMode": "Off",
+        "Gain": 0.0, 
+        "Gamma": 1.0,
+        "ExposureTime": 8000.0
+      },
+      "ROI":{
+        "OffsetX": 1848,
+        "OffsetY": 1548,
+        "Width": 512,
+        "Height": 512
+      }
+    },
+    "forAcquisition": true
+  },
+    "640 Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 65,
+        "wavelength": 640,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 100.0
+        },
+        "ROI":{
+          "OffsetX": 2016,
+          "OffsetY": 2104,
+          "Width": 512,
+          "Height": 512
+        }
+      },
+      "forAcquisition": true
+    }
+
+
+}, 
+
+"lasers": {
+  "488AOTF": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "AAAOTFLaserManager",
+      "managerProperties": {
+        "rs232device": "aaaotf",
+        "channel": 2
+      },
+      "wavelength": 488,
+      "valueRangeMin": 0,
+      "valueRangeMax": 100,
+      "valueRangeStep": 2,
+      "valueInit": 100,
+      "maxdBmValue": 18.2
+      
+      },
+  "561AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 3
+    },
+    "wavelength": 561,
+    "valueRangeMin": 0,
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+    "maxdBmValue": 20.8
+    },
+  "640AOTF": {
+    "analogChannel": null,
+    "digitalLine": null,
+    "managerName": "AAAOTFLaserManager",
+    "managerProperties": {
+      "rs232device": "aaaotf",
+      "channel": 4
+    }, 
+    "wavelength": 640,
+    "valueRangeMin": 0,
+    "valueRangeMax": 100,
+    "valueRangeStep": 2,
+    "valueInit": 100,
+
+    "maxdBmValue": 22.1
+    }
+    
+},
+  "positioners": {
+    "Z": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "QueensgatePiezoManager",
+      "mock": false,
+      "managerProperties": {
+        "port": "ASRLCOM18",
+        "zeroOnStartup": false
+      },
+      "axes": ["Z"],
+      "limits":[-40,440],
+      "forPositioning": true,
+      "forScanning": true
+    },
+    "XY": {
+      "analogChannel": null,
+      "digitalLine": null,
+      "managerName": "PriorStageManager",
+      "managerProperties": {
+        "port": "ASRLCOM3",
+        "zeroOnStartup": false
+      },
+      "axes": ["X","Y"],
+      "limits":[22000,10000],
+      "forPositioning": true,
+      "forScanning": true
+    }
+},
+
+  "rs232devices": {
+    "aaaotf": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM6",
+        "encoding": "ascii",
+        "recv_termination": "\n\r",
+        "send_termination": "\r",
+        "baudrate": 19200,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+        }
+    },
+    "arduino": {
+      "managerName": "RS232Manager",
+      "managerProperties": {
+        "port": "ASRLCOM7",
+        "encoding": "ascii",
+        "recv_termination": "\r",
+        "send_termination": "\r",
+        "baudrate": 115200,
+        "bytesize": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "rtscts": "false",
+        "dsrdtr": "false",
+        "xonxoff": "false"
+      }
+    }
+    },
+  "availableWidgets": [
+    "SIM",
+    "Laser",
+    "Image",
+    "Settings",
+    "Positioner",
+    "Tiling",
+    "Timing",
+    "ZStack",
+    "InfoGathering",
+    "ROI",
+    "SLM25D",
+    "PSFAnalysis",
+    "Autofocus"
+  ]
+}
