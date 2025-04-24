@@ -1419,12 +1419,6 @@ class SIMController(ImConWidgetController):
 
         rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
-        ##Temporary printing for debug
-        # if processor.handle == self.channelAF:
-        # print(processor.handle, " ", self._master.autofocusManager.computeLaplacian(rawImg))
-        # time.sleep(0.5)
-        ##
-        
         self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
@@ -1438,11 +1432,13 @@ class SIMController(ImConWidgetController):
                 
         # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
         
+        #### Emits every 2.5D image to tiling preview window.
         if self.tilePreview and self.isTiling:
             # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
             #     self.updateWFContLimits()
             self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
-        
+        ####
+
         with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
             if ((self.isRecordRaw)) and not (self.startSettingsSaved):
                 self._commChannel.sigSaveSettingsFirst.emit()

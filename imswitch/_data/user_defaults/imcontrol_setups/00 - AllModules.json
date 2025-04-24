@@ -90,8 +90,8 @@
         "ExposureTime": 15000.0
       },
       "ROI":{
-        "OffsetX": 2312,
-        "OffsetY": 1584,
+        "OffsetX": 2216,
+        "OffsetY": 1684,
         "Width": 1024,
         "Height": 1024
       } 
