@@ -208,6 +208,7 @@ class LaserModule(QtWidgets.QWidget):
 
     sigEnableChanged = QtCore.Signal(bool)  # (enabled)
     sigValueChanged = QtCore.Signal(float)  # (value)
+    sigCheckValidity = QtCore.Signal()
 
     sigModEnabledChanged = QtCore.Signal(bool) # (modulation enabled)
     sigFreqChanged = QtCore.Signal(int)        # (frequency)
@@ -262,59 +263,7 @@ class LaserModule(QtWidgets.QWidget):
         self.powerGrid.addWidget(self.slider, 0, 3, 2, 1)
         self.powerGrid.addWidget(self.maxpower, 0, 4, 2, 1)
         
-        if isModulated:
-            freqRangeMin, freqRangeMax, initialFrequency = frequencyRange
-            # laser modulation widgets
-            # enable button
-            self.modulationEnable = guitools.BetterPushButton("ON")
-            self.modulationEnable.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
-                                            QtWidgets.QSizePolicy.Expanding)
-            self.modulationEnable.setCheckable(True)
-
-            # frequency slider
-            self.modulationFrequencyLabel = QtWidgets.QLabel("Frequency [Hz]")
-            self.modulationFrequencyLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.modulationFrequencyEdit = QtWidgets.QLineEdit(str(initialFrequency))
-            self.modulationFrequencyEdit.setFixedWidth(50)
-            self.modulationFrequencyEdit.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.modulationFrequencyMinLabel = QtWidgets.QLabel(str(freqRangeMin))
-            self.modulationFrequencyMaxLabel = QtWidgets.QLabel(str(freqRangeMax))
-            self.modulationFrequencySlider = guitools.BetterSlider(QtCore.Qt.Horizontal)
-            self.modulationFrequencySlider.setRange(freqRangeMin, freqRangeMax)
-            self.modulationFrequencySlider.setValue(initialFrequency)
-
-            # duty cycle slider
-            self.modulationDutyCycleLabel = QtWidgets.QLabel("Duty cycle [%]")
-            self.modulationDutyCycleLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.modulationDutyCycleEdit = QtWidgets.QLineEdit(str(50))
-            self.modulationDutyCycleEdit.setFixedWidth(50)
-            self.modulationDutyCycleEdit.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.modulationDutyCycleMinLabel = QtWidgets.QLabel(str(1))
-            self.modulationDutyCycleMaxLabel = QtWidgets.QLabel(str(99))
-            self.modulationDutyCycleMinLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.modulationDutyCycleMaxLabel.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-            self.modulationDutyCycleSlider = guitools.BetterSlider(QtCore.Qt.Horizontal)
-            self.modulationDutyCycleSlider.setRange(1, 99)
-            self.modulationDutyCycleSlider.setValue(50)
-
-            self.modulationGroup = QtWidgets.QGroupBox("Frequency modulation")
-            self.modulationLayout = QtWidgets.QGridLayout()
-
-            self.modulationLayout.addWidget(self.modulationFrequencyLabel, 0, 0)
-            self.modulationLayout.addWidget(self.modulationFrequencyEdit, 0, 1)
-            self.modulationLayout.addWidget(self.modulationFrequencyMinLabel, 0, 2)
-            self.modulationLayout.addWidget(self.modulationFrequencySlider, 0, 3)
-            self.modulationLayout.addWidget(self.modulationFrequencyMaxLabel, 0, 4)
-
-            self.modulationLayout.addWidget(self.modulationDutyCycleLabel, 1, 0)
-            self.modulationLayout.addWidget(self.modulationDutyCycleEdit, 1, 1)
-            self.modulationLayout.addWidget(self.modulationDutyCycleMinLabel, 1, 2)
-            self.modulationLayout.addWidget(self.modulationDutyCycleSlider, 1, 3)
-            self.modulationLayout.addWidget(self.modulationDutyCycleMaxLabel, 1, 4)
-            self.modulationLayout.addWidget(self.modulationEnable, 0, 5, 2, 1)
-            self.modulationGroup.setLayout(self.modulationLayout)
-
-            self.powerGrid.addWidget(self.modulationGroup, 2, 0, 1, 5)
+      
                 
         self.enableButton = guitools.BetterPushButton('ON')
         self.enableButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
@@ -346,21 +295,16 @@ class LaserModule(QtWidgets.QWidget):
             lambda: self.slider.setValue(self.getValue())
         )
 
-        if isModulated:
-            self.modulationEnable.toggled.connect(self.sigModEnabledChanged)
-            self.modulationFrequencySlider.valueChanged.connect(
-                lambda value: self.sigFreqChanged.emit(value)
-            )
-            self.modulationFrequencyEdit.returnPressed.connect(
-                lambda: self.sigFreqChanged.emit(self.getFrequency())
-            )
-            self.modulationDutyCycleSlider.valueChanged.connect(
-                lambda value: self.sigDutyCycleChanged.emit(value)
-            )
-            self.modulationDutyCycleEdit.returnPressed.connect(
-                lambda: self.sigDutyCycleChanged.emit(self.getDutyCycle())
-            )
+        self.setPointEdit.textChanged.connect(self.checkValidity)
 
+
+
+    def checkValidity(self):
+        valid = self.setPointEdit.hasAcceptableInput()
+        if valid:
+            self.setPointEdit.setStyleSheet('')
+        else:
+            self.setPointEdit.setStyleSheet("border: 1px solid red;")
 
     def isActive(self):
         """ Returns whether the laser is powered on. """
