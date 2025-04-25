@@ -926,18 +926,13 @@ class SIMController(ImConWidgetController):
         self._widget.startSIM_button.setEnabled(False)
         self.active = True
         self._commChannel.updateSIMActive(self.active)
-        
-
-
-        
+                
         # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
         self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
         self.thread25D.start()
 
 
-
-        
     def getTilingSettings(self):
         self.startxpos, self.startypos = self.positionerXY.get_abs()
         self.num_grid_x = int(self.sharedAttrs[('Tiling Settings','Steps - X')])

@@ -7,7 +7,7 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from imswitch.imcommon.model import initLogger
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
-                             QCheckBox, QLabel, QLineEdit, QDialog)
+                             QCheckBox, QLabel, QLineEdit, QDialog, QRadioButton, QButtonGroup)
 from pyqtgraph.Qt import QtCore, QtGui
 import json
 import os
@@ -15,6 +15,7 @@ import threading
 from PIL import Image, ImageDraw
 import scipy.misc
 import tifffile as tif
+
 
 
 class PSFAnalysisWidget(NapariHybridWidget):
@@ -383,11 +384,13 @@ class PSFWindow(QMainWindow):
 
     def displayStackOfImages(self):
         liststackOfImages = []
-
         for file in os.listdir(self.folderPath.text()):
-            im = Image.open(os.path.join(self.folderPath.text(), file))
-            imarray = np.array(im)
-            liststackOfImages.append(imarray)
+            imarray = tif.imread(os.path.join(self.folderPath.text(), file))
+            if len(imarray.shape) == 3:
+                for i in range(imarray.shape[0]):
+                    liststackOfImages.append(imarray[i])
+            elif len(imarray.shape) == 2:
+                liststackOfImages.append(imarray)
 
         self.image_stack = np.array(liststackOfImages)
         self.imgZStack.setImage(self.image_stack[0,:,:])#, levels=(0,4095))
@@ -498,6 +501,21 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.saveZstack, 5, 2)
         self.savePSFstack = QPushButton("Save PSFstack")
         self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
+        
+        self.checkboxRecordRed = QRadioButton('Red')
+        self.checkboxRecordGreen = QRadioButton('Green')
+        self.checkboxRecordBlue = QRadioButton('Blue')
+
+        self.ZstackLayout.addWidget(self.checkboxRecordRed, 3, 3)
+        self.ZstackLayout.addWidget(self.checkboxRecordGreen, 3, 4)
+        self.ZstackLayout.addWidget(self.checkboxRecordBlue, 3, 5)
+
+        self.button_group = QButtonGroup()  
+        self.button_group.addButton(self.checkboxRecordRed)
+        self.button_group.addButton(self.checkboxRecordGreen)
+        self.button_group.addButton(self.checkboxRecordBlue)
+
+        self.button_group.buttonClicked.connect(self.selectChannel)
 
         self.openDialog.clicked.connect(self.loadPath)
         
@@ -609,7 +627,8 @@ class PSFWindowRecord(QMainWindow):
         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
         self.updatelines()
 
-
+    def selectChannel(self):
+        pass
 
     def updatelines(self):
         shape = np.shape(self.PSFstack)
