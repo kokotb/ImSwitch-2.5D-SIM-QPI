@@ -12,6 +12,8 @@ class MockRS232Driver:
 
     def query(self, arg):
         self.__logger.debug(f"Querying to {self._settings['port']}: {arg}")
+        if arg.startswith('V'):
+            return 'R'
         pass
 
     def initialize(self):
