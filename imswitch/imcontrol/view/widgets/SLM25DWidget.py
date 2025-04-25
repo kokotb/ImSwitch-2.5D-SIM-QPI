@@ -151,11 +151,18 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name + side] = QtWidgets.QDoubleSpinBox()
                 self.pars['AbsPosEdit' + name + side]._name = self.ZernikeAberrationNames[i]
                 self.pars['AbsPosEdit' + name + side]._type = 'flt'
+                
+                if side == 'Left': self.pars['AbsPosEdit' + name + side]._side = 'Left'
+                elif side == 'Right': self.pars['AbsPosEdit' + name + side]._side = 'Right'
         
                 self.pars['AbsPosEdit' + name + side].setRange(-5.0,5.0)
-                self.pars['AbsPosEdit' + name + side].setSingleStep(0.1)
+                if name == '(4,0)': #Different settings for 'spherical'
+                    self.pars['AbsPosEdit' + name + side].setSingleStep(0.01)
+                    self.pars['AbsPosEdit' + name + side].setDecimals(2)
+                else:
+                    self.pars['AbsPosEdit' + name + side].setSingleStep(0.1)
+                    self.pars['AbsPosEdit' + name + side].setDecimals(1)
                 self.pars['AbsPosEdit' + name + side].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['AbsPosEdit' + name + side].setDecimals(1)
                 self.pars['AbsPosEdit' + name + side].setValue(0.1)
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
 

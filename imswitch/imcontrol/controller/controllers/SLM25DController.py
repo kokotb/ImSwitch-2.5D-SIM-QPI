@@ -487,8 +487,13 @@ class SLM25DController(ImConWidgetController):
             params = self._commChannel.loadedSettings["Zernike SLM Parameters"]
 
             for i in range(len(self._widget.elementListZern)):
-                if self._widget.elementListZern[i]._type == 'flt':
-                    self._widget.elementListZern[i].setValue(float(params[self._widget.elementListZern[i]._name]))
+                if self._widget.elementListZern[i]._side == 'Left':
+                    leftParams = params['Left']
+                    self._widget.elementListZern[i].setValue(float(leftParams[self._widget.elementListZern[i]._name]))
+                    
+                if self._widget.elementListZern[i]._side == 'Right':
+                    rightParams = params['Right']
+                    self._widget.elementListZern[i].setValue(float(rightParams[self._widget.elementListZern[i]._name]))
 
 
     def load25DSettings(self, moduleDict):
