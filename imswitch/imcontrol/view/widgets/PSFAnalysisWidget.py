@@ -13,6 +13,8 @@ import json
 import os
 import threading
 from PIL import Image, ImageDraw
+import scipy.misc
+import tifffile as tif
 
 
 class PSFAnalysisWidget(NapariHybridWidget):
@@ -658,7 +660,7 @@ class PSFWindowRecord(QMainWindow):
     def updateXline(self):
         pass
     
-    def wheelEvent(self, event):
+    """def wheelEvent(self, event):
         global_pos = event.globalPosition()  
 
         viewbox_global_pos_Zstack = self.vbZStack.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
@@ -692,6 +694,54 @@ class PSFWindowRecord(QMainWindow):
             self.current_indexX = max(0, min(self.PSFstack.shape[2] - 1, new_index))
             self.updatePSFYZimage()
         else:
+            pass"""
+
+    def wheelEvent(self, event):
+
+        global_pos = event.globalPosition()  
+
+        viewbox_global_pos_Zstack = self.vbZStack.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+        viewbox_global_pos_PSFXY = self.vbPSFXY.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+        viewbox_global_pos_PSFXZ = self.vbPSFXZ.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+        viewbox_global_pos_PSFYZ = self.vbPSFYZ.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+
+        local_pos_Zstack = global_pos - viewbox_global_pos_Zstack
+        local_pos_PSFXY = global_pos - viewbox_global_pos_PSFXY
+        local_pos_PSFXZ = global_pos - viewbox_global_pos_PSFXZ
+        local_pos_PSFYZ = global_pos - viewbox_global_pos_PSFYZ
+
+        if self.vbZStack.boundingRect().contains(local_pos_Zstack):
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:    # if ctrl pressed ==> ZOOM
+                mouse_pos = event.pos()
+                mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+                # super().wheelEvent(event)
+                factor = 0.9 if event.angleDelta().y() / 120 > 0 else 1.1
+                self.vbZStack.scaleBy((factor, factor))
+                new_mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+                delta = new_mouse_point - mouse_point
+                self.vbZStack.translateBy(-delta)
+            else:    # if ctrl not pressed ==> zstack scroll
+                num_degrees = event.angleDelta().y() / 120  
+                new_index = self.current_index - int(num_degrees)
+                self.current_index = max(0, min(len(self.image_stack) - 1, new_index))
+                self.updateZstackImage()
+        elif self.vbPSFXY.boundingRect().contains(local_pos_PSFXY):
+            num_degrees = event.angleDelta().y() / 120  
+            new_index = self.current_indexZ - int(num_degrees)
+            self.current_indexZ = max(0, min(self.PSFstack.shape[0] - 1, new_index))
+            self.updatePSFXYimage()
+        elif self.vbPSFXZ.boundingRect().contains(local_pos_PSFXZ):
+            num_degrees = event.angleDelta().y() / 120  
+            new_index = self.current_indexY - int(num_degrees)
+            self.current_indexY = max(0, min(self.PSFstack.shape[1] - 1, new_index))
+            self.updatePSFXZimage()
+        elif self.vbPSFYZ.boundingRect().contains(local_pos_PSFYZ):
+            num_degrees = event.angleDelta().y() / 120  
+            new_index = self.current_indexX - int(num_degrees)
+            self.current_indexX = max(0, min(self.PSFstack.shape[2] - 1, new_index))
+            self.updatePSFYZimage()
+        else:
             pass
 
 
@@ -705,7 +755,12 @@ class PSFWindowRecord(QMainWindow):
         pass
 
     def saveZstackfunc(self):
-        pass
+        zstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text())
+        if not os.path.exists(zstackSavePath):
+            os.makedirs(zstackSavePath)
+        saveImageName = self.saveImagesName.text() + ".tif"
+        tif.imwrite(os.path.join(zstackSavePath, saveImageName), self.image_stack)
+
     
     def mouseReleaseEvent(self, event):
         if self.imgZStack.image is None:
