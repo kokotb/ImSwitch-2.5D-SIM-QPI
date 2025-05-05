@@ -17,7 +17,7 @@ class ZStackController(ImConWidgetController):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
         self._widget.initZStackInfo()
-        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
+        # self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
@@ -39,10 +39,15 @@ class ZStackController(ImConWidgetController):
 
 
 
-    def calcZStepArray(self):
-
-        stepDist = float(self._widget.zStepDistance_textedit.text())
-        totalDist = float(self._widget.totalZ_textedit.text())
+    def calcZStepArray(self): # CTNOTE: Something not calculating perfectly when switching between center and not center.
+        try: 
+            stepDist = float(self._widget.zStepDistance_textedit.text())
+        except ValueError:
+            return
+        try:
+            totalDist = float(self._widget.totalZ_textedit.text())
+        except ValueError:
+            return
         zScanDir = self._widget.zStackScanDir.currentText()
         currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position'])
         centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
@@ -51,7 +56,10 @@ class ZStackController(ImConWidgetController):
             zScanSign = -1
         elif zScanDir == 'Down':
             zScanSign = 1
-        floorSteps = math.floor(totalDist / stepDist)
+        try:
+            floorSteps = math.floor(totalDist / stepDist)
+        except ZeroDivisionError:
+            return
         zScanList = []
 
         if centerCheckbox == 2:
@@ -61,19 +69,21 @@ class ZStackController(ImConWidgetController):
 
             for i in range(floorSteps):
                 zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
+            self._widget.numSteps_textedit.setText(str(len(zScanList) + 1))
 
         else:
             zScanList.append(round(currentZ,1))
 
             for i in range(floorSteps):
                 zScanList.append(round(currentZ+zScanSign*((i+1)*stepDist),1))
+            self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
 
 
 
         self._commChannel.sigZScanList.emit(zScanList, currentZ)
 
-        self._widget.numSteps_textedit.setText(str(len(zScanList)))
+        
 
         return zScanList
 

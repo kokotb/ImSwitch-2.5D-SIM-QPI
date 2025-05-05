@@ -7,7 +7,7 @@ from PyQt5.QtGui import QIntValidator, QDoubleValidator
 class TimingWidget(NapariHybridWidget):
 
     sigTimingInfoChanged = QtCore.Signal(str, str, str)
-
+    sigCheckValidity = QtCore.Signal(str)
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         timingLayout = QtWidgets.QGridLayout()
@@ -23,6 +23,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingPeriod_textedit._name = 'Timing Period'
         self.timingPeriod_textedit._type = 'str'
         self.validator = QDoubleValidator()
+        self.validator.setBottom(0.0)
         self.timingPeriod_textedit.setValidator(self.validator)
         self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the image cycle, it will run as fast as possible.')
         self.timingPeriod_textedit.setFixedWidth(50)
@@ -45,6 +46,7 @@ class TimingWidget(NapariHybridWidget):
         self.timingDuration_textedit._type = 'str'
         self.timingDuration_textedit.setEnabled(False)
         self.validator = QDoubleValidator()
+        self.validator.setBottom(0.0)
         self.timingDuration_textedit.setValidator(self.validator)
         self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
         self.timingDuration_textedit.setFixedWidth(50)
@@ -63,7 +65,7 @@ class TimingWidget(NapariHybridWidget):
         self.totalReps_textedit._name = 'Repetitions'
         self.totalReps_textedit._type = 'str'
         self.totalReps_textedit.setEnabled(False)
-        self.validator = QIntValidator(0,10000,self)
+        self.validator = QIntValidator(1,1000000,self)
         self.totalReps_textedit.setFixedWidth(50)
         self.totalReps_textedit.setValidator(self.validator)
         
@@ -109,8 +111,25 @@ class TimingWidget(NapariHybridWidget):
         self.perCheckState = False
 
 
-     
+        self.timingDuration_textedit.textChanged.connect(lambda *args, name='duration': self.sigCheckValidity.emit(name))
+        self.timingPeriod_textedit.textChanged.connect(lambda *args, name='period': self.sigCheckValidity.emit(name))
+        self.totalReps_textedit.textChanged.connect(lambda *args, name='reps': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
 
+
+     
+    def checkValidity(self, name):
+        if name == 'duration':
+            signalOrigin = self.timingDuration_textedit
+        elif name == 'period':
+            signalOrigin = self.timingPeriod_textedit
+        elif name == 'reps':
+            signalOrigin = self.totalReps_textedit
+        valid = signalOrigin.hasAcceptableInput()
+        if valid:
+            signalOrigin.setStyleSheet('')
+        else:
+            signalOrigin.setStyleSheet("border: 1px solid red;")
 
 
     def toggleCheckboxes(self, state):

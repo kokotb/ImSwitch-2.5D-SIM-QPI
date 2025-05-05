@@ -99,7 +99,7 @@ class LucidCam:
         self.device.stop_stream()
 
     def suspend_live(self):
-        self.__logger.info("suspend_live")
+        self.__logger.info("Suspended")
         # print(self.device)
         self.device.stop_stream()
         
@@ -467,7 +467,7 @@ class LucidCam:
         return value
     
 
-    def grabFrameSet(self, buffer_size, mode):
+    def grabFrameSet(self, buffer_size):
         # buffer_size = image number pulled from a cam
         # time.sleep(0.5)
         buffer_type = "Mono16" #FIXME: do this with getproperty
@@ -475,8 +475,6 @@ class LucidCam:
         # print(waitingBuffers)
 
         buffer_set = self.device.get_buffer(buffer_size)
-        if mode == '25D':
-            buffer_set = [buffer_set]
         # buffer = self.device.get_buffer() 
         # print(self.device)
         """
@@ -501,10 +499,7 @@ class LucidCam:
                 # Cast 12bit data to 16 bit format for further processing
                 nparray = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
                 nparrays.append(np.ctypeslib.as_array(nparray, (item.height, item.width)))
-                if mode == '25D':
-                    reducedArray = np.divide(nparrays[0],16)
-                elif mode == 'SIM':
-                    reducedArray = np.divide(nparrays,16)
+                reducedArray = np.divide(nparrays,16)
                 array16Bit = reducedArray.astype(np.uint16)
             # array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
             # array = np.ctypeslib.as_array(array, (item.height, item.width))

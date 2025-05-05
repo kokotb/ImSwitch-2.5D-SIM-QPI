@@ -81,7 +81,7 @@ class PriorStageManager(PositionerManager):
         msg = "controller.connect " + port
         if self.query_initial(msg, SDKPrior, sessionID)[0]==0:
             SDKPriorMock = False
-            print("XY stage initialized")
+            # self.__logger.info(f'XY stage initialized.')
         else:
             # Could not connect, load mock PriorSDK DLL
             from . import MockSDKPriorDLL
@@ -159,7 +159,7 @@ class PriorStageManager(PositionerManager):
             old_pos = self.get_abs()
             self._position['X'] = float(old_pos[0])
             self._position['Y'] = float(old_pos[1])
-        print(self._position)
+        self.__logger.info(self._position)
 
     def moveRelative(self, dist, axis):
         """Moves the stage for a relative given step. """
@@ -186,7 +186,7 @@ class PriorStageManager(PositionerManager):
         self.checkBusyLoop()
         current_position = self.get_abs()
         self._position[axis] = float(current_position[axis_order])
-        print(self._position) #queries from get_abs
+        self.__logger.info(self._position) #queries from get_abs
 
 
 
@@ -223,7 +223,7 @@ class PriorStageManager(PositionerManager):
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         self.query(msg_set_position)
         self._position[axis] = position
-        print(self._position) #calcuated, not queries from get_abs
+        self.__logger.info(self._position) #calcuated, not queries from get_abs
 
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import time
 from imswitch.imcommon.model import initLogger
 from .DetectorManager import DetectorManager, DetectorAction, DetectorNumberParameter, DetectorListParameter
-from imswitch.imcontrol.model.interfaces.lucidcamera import LucidCam
+from imswitch.imcontrol.model.interfaces.LucidCamManager import LucidCam
 from ..ArduinoManager import ArduinoManager
 
 class LUCIDManager(DetectorManager):
@@ -108,7 +108,7 @@ class LUCIDManager(DetectorManager):
         contain a key with the specified parameter name, an error will be
         raised."""        
         def trigToggle():
-            self._camera.setPropertyValue(name, value)
+            self._camera.setPropertyValue(name, value, False)
         super().setParameter(name, value)
 
         if name not in self._DetectorManager__parameters:
@@ -236,7 +236,7 @@ class LUCIDManager(DetectorManager):
             # print(camera)
         except Exception:
             self.__logger.warning(f'Failed to initialize Lucid camera {cameraId}, loading mocker')
-            from imswitch.imcontrol.model.interfaces.lucidcamera_mock import LucidCamMock
+            from imswitch.imcontrol.model.interfaces.MockLucidCamManager import LucidCamMock
             camera = LucidCamMock()
             print(camera)
 

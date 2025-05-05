@@ -7,20 +7,12 @@ import tifffile as tif
 import time
 import numpy as np
 from decimal import Decimal
-from .SIMProcessor import SIMProcessor
-from .SIMProcessor import SIMParameters
+from .SIMProcessor import SIMProcessor, SIMParameters
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
 import math
-
-from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
+from imswitch.imcommon.model import initLogger, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
-from imswitch.imcommon.framework import Signal, Thread, Worker, Mutex, Timer
-# from imswitch.imcontrol.model import SLM4DDManager as SIMclient
-
-import imswitch
-import pandas as pd
-
+from imswitch.imcommon.framework import Signal
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -77,6 +69,9 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
+        self.SimProcessorLaser1.roOrder = 1
+        self.SimProcessorLaser2.roOrder = 2
+        self.SimProcessorLaser3.roOrder = 3
         self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3] #processor object list
         self.detectors = []
         for detector in self._master.detectorsManager: #detector object list
@@ -172,9 +167,8 @@ class SIMController(ImConWidgetController):
         Run snake scan for larger FOVs.
         """
         
-        # self.isReconstructing = False # Is this line needed, all other references to this variable are in SIMProcessor
-
         self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
+        projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
@@ -182,52 +176,74 @@ class SIMController(ImConWidgetController):
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
-        projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
-
-        #Get the parameters that go into the createXYGridPositionArray function
-        self.getTilingSettings()
-        # self._commChannel.sigCalcPositionArray.emit()
-        roiOriginList = []
+        self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
 
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
         else:
             self.isTiling = False
 
+        roiOriginList = []
         if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
             self.isScanROI = True
-        else:
-            self.isScanROI = False
-
-        if self.isScanROI:
             try:
                 roiOriginList = self.getOrigins()
             except KeyError:
                 self._logger.warning('ROI list is empty.')
+        else:
+            self.isScanROI = False
 
-        self.tileOrigins = []
-        positions = self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList)
-        for i in range(len(positions)):
-            self.tileOrigins.append(positions[i][-1])
-        
-        self.tileOrigin = positions[0][-1]
-
-
-
-
-        if not self.isTiling:
-            positions = self.tileOrigins
-        
-        #Get Z-Stack list
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
             self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
-            self.zLength = len(zList)
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
-            self.zLength = len(zList)
-            #zOrigin stored as self.zOrigin already
+
+        # Set running order on SLM
+        roID = self._widget.getSelectedRO()
+        self._master.SLM4DDManager.setRunningOrder(roID)
+        # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
+        self.expTimeMax, self.numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
+        self.setActiveSLMChannels(self.numSLMChannels, chansSLM)
+        self.activeProcessors = []
+        for processor in self.processors:
+            for detector in self.detectors:
+                if processor.handle == detector._wavelength:
+                    processor.detObj = detector
+                    processor.shape = detector._shape
+                    
+            if (processor.slmActive == True) and (processor.handle in poweredLasers):
+                self.activeProcessors.append(processor)
+        shapeList = []
+        for k, processor in enumerate(self.activeProcessors):
+            processor.processorIndex = k
+            shapeList.append(processor.shape)
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations. Check SLM running order and powered lasers.")
+            self.stopSIM()
+            return
+        
+        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
+        if len(setShapeList) != 1:
+            self._logger.error("Detector image shapes must be the same.")
+            self.stopSIM()
+            return
+        shapeList = list(setShapeList)[0] #Put back into list form to be used to calculate tiling positions.
+        ####
+
+
+        ####
+        self.tileOrigins = []
+        positions = self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        for i in range(len(positions)):
+            self.tileOrigins.append(positions[i][0])
+        self.tileOrigin = positions[0][0]
+        if not self.isTiling:
+            positions = self.tileOrigins
+        ####
+
 
 
         ''' # For nameing tiling squares A1, A2, .....C5 etc.
@@ -239,9 +255,7 @@ class SIMController(ImConWidgetController):
         #         test.append(item+value)
         '''
         
-        # Datetime string registered when start button is pressed only.
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
-        
+       
 
         # Set all SIM parameters from GUI to each processor. All will be the same, except Recon WL
         self.updateProcessorParameters()
@@ -251,131 +265,142 @@ class SIMController(ImConWidgetController):
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
         self.framesPerDetector = 9
         self.frameCounter = 0
-        #Set tiling flag, determines whether program will enter the tiling code.
-
-
-        self.numActiveChannels = len(poweredLasers)
-        
-
-        # Set running order on SLM
-        roID = self._widget.getSelectedRO()
-        self._master.SLM4DDManager.setRunningOrder(roID)
-        # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
-        self.expTimeMax, numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
-        self.setActiveSLMChannels(numSLMChannels, chansSLM)
-        self.activeProcessors = []
-        for processor in self.processors:
-            if processor.slmActive == True:
-                self.activeProcessors.append(processor)
-            for detector in self.detectors:
-                if processor.handle == detector._wavelength:
-                    processor.detObj = detector
-        for k, processor in enumerate(self.activeProcessors):
-            processor.processorIndex = k
-
-
-
-        # -------------------Set-up cams-------------------
-
-        # FIXME: Automate buffer size calculation based on image size, it did not work before
-        total_buffer_size_MB = 350 # in MBs
-        for detector in self.detectors:
-            image_size = detector.shape
-            image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            buffer_size = int(total_buffer_size_MB // image_size_MB)
-            # buffer_size = 9
-            self.setCamForExperimentSIM(detector, buffer_size,self.expTimeMax)
-        
-
+        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
         time_global_start = time.time()
-        # time_whole_start = time_global_start
-        # self.processors2 = self.processors[0]
-        # self.processors2 = [self.processors2]
-
-        self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
-       # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
         self.tilingRep = 0
+        isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
+        if isTimed: timingPeriodInSec = self.getPeriodInSec()
         timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
-        while self.active and poweredLasers != []:
-            
+        self.firstLoop = True
+        self.zLength = len(zList)
+        startLoopTime = time.time()
+        
+        self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
+        # FIXME: Automate buffer size calculation based on image size, it did not work before
+        # total_buffer_size_MB = 350 # in MBs
+        for processor in self.activeProcessors:
+            detector = processor.detObj
+            # image_size = detector.shape
+            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
+            # buffer_size = int(total_buffer_size_MB // image_size_MB)
+            buffer_size = 20 # Slightly more than double expected. If only set at 9, may miss information when it doesn't work well.
+            self.setCamForExperimentSIM(detector, buffer_size, self.expTimeMax)
+        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
+        self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
+        self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
-            self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
-            self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
-            self._commChannel.updateActiveDirectory(self.exptFolderPath)
+        while self.SIMActive:
 
-            # Scan over all positions generated for grid
-            
+            self.roiIter = 0
 
-            if self.completeFrameSets != 0 and timingPeriodInSec is not None:
-                repTimer = time.time() - repTimerStart
-                while repTimer < timingPeriodInSec:
-                    time.sleep(.1)
-                    repTimer = time.time() - repTimerStart
-                    if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
-                        self._widget.stop_button.setChecked(False)
-                        return
-            repTimerStart = time.time()
+            while self.roiIter < len(positions):
 
-            self.roiIterator = 0
+                #### Set variables for current and next positions. These will be used to move stage XY.
+                currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
+                try:
+                    nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
+                except IndexError:
+                    nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
+                if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
+                    currentROI = [currentROI]
+                ####
 
-            while self.roiIterator < len(positions):
                 j = 0 # Position iterator
-                oneROI = positions[self.roiIterator]
 
-                if (not self.isTiling) and (not self.isScanROI):
-                    oneROI = [oneROI]
-
-
-                while j < len(oneROI):
+                while j < len(currentROI):
                     self.j = j
+                    ####
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
                     else:
                         exptTimeElapsed = time.time() - time_global_start
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
                     self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
-                    self.nextPos = oneROI[self.j]
-                    self.currentPos = oneROI[self.j-1]
+                    ####
+
+                    self.currentPos = currentROI[self.j]
+                    try:
+                        self.nextPos = currentROI[self.j+1] # Next position to move to.
+                    except IndexError:
+                        self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
+
+                    if self.firstLoop:
+                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
+
                     self.positionerXY.checkBusyLoop()
 
 
-                    if j == 0 and self.completeFrameSets != 0 and self.isTiling:
+                    if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI):
                         time.sleep(.5) #TODO: Change to calibrate by distance needed to move
-                    # elif (j==0) and (self.completeFrameSets == 0):
-                    #     pass
                     else:
                         time.sleep(.05) #can probablz reduct slightly
+
+                    ####Autofocus
+                    if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
+                        localOrigin = float(self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')])
+                        AFList = self._master.autofocusManager.calcAFArray(localOrigin)
+                        self.autofocusLoop(AFList)
+                        _, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
+                        bestZ = AFList[bestIndex]
+                        offsetAF = bestZ - localOrigin
+                        print(offsetAF)
+                        self.channelAF = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
+                        if bestZ != localOrigin:
+                            self.positioner.setPosition(bestZ, 'Z')
+                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                    ####
+
                     z = 0
                     while z < len(zList):
-                    # for z in range(len(zList)):
-                        if self.zScanActive:
-                            self.positioner.setPosition(zList[z], 'Z')
-                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
 
-                        timestart = time.time()
-                                        
-                        # Trigger SIM set acquisition. Will trigger as many channels are as on SLM.
+                        #### For timing period. Check every 1/10s if period time is exceeded yet.
+                        if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                            repTimer = time.time() - repTimerStart
+                            if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                            while repTimer < timingPeriodInSec:
+                                time.sleep(timingPeriodInSec / 100)
+                                repTimer = time.time() - repTimerStart
+                                if self._widget.stop_button.isChecked(): #allows exit of the loop
+                                    self._widget.stop_button.setChecked(False)
+                                    self.stopSIM()
+                                    return
+                        repTimerStart = time.time()
+                        ####
+
+                        #### Moves piezo for Z stack.
+                        if self.zScanActive: 
+                            success = self.positioner.setPosition(zList[z], 'Z')
+                            if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
+                                time.sleep(0.05)
+                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
+                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
+                        ####
                         
                         self._master.arduinoManager.trigOneSequenceWriteOnly()
-                        # self._master.arduinoManager.trigOneSequence()
+                        # time.sleep(0.5)
+                        procTimeStart = time.time()
      
-
-
-
+                        #### Locks for variables to be thread safe
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                        saveLock = threading.Lock()
+                        saveSettingsLock = threading.Lock()
+                        saveStackLock = threading.Lock()
+                        snapshotLock = threading.Lock()
+                        self.snapshotSettingsSaved = False
+                        ####
+
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
                         with ThreadPoolExecutor(max_workers=4) as executor: #
-                            if self.isTiling:
+                            if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                    executor.submit(self.mainSIMLoop, processor, errorLock, z, saveLock) 
+                                    executor.submit(self.mainSIMLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock) 
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             # self.stopSIM()
@@ -386,45 +411,51 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                        loopEndTime = time.time()-timestart
-                        print(loopEndTime)
+                        self.firstLoop = False
+
+                        procTimeDur = time.time()-procTimeStart
+
+                        endLoopTime = time.time() - startLoopTime
+                        startLoopTime = time.time()
+
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        self._logger.info(f'Loop time (s): {endLoopTime}')
+                        self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     completeZ += 1
 
                     
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stopSIM() # Stops tiling reps after all tiles*repetitions is done.
 
-                    totalEndTime = time.time()-time_global_start
-                    remainder = self.completeFrameSets % len(oneROI)
+                    totalEndTime = round(time.time()-time_global_start,3)
 
-                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
-                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-                            self._commChannel.sigStopSim.emit()
-                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
-                            self._commChannel.sigStopSim.emit()
-
+                    remainder = self.completeFrameSets % len(currentROI)
 
 
                 self.frameCounter += 1
-
-
                 self.tilingRep += 1
-
-                self.roiIterator += 1
+                self.roiIter += 1
                 
-                print(f'total time: {totalEndTime}')
+                self._logger.info(f'Elapsed time (s): {totalEndTime}')
+
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
+                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
+                    self.stopSIM()
+                if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
+                    self.stopSIM()
             
 
 
 
-    def mainSIMLoop(self, processor, errorLock, z, saveLock):
+    def mainSIMLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
 
         k = processor.processorIndex
+        roOrder = processor.roOrder
+
         if k+1 == len(self.activeProcessors):
             lastChan = True
         else: 
@@ -434,17 +465,19 @@ class SIMController(ImConWidgetController):
         
         # Set current detector being used
         detector = processor.detObj
-######TIMING BUFFER WAITING LOGIC BREAKS DOWN AT FAST SPEEDS. NEED DIFFERENT WAY.
-        time.sleep(self.expTimeMax/1000000*(k)*20) #approximately how long it will start for detector to start receiving images in buffer.
+
+        if self.numSLMChannels == 3:
+            time.sleep(self.expTimeMax/1000000*(roOrder)*18) #approximately how long it will start for detector to start receiving images in buffer.
+        else:
+            time.sleep(self.expTimeMax/1000000*18)
+
         waitingBuffers = detector._camera.getBufferValue("SIM")
 
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
-        # broken = False
-        # time.sleep(self.expTimeMax/1000000*16)
-        # time.sleep(1)
+
         while waitingBuffers != 9:
-            time.sleep(self.expTimeMax/1000000)
+            # time.sleep(self.expTimeMax/1000000)
             waitingBuffers = detector._camera.getBufferValue("SIM") #FIXME This logic does not include a way to remove saved images for first 2 cams if for example the thrid cam fails
             if waitingBuffers != waitingBuffersEnd:
                 bufferStartTime = time.time()
@@ -460,12 +493,12 @@ class SIMController(ImConWidgetController):
                     self.errorQ.append(True)
                 for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
                     detector._camera.clearBuffers()
-                if lastChan:
-                    self.lastZ = (z == self.zLength - 1)
-                    if self.lastZ:
-                        self.waitToMoveEvent.set()
-                    else: 
-                        self.waitToMoveEvent.set()
+                # if lastChan:
+                #     self.lastZ = (z == self.zLength - 1)
+                #     if self.lastZ:
+                #         self.waitToMoveEvent.set()
+                #     else: 
+                #         self.waitToMoveEvent.set()
                 break #stop thread execution and waits at end for other threads to finish
 
         if not broken:
@@ -474,20 +507,19 @@ class SIMController(ImConWidgetController):
             if lastChan:
                 self.lastZ = (z == self.zLength - 1)
                 # print('All images, all channels loaded into buffer')
-                if self.lastZ:
+                if self.lastZ and (self.isTiling or self.isScanROI):
             # if lastChan:
                     self.waitToMoveEvent.set()
                 else: 
                     self.waitToMoveEvent.set()
 
                 
-            rawStack = detector._camera.grabFrameSet(self.framesPerDetector, 'SIM') # receive raw image stack
-            self.sigRawStackReceived.emit(np.array(rawStack),f"{processor.handle} Raw") # display raw image stack
+            rawStack = detector._camera.grabFrameSet(self.framesPerDetector) # receive raw image stack
+            self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
             
             # Set sim stack for reconstruction
             processor.setSIMStack(rawStack)
-            
-            # Average rawe stack to make WF
+            # Average raw stacks to make WF
             imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor?
             imageWF = imageWF.astype(np.uint16)
 
@@ -500,21 +532,22 @@ class SIMController(ImConWidgetController):
             if self.tilePreview and self.isTiling:
                 # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
                 #     self.updateWFContLimits()
-                self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
+                self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
 
-            if ((self.isRecordRaw) or (self.isRecordWF) or (self.isRecordRecon)) and not (self.startSettingsSaved):
-                with saveLock:
+            with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
+                if ((self.isRecordRaw) or (self.isRecordWF) or (self.isRecordRecon)) and not (self.startSettingsSaved):
                     self._commChannel.sigSaveSettingsFirst.emit()
                     self.startSettingsSaved = True
 
-            if self.isRecordRaw:
-                self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+            with saveStackLock:
+                if self.isRecordRaw:
+                    self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
 
-            if self.isRecordWF:
-                self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+                if self.isRecordWF:
+                    self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z, self.roiIter)
 
-            if self.isRecordRecon and self.isReconstruction:
-                self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIterator)
+                if self.isRecordRecon and self.isReconstruction:
+                    self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
 
             
             if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
@@ -523,6 +556,10 @@ class SIMController(ImConWidgetController):
                 if self.isReconstruction:
                     self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
                 processor.saveOneTime = False
+                with snapshotLock: # Needed to only save one settings file per snapshot.
+                    if self.snapshotSettingsSaved == False:
+                        self._commChannel.sigSaveSettingsFirst.emit()
+                        self.snapshotSettingsSaved = True
 
             processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
@@ -541,9 +578,7 @@ class SIMController(ImConWidgetController):
         self.waitToMoveEvent.clear()
         if True not in self.errorQ:
             if self.lastZ:
-        # print(f'Thread {threading.current_thread().getName()} started moving')
-                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos [1])
-            # self.positionerXY.checkBusyLoop()
+                self.positionerXY.setPositionXY(self.nextPos[0], self.nextPos[1])
         else:
             pass
 
@@ -719,8 +754,10 @@ class SIMController(ImConWidgetController):
             timingPeriodBox = float(self._commChannel.sharedAttrs[('Timing Settings', 'Timing Period')])
         except ValueError:
             timingSecs = 0.0
+            timingPeriodBox = 0.0
         except KeyError:
             timingSecs = 0.0
+            timingPeriodBox = 0.0
         if timingPeriodBox > 0.0:
             timingUnit = self._commChannel.sharedAttrs[('Timing Settings', 'Timing Unit')]
             if timingUnit == 's':
@@ -852,8 +889,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
-        self.active = False
-        self._commChannel.updateSIMActive(self.active)
+        self.SIMActive = False
+        self._commChannel.updateSIMActive(self.SIMActive)
         try:
             self.simThread.join()
         except:
@@ -875,8 +912,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
-        self.active = False
-        self._commChannel.updateSIMActive(self.active)
+        self.active25D = False
+        self._commChannel.updateSIMActive(self.active25D)
         try:
             self.thread25D.join()
         except:
@@ -893,6 +930,7 @@ class SIMController(ImConWidgetController):
         if self.zScanActive:
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            self.zScanActive = False
 
 
     def startSIM(self):
@@ -903,8 +941,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(True)
         self._widget.stop_button.setEnabled(True)
         self._widget.startSIM_button.setEnabled(False)
-        self.active = True
-        self._commChannel.updateSIMActive(self.active)
+        self.SIMActive = True
+        self._commChannel.updateSIMActive(self.SIMActive)
 
         simParametersFromGUI = self.getSIMParametersFromGUI()
         #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
@@ -922,11 +960,14 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.stop25DNow = False
         self._commChannel.sigSIMAcqToggled.emit(True)
-        self._widget.stop_button.setEnabled(True)
+        self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
-        self.active = True
-        self._commChannel.updateSIMActive(self.active)
-                
+        self.active25D = True
+        self._commChannel.updateSIMActive(self.active25D)
+        
+
+
+        
         # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
         self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
@@ -953,8 +994,8 @@ class SIMController(ImConWidgetController):
     def setCamForExperimentSIM(self, detector, num_buffers, expTimeMax):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 15.0)
-        detector._camera.setBufferTimeout(math.inf)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
+        detector._camera.setBufferTimeout(2000)
 
         trigger_source = 'Line2'
         trigger_mode = 'On'
@@ -1123,142 +1164,150 @@ class SIMController(ImConWidgetController):
         return sim_parameters
     
     def perform25DExperimentThread(self):
+        #CTNOTE: Change to dynamic
+        projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
 
-        # Check if lasers are set and have power in them select only lasers with powers
+        # Check if lasers are set and have power in them. Only channels with active lasers will be used.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
 
-        projCamPixelSize = 0.1233 # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
+        self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
 
-        #Get the parameters that go into the createXYGridPositionArray function
-        self.getTilingSettings()
-        # self._commChannel.sigCalcPositionArray.emit()
-        
-
+        ####Set flags for using in logic later.
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
         else:
             self.isTiling = False
 
+        roiOriginList = []
         if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
             self.isScanROI = True
-        else:
-            self.isScanROI = False
-
-        roiOriginList = []
-        if self.isScanROI:
             try:
                 roiOriginList = self.getOrigins()
             except KeyError:
                 self._logger.warning('ROI list is empty.')
+        else:
+            self.isScanROI = False
 
-        self.tileOrigins = []
-        positions = self._master.tilingManager.createXYGridPositionArrayWithROI(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList)
-        for i in range(len(positions)):
-            self.tileOrigins.append(positions[i][-1])
-        
-        self.tileOrigin = positions[0][-1]
-
-        
-
-
-        if not self.isTiling:
-            positions = self.tileOrigins
-        
-        #Get Z-Stack list
         if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
             self.zScanActive = False
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
-            self.zLength = len(zList)
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
-            self.zLength = len(zList)
-        
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
-    
-        self.numAllFrames = 0 # Number of frames, including dropped frames
-        self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
+        ####
 
-        self.frameCounter = 0
-
-        self.numActiveChannels = len(poweredLasers)
-        
-        # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
+        #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
         for processor in self.processors:
-            # if processor.slmActive == True:
-            self.activeProcessors.append(processor)
-            for detector in self.detectors:
+            for detector in self.detectors: # Associate detector object with processor object.
                 if processor.handle == detector._wavelength:
                     processor.detObj = detector
-        for k, processor in enumerate(self.activeProcessors):
+                    processor.shape = detector._shape
+            if processor.handle in poweredLasers:
+                self.activeProcessors.append(processor)
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations.")
+            self.stopSIM()
+            return
+        shapeList = []
+        for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
-    
-        for detector in self.detectors:
-            self.setCamForExperiment25D(detector)
-        
-        time_global_start = time.time()
+            shapeList.append(processor.shape)
+        ####
+            
+        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
+        if len(setShapeList) != 1:
+            self._logger.error("Detector image shapes must be the same.")
+            self.stop25D()
+            return
+        shapeList = list(setShapeList)[0] #Put back into list form to be used to calculate tiling positions.
+        ####
 
-        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers.
-       # 0.01s time delay built into activate SLM function. trigOneSequence() cannot be called too fast. Only adds to very first loop time. 1 ms was not enough. If query is waited for, value is 0.02
+        #### Create XY position array given ROI and tiling settings.
+        self.tileOrigins = []
+        positions= self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        for i in range(len(positions)):
+            self.tileOrigins.append(positions[i][0])
+        self.tileOrigin = positions[0][0]
+        if not self.isTiling:
+            positions = self.tileOrigins
+        ####
+        
+
+        #### Flags for state control, constant varables, this that need one time initialization.
+        self.zLength = len(zList)
+        self.numAllFrames = 0 # Number of frames, including dropped frames
+        self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
+        self.frameCounter = 0
         self.tilingRep = 0
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
         if isTimed: timingPeriodInSec = self.getPeriodInSec()
-
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
-        
         completeZ = 0
-        while self.active and poweredLasers != []:
-            
-            self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
-            self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
-            self._commChannel.updateActiveDirectory(self.exptFolderPath)
-            
-            # #### For timing period
-            # if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-            #     repTimer = time.time() - repTimerStart
-            #     if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-            #         self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-            #     while repTimer < timingPeriodInSec:
-            #         time.sleep(0.1)
-            #         repTimer = time.time() - repTimerStart
-            #         if self._commChannel.stop25DNow: #allows exit of the loop
-            #             self.stop25D()
-            #             return
-            # repTimerStart = time.time()
-            # ####
-
-            self.roiIterator = 0
-            while self.roiIterator < len(positions):
-                j = 0 # Position iterator
-                oneROI = positions[self.roiIterator]
-
-                if (not self.isTiling) and (not self.isScanROI):
-                    oneROI = [oneROI]
+        self.firstLoop = True
+        self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
+        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
+        time_global_start = time.time()
+        ####
 
 
-                while j < len(oneROI):
-                    self.j = j
+        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
+        for processor in self.activeProcessors: # Set only active cams
+            self.setCamForExperiment25D(processor.detObj)
+        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick) # Path of current experiment folder
+        self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
+        self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
+
+        ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
+        while self.active25D:
+            self.roiIter = 0
+            while self.roiIter < len(positions):
+                
+
+                #### Set variables for current and next positions. These will be used to move stage XY.
+                currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
+                try:
+                    nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
+                except IndexError:
+                    nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
+                if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
+                    currentROI = [currentROI]
+                ####
+
+                j = 0 # Position (tile) iterator
+                while j < len(currentROI):
+                    self.j = j # Self it for use elsewhere. Kind of sloppy.
+
+                    #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
                     else:
                         exptTimeElapsed = time.time() - time_global_start
                     self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
                     self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
-                    self.nextPos = oneROI[self.j]
-                    self.currentPos = oneROI[self.j-1]
-                    self.positionerXY.checkBusyLoop() #Probably move to just before triggering the image
+                    ####
+                    self.currentPos = currentROI[self.j]
+                    try:
+                        self.nextPos = currentROI[self.j+1] # Next position to move to.
+                    except IndexError:
+                        self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
 
+                    if self.firstLoop:
+                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
-                    if j == 0 and self.completeFrameSets != 0 and self.isTiling: #TODO NOT GOOD LOGIC. CAN BE FATER IF SMARTER
+                    #### Stage wait times for giggle.
+                    self.positionerXY.checkBusyLoop() # Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
+                    if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
                         time.sleep(.5) #Wait time for giggle if the stage is moving from end to origin to start another tile.
                     else:
                         time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
+                    ####
 
                     ####Autofocus
                     if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
@@ -1277,14 +1326,13 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-
-                        #### For timing period
+                        #### For timing period. Check every 1/10s if period time is exceeded yet.
                         if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                             repTimer = time.time() - repTimerStart
                             if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
                                 self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                             while repTimer < timingPeriodInSec:
-                                time.sleep(0.1)
+                                time.sleep(timingPeriodInSec / 100)
                                 repTimer = time.time() - repTimerStart
                                 if self._commChannel.stop25DNow: #allows exit of the loop
                                     self.stop25D()
@@ -1292,35 +1340,38 @@ class SIMController(ImConWidgetController):
                         repTimerStart = time.time()
                         ####
 
-                        if self.zScanActive: #Moves piezo for Z stack.
+                        #### Moves piezo for Z stack.
+                        if self.zScanActive: 
                             success = self.positioner.setPosition(zList[z], 'Z')
                             if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
                                 time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
+                        ####
 
-
-                        self._master.arduinoManager.trigger25DWriteOnly()
+                        self._master.arduinoManager.trigger25DWriteOnly() # Send actual trigger to cams.
                              
-                        procTimeStart = time.time()
+                        procTimeStart = time.time() # For tracking processing time of images. 
 
+                        #### Locks for variables to be thread safe
                         errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                        saveLock = threading.Lock()
+                        saveSettingsLock = threading.Lock()
                         saveStackLock = threading.Lock()
                         snapshotLock = threading.Lock()
-                        
                         self.snapshotSettingsSaved = False
+                        ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
                         with ThreadPoolExecutor(max_workers=4) as executor:
-                            if self.isTiling:
+                            if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveLock, saveStackLock, snapshotLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
 
-                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
+                        if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                            self._widget.stop_button.setChecked(False)
                             self.stop25D()
                             return
 
@@ -1328,52 +1379,49 @@ class SIMController(ImConWidgetController):
                         if True not in self.errorQ:
                             self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
 
-                        procTimeDur = round(time.time()-procTimeStart,3)
+                        procTimeDur = round(time.time()-procTimeStart,3) # Actual elapsed time for processing images.
+
+                        #### Print timing and frame information.
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                        ####
+                        
+                    
+                    j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
+                    completeZ += 1 # Count from 0 to infinity complete Z stack only. Similar to j, but is never reset.
 
-                    j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                    completeZ += 1
-
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(oneROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
-                        self.stop25D() # Stops tiling reps after all tiles*repetitions is done.
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                        self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
 
                     totalEndTime = round(time.time()-time_global_start,3)
-                    remainder = self.completeFrameSets % len(oneROI)
 
-                    if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
-                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
-                            self.stop25D()
-                        if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
-                            self.stop25D()
-
-                self.frameCounter += 1
-
-                self.tilingRep += 1
-
-                self.roiIterator += 1
-                
+                #### Increment counters.
+                self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
+                self.tilingRep += 1 # Used in filenames of saved files.
+                self.roiIter += 1 # Increment roi index
+                ####
                 self._logger.info(f'Elapsed time (s): {totalEndTime}')
+
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime: #Will this stop in middle of tiling if duration hits?
+                self.stop25D() # Stops system is duration based imaging is selected.
             
 
-    def main25DLoop(self, processor, errorLock, z, saveLock, saveStackLock, snapshotLock):
-        # saveOneTime = self.saveOneTime
-
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
 
         k = processor.processorIndex
-        if k+1 == len(self.activeProcessors):
+        if k+1 == len(self.activeProcessors): # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
             lastChan = True
         else: 
             lastChan = False
 
-        broken = False
+        broken = False # Initialize flag
+        detector = processor.detObj # Set current detector object associated with proecssor.
         
-        # Set current detector being used
-        detector = processor.detObj
-        
-        waitingBuffers = detector._camera.getBufferValue('25D')
+        #### Everything needed to confirm correct amount of images in buffer. If not correct, clear cam buffers and restart Z position.
+        waitingBuffers = detector._camera.getBufferValue('25D') # Arguement is unused by method.
         startBufferTime = time.time()
         totalBufferTime = 0
         while waitingBuffers != 1:
@@ -1381,7 +1429,7 @@ class SIMController(ImConWidgetController):
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue('25D')
 
-            if waitingBuffers != 1 and totalBufferTime > 0.25:
+            if waitingBuffers != 1 and totalBufferTime > 0.25: # Will wait for a quarter second for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
@@ -1390,63 +1438,61 @@ class SIMController(ImConWidgetController):
                 for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
                     detector._camera.clearBuffers()
                 break
-
-        # broken = False
-        if not broken:
+        ####
+        #### If buffers are correct, and thread is for last channel, last Z, move stage.
+        if not broken: 
             with errorLock:
                 self.errorQ.append(False)
             if lastChan:
                 self.lastZ = (z == self.zLength - 1)
-                # print('All images, all channels loaded into buffer')
-                if self.lastZ:
+                if self.lastZ and (self.isTiling or self.isScanROI):
                     self.waitToMoveEvent.set()
+                else:
+                    self.waitToMoveEvent.set()
+        ####
 
 
-        rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+        rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
-        ##Temporary printing for debug
-        # if processor.handle == self.channelAF:
-        # print(processor.handle, " ", self._master.autofocusManager.computeLaplacian(rawImg))
-        # time.sleep(0.5)
-        ##
-        
+        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
 
-        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # display raw image stack
-
-        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+        #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
+        if self.zScanActive: 
             if z == 0:
                 resetStack = True
             else:
                 resetStack = False
-
             self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
+        ####
                 
-        processor.setSIMStack(rawImg)
+        # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
         
-        # if self.tilePreview and self.isTiling:
-        #     # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
-        #     #     self.updateWFContLimits()
-        #     self._commChannel.sigTileImage.emit(imageWF, self.currentPos, f"{processor.handle}WF-{self.j}",self.numActiveChannels,k, self.completeFrameSets)
-        
-        with saveLock:
+        #### Emits every 2.5D image to tiling preview window.
+        if self.tilePreview and self.isTiling:
+            # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+            #     self.updateWFContLimits()
+            self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
+        ####
+
+        with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
             if ((self.isRecordRaw)) and not (self.startSettingsSaved):
                 self._commChannel.sigSaveSettingsFirst.emit()
                 self.startSettingsSaved = True
 
-        if self.isRecordRaw:
-            with saveStackLock:
-                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIterator)
+        if self.isRecordRaw: # Saves raw images.
+            with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
+                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-            self.recordOneSetRaw(self.j, processor)
+            self.recordOneSetRaw(self.j, processor) # Save one image from each active channel.
             processor.saveOneTime = False
-            with snapshotLock:
+            with snapshotLock: # Needed to only save one settings file per snapshot.
                 if self.snapshotSettingsSaved == False:
                     self._commChannel.sigSaveSettingsFirst.emit()
                     self.snapshotSettingsSaved = True
                 
 
-        processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+        # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
     def autofocusLoop(self, AFList):

@@ -41,18 +41,18 @@ class LaserController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
-        self._commChannel.sigScanStarting.connect(lambda: self.scanChanged(True))
-        self._commChannel.sigScanBuilt.connect(self.scanBuilt)
-        self._commChannel.sigScanEnded.connect(lambda: self.scanChanged(False))
+        # self._commChannel.sigScanStarting.connect(lambda: self.scanChanged(True))
+        # self._commChannel.sigScanBuilt.connect(self.scanBuilt)
+        # self._commChannel.sigScanEnded.connect(lambda: self.scanChanged(False))
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
         # Connect LaserWidget signals
         self._widget.sigEnableChanged.connect(self.toggleLaser)
         self._widget.sigValueChanged.connect(self.valueChanged)
 
-        self._widget.sigModEnabledChanged.connect(self.toggleModulation)
-        self._widget.sigFreqChanged.connect(self.frequencyChanged)
-        self._widget.sigDutyCycleChanged.connect(self.dutyCycleChanged)
+        # self._widget.sigModEnabledChanged.connect(self.toggleModulation)
+        # self._widget.sigFreqChanged.connect(self.frequencyChanged)
+        # self._widget.sigDutyCycleChanged.connect(self.dutyCycleChanged)
 
         # self._widget.sigPresetSelected.connect(self.presetSelected)
         # self._widget.sigLoadPresetClicked.connect(self.loadPreset)
