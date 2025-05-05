@@ -104,8 +104,6 @@ class PositionerInfo(DeviceInfo):
     """ Whether the positioner should be reset to 0-position upon closing ImSwitch. """
 
 
-
-
 @dataclass(frozen=True)
 class RS232Info:
     managerName: str
