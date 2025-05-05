@@ -18,6 +18,7 @@ class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
 
     sigRawStackReceived = Signal(np.ndarray, str)
+    sigRawImgReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     sigValueChanged = Signal()
@@ -79,6 +80,8 @@ class SIMController(ImConWidgetController):
 
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
+        self.sigRawImgReceived.connect(self.displayRawImage)
+
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
@@ -105,6 +108,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+
         # self._commChannel.sigRunAutofocus.conn
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         try:
@@ -866,6 +870,9 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setRawImage(im, name)
 
+    # def saveLastRawImage(self, im , name):
+        
+
     def displayWFImage(self, im, name):
         """ Displays the image in the view. """
         self._widget.setWFImage(im, name)
@@ -1254,6 +1261,8 @@ class SIMController(ImConWidgetController):
         self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
         dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         time_global_start = time.time()
+        autoZern = False
+        autoZernRep = -1
         ####
 
 
@@ -1268,6 +1277,12 @@ class SIMController(ImConWidgetController):
         while self.active25D:
             self.roiIter = 0
             while self.roiIter < len(positions):
+
+                if autoZernRep >= 154: # hardcoded, 22 parameters with 7 options at the moment.
+                    autoZernRep = -1
+                    self._commChannel.sigToggleAutoZern.emit(False)
+                    autoZern = False
+
                 
 
                 #### Set variables for current and next positions. These will be used to move stage XY.
@@ -1281,6 +1296,11 @@ class SIMController(ImConWidgetController):
                 ####
 
                 j = 0 # Position (tile) iterator
+
+                
+                
+
+
                 while j < len(currentROI):
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
@@ -1364,11 +1384,19 @@ class SIMController(ImConWidgetController):
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
+
+
+
                         with ThreadPoolExecutor(max_workers=4) as executor:
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
+
+
+                        if autoZern:
+                            self._commChannel.sigAutoZernCalc.emit()
+                        
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
                             self._widget.stop_button.setChecked(False)
@@ -1388,6 +1416,8 @@ class SIMController(ImConWidgetController):
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         ####
+
+
                         
                     
                     j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
@@ -1407,7 +1437,19 @@ class SIMController(ImConWidgetController):
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime: #Will this stop in middle of tiling if duration hits?
                 self.stop25D() # Stops system is duration based imaging is selected.
-            
+
+
+            if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
+                if autoZernRep == -1:
+                    autoZern = True
+                autoZernRep += 1
+
+
+            if autoZern:
+                self._commChannel.sigSetAutoZern.emit(autoZernRep)
+                time.sleep(0.05)
+                
+
 
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
 
@@ -1454,9 +1496,12 @@ class SIMController(ImConWidgetController):
 
         rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
-        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+        self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+
+        self._commChannel.sigGetLastRawImgs.emit(rawImg, processor.handle)
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
+
         if self.zScanActive: 
             if z == 0:
                 resetStack = True
