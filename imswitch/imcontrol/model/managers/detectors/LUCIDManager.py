@@ -59,7 +59,7 @@ class LUCIDManager(DetectorManager):
         gamma_init = self.setupInfo['Gamma']
         # exposureauto_init = self.setupInfo['ExposureAuto']
         trigmode_init = self.setupInfo['TriggerMode']
-        #trigsource_init not needed yet. All triggers on Line2. QPI may change this.
+        #trigsource_init not needed yet. All triggers on Line0. QPI may change this.
 
         parameters = {
             'ExposureTime': DetectorNumberParameter(group='Acq. Control', value=exposure_init, valueUnits='us',

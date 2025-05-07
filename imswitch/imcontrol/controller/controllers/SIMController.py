@@ -999,7 +999,7 @@ class SIMController(ImConWidgetController):
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
         detector._camera.setBufferTimeout(2000)
 
-        trigger_source = 'Line2'
+        trigger_source = 'Line0'
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
@@ -1044,7 +1044,7 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
-        trigger_source = 'Line2'
+        trigger_source = '0'
         detector._camera.setBufferTimeout(1000)
 
         # # Pull the exposure time from settings widget

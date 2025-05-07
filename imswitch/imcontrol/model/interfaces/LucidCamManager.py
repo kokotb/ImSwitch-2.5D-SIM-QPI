@@ -417,7 +417,7 @@ class LucidCam:
     # Doing this to be on the safe side - SIMControler changes stuf
     # Maybe keep this here and to nothing on the SIMControler side (setCamsAfterExperiment)?
     # FIXME: Delete if obsolete
-        trigger_source = 'Line2'
+        trigger_source = 'Line0'
         trigger_mode = trigBool
         exposure_auto = 'Off'
         # It overrides what is in the widget each time you run live-view button
