@@ -1044,7 +1044,7 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
-        trigger_source = '0'
+        trigger_source = 'Line0'
         detector._camera.setBufferTimeout(1000)
 
         # # Pull the exposure time from settings widget
