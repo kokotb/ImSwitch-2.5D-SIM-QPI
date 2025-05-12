@@ -6,6 +6,7 @@ import os
 import numpy as np
 from PIL import Image
 from scipy import signal as sg
+from scipy.optimize import curve_fit
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -23,7 +24,7 @@ class SLM25DManager(SignalInterface):
         # self.openSLMResource()
         if SLM25DInfo is None:
             return
-
+        
         # self.__slmInfo = slmInfo 
         # self.__wavelength = self.__slmInfo.wavelength
         # self.__pixelsize = self.__slmInfo.pixelSize
@@ -42,9 +43,36 @@ class SLM25DManager(SignalInterface):
 
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
+        self.arrayImgScoresAZ = []
 
-    def calcAutoZern(self, rep):
-        print('calc ' + str(rep))
+    def calcAutoZern(self, imgs):
+        img = imgs[640]
+        score = self.scoreImage(img, metric="total intensity")
+        self.arrayImgScoresAZ.append(score)
+
+    def scoreImage(self, img, metric): # scores image quality according to the chosen metric
+        if metric == "total intensity":
+            return np.sum(img)
+        else:
+            print("Invalid metric for image quality chosen")
+
+    def optimalCoeffValue(self, calibValues): # finds optimal value for zern coeff, according to image score
+
+        def fitfunc(x, a, b, c):
+            return c - a * (x + b) ** 2   
+        
+        try:
+            popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+            optimalCoeff = popt[1]
+        except RuntimeError:
+            print("fit unsuccessful")
+            optimalCoeff = 3.
+        return optimalCoeff
+
+
+    def resetList(self):
+        self.arrayImgScoresAZ = []
+
 
     def projectMask(self, mask):
         error = self.slm.showData(mask)

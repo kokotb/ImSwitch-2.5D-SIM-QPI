@@ -30,11 +30,10 @@ class SLM25DManagerMock(SignalInterface):
         self.rep = 0
         self.arrayImgScoresAZ = []
 
-    def calcAutoZern(self, rep, imgs, calibValues):
+    def calcAutoZern(self, imgs):
         img = imgs[640]
         score = self.scoreImage(img, metric="total intensity")
         self.arrayImgScoresAZ.append(score)
-        print(self.arrayImgScoresAZ)
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
         if metric == "total intensity":
@@ -58,6 +57,7 @@ class SLM25DManagerMock(SignalInterface):
 
     def resetList(self):
         self.arrayImgScoresAZ = []
+
 
     def projectMask(self, mask):
         # plt.ioff()

@@ -1397,7 +1397,7 @@ class SIMController(ImConWidgetController):
                         # last images are available
 
                         if autoZern:
-                            self._master.slm25DManager.calcAutoZern(autoZernRep, self.lastImgDict, self._commChannel.autoZernCalibValues) # score in the manager, put score in a list.
+                            self._master.slm25DManager.calcAutoZern(self.lastImgDict) # score in the manager, put score in a list.
                         
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
