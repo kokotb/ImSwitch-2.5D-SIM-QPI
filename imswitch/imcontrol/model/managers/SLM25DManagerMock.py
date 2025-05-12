@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 from scipy import signal as sg
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -27,6 +28,36 @@ class SLM25DManagerMock(SignalInterface):
 
         self.slmActive = False
         self.rep = 0
+        self.arrayImgScoresAZ = []
+
+    def calcAutoZern(self, rep, imgs, calibValues):
+        img = imgs[640]
+        score = self.scoreImage(img, metric="total intensity")
+        self.arrayImgScoresAZ.append(score)
+        print(self.arrayImgScoresAZ)
+
+    def scoreImage(self, img, metric): # scores image quality according to the chosen metric
+        if metric == "total intensity":
+            return np.sum(img)
+        else:
+            print("Invalid metric for image quality chosen")
+
+    def optimalCoeffValue(self, calibValues): # finds optimal value for zern coeff, according to image score
+
+        def fitfunc(x, a, b, c):
+            return c - a * (x + b) ** 2   
+        
+        try:
+            popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+            optimalCoeff = popt[1]
+        except RuntimeError:
+            print("fit unsuccessful")
+            optimalCoeff = 3.
+        return optimalCoeff
+
+
+    def resetList(self):
+        self.arrayImgScoresAZ = []
 
     def projectMask(self, mask):
         # plt.ioff()

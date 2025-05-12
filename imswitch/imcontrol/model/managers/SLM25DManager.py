@@ -43,6 +43,8 @@ class SLM25DManager(SignalInterface):
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
 
+    def calcAutoZern(self, rep):
+        print('calc ' + str(rep))
 
     def projectMask(self, mask):
         error = self.slm.showData(mask)

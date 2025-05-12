@@ -25,7 +25,8 @@ class SLM25DController(ImConWidgetController):
         self.__logger = initLogger(self)
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
-        self.testParametersValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+        self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+        self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
@@ -43,6 +44,7 @@ class SLM25DController(ImConWidgetController):
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
+        self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
 
@@ -492,7 +494,7 @@ class SLM25DController(ImConWidgetController):
         tempZernList = []
         for name in self._widget.ZernikeCoefficientNames:
             for side in self._widget.ZernikeSides:        
-                for testValue in self.testParametersValues:
+                for testValue in self.autoZernCalibValues:
                     tempZernList.append(('AbsPosEdit' + name + side,testValue))
         
         return tempZernList
@@ -500,16 +502,23 @@ class SLM25DController(ImConWidgetController):
     def setAutoZern(self, rep):
         try:
             self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+            print('set '+str(rep))
         except IndexError:
             pass
+
+    def setOptimalZern(self, rep, optimalValue):
+        self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)
 
     # def autoZernikeThread(self):
     #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
 
-    def calcAutoZern(self):
+    def calcAutoZern(self, rep):
 
         image = self._commChannel.lastImgDict[640]
+        print('scored '+str(rep))
         # self.evaluateImageQuality(image)  # set image quality metric here
+
+
 
 
 

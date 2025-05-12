@@ -1379,23 +1379,25 @@ class SIMController(ImConWidgetController):
                         saveStackLock = threading.Lock()
                         snapshotLock = threading.Lock()
                         self.snapshotSettingsSaved = False
+                        lastImgLock = threading.Lock()
                         ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
-
+                        self.lastImgDict = dict()
 
 
                         with ThreadPoolExecutor(max_workers=4) as executor:
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
 
+                        # last images are available
 
                         if autoZern:
-                            self._commChannel.sigAutoZernCalc.emit()
+                            self._master.slm25DManager.calcAutoZern(autoZernRep, self.lastImgDict, self._commChannel.autoZernCalibValues) # score in the manager, put score in a list.
                         
 
                         if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
@@ -1442,16 +1444,26 @@ class SIMController(ImConWidgetController):
             if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
                 if autoZernRep == -1:
                     autoZern = True
+                if ((autoZernRep + 1) % 7 == 0) and (autoZernRep != -1):
+                    # look at the list, fit parabola, get best value, set value, continue
+                    optimalCoefficient = self._master.slm25DManager.optimalCoeffValue(self._commChannel.autoZernCalibValues)
+                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
+                    #time.sleep(1)
+
+
+                    self._master.slm25DManager.resetList()
                 autoZernRep += 1
 
 
             if autoZern:
+
                 self._commChannel.sigSetAutoZern.emit(autoZernRep)
                 time.sleep(0.05)
+
                 
 
 
-    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors): # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
@@ -1495,6 +1507,9 @@ class SIMController(ImConWidgetController):
 
 
         rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
+
+        with lastImgLock:
+            self.lastImgDict[processor.handle] = rawImg
 
         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
 

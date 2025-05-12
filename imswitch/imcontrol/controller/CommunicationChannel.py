@@ -108,7 +108,9 @@ class CommunicationChannel(SignalInterface):
 
     sigSetAutoZern = Signal(int)
 
-    sigAutoZernCalc = Signal()
+    sigSetOptimalZern = Signal(int, float)
+
+    sigAutoZernCalc = Signal(int)
 
     sigSaveFocus = Signal()
 
