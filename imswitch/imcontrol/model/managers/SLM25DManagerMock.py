@@ -2,6 +2,7 @@ import enum
 import glob
 import math
 import os
+import cv2
 
 import numpy as np
 from PIL import Image
@@ -32,12 +33,18 @@ class SLM25DManagerMock(SignalInterface):
 
     def calcAutoZern(self, imgs):
         img = imgs[640]
-        score = self.scoreImage(img, metric="total intensity")
+        #score = self.scoreImage(img, metric="total intensity")
+        score = self.scoreImage(img, metric="sharpness of the edges")
         self.arrayImgScoresAZ.append(score)
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
         if metric == "total intensity":
-            return np.sum(img)
+            score = np.sum(img)
+            return score
+        elif metric == "sharpness of the edges":
+            laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
+            score = np.var(laplacian)
+            return score
         else:
             print("Invalid metric for image quality chosen")
 

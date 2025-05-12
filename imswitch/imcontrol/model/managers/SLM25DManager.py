@@ -2,6 +2,7 @@ import enum
 import glob
 import math
 import os
+import cv2
 
 import numpy as np
 from PIL import Image
@@ -53,6 +54,10 @@ class SLM25DManager(SignalInterface):
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
         if metric == "total intensity":
             return np.sum(img)
+        elif metric == "sharpness of the edges":
+            laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
+            score = np.var(laplacian)
+            return score
         else:
             print("Invalid metric for image quality chosen")
 
