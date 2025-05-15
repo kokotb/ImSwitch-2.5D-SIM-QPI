@@ -22,8 +22,18 @@ class QueensgatePiezoManager(PositionerManager):
         self.loadDLL()
 
         status = self.initialize_all()
-        
+
         self.check_axes()
+
+        if status == False:
+            queensgateMock = True
+            from . import MockQueensgateDLL
+            self.dll = MockQueensgateDLL.DllAdapter()  
+            
+        else:
+            queensgateMock = False
+
+
         
         # Set intial values to match the widget
         self.zeroOnStartup = positionerInfo.managerProperties['zeroOnStartup']

@@ -974,8 +974,6 @@ class SIMController(ImConWidgetController):
         self.thread25D.start()
 
 
-
-        
     def getTilingSettings(self):
         self.startxpos, self.startypos = self.positionerXY.get_abs()
         self.num_grid_x = int(self.sharedAttrs[('Tiling Settings','Steps - X')])

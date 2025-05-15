@@ -175,6 +175,12 @@ class CommunicationChannel(SignalInterface):
         self.stop25DNow = True
 
     def getPSFStack(self):
+        if not self.zStackList488:
+            self.zStackList488 = []
+        if not self.zStackList561:
+            self.zStackList561 = []
+        if not self.zStackList640:
+            self.zStackList640 = []
         allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
         return allPSFStacks
 
