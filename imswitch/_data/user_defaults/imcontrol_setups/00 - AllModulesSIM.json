@@ -56,8 +56,8 @@
   "sim": {
     "width": 1920,
     "height": 1080,
-    "ReconWL1": 520,
-    "ReconWL2": 595,
+    "ReconWL1": 523,
+    "ReconWL2": 573,
     "ReconWL3": 678,
     "NA": 0.8,
     "Pixelsize": 2.74,
@@ -90,8 +90,8 @@
         "ExposureTime": 2000.0
       },
       "ROI":{
-        "OffsetX": 2736,
-        "OffsetY": 2504,
+        "OffsetX": 2720,
+        "OffsetY": 2490,
         "Width": 512,
         "Height": 512
       } 
@@ -114,8 +114,8 @@
         "ExposureTime": 15000.0
       },
       "ROI":{
-        "OffsetX": 2860,
-        "OffsetY": 2575,
+        "OffsetX": 2230,
+        "OffsetY": 2725,
         "Width": 512,
         "Height": 512
       }
@@ -139,8 +139,8 @@
           "ExposureTime": 1200.0
         },
         "ROI":{
-          "OffsetX": 2408,
-          "OffsetY": 3200,
+          "OffsetX": 2310,
+          "OffsetY": 3210,
           "Width": 512,
           "Height": 512
         }
@@ -165,7 +165,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.4
+      "maxdBmValue": 17.6
       
       },
   "561AOTF": {
@@ -181,7 +181,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.7
+    "maxdBmValue": 20.1
     },
   "640AOTF": {
     "analogChannel": null,
@@ -197,7 +197,7 @@
     "valueRangeStep": 2,
     "valueInit": 100,
 
-    "maxdBmValue": 22.1
+    "maxdBmValue": 21.8
     }
     
 },
