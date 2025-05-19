@@ -12,7 +12,7 @@
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 480,
@@ -92,8 +92,8 @@
       "ROI":{
         "OffsetX": 2576,
         "OffsetY": 2000,
-        "Width": 512,
-        "Height": 512
+        "Width": 1024,
+        "Height": 1024
       } 
     },
     "forAcquisition": true
@@ -116,8 +116,8 @@
       "ROI":{
         "OffsetX": 2110,
         "OffsetY": 2220,
-        "Width": 512,
-        "Height": 512
+        "Width": 1024,
+        "Height": 1024
       }
     },
     "forAcquisition": true
@@ -136,13 +136,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 8000.0
+          "ExposureTime": 6000.0
         },
         "ROI":{
-          "OffsetX": 2424,
-          "OffsetY": 2714,
-          "Width": 512,
-          "Height": 512
+          "OffsetX": 2352,
+          "OffsetY": 2420,
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
