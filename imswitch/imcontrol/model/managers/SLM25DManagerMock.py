@@ -53,14 +53,12 @@ class SLM25DManagerMock(SignalInterface):
         def fitfunc(x, a, b, c):
             return c - a * (x + b) ** 2   
         
-        try:
-            popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
-            optimalCoeff = popt[1]
-        except RuntimeError:
-            print("fit unsuccessful")
-            optimalCoeff = 3.
-        return optimalCoeff
 
+        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+        optimalCoeff = popt[1]
+
+        return optimalCoeff
+    
 
     def resetList(self):
         self.arrayImgScoresAZ = []

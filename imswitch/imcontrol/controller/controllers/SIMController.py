@@ -1278,12 +1278,7 @@ class SIMController(ImConWidgetController):
             self.roiIter = 0
             while self.roiIter < len(positions):
 
-                if autoZernRep >= 154: # hardcoded, 22 parameters with 7 options at the moment.
-                    autoZernRep = -1
-                    self._commChannel.sigToggleAutoZern.emit(False)
-                    autoZern = False
-
-                
+               
 
                 #### Set variables for current and next positions. These will be used to move stage XY.
                 currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
@@ -1446,21 +1441,26 @@ class SIMController(ImConWidgetController):
                     autoZern = True
                 if ((autoZernRep + 1) % 7 == 0) and (autoZernRep != -1):
                     # look at the list, fit parabola, get best value, set value, continue
-                    optimalCoefficient = self._master.slm25DManager.optimalCoeffValue(self._commChannel.autoZernCalibValues)
+                    try:
+                        optimalCoefficient = self._master.slm25DManager.optimalCoeffValue(self._commChannel.autoZernCalibValues)     
+                    except: 
+                        self._logger.error('!!!FIT UNSUCCESSFUL!!!')
+                        optimalCoefficient = 3
+                    
                     self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                    #time.sleep(1)
-
-
+                    time.sleep(.05)
                     self._master.slm25DManager.resetList()
                 autoZernRep += 1
 
 
             if autoZern:
-
-                self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                time.sleep(0.05)
-
-                
+                if autoZernRep < 154:                    
+                    self._commChannel.sigSetAutoZern.emit(autoZernRep)
+                    time.sleep(0.05)
+                else: # hardcoded, 22 parameters with 7 options at the moment.
+                    autoZernRep = -1
+                    self._commChannel.sigToggleAutoZern.emit(False)
+                    autoZern = False
 
 
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):

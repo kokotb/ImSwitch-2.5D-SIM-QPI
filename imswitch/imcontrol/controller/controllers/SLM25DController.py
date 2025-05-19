@@ -45,7 +45,7 @@ class SLM25DController(ImConWidgetController):
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
         self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
-        self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
+        # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
 
         self.matrix25d = self._widget.matrix25d
@@ -512,11 +512,11 @@ class SLM25DController(ImConWidgetController):
     # def autoZernikeThread(self):
     #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
 
-    def calcAutoZern(self, rep):
+    # def calcAutoZern(self, rep):
 
-        image = self._commChannel.lastImgDict[640]
-        print('scored '+str(rep))
-        # self.evaluateImageQuality(image)  # set image quality metric here
+    #     image = self._commChannel.lastImgDict[640]
+    #     print('scored '+str(rep))
+    #     # self.evaluateImageQuality(image)  # set image quality metric here
 
 
 
