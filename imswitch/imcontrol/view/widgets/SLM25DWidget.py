@@ -170,7 +170,7 @@ class SLM25DWidget(Widget):
                     self.pars['AbsPosEdit' + name + side].setDecimals(2)
                 else:
                     self.pars['AbsPosEdit' + name + side].setSingleStep(0.1)
-                    self.pars['AbsPosEdit' + name + side].setDecimals(1)
+                    self.pars['AbsPosEdit' + name + side].setDecimals(2)
                 self.pars['AbsPosEdit' + name + side].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name + side].setValue(0.1)
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
