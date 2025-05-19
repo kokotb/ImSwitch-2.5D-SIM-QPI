@@ -1443,8 +1443,9 @@ class SIMController(ImConWidgetController):
                         self._logger.error('!!!FIT UNSUCCESSFUL!!!')
                         optimalCoefficient = 3
                     
-                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                    time.sleep(.05)
+                    # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
+                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
+                    time.sleep(.25)
                     self._master.slm25DManager.resetList()
                 autoZernRep += 1
 
@@ -1452,7 +1453,7 @@ class SIMController(ImConWidgetController):
             if autoZern:
                 if autoZernRep < 154:                    
                     self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                    time.sleep(0.05)
+                    time.sleep(0.25)
                 else: # hardcoded, 22 parameters with 7 options at the moment.
                     autoZernRep = -1
                     self._commChannel.sigToggleAutoZern.emit(False)
@@ -1508,6 +1509,7 @@ class SIMController(ImConWidgetController):
             self.lastImgDict[processor.handle] = rawImg
 
         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+        processor.stack = rawImg
 
         self._commChannel.sigGetLastRawImgs.emit(rawImg, processor.handle)
 

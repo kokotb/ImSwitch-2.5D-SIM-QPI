@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 from scipy import signal as sg
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -48,7 +49,7 @@ class SLM25DManager(SignalInterface):
 
     def calcAutoZern(self, imgs):
         img = imgs[640]
-        score = self.scoreImage(img, metric="total intensity")
+        score = self.scoreImage(img, metric="sharpness of the edges")
         self.arrayImgScoresAZ.append(score)
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
@@ -66,12 +67,9 @@ class SLM25DManager(SignalInterface):
         def fitfunc(x, a, b, c):
             return c - a * (x + b) ** 2   
         
-        try:
-            popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
-            optimalCoeff = popt[1]
-        except RuntimeError:
-            print("fit unsuccessful")
-            optimalCoeff = 3.
+        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+        optimalCoeff = popt[1]
+        
         return optimalCoeff
 
 
