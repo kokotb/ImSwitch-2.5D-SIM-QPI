@@ -165,7 +165,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.2
+      "maxdBmValue": 18.4
       
       },
   "561AOTF": {
@@ -181,7 +181,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.8
+    "maxdBmValue": 20.7
     },
   "640AOTF": {
     "analogChannel": null,
@@ -251,7 +251,7 @@
     "arduino": {
       "managerName": "RS232Manager",
       "managerProperties": {
-        "port": "ASRLCOM7",
+        "port": "ASRLCOM19",
         "encoding": "ascii",
         "recv_termination": "\r",
         "send_termination": "\r",

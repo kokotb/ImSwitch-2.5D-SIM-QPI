@@ -312,7 +312,20 @@ class SIMController(ImConWidgetController):
                 if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
                     currentROI = [currentROI]
                 ####
-
+                #### For timing period. Check every 1/10s if period time is exceeded yet.
+                if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                    repTimer = time.time() - repTimerStart
+                    if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                        self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                    while repTimer < timingPeriodInSec:
+                        time.sleep(timingPeriodInSec / 100)
+                        repTimer = time.time() - repTimerStart
+                        if self._widget.stop_button.isChecked(): #allows exit of the loop
+                            self._widget.stop_button.setChecked(False)
+                            self.stopSIM()
+                            return
+                repTimerStart = time.time()
+                ####
                 j = 0 # Position iterator
 
                 while j < len(currentROI):
@@ -361,20 +374,7 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
-                        #### For timing period. Check every 1/10s if period time is exceeded yet.
-                        if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                            repTimer = time.time() - repTimerStart
-                            if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-                                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                            while repTimer < timingPeriodInSec:
-                                time.sleep(timingPeriodInSec / 100)
-                                repTimer = time.time() - repTimerStart
-                                if self._widget.stop_button.isChecked(): #allows exit of the loop
-                                    self._widget.stop_button.setChecked(False)
-                                    self.stopSIM()
-                                    return
-                        repTimerStart = time.time()
-                        ####
+
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -1004,7 +1004,7 @@ class SIMController(ImConWidgetController):
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
         detector._camera.setBufferTimeout(2000)
 
-        trigger_source = 'Line2'
+        trigger_source = 'Line0'
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
@@ -1039,7 +1039,7 @@ class SIMController(ImConWidgetController):
             if parameter_name == 'ExposureTime':
                 self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
             # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode 
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamForExperiment25D(self, detector):
@@ -1049,7 +1049,7 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
-        trigger_source = 'Line2'
+        trigger_source = 'Line0'
         detector._camera.setBufferTimeout(1000)
 
         # # Pull the exposure time from settings widget
@@ -1291,11 +1291,19 @@ class SIMController(ImConWidgetController):
                 ####
 
                 j = 0 # Position (tile) iterator
-
-                
-                
-
-
+                #### For timing period. Check every 1/10s if period time is exceeded yet.
+                if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                    repTimer = time.time() - repTimerStart
+                    if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                        self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                    while repTimer < timingPeriodInSec:
+                        time.sleep(timingPeriodInSec / 100)
+                        repTimer = time.time() - repTimerStart
+                        if self._commChannel.stop25DNow: #allows exit of the loop
+                            self.stop25D()
+                            return
+                repTimerStart = time.time()
+                ####
                 while j < len(currentROI):
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
@@ -1341,19 +1349,7 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-                        #### For timing period. Check every 1/10s if period time is exceeded yet.
-                        if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                            repTimer = time.time() - repTimerStart
-                            if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-                                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                            while repTimer < timingPeriodInSec:
-                                time.sleep(timingPeriodInSec / 100)
-                                repTimer = time.time() - repTimerStart
-                                if self._commChannel.stop25DNow: #allows exit of the loop
-                                    self.stop25D()
-                                    return
-                        repTimerStart = time.time()
-                        ####
+
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 

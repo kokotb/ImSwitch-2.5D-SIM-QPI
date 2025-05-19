@@ -1151,7 +1151,7 @@ class SIMController(ImConWidgetController):
         #     detectors.append(self._master.detectorsManager[det_name]._camera)
         # Hardcoded parameters at the moment
 
-        trigger_source = 'Line2'
+        trigger_source = 'Line0'
         trigger_mode = 'On'
         exposure_auto = 'Off'
         # FIXME: There must be a neater, better, more stable way to do this
