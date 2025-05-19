@@ -1456,6 +1456,7 @@ class SIMController(ImConWidgetController):
         rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
         self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+        processor.stack = rawImg
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
         if self.zScanActive: 
