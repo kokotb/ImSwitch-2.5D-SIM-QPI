@@ -69,7 +69,7 @@ class SIMWidget(NapariHybridWidget):
         ]
         # Set layer properties
         self.layer = None
-        self.laserColormaps = {'488':'blue','561':'green','640':'red'}
+        self.laserColormaps = {'488':'cyan','561':'green','640':'red'}
         self.micronsPerPixel = [.1233,.1233]
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
