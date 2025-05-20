@@ -43,7 +43,10 @@ class ROIController(ImConWidgetController):
         except KeyError:
             loadBool = 0
         if loadBool:
-            roiList = self._commChannel.loadedSettings['ROI List']['List']
+            try:
+                roiList = self._commChannel.loadedSettings['ROI List']['List']
+            except KeyError:
+                return
             scanParam = self._commChannel.loadedSettings['ROI List']['Checkbox']
 
             self._widget.ROIList.clear()

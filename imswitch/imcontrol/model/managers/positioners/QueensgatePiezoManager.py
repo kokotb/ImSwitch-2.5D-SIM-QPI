@@ -124,8 +124,8 @@ class QueensgatePiezoManager(PositionerManager):
 
 
     def setPosition(self, position, axis = 'Z'):
-
-        if float(position) < self.moveLimitsRegHolder[0] or float(position) > self.moveLimitsRegHolder[1]:
+        position = float(position)
+        if position < self.moveLimitsRegHolder[0] or position > self.moveLimitsRegHolder[1]:
 
             self.__logger.error(f'Out of bounds request for Z piezo. Range is between {self.moveLimitsRegHolder}')
             old_pos = self.get_abs()

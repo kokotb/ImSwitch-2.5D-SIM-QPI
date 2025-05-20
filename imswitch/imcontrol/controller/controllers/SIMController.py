@@ -487,7 +487,7 @@ class SIMController(ImConWidgetController):
                 bufferEndTime = time.time()
             bufferTotalTime = bufferEndTime-bufferStartTime
             waitingBuffersEnd = waitingBuffers
-            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/250000: #self.expTimeMax/250000 = 4x exp time in correct units
+            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/50000: #self.expTimeMax/250000 = 4x exp time in correct units
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
                 with errorLock:
