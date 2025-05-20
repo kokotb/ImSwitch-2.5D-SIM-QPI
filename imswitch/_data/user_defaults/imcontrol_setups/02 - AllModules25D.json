@@ -56,15 +56,15 @@
   "sim": {
     "width": 1920,
     "height": 1080,
-    "ReconWL1": 523,
+    "ReconWL1": 512,
     "ReconWL2": 573,
     "ReconWL3": 678,
     "NA": 0.8,
     "Pixelsize": 2.74,
-    "Alpha": 0.4,
-    "Beta": 0.99,
+    "Alpha": 0.5,
+    "Beta": 0.98,
     "w": 0.15,
-    "eta": 0.5,
+    "eta": 0.6,
     "n": 1.0,
     "Magnification": 22.2222,
     "saveDir": "D:\\SIM_Data\\",
@@ -87,11 +87,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 1000.0
+        "ExposureTime": 5000.0
       },
       "ROI":{
-        "OffsetX": 2568,
-        "OffsetY": 2088,
+        "OffsetX": 2552,
+        "OffsetY": 1980,
         "Width": 512,
         "Height": 512
       } 
@@ -109,13 +109,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 0.0,  
+        "Gain": 0.0, 
         "Gamma": 1.0,
-        "ExposureTime": 14000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 2110,
-        "OffsetY": 2300,
+        "OffsetX": 2091,
+        "OffsetY": 2199,
         "Width": 512,
         "Height": 512
       }
@@ -136,11 +136,11 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 1000.0
+          "ExposureTime": 3000.0
         },
         "ROI":{
-          "OffsetX": 2408,
-          "OffsetY": 2790,
+          "OffsetX": 2216,
+          "OffsetY": 2692,
           "Width": 512,
           "Height": 512
         }
@@ -165,7 +165,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 17.6
+      "maxdBmValue": 18.4
       
       },
   "561AOTF": {
@@ -181,7 +181,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.1
+    "maxdBmValue": 20.7
     },
   "640AOTF": {
     "analogChannel": null,
@@ -197,7 +197,7 @@
     "valueRangeStep": 2,
     "valueInit": 100,
 
-    "maxdBmValue": 21.8
+    "maxdBmValue": 22.1
     }
     
 },
@@ -207,7 +207,7 @@
       "digitalLine": null,
       "managerName": "QueensgatePiezoManager",
       "mock": false,
-      "managerProperties": {  
+      "managerProperties": {
         "port": "ASRLCOM18",
         "zeroOnStartup": false
       },
