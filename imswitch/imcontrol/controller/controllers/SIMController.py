@@ -1346,6 +1346,7 @@ class SIMController(ImConWidgetController):
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
                             success = self.positioner.setPosition(zList[z], 'Z')
+                            time.sleep(0.05) #Demo day sleep, was dropping frames when z-stacking on 2.5D without this
                             if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
                                 time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
