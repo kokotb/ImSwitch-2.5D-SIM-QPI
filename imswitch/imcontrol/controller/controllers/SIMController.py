@@ -305,8 +305,9 @@ class SIMController(ImConWidgetController):
                     nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
                 except IndexError:
                     nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
-                if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
+                if (not self.isTiling): # If only one position, put into list so len(currentROI) = 1.
                     currentROI = [currentROI]
+                    nextROI = [nextROI]
                 ####
                 #### For timing period. Check every 1/10s if period time is exceeded yet.
                 if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
@@ -1276,8 +1277,9 @@ class SIMController(ImConWidgetController):
                     nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
                 except IndexError:
                     nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
-                if (not self.isTiling) and (not self.isScanROI): # If only one position, put into list so len(currentROI) = 1.
+                if (not self.isTiling): # If only one position, put into list so len(currentROI) = 1.
                     currentROI = [currentROI]
+                    nextROI = [nextROI]
                 ####
 
                 j = 0 # Position (tile) iterator
@@ -1371,7 +1373,7 @@ class SIMController(ImConWidgetController):
                             for processor in self.activeProcessors:
                                 executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
 
-                        if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
                             self._widget.stop_button.setChecked(False)
                             self.stop25D()
                             return

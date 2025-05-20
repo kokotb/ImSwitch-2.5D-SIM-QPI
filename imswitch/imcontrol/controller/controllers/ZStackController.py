@@ -17,7 +17,7 @@ class ZStackController(ImConWidgetController):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
         self._widget.initZStackInfo()
-        # self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
+        self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
