@@ -109,7 +109,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
 
-        # self._commChannel.sigRunAutofocus.conn
+
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         try:
             self.populateAndSelectROList()
@@ -1331,7 +1331,7 @@ class SIMController(ImConWidgetController):
                         self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
                     #### Stage wait times for giggle.
-                    self.positionerXY.checkBusyLoop() # Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
+                    self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
                     if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
                         time.sleep(.5) #Wait time for giggle if the stage is moving from end to origin to start another tile.
                     else:
@@ -1355,7 +1355,6 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-
                         if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
                             time.sleep(0.1) #can prob be deleted
@@ -1564,7 +1563,7 @@ class SIMController(ImConWidgetController):
         # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
-    def autofocusLoop(self, AFList):
+    def autofocusLoop(self, AFList, processor):
         print("AF START")
         resetStack = False
         afIter = 0
@@ -1580,12 +1579,14 @@ class SIMController(ImConWidgetController):
 
 
             self.positioner.setPosition(AFList[afIter], 'Z')
-            time.sleep(0.1)
+            time.sleep(0.05)
 
             self._master.arduinoManager.trigger25DWriteOnly()
 
             detector = AFProcessor.detObj
             rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+
+            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
 
 
             if afIter == 0:

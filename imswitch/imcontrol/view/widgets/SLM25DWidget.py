@@ -90,7 +90,7 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Auto Enabled',str(value)))
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
         

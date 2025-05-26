@@ -29,7 +29,7 @@ class InfoGatheringController(ImConWidgetController):
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
         self._commChannel.sigSaveSettingsFirst.connect(self.saveFileDialog)
-        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleLoadButton)
+        self._commChannel.connect(self._widget.toggleLoadButton)
         # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
         
         
@@ -128,6 +128,7 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Zernike SLM Parameters','Right', 'Horizontal Coma'),
                                 ('Zernike SLM Parameters','Right', 'Horizontal Trefoil'),
                                 ('Zernike SLM Parameters','Right', 'Spherical'),
+                                ('Zernike SLM Parameters','Both', 'Auto Enabled'),
                                 ('Autofocus Settings','Autofocus Checkbox'),
                                 ('Autofocus Settings','Autofocus Channel')]
         
