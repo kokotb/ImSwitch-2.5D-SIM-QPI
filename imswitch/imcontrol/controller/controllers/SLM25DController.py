@@ -1,6 +1,6 @@
 import json
 import os
-
+import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -25,6 +25,11 @@ class SLM25DController(ImConWidgetController):
         self.__logger = initLogger(self)
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
+        #self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+        #self.autoZernCalibValues = [1., 0.7, 0.3, 0.0, -0.3, -0.7, -1.0]
+        #self.autoZernCalibValues = [-1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+        self.autoZernCalibValues = [-0.5, -0.3, -0.1 , 0., 0.1, 0.3, 0.5]
+        self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
@@ -41,6 +46,10 @@ class SLM25DController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
+        self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
+        self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
+        # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
+        self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
 
         self.matrix25d = self._widget.matrix25d
 
@@ -60,11 +69,12 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
         self._widget.sigStepDown25DMask.connect(self.updatePhaseMask)
     
-        self._widget.updateZernikeMask.connect(self.updateZernike)
+        self._widget.sigUpdateZernikeMask.connect(self.updateZernike)
         self._widget.sigStepUpZernikeLeft.connect(self.updateZernike)
         self._widget.sigStepDownZernikeLeft.connect(self.updateZernike)
         self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
         self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
+        # self._widget.autoZernCheckbox.clicked.connect(self.autoZernikeThread)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -86,7 +96,10 @@ class SLM25DController(ImConWidgetController):
         self.init25DWidgetValues()
 
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
+        self.fullZernList = self.createFullZernList()
         
+    def toggleAutoZern(self, state):
+        self._widget.autoZernCheckbox.setChecked(state)
 
     def init25DWidgetValues(self):
         strippedNames = []
@@ -109,6 +122,8 @@ class SLM25DController(ImConWidgetController):
             for side in  self._widget.ZernikeSides:
                 self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i])) #Set value in widget
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i]) #Initial value dictionary to reset to when 'Reset' is rpessed.
+        
+        self._widget.autoZernCheckbox.setChecked(False)
             
 
     def updateZernike(self):
@@ -477,6 +492,70 @@ class SLM25DController(ImConWidgetController):
         self._widget.imgZernike.setImage(self._widget.matrixZernike, levels=(0,255))
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
+
+    def createFullZernList(self):
+        tempZernList = []
+        for name in self._widget.ZernikeCoefficientNames:
+            for side in self._widget.ZernikeSides:        
+                for testValue in self.autoZernCalibValues:
+                    tempZernList.append(('AbsPosEdit' + name + side,testValue))
+        
+        return tempZernList
+
+    # def setAutoZern(self, rep):
+    #     try:
+    #         self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+    #         print('set '+str(rep))
+    #     except IndexError:
+    #         pass
+
+    def setAutoZern(self, rep):
+        self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+        print('set '+str(rep))
+
+
+    def setOptimalZern(self, rep, optimalValue):
+        self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)
+
+    # def autoZernikeThread(self):
+    #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
+
+    # def calcAutoZern(self, rep):
+
+    #     image = self._commChannel.lastImgDict[640]
+    #     print('scored '+str(rep))
+    #     # self.evaluateImageQuality(image)  # set image quality metric here
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def loadZernSettings(self, moduleDict):
         try:

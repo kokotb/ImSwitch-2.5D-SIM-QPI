@@ -2,11 +2,13 @@ import enum
 import glob
 import math
 import os
+import cv2
 
 import numpy as np
 from PIL import Image
 from scipy import signal as sg
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -27,6 +29,40 @@ class SLM25DManagerMock(SignalInterface):
 
         self.slmActive = False
         self.rep = 0
+        self.arrayImgScoresAZ = []
+
+    def calcAutoZern(self, imgs):
+        img = imgs[640]
+        #score = self.scoreImage(img, metric="total intensity")
+        score = self.scoreImage(img, metric="sharpness of the edges")
+        self.arrayImgScoresAZ.append(score)
+
+    def scoreImage(self, img, metric): # scores image quality according to the chosen metric
+        if metric == "total intensity":
+            score = np.sum(img)
+            return score
+        elif metric == "sharpness of the edges":
+            laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
+            score = np.var(laplacian)
+            return score
+        else:
+            print("Invalid metric for image quality chosen")
+
+    def optimalCoeffValue(self, calibValues): # finds optimal value for zern coeff, according to image score
+
+        def fitfunc(x, a, b, c):
+            return c - a * (x + b) ** 2   
+        
+
+        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+        optimalCoeff = popt[1]
+
+        return optimalCoeff
+    
+
+    def resetList(self):
+        self.arrayImgScoresAZ = []
+
 
     def projectMask(self, mask):
         # plt.ioff()

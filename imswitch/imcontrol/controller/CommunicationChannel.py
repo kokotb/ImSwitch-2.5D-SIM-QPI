@@ -106,9 +106,15 @@ class CommunicationChannel(SignalInterface):
 
     #sigRequestScannersInScan = Signal()
 
-    #sigSendScannersInScan = Signal(object)  # (scannerList)
+    sigSetAutoZern = Signal(int)
+
+    sigSetOptimalZern = Signal(int, float)
+
+    sigAutoZernCalc = Signal(int)
 
     sigSaveFocus = Signal()
+
+    sigToggleAutoZern = Signal(bool)
 
     sigLiveviewToggled = Signal(bool)
 
@@ -132,6 +138,8 @@ class CommunicationChannel(SignalInterface):
 
     sigRecAFStack = Signal(np.ndarray, bool, int)
 
+    sigGetLastRawImgs = Signal(np.ndarray, int)
+
     # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
@@ -146,6 +154,7 @@ class CommunicationChannel(SignalInterface):
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
     sigSIMStopped = Signal()
+    
 
     @property
     def sharedAttrs(self):
@@ -162,10 +171,12 @@ class CommunicationChannel(SignalInterface):
         self.sigRecPSFStack.connect(self.storeRecPSFStack)
         self.sigRecAFStack.connect(self.storeRecAFStack)
         self.sigStop25D.connect(self.updateStop25DCommand)
+        self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
         self.roiList = []
         self.simActive = False
         self.activeDir = None
         self.stop25DNow = False
+        self.lastImgDict = {488: None, 561: None,640: None}
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
@@ -173,6 +184,10 @@ class CommunicationChannel(SignalInterface):
     #     print(value)
     def updateStop25DCommand(self):
         self.stop25DNow = True
+
+    def saveLastRawImgs(self, rawImg, handle):
+        self.lastImgDict[handle] = rawImg
+
 
     def getPSFStack(self):
         if not self.zStackList488:

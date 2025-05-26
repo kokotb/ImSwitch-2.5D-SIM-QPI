@@ -13,6 +13,7 @@ class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
     sig25DParamChanged = QtCore.Signal(str, str, str)
     sigZernParamChanged = QtCore.Signal(str, str, str, str)
+    sigAutoZernParamChanged = QtCore.Signal(str, str, str, str)
 #Signals for pressing the increment/decrement buttons
     sigStepUp25DMask = QtCore.Signal(str)
     sigStepDown25DMask = QtCore.Signal(str)
@@ -25,7 +26,7 @@ class SLM25DWidget(Widget):
 #Signals for updating and eventually projecting images
     update25DMask = QtCore.Signal(str)
     updateCenterMask = QtCore.Signal(str)
-    updateZernikeMask = QtCore.Signal(str)
+    sigUpdateZernikeMask = QtCore.Signal(str)
 #Signals to control red highlighting of incorreect QLineEdit entries
     sigCheckValidityAbsPos = QtCore.Signal(str)
     sigCheckValidityStep = QtCore.Signal(str)
@@ -88,6 +89,13 @@ class SLM25DWidget(Widget):
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
+        self.autoZernCheckbox = QCheckBox("Auto Zernike")
+        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.autoZernCheckbox.setEnabled(False)
+        self.autoZernCheckbox.setChecked(True)
+        
+        
+
 
         # Grid layout for the entire widget
         self.grid = QtWidgets.QGridLayout()
@@ -101,6 +109,7 @@ class SLM25DWidget(Widget):
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
+        self.grid.addWidget(self.autoZernCheckbox, 4, 4)
         self.grid.addWidget(self.reset25D, 17, 5)
         
         # Horizontal lines separating logic sections
@@ -161,7 +170,7 @@ class SLM25DWidget(Widget):
                     self.pars['AbsPosEdit' + name + side].setDecimals(2)
                 else:
                     self.pars['AbsPosEdit' + name + side].setSingleStep(0.1)
-                    self.pars['AbsPosEdit' + name + side].setDecimals(1)
+                    self.pars['AbsPosEdit' + name + side].setDecimals(2)
                 self.pars['AbsPosEdit' + name + side].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name + side].setValue(0.1)
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
@@ -194,7 +203,8 @@ class SLM25DWidget(Widget):
                 # Connect buttons to signals
                 # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
                 # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
-                self.pars['AbsPosEdit' + name + side].valueChanged.connect(lambda *args, name=name + side: self.updateZernikeMask.emit(name + side))
+
+                self.pars['AbsPosEdit' + name + side].valueChanged.connect(lambda *args, name=name + side: self.sigUpdateZernikeMask.emit(name + side))
 
                 # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
@@ -356,7 +366,7 @@ class SLM25DWidget(Widget):
         for side in self.ZernikeSides:
             for name in self.ZernikeCoefficientNames:
                 self.pars['AbsPosEdit' + name + side].setValue(self.valueDictZern25D[name + side])
-        self.updateZernikeMask.emit('_')
+        self.sigUpdateZernikeMask.emit('_')
 
     def checkValidityAbsPos(self, name):
         valid = self.pars['AbsPosEdit'+name].hasAcceptableInput()
@@ -376,6 +386,7 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(False)
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
+        self.autoZernCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
@@ -407,6 +418,7 @@ class SLM25DWidget(Widget):
     def enableAll(self):
         self.slmPreview.setEnabled(True)
         self.valLabel.setEnabled(True)
+        self.autoZernCheckbox.setEnabled(True)
         self.valLabel2.setEnabled(True)
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)

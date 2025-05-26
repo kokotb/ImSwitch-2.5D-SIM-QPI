@@ -18,6 +18,7 @@ class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
 
     sigRawStackReceived = Signal(np.ndarray, str)
+    sigRawImgReceived = Signal(np.ndarray, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     sigValueChanged = Signal()
@@ -79,6 +80,8 @@ class SIMController(ImConWidgetController):
 
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
+        self.sigRawImgReceived.connect(self.displayRawImage)
+
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
@@ -105,6 +108,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+
         # self._commChannel.sigRunAutofocus.conn
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         try:
@@ -867,6 +871,9 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setRawImage(im, name)
 
+    # def saveLastRawImage(self, im , name):
+        
+
     def displayWFImage(self, im, name):
         """ Displays the image in the view. """
         self._widget.setWFImage(im, name)
@@ -1257,6 +1264,12 @@ class SIMController(ImConWidgetController):
         time_global_start = time.time()
         ####
 
+        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
+            autoZern = True
+            autoZernRep = 0
+        else:
+            autoZern = False
+            autoZernRep = -1
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
@@ -1269,7 +1282,8 @@ class SIMController(ImConWidgetController):
         while self.active25D:
             self.roiIter = 0
             while self.roiIter < len(positions):
-                
+
+               
 
                 #### Set variables for current and next positions. These will be used to move stage XY.
                 currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
@@ -1342,6 +1356,9 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
+                        if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
+                            self._commChannel.sigSetAutoZern.emit(autoZernRep)
+                            time.sleep(0.1)
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -1363,16 +1380,26 @@ class SIMController(ImConWidgetController):
                         saveStackLock = threading.Lock()
                         snapshotLock = threading.Lock()
                         self.snapshotSettingsSaved = False
+                        lastImgLock = threading.Lock()
                         ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
+                        self.lastImgDict = dict()
+
+
                         with ThreadPoolExecutor(max_workers=4) as executor:
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+
+                        # last images are available
+
+                        if autoZern:
+                            self._master.slm25DManager.calcAutoZern(self.lastImgDict) # score in the manager, put score in a list.
+                        
 
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
                             self._widget.stop_button.setChecked(False)
@@ -1392,6 +1419,8 @@ class SIMController(ImConWidgetController):
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         ####
+
+
                         
                     
                     j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
@@ -1411,9 +1440,38 @@ class SIMController(ImConWidgetController):
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime: #Will this stop in middle of tiling if duration hits?
                 self.stop25D() # Stops system is duration based imaging is selected.
-            
 
-    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock):
+
+            if autoZern:
+                if ((autoZernRep + 1) % 7 == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+                    # look at the list, fit parabola, get best value, set value, continue
+                    try:
+                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(self._commChannel.autoZernCalibValues)     
+                    except: 
+                        self._logger.error('!!!FIT UNSUCCESSFUL!!!')
+                        optimalCoefficient = 3
+                    
+                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(self._commChannel.autoZernCalibValues)
+                    # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
+                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                    #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
+                    #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
+
+                    
+                    self._master.slm25DManager.resetList()
+
+
+                if autoZernRep >= 153:  # hardcoded, 22 parameters with 7 options at the moment.
+                    autoZernRep = -1
+                    self._commChannel.sigToggleAutoZern.emit(False)
+                    autoZern = False
+                else:
+                    autoZernRep += 1
+                    time.sleep(.1)
+
+
+
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
         k = processor.processorIndex
         if k+1 == len(self.activeProcessors): # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
@@ -1458,10 +1516,16 @@ class SIMController(ImConWidgetController):
 
         rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
-        self.sigRawStackReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+        with lastImgLock:
+            self.lastImgDict[processor.handle] = rawImg
+
+        self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
         processor.stack = rawImg
 
+        self._commChannel.sigGetLastRawImgs.emit(rawImg, processor.handle)
+
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
+
         if self.zScanActive: 
             if z == 0:
                 resetStack = True
