@@ -25,10 +25,10 @@ class SLM25DController(ImConWidgetController):
         self.__logger = initLogger(self)
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
-        self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+        #self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
         #self.autoZernCalibValues = [1., 0.7, 0.3, 0.0, -0.3, -0.7, -1.0]
         #self.autoZernCalibValues = [-1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
-        #self.autoZernCalibValues = [-3., -2., -1. , 0., 1., 2., 3.]
+        self.autoZernCalibValues = [-0.5, -0.3, -0.1 , 0., 0.1, 0.3, 0.5]
         self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
@@ -502,12 +502,17 @@ class SLM25DController(ImConWidgetController):
         
         return tempZernList
 
+    # def setAutoZern(self, rep):
+    #     try:
+    #         self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+    #         print('set '+str(rep))
+    #     except IndexError:
+    #         pass
+
     def setAutoZern(self, rep):
-        try:
-            self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-            print('set '+str(rep))
-        except IndexError:
-            pass
+        self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+        print('set '+str(rep))
+
 
     def setOptimalZern(self, rep, optimalValue):
         self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)

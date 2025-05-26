@@ -73,13 +73,20 @@ class SLM25DManager(SignalInterface):
         else:
             print("Invalid metric for image quality chosen")
 
-    def optimalCoeffValue(self, calibValues): # finds optimal value for zern coeff, according to image score
+    def optimalCoeffValueFit(self, calibValues): # finds optimal value for zern coeff, according to image score
 
         def fitfunc(x, a, b, c):
             return c - a * (x + b) ** 2   
         
         popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
         optimalCoeff = popt[1]
+        
+        return optimalCoeff
+    
+    def optimalCoeffValueMax(self, calibValues): # finds optimal value for zern coeff, according to image score
+ 
+        ind = self.arrayImgScoresAZ.index(max(self.arrayImgScoresAZ))
+        optimalCoeff = calibValues[ind]
         
         return optimalCoeff
 

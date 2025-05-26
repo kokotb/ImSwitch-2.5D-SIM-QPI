@@ -1261,10 +1261,14 @@ class SIMController(ImConWidgetController):
         self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
         dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         time_global_start = time.time()
-        autoZern = False
-        autoZernRep = -1
         ####
 
+        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
+            autoZern = True
+            autoZernRep = 0
+        else:
+            autoZern = False
+            autoZernRep = -1
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
@@ -1350,6 +1354,9 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
+                        if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
+                            self._commChannel.sigSetAutoZern.emit(autoZernRep)
+                            time.sleep(0.1)
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -1432,32 +1439,33 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-            if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
-                if autoZernRep == -1:
-                    autoZern = True
-                if ((autoZernRep + 1) % 7 == 0) and (autoZernRep != -1): #!!! put 7 instead of 21 again - later have it un-hadrcoded
+            if autoZern:
+                if ((autoZernRep + 1) % 7 == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
                     try:
-                        optimalCoefficient = self._master.slm25DManager.optimalCoeffValue(self._commChannel.autoZernCalibValues)     
+                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(self._commChannel.autoZernCalibValues)     
                     except: 
                         self._logger.error('!!!FIT UNSUCCESSFUL!!!')
                         optimalCoefficient = 3
                     
+                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(self._commChannel.autoZernCalibValues)
                     # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
-                    time.sleep(.25)
+                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                    #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
+                    #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
+
+                    
                     self._master.slm25DManager.resetList()
-                autoZernRep += 1
 
 
-            if autoZern:
-                if autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
-                    self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                    time.sleep(0.25)
-                else: # hardcoded, 22 parameters with 7 options at the moment.
+                if autoZernRep >= 153:  # hardcoded, 22 parameters with 7 options at the moment.
                     autoZernRep = -1
                     self._commChannel.sigToggleAutoZern.emit(False)
                     autoZern = False
+                else:
+                    autoZernRep += 1
+                    time.sleep(.1)
+
 
 
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
@@ -1538,11 +1546,8 @@ class SIMController(ImConWidgetController):
                 self.startSettingsSaved = True
 
         if self.isRecordRaw: # Saves raw images.
-            if self.firstLoop and self.autoZern:
-                pass
-            else:
-                with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
-                    self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
+            with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
+                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
             self.recordOneSetRaw(self.j, processor) # Save one image from each active channel.
