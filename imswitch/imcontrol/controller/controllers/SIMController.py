@@ -1358,7 +1358,7 @@ class SIMController(ImConWidgetController):
 
                         if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                            time.sleep(0.1)
+                            time.sleep(0.1) #can prob be deleted
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
