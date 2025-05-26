@@ -29,7 +29,7 @@ class InfoGatheringController(ImConWidgetController):
         # Connect signals to communications channel
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.updateSharedAttributes)
         self._commChannel.sigSaveSettingsFirst.connect(self.saveFileDialog)
-        self._commChannel.connect(self._widget.toggleLoadButton)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleLoadButton)
         # self._commChannel.sigSIMAcqToggled.connect(self.saveAttributesToFile)
         
         

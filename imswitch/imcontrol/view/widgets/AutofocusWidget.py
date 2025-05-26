@@ -1,5 +1,5 @@
 from qtpy import QtCore, QtWidgets
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit)
+from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 
@@ -14,13 +14,17 @@ class AutofocusWidget(NapariHybridWidget):
         self.setLayout(autofocusLayout)
 
         self.checkbox_Autofocus = QCheckBox('Autofocus')
-
         self.AFChannel = QtWidgets.QComboBox()
+
+        self.scanHeightLabel = QLabel("Scan Height")
+        self.scanHeight = QLineEdit("20")
 
 
         row = 0
         autofocusLayout.addWidget(self.checkbox_Autofocus, row, 0)
         autofocusLayout.addWidget(self.AFChannel, row, 1)
+        autofocusLayout.addWidget(self.scanHeightLabel, row + 1, 0)
+        autofocusLayout.addWidget(self.scanHeight, row + 1, 1)
         
 
         self.checkbox_Autofocus.stateChanged.connect(lambda value: self.sigAutofocusInfoChanged.emit('Autofocus Settings','Autofocus Checkbox', str(value)))
@@ -30,7 +34,7 @@ class AutofocusWidget(NapariHybridWidget):
         self.checkbox_Autofocus.setChecked(True)
         self.checkbox_Autofocus.setChecked(False)
         self.AFChannel.addItems(['488', '561','640'])
-        self.AFChannel.setCurrentIndex(2)
+        self.AFChannel.setCurrentIndex(0)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

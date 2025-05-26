@@ -1264,7 +1264,7 @@ class SIMController(ImConWidgetController):
         time_global_start = time.time()
         ####
 
-        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
+        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Auto Enabled')]=='2':
             autoZern = True
             autoZernRep = 0
         else:
@@ -1339,18 +1339,19 @@ class SIMController(ImConWidgetController):
                     ####
 
                     ####Autofocus
-                    if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
+                    if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2'):
                         localOrigin = float(self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')])
                         AFList = self._master.autofocusManager.calcAFArray(localOrigin)
                         self.autofocusLoop(AFList)
                         scoreArray, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
                         bestZ = AFList[bestIndex]
-                        offsetAF = bestZ - localOrigin
-                        print(offsetAF)
-                        self.channelAF = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
+                        # offsetAF = bestZ - localOrigin
+                        # print(scoreArray)
+                        # self.channelAF = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
                         if bestZ != localOrigin:
                             self.positioner.setPosition(bestZ, 'Z')
                             self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                        self._commChannel.sigToggleAutofocus.emit(False)
                     ####
 
                     z = 0
@@ -1563,7 +1564,7 @@ class SIMController(ImConWidgetController):
         # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
 
-    def autofocusLoop(self, AFList, processor):
+    def autofocusLoop(self, AFList):
         print("AF START")
         resetStack = False
         afIter = 0
@@ -1579,14 +1580,15 @@ class SIMController(ImConWidgetController):
 
 
             self.positioner.setPosition(AFList[afIter], 'Z')
-            time.sleep(0.05)
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            time.sleep(0.1)
 
             self._master.arduinoManager.trigger25DWriteOnly()
 
             detector = AFProcessor.detObj
             rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
+            self.sigRawImgReceived.emit(rawImg,f"{AFProcessor.handle} Raw")
 
-            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
 
 
             if afIter == 0:
@@ -1599,7 +1601,7 @@ class SIMController(ImConWidgetController):
             AFProcessor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
             afIter += 1
 
-        self.positioner.setPosition(startOriginValue, 'Z')
+        # self.positioner.setPosition(startOriginValue, 'Z')
         print("AFEND")
   
    

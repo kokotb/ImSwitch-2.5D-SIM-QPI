@@ -154,6 +154,7 @@ class CommunicationChannel(SignalInterface):
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
     sigSIMStopped = Signal()
+    sigToggleAutofocus = Signal(bool)
     
 
     @property

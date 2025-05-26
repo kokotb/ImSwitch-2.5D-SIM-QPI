@@ -16,6 +16,12 @@ class AutofocusController(ImConWidgetController):
         self._widget.sigAutofocusInfoChanged.connect(self.valueChanged)
         # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
         self._widget.initValues()
+        self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
+    
+    def toggleAutofocusCheckbox(self):
+        state = self._widget.checkbox_Autofocus.checkState()
+        state = not state
+        self._widget.checkbox_Autofocus.setCheckState(state)
 
     def load_tif_images_from_folder(folder_path):
         # List all files in the folder
@@ -47,17 +53,17 @@ class AutofocusController(ImConWidgetController):
     # def testFunc(self):
 
 
-    def calcAFArray(self, origin):
+    # def calcAFArray(self, origin):
 
-        AFList = []
-        startZ = origin - 1
-        steps = 10
-        stepSize = 0.2
-        AFList.append(startZ)
-        for i in range(steps):
-            AFList.append(startZ+(i+1)*stepSize)
+    #     AFList = []
+    #     steps = 20
+    #     stepSize = 0.1
+    #     startZ = origin - ((steps / 2)*stepSize)
+    #     AFList.append(startZ)
+    #     for i in range(steps):
+    #         AFList.append(startZ+(i+1)*stepSize)
 
-        return AFList
+    #     return AFList
 
     def computeLaplacianArray(imarray, toPrint = False):
         startTime = time.time()

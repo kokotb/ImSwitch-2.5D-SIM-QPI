@@ -18,12 +18,12 @@ class AutofocusManager(SignalInterface):
     def calcAFArray(self, origin):
 
         AFList = []
-        startZ = origin - 2
         steps = 20
         stepSize = 0.2
+        startZ = origin - ((steps / 2)*stepSize)
         AFList.append(startZ)
         for i in range(steps):
-            AFList.append(startZ+(i+1)*stepSize)
+            AFList.append(round(startZ+(i+1)*stepSize,2))
 
         return AFList
             
