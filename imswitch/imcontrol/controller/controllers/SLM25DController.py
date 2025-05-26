@@ -26,6 +26,9 @@ class SLM25DController(ImConWidgetController):
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
         self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
+        #self.autoZernCalibValues = [1., 0.7, 0.3, 0.0, -0.3, -0.7, -1.0]
+        #self.autoZernCalibValues = [-1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+        #self.autoZernCalibValues = [-3., -2., -1. , 0., 1., 2., 3.]
         self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes

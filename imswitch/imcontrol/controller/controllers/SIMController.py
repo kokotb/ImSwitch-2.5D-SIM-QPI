@@ -1435,7 +1435,7 @@ class SIMController(ImConWidgetController):
             if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
                 if autoZernRep == -1:
                     autoZern = True
-                if ((autoZernRep + 1) % 7 == 0) and (autoZernRep != -1):
+                if ((autoZernRep + 1) % 7 == 0) and (autoZernRep != -1): #!!! put 7 instead of 21 again - later have it un-hadrcoded
                     # look at the list, fit parabola, get best value, set value, continue
                     try:
                         optimalCoefficient = self._master.slm25DManager.optimalCoeffValue(self._commChannel.autoZernCalibValues)     
@@ -1451,7 +1451,7 @@ class SIMController(ImConWidgetController):
 
 
             if autoZern:
-                if autoZernRep < 154:                    
+                if autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
                     self._commChannel.sigSetAutoZern.emit(autoZernRep)
                     time.sleep(0.25)
                 else: # hardcoded, 22 parameters with 7 options at the moment.
@@ -1538,8 +1538,11 @@ class SIMController(ImConWidgetController):
                 self.startSettingsSaved = True
 
         if self.isRecordRaw: # Saves raw images.
-            with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
-                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
+            if self.firstLoop and self.autoZern:
+                pass
+            else:
+                with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
+                    self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
             self.recordOneSetRaw(self.j, processor) # Save one image from each active channel.
