@@ -39,12 +39,22 @@ class SLM25DManagerMock(SignalInterface):
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
         if metric == "total intensity":
-            score = np.sum(img)
-            return score
-        elif metric == "sharpness of the edges":
+            return np.sum(img)
+        elif metric == "Laplacian":
             laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
             score = np.var(laplacian)
             return score
+        elif metric == "tenegrad":
+            sobel_x = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)  # Sobel filter in X direction
+            sobel_y = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)  # Sobel filter in Y direction
+            tenengrad = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
+            return np.mean(tenengrad)
+        elif metric == "sobel":
+            sobel_x = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)  # Sobel X gradient
+            sobel_y = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)  # Sobel Y gradient
+            sobel_magnitude = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
+            variance = np.var(img)  # Compute variance of pixel intensities
+            return np.mean(sobel_magnitude) + variance
         else:
             print("Invalid metric for image quality chosen")
 
