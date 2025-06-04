@@ -67,13 +67,16 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL1)
         self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL2)
         self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL3)
+        self.SimProcessorLaser4 = SIMProcessor(self, self.sim_parameters, wavelength=490)
         self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
         self.SimProcessorLaser2.handle = 561
         self.SimProcessorLaser3.handle = 640
+        self.SimProcessorLaser4.handle = 490
         self.SimProcessorLaser1.roOrder = 1
         self.SimProcessorLaser2.roOrder = 2
         self.SimProcessorLaser3.roOrder = 3
-        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3] #processor object list
+        self.SimProcessorLaser4.roOrder = 1
+        self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3,self.SimProcessorLaser4] #processor object list
         self.detectors = []
         for detector in self._master.detectorsManager: #detector object list
             self.detectors.append(detector[1])
@@ -120,6 +123,7 @@ class SIMController(ImConWidgetController):
         
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+
 
     def loadSIMSettings(self, moduleDict):
         try:
@@ -174,11 +178,18 @@ class SIMController(ImConWidgetController):
         self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
         projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
+        if self._widget.scatterCamEnable.checkState() == 2:
+            scatterCam = True
+        else:
+            scatterCam = False
+
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
+        if 488 in poweredLasers and scatterCam:
+            poweredLasers.append(490)
 
         self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
 
@@ -219,6 +230,10 @@ class SIMController(ImConWidgetController):
                     
             if (processor.slmActive == True) and (processor.handle in poweredLasers):
                 self.activeProcessors.append(processor)
+
+
+
+
         shapeList = []
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
@@ -1175,11 +1190,17 @@ class SIMController(ImConWidgetController):
         #CTNOTE: Change to dynamic
         projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
 
+        if self._widget.scatterCamEnable.checkState() == 2:
+            scatterCam = True
+        else: 
+            scatterCam = False
         # Check if lasers are set and have power in them. Only channels with active lasers will be used.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
+        if 488 in poweredLasers and scatterCam:
+            poweredLasers.append(490)
 
         self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
 
@@ -1209,6 +1230,8 @@ class SIMController(ImConWidgetController):
 
         #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
+        # if self._widget.scatterCamEnable.checkState() == 2:
+        #     scatterCam = True
         for processor in self.processors:
             for detector in self.detectors: # Associate detector object with processor object.
                 if processor.handle == detector._wavelength:
@@ -1216,6 +1239,10 @@ class SIMController(ImConWidgetController):
                     processor.shape = detector._shape
             if processor.handle in poweredLasers:
                 self.activeProcessors.append(processor)
+
+
+
+        # self.activeProcessors.append(processor)
         if len(self.activeProcessors) == 0:
             self._logger.error("No active laser/detector combinations.")
             self.stopSIM()

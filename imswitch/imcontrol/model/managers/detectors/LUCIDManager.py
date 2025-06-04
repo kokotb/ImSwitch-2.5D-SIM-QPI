@@ -31,7 +31,11 @@ class LUCIDManager(DetectorManager):
         self.roiInfo = detectorInfo.managerProperties['ROI']
         
         #Properties that will not EVER change, but are also not defult
-        self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014, toPrint=False)
+
+        if name == 'Scatter Cam':
+            self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 1500, toPrint=False) #The MD ethernet port can only take 1500 byte packets
+        else:
+            self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014, toPrint=False) 
         self._camera.setPropertyValue('AcquisitionFrameRateEnable', True, toPrint=False)
         self._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
         self._camera.setPropertyValue('ExposureAuto', "Off", toPrint=False)
