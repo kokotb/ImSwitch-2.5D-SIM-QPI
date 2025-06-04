@@ -12,7 +12,7 @@ import os
 # FIXME: Remove if .json is confirmed to work well
 # Deletes whole config folder
 # shutil.rmtree('C:/Users/SIM/Documents/ImSwitchConfig')
-# shutil.rmtree('C:/Users/SIM_admin/Documents/ImSwitchConfig')
+shutil.rmtree('C:/Users/SIM_admin/Documents/ImSwitchConfig')  
 # shutil.rmtree('C:/Users/Cody/Documents/ImSwitchConfig')
 # shutil.rmtree('C:/Users/Bostjan Kokot/Documents/ImSwitchConfig/')
 # shutil.rmtree('C:/Users/Administrator/Documents/ImSwitchConfig')
@@ -20,3 +20,4 @@ main()
 
 
 
+  

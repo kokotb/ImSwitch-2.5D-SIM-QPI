@@ -87,11 +87,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 3000.0
       },
-      "ROI":{
+      "ROI":{  
         "OffsetX": 2568,
-        "OffsetY": 2088,
+        "OffsetY": 2020,
         "Width": 512,
         "Height": 512
       } 
@@ -109,9 +109,9 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 0.0,  
+        "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 1000.0
       },
       "ROI":{
         "OffsetX": 2110,
@@ -136,7 +136,7 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 9000.0
+          "ExposureTime": 1000.0
         },
         "ROI":{
           "OffsetX": 2408,
