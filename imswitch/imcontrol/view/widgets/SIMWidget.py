@@ -137,8 +137,9 @@ class SIMWidget(NapariHybridWidget):
         # if reconLayerList == []:
         #     return
         for name in reconLayerList:
-            initMaxLimit = np.max(self.viewer.layers[name].data_raw)
-            self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
+            # initMaxLimit = np.max(self.viewer.layers[name].data_raw)
+            percentile9999 = np.percentile(self.viewer.layers[name].data_raw, 99.99)
+            self.viewer.layers[name].contrast_limits = [0,percentile9999]
 
     def colormapToggleReconFunc(self, channel):
         self.laserColormaps

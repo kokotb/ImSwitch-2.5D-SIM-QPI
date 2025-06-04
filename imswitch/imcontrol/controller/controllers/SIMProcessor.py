@@ -408,8 +408,9 @@ class SIMProcessor(object):
             self.setReconstructor()
             self.calibrate(mStack)
             self.sharedAttrs[ROI_calib_key] = ROI_cam
+            self.parent._widget.contrastReconFunc()
         self.SIMReconstruction = self.reconstruct(mStack)
-
+        
         self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
 
 
