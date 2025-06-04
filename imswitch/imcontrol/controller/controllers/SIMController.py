@@ -238,6 +238,8 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
+        if scatterCam and (488 in poweredLasers):
+            self.SimProcessorLaser4.processorIndex = 0
         if len(self.activeProcessors) == 0:
             self._logger.error("No active laser/detector combinations. Check SLM running order and powered lasers.")
             self.stopSIM()
@@ -1251,6 +1253,8 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
             shapeList.append(processor.shape)
+        if scatterCam and (488 in poweredLasers):
+            self.SimProcessorLaser4.processorIndex = 0
         ####
             
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
