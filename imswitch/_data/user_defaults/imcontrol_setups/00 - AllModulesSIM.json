@@ -87,7 +87,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 3000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{  
         "OffsetX": 2568,
@@ -111,7 +111,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 1000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{
         "OffsetX": 2110,
@@ -130,6 +130,32 @@
       "managerProperties": {
         "cameraListIndex": 65,
         "wavelength": 640,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 19000.0
+        },
+        "ROI":{
+          "OffsetX": 2408,
+          "OffsetY": 2790,
+          "Width": 512,
+          "Height": 512
+        }
+      },
+      "forAcquisition": true
+    },
+
+    "Scatter Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 47,
+        "wavelength": 490,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
