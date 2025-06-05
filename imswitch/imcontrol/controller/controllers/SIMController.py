@@ -220,6 +220,7 @@ class SIMController(ImConWidgetController):
         self._master.SLM4DDManager.setRunningOrder(roID)
         # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
         self.expTimeMax, self.numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
+        expectedLoopTime = ((self.expTimeMax*18*self.numSLMChannels)+(20*3))/1000000*1.15
         self.setActiveSLMChannels(self.numSLMChannels, chansSLM)
         self.activeProcessors = []
         for processor in self.processors:
@@ -331,11 +332,17 @@ class SIMController(ImConWidgetController):
                     nextROI = [nextROI]
                 ####
                 #### For timing period. Check every 1/10s if period time is exceeded yet.
+                if self.completeFrameSets != 0:
+                    repTimer = time.time() - repTimerStart
+                    while repTimer < expectedLoopTime:
+                        time.sleep(expectedLoopTime / 1000)
+                        repTimer = time.time() - repTimerStart
+
                 if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                     repTimer = time.time() - repTimerStart
                     if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
                         self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                    while repTimer < timingPeriodInSec:
+                    while (repTimer < timingPeriodInSec):
                         time.sleep(timingPeriodInSec / 100)
                         repTimer = time.time() - repTimerStart
                         if self._widget.stop_button.isChecked(): #allows exit of the loop
