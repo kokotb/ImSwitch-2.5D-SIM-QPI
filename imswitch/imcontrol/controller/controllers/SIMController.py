@@ -108,6 +108,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+        self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
 
         # self._commChannel.sigRunAutofocus.conn
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
@@ -1264,12 +1265,20 @@ class SIMController(ImConWidgetController):
         time_global_start = time.time()
         ####
 
+        def debug_slot():
+            print("Signal was emitted and caught!")
+
+        self._commChannel.sigStartAutoZern.connect(debug_slot)
+
+        self._commChannel.sigStartAutoZern.emit()
+
         if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
             autoZern = True
             autoZernRep = 0
         else:
             autoZern = False
             autoZernRep = -1
+
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
@@ -1356,7 +1365,7 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
-                        if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
+                        if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
                             time.sleep(0.1) #can prob be deleted
 
@@ -1443,7 +1452,7 @@ class SIMController(ImConWidgetController):
 
 
             if autoZern:
-                if ((autoZernRep + 1) % 7 == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+                if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
                     try:
                         optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(self._commChannel.autoZernCalibValues)     
@@ -1461,7 +1470,7 @@ class SIMController(ImConWidgetController):
                     self._master.slm25DManager.resetList()
 
 
-                if autoZernRep >= 153:  # hardcoded, 22 parameters with 7 options at the moment.
+                if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  # hardcoded, 22 parameters with 7 options at the moment.
                     autoZernRep = -1
                     self._commChannel.sigToggleAutoZern.emit(False)
                     autoZern = False
@@ -1615,6 +1624,11 @@ class SIMController(ImConWidgetController):
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
         finally:
             self.settingAttr = False
+
+    def listLengthAZTestParams(self, AZlen, testValuesLen):
+        self.AutoZernCalibValuesListLength = AZlen
+        self.numCalibValues = testValuesLen
+
             
     # def setParameter(self, parameterName, value):
     #     # FIXME: Just a place holder

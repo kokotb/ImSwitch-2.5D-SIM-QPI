@@ -34,7 +34,7 @@ class SLM25DManagerMock(SignalInterface):
     def calcAutoZern(self, imgs):
         img = imgs[640]
         #score = self.scoreImage(img, metric="total intensity")
-        score = self.scoreImage(img, metric="sharpness of the edges")
+        score = self.scoreImage(img, metric="tenegrad")
         self.arrayImgScoresAZ.append(score)
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
@@ -58,15 +58,22 @@ class SLM25DManagerMock(SignalInterface):
         else:
             print("Invalid metric for image quality chosen")
 
-    def optimalCoeffValue(self, calibValues): # finds optimal value for zern coeff, according to image score
+    def optimalCoeffValueFit(self, calibValues): # finds optimal value for zern coeff, according to image score
 
         def fitfunc(x, a, b, c):
             return c - a * (x + b) ** 2   
         
 
-        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ, p0=[200., 0.1, 450.])
         optimalCoeff = popt[1]
 
+        return optimalCoeff
+    
+    def optimalCoeffValueMax(self, calibValues): # finds optimal value for zern coeff, according to image score
+ 
+        ind = self.arrayImgScoresAZ.index(max(self.arrayImgScoresAZ))
+        optimalCoeff = calibValues[ind]
+        
         return optimalCoeff
     
 

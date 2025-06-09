@@ -27,8 +27,8 @@ class SLM25DController(ImConWidgetController):
         # self.axes = self._widget.axes
         #self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
         #self.autoZernCalibValues = [1., 0.7, 0.3, 0.0, -0.3, -0.7, -1.0]
-        #self.autoZernCalibValues = [-1., -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
-        self.autoZernCalibValues = [-0.5, -0.3, -0.1 , 0., 0.1, 0.3, 0.5]
+        self.autoZernCalibValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        #self.autoZernCalibValues = [-0.5, -0.3, -0.1 , 0., 0.1, 0.3, 0.5]
         self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
@@ -47,6 +47,7 @@ class SLM25DController(ImConWidgetController):
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
+        self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
         self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
@@ -91,6 +92,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.stop25D.clicked.connect(self._commChannel.sigStop25D.emit)
         # self._commChannel.sig25DAcqToggled.connect(self._widget.toggled25D)
         # self._widget.stop25D
+
+        #self._widget.autoZernCheckbox2.stateChanged.connect(self.combineAndProject)
         self.mask25D = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
         self.init25DWidgetValues()
@@ -100,6 +103,7 @@ class SLM25DController(ImConWidgetController):
         
     def toggleAutoZern(self, state):
         self._widget.autoZernCheckbox.setChecked(state)
+
 
     def init25DWidgetValues(self):
         strippedNames = []
@@ -501,6 +505,7 @@ class SLM25DController(ImConWidgetController):
                     tempZernList.append(('AbsPosEdit' + name + side,testValue))
         
         return tempZernList
+    
 
     # def setAutoZern(self, rep):
     #     try:
@@ -516,6 +521,13 @@ class SLM25DController(ImConWidgetController):
 
     def setOptimalZern(self, rep, optimalValue):
         self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)
+
+    def startAutoZern(self):
+        numAZtestPoints = len(self.fullZernList)
+        numTestValues = len(self.autoZernCalibValues)
+        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
+        print("AZ signal called properly")
+
 
     # def autoZernikeThread(self):
     #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
