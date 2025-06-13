@@ -1465,15 +1465,20 @@ class SIMController(ImConWidgetController):
                 if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
                     
-                    try:
-                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
-                    except: 
-                        self._logger.error('!!!FIT UNSUCCESSFUL!!!')
-                        optimalCoefficient = 3
-                    
-                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
+                    if finerLoop:
+                        try:
+                            optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
+                            self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
+                        except: 
+                            self._logger.error('!!!FIT UNSUCCESSFUL!!!')
+                            #optimalCoefficient = 3 # !!! FIND better way to do it
+                            optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
+                            self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+
+                    else:
+                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
                     # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
 
