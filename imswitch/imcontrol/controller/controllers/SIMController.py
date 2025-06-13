@@ -1365,6 +1365,16 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
+                        try:   #!!! EXTREMELY DUMB WAY TO DO IT!    
+                            finerLoop
+                        except NameError:
+                            finerLoop = False
+
+                        if autoZernRep == -1 and finerLoop:
+                            self._commChannel.sigStartAutoZernFinerLoop.emit()
+                            autoZernRep = 0
+                            
+
                         if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
                             time.sleep(0.1) #can prob be deleted
@@ -1473,8 +1483,12 @@ class SIMController(ImConWidgetController):
 
                 if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  # hardcoded, 22 parameters with 7 options at the moment.
                     autoZernRep = -1
-                    self._commChannel.sigToggleAutoZern.emit(False)
-                    autoZern = False
+                    if finerLoop == False:
+                        finerLoop = True
+                        autoZern = True
+                    else:
+                        self._commChannel.sigToggleAutoZern.emit(False)
+                        autoZern = False
                 else:
                     autoZernRep += 1
                     time.sleep(.1)

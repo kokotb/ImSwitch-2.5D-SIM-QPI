@@ -108,7 +108,7 @@ class CommunicationChannel(SignalInterface):
 
     sigStartAutoZern = Signal()
 
-    sigStartAutoZern2nd = Signal()
+    sigStartAutoZernFinerLoop = Signal()
 
     sigSendAutoZernListLen = Signal(int, int)
 

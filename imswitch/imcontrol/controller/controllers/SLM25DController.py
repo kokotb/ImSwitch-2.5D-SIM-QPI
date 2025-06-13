@@ -45,6 +45,7 @@ class SLM25DController(ImConWidgetController):
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
         self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
+        self._commChannel.sigStartAutoZernFinerLoop.connect(self.startAutoZernFinerLoop)
         self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
@@ -96,7 +97,7 @@ class SLM25DController(ImConWidgetController):
         self.init25DWidgetValues()
 
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
-        self.fullZernList = self.createFullZernList()
+        self.fullZernList = self.createFullZernList1stLoop()
         
     def toggleAutoZern(self, state):
         self._widget.autoZernCheckbox.setChecked(state)
@@ -494,16 +495,22 @@ class SLM25DController(ImConWidgetController):
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
 
-    # def createFullZernList(self):
-    #     tempZernList = []
-    #     for name in self._widget.ZernikeCoefficientNames:
-    #         for side in self._widget.ZernikeSides:        
-    #             for testValue in self.autoZernCalibValues:
-    #                 tempZernList.append(('AbsPosEdit' + name + side,testValue))
+    def createFullZernList1stLoop(self):
+        tempZernList = []
+        self.autoZernCalibValuesDict = {}
+        testValues = [-1., -0.6, -0.2, 0.2, 0.6, 1.]
+        for name in self._widget.ZernikeCoefficientNames:
+            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+                pass
+            else:
+                for side in self._widget.ZernikeSides:
+                    self.autoZernCalibValuesDict[name + side] = testValues        
+                    for testValue in testValues:
+                        tempZernList.append(('AbsPosEdit' + name + side,testValue))
         
-    #     return tempZernList
+        return tempZernList
     
-    def createFullZernList(self):
+    def createFullZernListFinerLoop(self):
         # this version takes curent value
         tempZernList = []
         self.autoZernCalibValuesDict = {}
@@ -537,7 +544,16 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)
 
     def startAutoZern(self):
-        self.fullZernList = self.createFullZernList()
+        self.fullZernList = self.createFullZernList1stLoop()
+        numAZtestPoints = len(self.fullZernList)
+        self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
+        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
+        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
+        time.sleep(0.1) # makes sure this last signal is executed before countiniouing
+        print("AZ signal called properly")
+
+    def startAutoZernFinerLoop(self):
+        self.fullZernList = self.createFullZernListFinerLoop()
         numAZtestPoints = len(self.fullZernList)
         self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
         numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
