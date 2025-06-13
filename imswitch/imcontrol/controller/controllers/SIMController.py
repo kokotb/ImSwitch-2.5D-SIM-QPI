@@ -1454,13 +1454,14 @@ class SIMController(ImConWidgetController):
             if autoZern:
                 if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
+                    
                     try:
-                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(self._commChannel.autoZernCalibValues)     
+                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
                     except: 
                         self._logger.error('!!!FIT UNSUCCESSFUL!!!')
                         optimalCoefficient = 3
                     
-                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(self._commChannel.autoZernCalibValues)
+                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
                     # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
                     self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)

@@ -25,11 +25,8 @@ class SLM25DController(ImConWidgetController):
         self.__logger = initLogger(self)
         # self.pars = self._widget.pars
         # self.axes = self._widget.axes
-        #self.autoZernCalibValues = [-1., -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
-        #self.autoZernCalibValues = [1., 0.7, 0.3, 0.0, -0.3, -0.7, -1.0]
-        self.autoZernCalibValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-        #self.autoZernCalibValues = [-0.5, -0.3, -0.1 , 0., 0.1, 0.3, 0.5]
-        self._commChannel.autoZernCalibValues = self.autoZernCalibValues
+        #self.autoZernCalibValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        #self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
@@ -497,12 +494,29 @@ class SLM25DController(ImConWidgetController):
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
 
+    # def createFullZernList(self):
+    #     tempZernList = []
+    #     for name in self._widget.ZernikeCoefficientNames:
+    #         for side in self._widget.ZernikeSides:        
+    #             for testValue in self.autoZernCalibValues:
+    #                 tempZernList.append(('AbsPosEdit' + name + side,testValue))
+        
+    #     return tempZernList
+    
     def createFullZernList(self):
+        # this version takes curent value
         tempZernList = []
+        self.autoZernCalibValuesDict = {}
         for name in self._widget.ZernikeCoefficientNames:
-            for side in self._widget.ZernikeSides:        
-                for testValue in self.autoZernCalibValues:
-                    tempZernList.append(('AbsPosEdit' + name + side,testValue))
+            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+                pass
+            else:
+                for side in self._widget.ZernikeSides:   
+                    current = self._widget.pars['AbsPosEdit' + name + side].value()
+                    testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
+                    self.autoZernCalibValuesDict[name + side] = testValues
+                    for testValue in testValues:
+                        tempZernList.append(('AbsPosEdit' + name + side,testValue))
         
         return tempZernList
     
@@ -523,8 +537,10 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars[self.fullZernList[rep][0]].setValue(optimalValue)
 
     def startAutoZern(self):
+        self.fullZernList = self.createFullZernList()
         numAZtestPoints = len(self.fullZernList)
-        numTestValues = len(self.autoZernCalibValues)
+        self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
+        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
         self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
         print("AZ signal called properly")
 
