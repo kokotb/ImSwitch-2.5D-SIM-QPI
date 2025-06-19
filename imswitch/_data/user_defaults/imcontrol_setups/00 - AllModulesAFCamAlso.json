@@ -5,14 +5,14 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": false,
+  "mock": true,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 480,
@@ -172,6 +172,32 @@
         }
       },
       "forAcquisition": true
+    },
+
+    "AF Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "PixelManager",
+      "managerProperties": {
+        "cameraListIndex": 10,
+        "wavelength": 808,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 300.0
+        },
+        "ROI":{
+          "OffsetX": 0,
+          "OffsetY": 0,
+          "Width": 1280,
+          "Height": 1024
+        }
+      },
+      "forAcquisition": false
     }
 
 
