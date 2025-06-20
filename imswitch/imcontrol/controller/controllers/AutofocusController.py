@@ -21,6 +21,9 @@ class AutofocusController(ImConWidgetController):
         self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrame)
 
+
+
+
     def openSetAFWindowThread(self):
         threading.Thread(target=self._widget.openSetAFWindow(), args=(), daemon=True).start()
 

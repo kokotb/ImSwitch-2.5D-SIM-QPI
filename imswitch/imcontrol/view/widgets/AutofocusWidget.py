@@ -1,7 +1,8 @@
 from qtpy import QtCore, QtWidgets
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
 import threading
 import numpy as np
 
@@ -12,25 +13,28 @@ class AutofocusWidget(NapariHybridWidget):
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
+        blankImage = np.zeros((1280,1024))
         self.AFWindow = SetAFWindow()
+        self.clickableImage = ClickableImage(blankImage)
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
-        self.openPreview = QtWidgets.QPushButton('Set AF ROI')
+        self.openPreview = QtWidgets.QPushButton('Open AF Preview')
 
         row = 0
         autofocusLayout.addWidget(self.openPreview, row, 0)
+        self.AFWindow.clearAnnotations.clicked.connect(self.clearAnnot)
 
-        
 
     def initValues(self):
         pass
 
-
-
-
     def openSetAFWindow(self):
         self.AFWindow.show()
+
+    def clearAnnot(self):
+        self.clickableImage.clearAnnot()
+
 
 class SetAFWindow(QMainWindow):
     def __init__(self, parent = None):
@@ -44,14 +48,14 @@ class SetAFWindow(QMainWindow):
         central_widget.setLayout(afWindowLayout)
         self.setCentralWidget(central_widget)
 
-        self.displyImage = self.convert_ndarray_to_qpixmap(np.zeros((1280,1024)))
+        blankImage = np.zeros((1280,1024))
 
-        self.acqImgButton = QtWidgets.QPushButton('Acquire Image')
+        self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
         buttonLayout.addWidget(self.acqImgButton)
+        self.clearAnnotations = QtWidgets.QPushButton('Clear Annotations')
+        buttonLayout.addWidget(self.clearAnnotations)
 
-        self.label = QLabel()
-        self.label.setPixmap(self.displyImage)
-        self.label.setScaledContents(True)
+        self.label = ClickableImage(blankImage)
 
         afWindowLayout.addLayout(buttonLayout)
         afWindowLayout.addWidget(self.label)
@@ -59,21 +63,77 @@ class SetAFWindow(QMainWindow):
 
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
-        """Convert a NumPy RGB or BGR image to QPixmap."""
-        if image.ndim == 2:
-            # Grayscale
-            h, w = image.shape
-            q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
-        else:
-            raise ValueError("Unsupported image format")
+        h, w = image.shape
+        q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
 
+class ClickableImage(QLabel):
+    def __init__(self, image_np):
+        super().__init__()
+        self.painted = False
+        # Convert NumPy image to QImage and then to QPixmap
+        self.image_np = image_np
+        self.pixelmap = self.convert_ndarray_to_qpixmap(self.image_np)
+
+        self.setPixmap(self.pixelmap)
+        self.setScaledContents(True)  # Ensure image scales with widget
+        self.annotation_points = []
+        self.lastClick = (0,0,100,100) #Left,Top,width,height of last image click.
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.repaintAnnot()
+            x = event.pos().x()
+            y = event.pos().y()
+
+            # Account for scaling
+            scaled_w = self.width()
+            scaled_h = self.height()
+            img_h, img_w = self.image_np.shape
+
+            # Map widget coordinates to image coordinates
+            img_x = int(x * img_w / scaled_w)
+            img_y = int(y * img_h / scaled_h)
+
+            # Clip to image bounds
+            img_x = min(max(img_x, 0), img_w - 1)
+            img_y = min(max(img_y, 0), img_h - 1)
+
+            windowSize = 100
+            top = img_y - windowSize/2
+            left = img_x - windowSize/2
+            width = windowSize
+            height = windowSize
+
+            if not self.painted:
+                self.annotation_points.append(event.pos())
+                self.update()  # Trigger repaint
+                self.lastClick = (left,top,width,height)
+                self.painted = True
+      
+
+            print(f"Click data: {self.lastClick}")
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        pen = QPen(Qt.red, 3)
+        painter.setPen(pen)
+        for point in self.annotation_points:
+            painter.drawRect(point.x() - 50, point.y() - 50, 100, 100)
 
 
+    def repaintAnnot(self):
+        self.annotation_points = []
+        self.update()
+        self.painted = False
 
+    def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
+        h, w = image.shape
+        q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
-
+        return QPixmap.fromImage(q_image)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
