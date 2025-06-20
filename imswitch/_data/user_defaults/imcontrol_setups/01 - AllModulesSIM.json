@@ -172,6 +172,33 @@
         }
       },
       "forAcquisition": true
+    },
+
+    "AF Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "PixelinkManager",
+      "managerProperties": {
+        "cameraListIndex": 85,
+        "wavelength": 808,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 300.0
+        },
+        "ROI":{
+          "OffsetX": 0,
+          "OffsetY": 0,
+          "Width": 1280,
+          "Height": 1024
+        }
+      },
+      "forAcquisition": false,
+      "forFocusLock": true
     }
 
 

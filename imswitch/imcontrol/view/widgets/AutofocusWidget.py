@@ -1,7 +1,9 @@
 from qtpy import QtCore, QtWidgets
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel)
+from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtGui import QImage, QPixmap
+import threading
+import numpy as np
 
 
 class AutofocusWidget(NapariHybridWidget):
@@ -10,31 +12,68 @@ class AutofocusWidget(NapariHybridWidget):
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
+        self.AFWindow = SetAFWindow()
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
-        self.checkbox_Autofocus = QCheckBox('Autofocus')
-        self.AFChannel = QtWidgets.QComboBox()
-
-        self.scanHeightLabel = QLabel("Scan Height")
-        self.scanHeight = QLineEdit("20")
-
+        self.openPreview = QtWidgets.QPushButton('Set AF ROI')
 
         row = 0
-        autofocusLayout.addWidget(self.checkbox_Autofocus, row, 0)
-        autofocusLayout.addWidget(self.AFChannel, row, 1)
-        autofocusLayout.addWidget(self.scanHeightLabel, row + 1, 0)
-        autofocusLayout.addWidget(self.scanHeight, row + 1, 1)
+        autofocusLayout.addWidget(self.openPreview, row, 0)
+
         
 
-        self.checkbox_Autofocus.stateChanged.connect(lambda value: self.sigAutofocusInfoChanged.emit('Autofocus Settings','Autofocus Checkbox', str(value)))
-        self.AFChannel.currentTextChanged.connect(lambda value: self.sigAutofocusInfoChanged.emit('Autofocus Settings','Autofocus Channel', value))
-
     def initValues(self):
-        self.checkbox_Autofocus.setChecked(True)
-        self.checkbox_Autofocus.setChecked(False)
-        self.AFChannel.addItems(['488', '561','640'])
-        self.AFChannel.setCurrentIndex(0)
+        pass
+
+
+
+
+    def openSetAFWindow(self):
+        self.AFWindow.show()
+
+class SetAFWindow(QMainWindow):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setWindowTitle("Open AF Preview")
+        self.setGeometry(100, 100, 1280, 1024)
+
+        afWindowLayout = QtWidgets.QVBoxLayout()
+        buttonLayout = QtWidgets.QHBoxLayout()
+        central_widget = QWidget()
+        central_widget.setLayout(afWindowLayout)
+        self.setCentralWidget(central_widget)
+
+        self.displyImage = self.convert_ndarray_to_qpixmap(np.zeros((1280,1024)))
+
+        self.acqImgButton = QtWidgets.QPushButton('Acquire Image')
+        buttonLayout.addWidget(self.acqImgButton)
+
+        self.label = QLabel()
+        self.label.setPixmap(self.displyImage)
+        self.label.setScaledContents(True)
+
+        afWindowLayout.addLayout(buttonLayout)
+        afWindowLayout.addWidget(self.label)
+
+
+
+    def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
+        """Convert a NumPy RGB or BGR image to QPixmap."""
+        if image.ndim == 2:
+            # Grayscale
+            h, w = image.shape
+            q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
+        else:
+            raise ValueError("Unsupported image format")
+
+        return QPixmap.fromImage(q_image)
+
+
+
+
+
+
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

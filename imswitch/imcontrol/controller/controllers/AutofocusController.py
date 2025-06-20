@@ -4,6 +4,7 @@ from imswitch.imcommon.model import initLogger
 import os
 import cv2
 from tifffile import tifffile
+import threading
 
 import time
 
@@ -13,75 +14,54 @@ class AutofocusController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
-        self._widget.sigAutofocusInfoChanged.connect(self.valueChanged)
+        # self._widget.sigAutofocusInfoChanged.connect(self.valueChanged)
         # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
         self._widget.initValues()
-        self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
-    
-    def toggleAutofocusCheckbox(self):
-        state = self._widget.checkbox_Autofocus.checkState()
-        state = not state
-        self._widget.checkbox_Autofocus.setCheckState(state)
+        # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
+        self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
+        self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrame)
 
-    def load_tif_images_from_folder(folder_path):
-        # List all files in the folder
-        tif_images = []
+    def openSetAFWindowThread(self):
+        threading.Thread(target=self._widget.openSetAFWindow(), args=(), daemon=True).start()
+
+    def getOneFrame(self):
+        img = self._master.detectorsManager._subManagers['AF Cam'].grabFrameOnly()
+        pixmapImg = self._widget.AFWindow.convert_ndarray_to_qpixmap(img)
+        self._widget.AFWindow.label.setPixmap(pixmapImg)
+
+    
+    # def toggleAutofocusCheckbox(self):
+    #     state = self._widget.checkbox_Autofocus.checkState()
+    #     state = not state
+    #     self._widget.checkbox_Autofocus.setCheckState(state)
+
+    # def load_tif_images_from_folder(folder_path):
+    #     # List all files in the folder
+    #     tif_images = []
         
-        # Loop through all files in the folder
-        for filename in os.listdir(folder_path):
-            if filename.endswith('.tif') or filename.endswith('.tiff'):  # Check for .tif or .tiff extensions
-                file_path = os.path.join(folder_path, filename)
+    #     # Loop through all files in the folder
+    #     for filename in os.listdir(folder_path):
+    #         if filename.endswith('.tif') or filename.endswith('.tiff'):  # Check for .tif or .tiff extensions
+    #             file_path = os.path.join(folder_path, filename)
                 
-                # Use tifffile to load the image
-                try:
-                    image = tifffile.imread(file_path)
-                    startTime = time.time()
-                    # image = image / ((2**4)-1)
-                    # image = image.astype(np.uint8)
-                    endTime = time.time()
-                    elapsed = endTime - startTime
-                    tif_images.append(image)
-                    # print(f"Loaded image: {filename}")
-                except Exception as e:
-                    print(f"Error loading image {filename}: {e}")
+    #             # Use tifffile to load the image
+    #             try:
+    #                 image = tifffile.imread(file_path)
+    #                 startTime = time.time()
+    #                 # image = image / ((2**4)-1)
+    #                 # image = image.astype(np.uint8)
+    #                 endTime = time.time()
+    #                 elapsed = endTime - startTime
+    #                 tif_images.append(image)
+    #                 # print(f"Loaded image: {filename}")
+    #             except Exception as e:
+    #                 print(f"Error loading image {filename}: {e}")
         
-        return tif_images, elapsed
+    #     return tif_images, elapsed
     
     def getLastZStack(self):
         pass
 
-    # def testFunc(self):
-
-
-    # def calcAFArray(self, origin):
-
-    #     AFList = []
-    #     steps = 20
-    #     stepSize = 0.1
-    #     startZ = origin - ((steps / 2)*stepSize)
-    #     AFList.append(startZ)
-    #     for i in range(steps):
-    #         AFList.append(startZ+(i+1)*stepSize)
-
-    #     return AFList
-
-    def computeLaplacianArray(imarray, toPrint = False):
-        startTime = time.time()
-        scoreArray = []
-        for i, image in enumerate(imarray):
-            laplacian = cv2.Laplacian(image, cv2.CV_64F)  # Apply Laplacian filter
-            score = np.var(laplacian)
-            scoreArray.append(score)
-            if toPrint:
-                print(f'Laplacian {i}: {score}')
-
-        maxVal = max(range(len(scoreArray)), key=scoreArray.__getitem__)
-        endTime = time.time()
-        elapsed = endTime-startTime
-        print(f'Laplacian time: {elapsed}')
-
-            
-        return scoreArray, maxVal  # Compute variance of Laplacian
 
 
 

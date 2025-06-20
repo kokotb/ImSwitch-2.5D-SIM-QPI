@@ -19,3 +19,4 @@ from .ArduinoManager import ArduinoManager
 from .TilingManager import TilingManager
 from .ROIManager import ROIManager
 from .AutofocusManager import AutofocusManager
+from .detectors.PixelinkManager import PixelinkManager

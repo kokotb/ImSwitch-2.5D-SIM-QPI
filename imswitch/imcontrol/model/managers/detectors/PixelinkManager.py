@@ -10,7 +10,7 @@ import numpy
 import cv2
 import os
 
-class PixelManager(DetectorManager):
+class PixelinkManager(DetectorManager):
     """ DetectorManager that deals with LUCID cameras and the   parameters for frame extraction from them.
 
     Manager properties:
@@ -209,9 +209,11 @@ class PixelManager(DetectorManager):
             self.left = left
             
 
-            if event == cv2.EVENT_LBUTTONDOWN:
+            if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
                 cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
+                self.oneRect = True
         
+        self.oneRect = False
         rawFrame = create_string_buffer(1024 * 1280 * 2)
         ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
         ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
@@ -232,8 +234,40 @@ class PixelManager(DetectorManager):
                 break
         cv2.destroyAllWindows()
         print(self.left,self.top,self.xsize,self.ysize)
-        return npFormatedImage
+        return self.left,self.top,self.xsize,self.ysize
     
+    def grabFrameOnly(self):
+        # def drawRect(event, x,y,flag,params):
+        #     top = y - 50
+        #     left = x - 50
+        #     right = x + 50
+        #     bottom = y + 50
+        #     self.xsize = 100
+        #     self.ysize = 100
+        #     self.top = top
+        #     self.left = left
+            
+
+        #     if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
+        #         cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
+        #         self.oneRect = True
+        
+        # self.oneRect = False
+        rawFrame = create_string_buffer(1024 * 1280 * 2)
+        ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
+        ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
+        frameDesc = ret[1]
+        ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
+        formatedImage = ret[1]
+        npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
+        npFormatedImage.dtype = numpy.uint8
+        imageHeight = int(frameDesc.Roi.fHeight)
+        imageWidth = int(frameDesc.Roi.fWidth)
+        newShape = (imageHeight, imageWidth)
+        npFormatedImage = numpy.reshape(npFormatedImage, newShape)
+        ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
+        assert PxLApi.apiSuccess(ret[0])
+        return npFormatedImage
 
 
     def openPropertiesDialog(self):
@@ -241,8 +275,8 @@ class PixelManager(DetectorManager):
 
     
     def close(self):
-        ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
-        assert PxLApi.apiSuccess(ret[0])
+        # ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
+        # assert PxLApi.apiSuccess(ret[0])
         ret = PxLApi.uninitialize(self.hCamera)
         assert PxLApi.apiSuccess(ret[0])
         self.__logger.info(f'Shutting down camera, model: {self._camera.model}')

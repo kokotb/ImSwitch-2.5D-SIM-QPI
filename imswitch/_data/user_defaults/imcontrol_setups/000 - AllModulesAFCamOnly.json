@@ -53,7 +53,8 @@
 
   "availableWidgets": [
     "Settings",
-    "Positioner"
+    "Positioner",
+    "Autofocus"
 
   ]
 }
