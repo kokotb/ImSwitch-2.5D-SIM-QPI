@@ -1375,9 +1375,9 @@ class SIMController(ImConWidgetController):
                             autoZernRep = 0
                             
 
-                        if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
+                        if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:                    
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                            time.sleep(0.1) #can prob be deleted
+                            time.sleep(0.1) # !!!can prob be deleted
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -1486,7 +1486,7 @@ class SIMController(ImConWidgetController):
                     self._master.slm25DManager.resetList()
 
 
-                if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  # hardcoded, 22 parameters with 7 options at the moment.
+                if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  
                     autoZernRep = -1
                     if finerLoop == False:
                         finerLoop = True
@@ -1496,7 +1496,7 @@ class SIMController(ImConWidgetController):
                         autoZern = False
                 else:
                     autoZernRep += 1
-                    time.sleep(.1)
+                    time.sleep(.1) # !!!
 
 
 
