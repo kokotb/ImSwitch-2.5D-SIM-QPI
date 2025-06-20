@@ -1466,14 +1466,14 @@ class SIMController(ImConWidgetController):
                     # look at the list, fit parabola, get best value, set value, continue
                     
                     if finerLoop:
-                        try:
-                            optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
-                            self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
-                        except: 
-                            self._logger.error('!!!FIT UNSUCCESSFUL!!!')
-                            #optimalCoefficient = 3 # !!! FIND better way to do it
-                            optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
-                            self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                        # try:
+                        #     optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
+                        #     self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
+                        # except: 
+                        #     self._logger.error('!!!FIT UNSUCCESSFUL!!!')
+                        #     #optimalCoefficient = 3 # !!! FIND better way to do it
+                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
+                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
 
                     else:
                         optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])

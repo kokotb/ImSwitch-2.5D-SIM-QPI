@@ -498,9 +498,9 @@ class SLM25DController(ImConWidgetController):
     def createFullZernList1stLoop(self):
         tempZernList = []
         self.autoZernCalibValuesDict = {}
-        testValues = [-1., -0.6, -0.2, 0.2, 0.6, 1.]
+        testValues = [-1., -0.6, -0.2, 0., 0.2, 0.6, 1.]
         for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+            if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
             else:
                 for side in self._widget.ZernikeSides:
@@ -515,7 +515,7 @@ class SLM25DController(ImConWidgetController):
         tempZernList = []
         self.autoZernCalibValuesDict = {}
         for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+            if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
             else:
                 for side in self._widget.ZernikeSides:   
