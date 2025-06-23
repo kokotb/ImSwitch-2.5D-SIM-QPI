@@ -3,7 +3,7 @@ import numpy as np
 from imswitch.imcommon.model import initLogger
 import os
 import cv2
-from tifffile import tifffile
+import tifffile as tif
 import threading
 
 import time
@@ -19,51 +19,91 @@ class AutofocusController(ImConWidgetController):
         self._widget.initValues()
         # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
         self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
-        self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrame)
+        self._widget.AFWindow.roiReset.clicked.connect(self.resetROIOnCam)
+        self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
+        self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurve)
+        self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
+
+        self.zPositioner = self._master.positionersManager._subManagers['Z']
+        self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
 
+    def resetROIOnCam(self):
+        self.AFCam.setROI([0,0,1280,1024])
+        self.getOneFrameToSet()
 
+    def setROIOnCam(self):
+        try:
+            wantedROI = self._widget.AFWindow.embeddedImage.lastClick
+            self.AFCam.setROI(wantedROI)
+            self.getOneFrameToSet()
+        except AttributeError:
+            self._logger.warning("ROI has not yet been selected. Please click the center of desired ROI.")
 
     def openSetAFWindowThread(self):
         threading.Thread(target=self._widget.openSetAFWindow(), args=(), daemon=True).start()
 
-    def getOneFrame(self):
-        img = self._master.detectorsManager._subManagers['AF Cam'].grabFrameOnly()
+    def getOneFrameToSet(self):
+        img = self.AFCam.grabFrameOnly()
         pixmapImg = self._widget.AFWindow.convert_ndarray_to_qpixmap(img)
-        self._widget.AFWindow.label.setPixmap(pixmapImg)
+        self._widget.AFWindow.embeddedImage.setPixmap(pixmapImg)
+
+    def getOneFrame(self): 
+        img = self.AFCam.grabFrameOnly()
+        return img
+    
+    def runCalCurve(self):
+        path = R'D:\SIM_Data\_Settings\AFImages'
+        zList, currentZ = self.calcZRange()
+        # zList = zList.reverse()
+        for count, z in enumerate(zList):
+            filename = f"{count:03}.tif"
+            self.zPositioner.setPosition(zList[count], 'Z')
+            time.sleep(0.001)
+            img = self.getOneFrame()
+            self.saveImageInBackground(img, path, filename)
+        self.zPositioner.setPosition(currentZ, 'Z')
+        print('AF stack saved.')
+
+
+
+
+        
+
+    def calcZRange(self):
+        currentZ = self.zPositioner._position['Z']
+        bottom = currentZ - 20
+        top = currentZ + 20
+        steps = 51
+        zList = np.linspace(top, bottom, steps)
+        return zList, currentZ
+
 
     
-    # def toggleAutofocusCheckbox(self):
-    #     state = self._widget.checkbox_Autofocus.checkState()
-    #     state = not state
-    #     self._widget.checkbox_Autofocus.setCheckState(state)
+    def saveImageInBackground(self, image, path, filename):
+        try:
+            # self.folder = self._widget.getRecFolder()
+            filename = os.path.join(path,filename) 
+            image = np.array(image)
+            tif.imwrite(filename, image, imagej=True)
+            self._logger.debug("Saving AF image: " + filename)
 
-    # def load_tif_images_from_folder(folder_path):
-    #     # List all files in the folder
-    #     tif_images = []
-        
-    #     # Loop through all files in the folder
-    #     for filename in os.listdir(folder_path):
-    #         if filename.endswith('.tif') or filename.endswith('.tiff'):  # Check for .tif or .tiff extensions
-    #             file_path = os.path.join(folder_path, filename)
-                
-    #             # Use tifffile to load the image
-    #             try:
-    #                 image = tifffile.imread(file_path)
-    #                 startTime = time.time()
-    #                 # image = image / ((2**4)-1)
-    #                 # image = image.astype(np.uint8)
-    #                 endTime = time.time()
-    #                 elapsed = endTime - startTime
-    #                 tif_images.append(image)
-    #                 # print(f"Loaded image: {filename}")
-    #             except Exception as e:
-    #                 print(f"Error loading image {filename}: {e}")
-        
-    #     return tif_images, elapsed
+        except  Exception as e:
+            self._logger.error(e)
     
-    def getLastZStack(self):
-        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

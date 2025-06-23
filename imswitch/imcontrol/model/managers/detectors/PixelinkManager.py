@@ -107,6 +107,51 @@ class PixelinkManager(DetectorManager):
             return self.__image, frameNumber
         else:    
             return self.__image
+        
+    def api_range_error(rc):
+        return rc == PxLApi.ReturnCode.ApiInvalidParameterError or rc == PxLApi.ReturnCode.ApiOutOfRangeError
+        
+    def getExposure(self):
+        ret = PxLApi.getFeature(self.hCamera, PxLApi.FeatureId.EXPOSURE)
+        if not(PxLApi.apiSuccess(ret[0])):
+            print("!! Attempt to get exposure returned %i!" % ret[0])
+            return
+        params = ret[2]
+        exposureInSec = params[0]
+        return exposureInSec
+    
+    def setExposure(self, exposureInSec):
+        ret = PxLApi.setFeature(self.hCamera, PxLApi.FeatureId.EXPOSURE, PxLApi.FeatureFlags.MANUAL, [exposureInSec])
+        if (not PxLApi.apiSuccess(ret[0])) and (not self.api_range_error(ret[0])):
+            print("!! Attempt to set exposure returned %i!" % ret[0])
+            return
+        newExposure = self.getExposure()
+        newExposureInMS = newExposure * 1000
+        self.__logger.info(f"Exposure set to {newExposureInMS} ms on AF cam")
+
+        return exposureInSec
+    
+    def getROI(self):
+        ret = PxLApi.getFeature (self.hCamera, PxLApi.FeatureId.ROI)
+        if PxLApi.apiSuccess(ret[0]):
+            flags = ret[1]
+            updatedParams = ret[2]
+            width = updatedParams[PxLApi.RoiParams.WIDTH]
+            height = updatedParams[PxLApi.RoiParams.HEIGHT]
+            left = updatedParams[PxLApi.RoiParams.LEFT]
+            top = updatedParams[PxLApi.RoiParams.TOP]
+        return [left, top, width, height]
+
+    def setROI(self, params): #Params should be lsit of [left, top, width, height]
+
+        ret = PxLApi.setFeature(self.hCamera, PxLApi.FeatureId.ROI, PxLApi.FeatureFlags.MANUAL, params)
+        if not PxLApi.apiSuccess(ret[0]):
+            print("Could not setFeature on ROI, ret: %d!" % ret[0])
+            PxLApi.uninitialize(self.hCamera)
+            return
+        newROI = self.getROI()
+        self.__logger.info(f'AF Cam ROI set to {newROI}')
+    
 
     def setParameter(self, name, value):
         """Sets a parameter value and returns the value.
@@ -197,44 +242,44 @@ class PixelinkManager(DetectorManager):
         self._adjustingParameters = False
 
 
-    def grabFrameAF(self):
-        def drawRect(event, x,y,flag,params):
-            top = y - 50
-            left = x - 50
-            right = x + 50
-            bottom = y + 50
-            self.xsize = 100
-            self.ysize = 100
-            self.top = top
-            self.left = left
+    # def grabFrameAF(self):
+    #     def drawRect(event, x,y,flag,params):
+    #         top = y - 50
+    #         left = x - 50
+    #         right = x + 50
+    #         bottom = y + 50
+    #         self.xsize = 100
+    #         self.ysize = 100
+    #         self.top = top
+    #         self.left = left
             
 
-            if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
-                cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
-                self.oneRect = True
+    #         if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
+    #             cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
+    #             self.oneRect = True
         
-        self.oneRect = False
-        rawFrame = create_string_buffer(1024 * 1280 * 2)
-        ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
-        ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
-        frameDesc = ret[1]
-        ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
-        formatedImage = ret[1]
-        npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
-        npFormatedImage.dtype = numpy.uint8
-        imageHeight = int(frameDesc.Roi.fHeight)
-        imageWidth = int(frameDesc.Roi.fWidth)
-        newShape = (imageHeight, imageWidth)
-        npFormatedImage = numpy.reshape(npFormatedImage, newShape)
-        cv2.namedWindow('AF Preview')
-        cv2.setMouseCallback('AF Preview', drawRect)
-        while True:
-            cv2.imshow('AF Preview', npFormatedImage)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-        cv2.destroyAllWindows()
-        print(self.left,self.top,self.xsize,self.ysize)
-        return self.left,self.top,self.xsize,self.ysize
+    #     self.oneRect = False
+    #     rawFrame = create_string_buffer(1024 * 1280 * 2)
+    #     ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
+    #     ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
+    #     frameDesc = ret[1]
+    #     ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
+    #     formatedImage = ret[1]
+    #     npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
+    #     npFormatedImage.dtype = numpy.uint8
+    #     imageHeight = int(frameDesc.Roi.fHeight)
+    #     imageWidth = int(frameDesc.Roi.fWidth)
+    #     newShape = (imageHeight, imageWidth)
+    #     npFormatedImage = numpy.reshape(npFormatedImage, newShape)
+    #     cv2.namedWindow('AF Preview')
+    #     cv2.setMouseCallback('AF Preview', drawRect)
+    #     while True:
+    #         cv2.imshow('AF Preview', npFormatedImage)
+    #         if cv2.waitKey(1) & 0xFF == ord("q"):
+    #             break
+    #     cv2.destroyAllWindows()
+    #     print(self.left,self.top,self.xsize,self.ysize)
+    #     return self.left,self.top,self.xsize,self.ysize
     
     def grabFrameOnly(self):
         # def drawRect(event, x,y,flag,params):

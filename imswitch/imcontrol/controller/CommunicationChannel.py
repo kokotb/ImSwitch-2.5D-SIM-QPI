@@ -33,12 +33,8 @@ class CommunicationChannel(SignalInterface):
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
-
-    # sigTriggerModeToggled = Signal()
-    
-    # sigRunAcquireSetStarted = Signal()
-    
-    # sigRunAcquireSetStopped = Signal()
+# 
+    # sigAutoFocus
 
     sigRunAutofocus = Signal()
 
@@ -189,6 +185,8 @@ class CommunicationChannel(SignalInterface):
     def saveLastRawImgs(self, rawImg, handle):
         self.lastImgDict[handle] = rawImg
 
+    # def saveLastROIClickAF(self, AFParams):
+    #     self.AFParams = AFParams
 
     def getPSFStack(self):
         if not self.zStackList488:

@@ -15,7 +15,7 @@ class AutofocusWidget(NapariHybridWidget):
         # super().__init__(*args, **kwargs)
         blankImage = np.zeros((1280,1024))
         self.AFWindow = SetAFWindow()
-        self.clickableImage = ClickableImage(blankImage)
+        # self.clickableImage = ClickableImage(blankImage)
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
@@ -23,7 +23,7 @@ class AutofocusWidget(NapariHybridWidget):
 
         row = 0
         autofocusLayout.addWidget(self.openPreview, row, 0)
-        self.AFWindow.clearAnnotations.clicked.connect(self.clearAnnot)
+        # self.AFWindow.clearAnnotations.clicked.connect(self.clearAnnot)
 
 
     def initValues(self):
@@ -32,8 +32,9 @@ class AutofocusWidget(NapariHybridWidget):
     def openSetAFWindow(self):
         self.AFWindow.show()
 
-    def clearAnnot(self):
-        self.clickableImage.clearAnnot()
+
+    # def clearAnnot(self):
+    #     self.clickableImage.clearAnnot()
 
 
 class SetAFWindow(QMainWindow):
@@ -43,6 +44,8 @@ class SetAFWindow(QMainWindow):
         self.setGeometry(100, 100, 1280, 1024)
 
         afWindowLayout = QtWidgets.QVBoxLayout()
+        imageLayout = QtWidgets.QVBoxLayout()
+        buttonAndTextLayout = QtWidgets.QVBoxLayout()
         buttonLayout = QtWidgets.QHBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(afWindowLayout)
@@ -52,13 +55,25 @@ class SetAFWindow(QMainWindow):
 
         self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
         buttonLayout.addWidget(self.acqImgButton)
-        self.clearAnnotations = QtWidgets.QPushButton('Clear Annotations')
-        buttonLayout.addWidget(self.clearAnnotations)
+        self.roiReset = QtWidgets.QPushButton('Reset ROI')
+        buttonLayout.addWidget(self.roiReset)
 
-        self.label = ClickableImage(blankImage)
+        self.roiSet = QtWidgets.QPushButton('Set ROI')
+        buttonLayout.addWidget(self.roiSet)
 
-        afWindowLayout.addLayout(buttonLayout)
-        afWindowLayout.addWidget(self.label)
+        self.calCurve = QtWidgets.QPushButton('Cal. Curve')
+        buttonLayout.addWidget(self.calCurve)
+
+        self.embeddedImage = ClickableImage(blankImage)
+
+        # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
+        buttonAndTextLayout.addLayout(buttonLayout)
+        # buttonAndTextLayout.addWidget(textLabel)
+
+
+        afWindowLayout.addLayout(buttonAndTextLayout)
+        imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
+        afWindowLayout.addLayout(imageLayout)
 
 
 
@@ -77,30 +92,31 @@ class ClickableImage(QLabel):
         self.pixelmap = self.convert_ndarray_to_qpixmap(self.image_np)
 
         self.setPixmap(self.pixelmap)
-        self.setScaledContents(True)  # Ensure image scales with widget
+        # self.setScaledContents(True)  # Ensure image scales with widget
         self.annotation_points = []
-        self.lastClick = (0,0,100,100) #Left,Top,width,height of last image click.
+        # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.repaintAnnot()
+            if self.painted:
+                self.repaintAnnot()
             x = event.pos().x()
             y = event.pos().y()
 
             # Account for scaling
             scaled_w = self.width()
             scaled_h = self.height()
-            img_h, img_w = self.image_np.shape
+            img_w, img_h = self.image_np.shape
 
             # Map widget coordinates to image coordinates
-            img_x = int(x * img_w / scaled_w)
+            img_x = int(x * img_w / scaled_w) 
             img_y = int(y * img_h / scaled_h)
 
             # Clip to image bounds
             img_x = min(max(img_x, 0), img_w - 1)
             img_y = min(max(img_y, 0), img_h - 1)
 
-            windowSize = 100
+            windowSize = 160
             top = img_y - windowSize/2
             left = img_x - windowSize/2
             width = windowSize
@@ -109,11 +125,9 @@ class ClickableImage(QLabel):
             if not self.painted:
                 self.annotation_points.append(event.pos())
                 self.update()  # Trigger repaint
-                self.lastClick = (left,top,width,height)
+                self.lastClick = [left,top,width,height]
                 self.painted = True
-      
 
-            print(f"Click data: {self.lastClick}")
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -121,7 +135,7 @@ class ClickableImage(QLabel):
         pen = QPen(Qt.red, 3)
         painter.setPen(pen)
         for point in self.annotation_points:
-            painter.drawRect(point.x() - 50, point.y() - 50, 100, 100)
+            painter.drawRect(point.x() - 80, point.y() - 80, 160, 160)
 
 
     def repaintAnnot(self):
