@@ -20,10 +20,14 @@ class AutofocusWidget(NapariHybridWidget):
         self.setLayout(autofocusLayout)
 
         self.openPreview = QtWidgets.QPushButton('Open AF Preview')
+        self.registerPlane = QtWidgets.QPushButton('Register Plane')
+        self.clearRegPlane = QtWidgets.QPushButton('Clear Registered Plane')
 
         row = 0
         autofocusLayout.addWidget(self.openPreview, row, 0)
-        # self.AFWindow.clearAnnotations.clicked.connect(self.clearAnnot)
+        autofocusLayout.addWidget(self.registerPlane, row, 1)
+        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 1)
+
 
 
     def initValues(self):
