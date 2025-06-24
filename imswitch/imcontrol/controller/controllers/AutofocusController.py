@@ -38,7 +38,7 @@ class AutofocusController(ImConWidgetController):
         self.currentReg = None
 
     def registerCurrentPlane(self):
-        score = self.getAndScoreOne
+        score = self.getAndScoreOne()
         self.currentReg = score
 
     def resetROIOnCam(self):
@@ -74,7 +74,7 @@ class AutofocusController(ImConWidgetController):
         for count, z in enumerate(zList):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
-            time.sleep(0.001)
+            time.sleep(0.01)
             img = self.getOneFrame()
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
@@ -93,8 +93,8 @@ class AutofocusController(ImConWidgetController):
     def setZPosition(self, z):
         self.zPositioner.setPosition(z, 'Z')
 
-    def regPlaneAF(self):
-        pass
+    # def regPlaneAF(self):
+    #     pass
 
     def getXfromY(self, y):
         if self.calCurveFit:
@@ -240,7 +240,7 @@ class AutofocusController(ImConWidgetController):
         self.x_slp = model.coef_[0]
         self.y_int = model.intercept_
         self.r2 = r2_score(zList, y_pred)
-        if self.r2 >= 0.99:
+        if self.r2 >= 0.999:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
             self.calCurveFit = True
         else:
@@ -281,9 +281,9 @@ class AutofocusController(ImConWidgetController):
 
     def calcZRange(self):
         currentZ = self.zPositioner._position['Z']
-        bottom = currentZ - 20
-        top = currentZ + 20
-        steps = 51
+        bottom = currentZ - 10
+        top = currentZ + 10
+        steps = 101
         zList = np.linspace(top, bottom, steps)
         return zList, currentZ
 

@@ -1,8 +1,8 @@
 from qtpy import QtCore, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import threading
 import numpy as np
 
@@ -19,6 +19,7 @@ class AutofocusWidget(NapariHybridWidget):
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
+        self.led = LedIndicator(self)
         self.openPreview = QtWidgets.QPushButton('Open AF Preview')
         self.registerPlane = QtWidgets.QPushButton('Register Plane')
         self.clearRegPlane = QtWidgets.QPushButton('Clear Registered Plane')
@@ -26,7 +27,11 @@ class AutofocusWidget(NapariHybridWidget):
         row = 0
         autofocusLayout.addWidget(self.openPreview, row, 0)
         autofocusLayout.addWidget(self.registerPlane, row, 1)
-        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 1)
+        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 0)
+        autofocusLayout.addWidget(self.led, row + 1, 1)
+
+        self.registerPlane.clicked.connect(self.led.turn_on)
+        self.clearRegPlane.clicked.connect(self.led.turn_off)
 
 
 
@@ -152,6 +157,37 @@ class ClickableImage(QLabel):
         q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
+    
+
+
+
+class LedIndicator(QWidget):
+    def __init__(self, parent=None, diameter=30):
+        super().__init__(parent)
+        self._on = False
+        self._diameter = diameter
+        self.setFixedSize(QSize(diameter + 10, diameter + 10))
+
+    def turn_on(self):
+        self._on = True
+        self.update()
+
+    def turn_off(self):
+        self._on = False
+        self.update()
+
+    def toggle(self):
+        self._on = not self._on
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        color = QColor(0, 255, 0) if self._on else QColor(255, 0, 0)
+        painter.setBrush(QBrush(color, Qt.SolidPattern))
+        painter.setPen(Qt.black)
+        rect = self.rect().adjusted(5, 5, -5, -5)
+        painter.drawEllipse(rect)
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
