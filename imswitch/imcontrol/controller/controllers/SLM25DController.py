@@ -77,6 +77,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
+        self._widget.projectCenter.stateChanged.connect(self.combineAndProject)
 
         self.slm25DManager = self._master.slm25DManager
 
@@ -93,6 +94,7 @@ class SLM25DController(ImConWidgetController):
 
         #self._widget.autoZernCheckbox2.stateChanged.connect(self.combineAndProject)
         self.mask25D = np.zeros((1920, 1080))
+        self.centerMask = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
         self.init25DWidgetValues()
 
@@ -395,6 +397,7 @@ class SLM25DController(ImConWidgetController):
     def combineAndProject(self):
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
+        projCenter = self._widget.projectCenter.checkState()
 
         if (projZernike == 2) and (proj25D == 2):
             #if ((self._widget.matrixZernike == 0).all()):
@@ -406,7 +409,7 @@ class SLM25DController(ImConWidgetController):
 
         elif (projZernike == 2) and (proj25D == 0):
             #if ((self._widget.matrixZernike == 0).all()):
-                #self._widget.matrixZernike = np.ones((1920, 1080)) 
+                #self._widget.matrixZernike = np.ones((1920, 1080))
             projImg = self._widget.matrixZernike
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
@@ -416,10 +419,19 @@ class SLM25DController(ImConWidgetController):
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-        elif (projZernike == 0) and (proj25D == 0):
+        elif (projZernike == 0) and (proj25D == 0) and (projCenter == 0):
             projImg = np.zeros((1920, 1080))
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
+        elif (projCenter == 2): # always center mask only!
+            self.centerMask = self.createCenterMask()
+            projImg = self.centerMask
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(np.transpose(projImg)))
+
+        else:
+            print('Center mask can be projected alone only')
         
         
 
@@ -434,6 +446,34 @@ class SLM25DController(ImConWidgetController):
 
         return valueList[0], valueList[1], valueList[2], valueList[3], 
 
+    def createCenterMask(self):
+        xLeft, yLeft, xRight, yRight = self.getCurrentCenters()
+
+        # SLM screen size parameters
+        numberXpix = 1920
+        numberYpix = 1080
+        pszSLM = 0.000008 # (in m, 8 um) pixel size
+        rhoPupilAperture = 1.  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
+        rhoPupilAperturePix = rhoPupilAperture/pszSLM
+        
+        # ====================================================================================================================================
+        y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
+        y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
+        x_coordsright += 960
+
+        rhomatrixleft = np.sqrt((x_coordsleft - xLeft)**2 + (y_coordsleft - yLeft)**2) / rhoPupilAperturePix
+        rhomatrixright = np.sqrt((x_coordsright - xRight)**2 + (y_coordsright - yRight)**2) / rhoPupilAperturePix
+
+        rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
+        # ====================================================================================================================================
+
+        circularMask = np.where(rhomatrix > 0.001, 0, 1)
+        Xmatrix = np.concatenate((x_coordsleft, x_coordsright),axis=1)
+        stripe_width = 40
+        stripe_mask = Xmatrix % stripe_width
+        finalMask = circularMask * stripe_mask * 255 / stripe_width
+        
+        return finalMask
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)

@@ -78,6 +78,9 @@ class SLM25DWidget(Widget):
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(True)
         self.project25D.setEnabled(False)
+        self.projectCenter = QCheckBox('Project Center')
+        self.projectCenter.setChecked(True)
+        self.projectCenter.setEnabled(False)
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
@@ -90,9 +93,14 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value))) #!!! ask Cody???
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
+
+        self.maskCenterCheckbox = QCheckBox("Mask Center")
+        self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.maskCenterCheckbox.setEnabled(False)
+        self.maskCenterCheckbox.setChecked(False)
         
         
 
@@ -105,11 +113,13 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.activate25DSLM,0,2)
         self.grid.addWidget(self.projectZernike,0,3)
         self.grid.addWidget(self.project25D,0,4)
-        self.grid.addWidget(self.slmPreview, 0, 5)
+        self.grid.addWidget(self.projectCenter,0,5)
+        self.grid.addWidget(self.slmPreview, 0, 6)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
         self.grid.addWidget(self.autoZernCheckbox, 4, 4)
+        self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
         self.grid.addWidget(self.reset25D, 17, 5)
         
         # Horizontal lines separating logic sections
@@ -387,11 +397,13 @@ class SLM25DWidget(Widget):
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
+        self.maskCenterCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
+        self.projectCenter.setEnabled(False)
         self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
@@ -419,12 +431,14 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
+        self.maskCenterCheckbox.setEnabled(True)
         self.valLabel2.setEnabled(True)
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
+        self.projectCenter.setEnabled(True)
         self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)
