@@ -453,7 +453,7 @@ class SLM25DController(ImConWidgetController):
         numberXpix = 1920
         numberYpix = 1080
         pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = 1.  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
+        rhoPupilAperture = 3.  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
         rhoPupilAperturePix = rhoPupilAperture/pszSLM
         
         # ====================================================================================================================================
@@ -469,11 +469,11 @@ class SLM25DController(ImConWidgetController):
 
         circularMask = np.where(rhomatrix > 0.001, 0, 1)
         Xmatrix = np.concatenate((x_coordsleft, x_coordsright),axis=1)
-        stripe_width = 40
+        stripe_width = 50
         stripe_mask = Xmatrix % stripe_width
         finalMask = circularMask * stripe_mask * 255 / stripe_width
         
-        return finalMask
+        return finalMask.astype(np.uint8)
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
