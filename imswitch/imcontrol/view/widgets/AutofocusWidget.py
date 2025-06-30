@@ -24,22 +24,33 @@ class AutofocusWidget(NapariHybridWidget):
         self.registerPlane = QtWidgets.QPushButton('Register Plane')
         self.clearRegPlane = QtWidgets.QPushButton('Clear Registered Plane')
 
+        self.calCurveRange = QtWidgets.QSpinBox()
+        self.calCurveRange.setMinimum(20)
+        self.calCurveRange.setMaximum(100)
+        self.calCurveRange.setValue(20)
+
+        
+        self.rangeLabel = QLabel(self)
+        self.rangeLabel.setText("Scan Range:")
+
         row = 0
         autofocusLayout.addWidget(self.openPreview, row, 0)
         autofocusLayout.addWidget(self.registerPlane, row, 1)
         autofocusLayout.addWidget(self.clearRegPlane, row + 1, 0)
         autofocusLayout.addWidget(self.led, row + 1, 1)
+        autofocusLayout.addWidget(self.rangeLabel, row + 2, 0)
+        autofocusLayout.addWidget(self.calCurveRange, row + 2, 1)
 
-        self.registerPlane.clicked.connect(self.led.turn_on)
-        self.clearRegPlane.clicked.connect(self.led.turn_off)
+
 
 
 
     def initValues(self):
         pass
 
-    def openSetAFWindow(self):
-        self.AFWindow.show()
+    # def openSetAFWindow(self):
+    #     self.AFWindow.show()
+    #     self.AFWindow.embeddedImage
 
 
     # def clearAnnot(self):

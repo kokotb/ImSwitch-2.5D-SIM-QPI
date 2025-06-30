@@ -27,19 +27,31 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurve)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
+        # self._widget.registerPlane.clicked.connect(self.onLED)
+        # self._widget.clearRegPlane.clicked.connect(self.offLED)
 
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
         self.calCurveImgs = []
         self.calCurveFit = False
-        self.currentReg = None
+        self.currentRegScore = None
 
     def clearRegisteredPlane(self):
-        self.currentReg = None
+        self.currentRegScore = None
+        self.offLED()
+
+    def onLED(self):
+        self._widget.led.turn_on()
+
+    def offLED(self):
+        self._widget.led.turn_off()
 
     def registerCurrentPlane(self):
         score = self.getAndScoreOne()
-        self.currentReg = score
+        self.currentRegScore = score
+        predZ = self.getYfromX(self.currentRegScore)
+        print(f"Plane registered with score of {self.currentRegScore}, Z of {predZ}")
+        self.onLED()
 
     def resetROIOnCam(self):
         self.AFCam.setROI([0,0,1280,1024])
@@ -54,7 +66,13 @@ class AutofocusController(ImConWidgetController):
             self._logger.warning("ROI has not yet been selected. Please click the center of desired ROI.")
 
     def openSetAFWindowThread(self):
-        threading.Thread(target=self._widget.openSetAFWindow(), args=(), daemon=True).start()
+        threading.Thread(target=self.openSetAFWindow(), args=(), daemon=True).start()
+
+    def openSetAFWindow(self):
+        self._widget.AFWindow.show()
+        self.getOneFrameToSet()
+        self._widget.AFWindow.embeddedImage.repaintAnnot()
+
 
     def getOneFrameToSet(self):
         img = self.AFCam.grabFrameOnly()
@@ -71,7 +89,7 @@ class AutofocusController(ImConWidgetController):
         # zList = zList.reverse()
         if len(self.calCurveImgs) != 0:
             self.calCurveImgs = []
-        for count, z in enumerate(zList):
+        for count, _ in enumerate(zList):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
             time.sleep(0.01)
@@ -195,7 +213,6 @@ class AutofocusController(ImConWidgetController):
         # To read the acquired images and apply the Gaussian fitting
         for i in range(len(self.calCurveImgs)):
             i_values.append(i)
-            print("Step " + str(i+1) + " of " + str(Range))
             #Reading the frames
             im = self.calCurveImgs[i]
             # img = cv2.imread(stacks,-1)
@@ -281,8 +298,9 @@ class AutofocusController(ImConWidgetController):
 
     def calcZRange(self):
         currentZ = self.zPositioner._position['Z']
-        bottom = currentZ - 10
-        top = currentZ + 10
+        rangeVal = self._widget.calCurveRange.value()
+        bottom = currentZ - rangeVal/2
+        top = currentZ + rangeVal/2
         steps = 101
         zList = np.linspace(top, bottom, steps)
         return zList, currentZ
