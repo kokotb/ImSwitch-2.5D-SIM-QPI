@@ -207,9 +207,17 @@ class SLM25DController(ImConWidgetController):
 
         im = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0))
 
+        parameters = self.getAllWidgetParams()
+        rho = parameters["Beam Diameter"]
+        pszSLM = 0.000008 # (in m, 8 um) pixel size
+        rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
+        radious = rhoPupilAperture/pszSLM # [pixels]
+
         draw = ImageDraw.Draw(im)
         draw.ellipse([llx, bly, rlx, toply], fill=(255, 0, 0))
         draw.ellipse([lrx, bry, rrx, topry], fill=(255, 0, 0))
+        draw.ellipse([lx - radious, ly - radious, lx + radious, ly + radious], fill=(255, 0, 0, 100))
+        draw.ellipse([rx - radious, ry - radious, rx + radious, ry + radious], fill=(255, 0, 0, 100))
         centerArray = np.array(im)
         centerArray = np.rot90(centerArray, 3)
         # self.overlayImg25D = pg.ImageItem(centerArray, opacity=0.5)

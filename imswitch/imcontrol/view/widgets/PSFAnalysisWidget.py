@@ -434,13 +434,13 @@ class PSFWindow(QMainWindow):
         self.image_stack = np.array(liststackOfImages)
         self.imgZStack.setImage(self.image_stack[0,:,:])#, levels=(0,4095))
 
-        if (self.selectedX == 0) and (self.selectedY == 0) and (self.selectedZ == 0):
-            flat_index = np.argmax(self.image_stack)
-            self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
-            self.current_indexX = int(self.PSFViewSize.text())//2
-            self.current_indexY = int(self.PSFViewSize.text())//2
-            self.current_index = self.selectedZ
-            self.current_indexZ = self.selectedZ
+        # if (self.selectedX == 0) and (self.selectedY == 0) and (self.selectedZ == 0):
+        flat_index = np.argmax(self.image_stack)
+        self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
+        self.current_indexX = int(self.PSFViewSize.text())//2
+        self.current_indexY = int(self.PSFViewSize.text())//2
+        self.current_index = self.selectedZ
+        self.current_indexZ = self.selectedZ
             
         self.updateZstackImage()
         self.showSelectedPSF()
