@@ -178,9 +178,9 @@
       "analogChannel": null,
 
       "digitalLine": null,
-      "managerName": "PixelinkManager",
+      "managerName": "ZWOCamManager",
       "managerProperties": {
-        "cameraListIndex": 85,
+        "cameraListIndex": 21,
         "wavelength": 808,
         "x0_global": 0,
         "y0_global": 0,
@@ -188,13 +188,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 300.0
+          "ExposureTime": 450.0
         },
         "ROI":{
           "OffsetX": 0,
           "OffsetY": 0,
-          "Width": 1280,
-          "Height": 1024
+          "Width": 1936,
+          "Height": 1096
         }
       },
       "forAcquisition": false,
