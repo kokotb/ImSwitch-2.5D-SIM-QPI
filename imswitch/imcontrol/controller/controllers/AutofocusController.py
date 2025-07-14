@@ -54,7 +54,7 @@ class AutofocusController(ImConWidgetController):
         self.onLED()
 
     def resetROIOnCam(self):
-        self.AFCam.setROI([0,0,1280,1024])
+        self.AFCam.setROI([0,0,1936,1096])
         self.getOneFrameToSet()
 
     def setROIOnCam(self):
@@ -71,7 +71,7 @@ class AutofocusController(ImConWidgetController):
     def openSetAFWindow(self):
         self._widget.AFWindow.show()
         self.getOneFrameToSet()
-        self._widget.AFWindow.embeddedImage.repaintAnnot()
+        # self._widget.AFWindow.embeddedImage.repaintAnnot()
 
 
     def getOneFrameToSet(self):
@@ -142,8 +142,8 @@ class AutofocusController(ImConWidgetController):
             print("Unable to import curve_fit from scipy.optimize.")
 
 
-        init_guess_x = [0,80,10,62]	# Guesses for fits Background, Centre, Width, Amplitude
-        init_guess_y = [0,80,10,31]	# Guesses for fits
+        init_guess_x = [0,905,400,40]	# Guesses for fits Background, Centre, Width, Amplitude
+        init_guess_y = [0,620,400,40]	# Guesses for fits
         x_sigma = []
         y_sigma = []
 
@@ -176,8 +176,8 @@ class AutofocusController(ImConWidgetController):
         init_guess_y.clear()
         init_guess_y.append(popt)
     
-        x_sigma = sx
-        y_sigma = sy
+        x_sigma = abs(sx)
+        y_sigma = abs(sy)
         score = x_sigma - y_sigma
 
         # x_c.append(popt[1])
@@ -203,8 +203,8 @@ class AutofocusController(ImConWidgetController):
             print("Unable to import curve_fit from scipy.optimize.")
 
 
-        init_guess_x = [0,80,10,62]	# Guesses for fits Background, Centre, Width, Amplitude
-        init_guess_y = [0,80,10,31]	# Guesses for fits
+        init_guess_x = [0,905,400,40]	# Guesses for fits Background, Centre, Width, Amplitude
+        init_guess_y = [0,620,400,40]	# Guesses for fits
         x_c = []
         x_sigma = []
         y_sigma = []
@@ -219,6 +219,9 @@ class AutofocusController(ImConWidgetController):
             # im = np.asarray(img).astype(float)
             im = im-np.mean(im)/2	# Remove background
             im[im<10] = 0			# Threshold
+
+            # plt.imshow(im)
+
         
             # 1D Gaussian
             h1, w1 = im.shape
@@ -240,9 +243,13 @@ class AutofocusController(ImConWidgetController):
             init_guess_y.clear()
             init_guess_y.append(popt)
         
-            x_sigma.append(sx)
-            y_sigma.append(sy)
+            x_sigma.append(abs(sx))
+            y_sigma.append(abs(sy))
             x_c.append(popt[1])
+            # plt.plot((x0,x0+sx),(y0,y0))
+            # plt.plot((x0,x0),(y0,y0+sy))
+            # plt.imshow(im)
+            # plt.show()
             
         # This is just to set the x-axis of the graph to the axial values
         # StepSize = zval
@@ -257,7 +264,7 @@ class AutofocusController(ImConWidgetController):
         self.x_slp = model.coef_[0]
         self.y_int = model.intercept_
         self.r2 = r2_score(zList, y_pred)
-        if self.r2 >= 0.999:
+        if self.r2 >= 0.99:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
             self.calCurveFit = True
         else:
@@ -266,14 +273,14 @@ class AutofocusController(ImConWidgetController):
 
 
         # Save calibration data
-        # plt.plot(z_values, x_sigma, 'b8', markersize=2, label="σx")
-        # plt.plot(z_values, y_sigma, 'r8', markersize=2, label="σy")
-        # plt.plot(np.subtract(x_sigma,y_sigma),z_values,  '--k', markersize=2, label="σx - σy")
-        # plt.grid(True)
-        # plt.ylabel("z-Position (µm)")
-        # plt.xlabel("Width (px)")
-        # plt.legend()
-        # plt.show()
+        plt.plot(z_values, x_sigma,  'b8', markersize=2, label="σx")
+        plt.plot(z_values, y_sigma, 'r8', markersize=2, label="σy")
+        plt.plot(z_values, np.subtract(x_sigma,y_sigma), '--k', markersize=2, label="σx - σy")
+        plt.grid(True)
+        plt.xlabel("z-Position (µm)")
+        plt.ylabel("Width (px)")
+        plt.legend()
+        plt.show()
         # self.y_int, self.slp = self.estimate_coef(comboData, z_values)
 
 
@@ -301,7 +308,7 @@ class AutofocusController(ImConWidgetController):
         rangeVal = self._widget.calCurveRange.value()
         bottom = currentZ - rangeVal/2
         top = currentZ + rangeVal/2
-        steps = 101
+        steps = 21
         zList = np.linspace(top, bottom, steps)
         return zList, currentZ
 

@@ -71,15 +71,15 @@ class SetAFWindow(QMainWindow):
         central_widget.setLayout(afWindowLayout)
         self.setCentralWidget(central_widget)
 
-        blankImage = np.zeros((1280,1024))
+        blankImage = np.zeros((1936,1096))
 
         self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
         buttonLayout.addWidget(self.acqImgButton)
         self.roiReset = QtWidgets.QPushButton('Reset ROI')
-        buttonLayout.addWidget(self.roiReset)
+        # buttonLayout.addWidget(self.roiReset)
 
         self.roiSet = QtWidgets.QPushButton('Set ROI')
-        buttonLayout.addWidget(self.roiSet)
+        # buttonLayout.addWidget(self.roiSet)
 
         self.calCurve = QtWidgets.QPushButton('Cal. Curve')
         buttonLayout.addWidget(self.calCurve)
@@ -116,52 +116,52 @@ class ClickableImage(QLabel):
         self.annotation_points = []
         # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            if self.painted:
-                self.repaintAnnot()
-            x = event.pos().x()
-            y = event.pos().y()
+    # def mousePressEvent(self, event):
+    #     if event.button() == Qt.LeftButton:
+    #         if self.painted:
+    #             self.repaintAnnot()
+    #         x = event.pos().x()
+    #         y = event.pos().y()
 
-            # Account for scaling
-            scaled_w = self.width()
-            scaled_h = self.height()
-            img_w, img_h = self.image_np.shape
+    #         # Account for scaling
+    #         scaled_w = self.width()
+    #         scaled_h = self.height()
+    #         img_w, img_h = self.image_np.shape
 
-            # Map widget coordinates to image coordinates
-            img_x = int(x * img_w / scaled_w) 
-            img_y = int(y * img_h / scaled_h)
+    #         # Map widget coordinates to image coordinates
+    #         img_x = int(x * img_w / scaled_w) 
+    #         img_y = int(y * img_h / scaled_h)
 
-            # Clip to image bounds
-            img_x = min(max(img_x, 0), img_w - 1)
-            img_y = min(max(img_y, 0), img_h - 1)
+    #         # Clip to image bounds
+    #         img_x = min(max(img_x, 0), img_w - 1)
+    #         img_y = min(max(img_y, 0), img_h - 1)
 
-            windowSize = 160
-            top = img_y - windowSize/2
-            left = img_x - windowSize/2
-            width = windowSize
-            height = windowSize
+    #         windowSize = 1000
+    #         top = img_y - windowSize/2
+    #         left = img_x - windowSize/2
+    #         width = windowSize
+    #         height = windowSize
 
-            if not self.painted:
-                self.annotation_points.append(event.pos())
-                self.update()  # Trigger repaint
-                self.lastClick = [left,top,width,height]
-                self.painted = True
-
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        painter = QPainter(self)
-        pen = QPen(Qt.red, 3)
-        painter.setPen(pen)
-        for point in self.annotation_points:
-            painter.drawRect(point.x() - 80, point.y() - 80, 160, 160)
+    #         if not self.painted:
+    #             self.annotation_points.append(event.pos())
+    #             self.update()  # Trigger repaint
+    #             self.lastClick = [left,top,width,height]
+    #             self.painted = True
 
 
-    def repaintAnnot(self):
-        self.annotation_points = []
-        self.update()
-        self.painted = False
+    # def paintEvent(self, event):
+    #     super().paintEvent(event)
+    #     painter = QPainter(self)
+    #     pen = QPen(Qt.red, 3)
+    #     painter.setPen(pen)
+    #     for point in self.annotation_points:
+    #         painter.drawRect(point.x() - 500, point.y() - 500, 1000, 1000)
+
+
+    # def repaintAnnot(self):
+    #     self.annotation_points = []
+    #     self.update()
+    #     self.painted = False
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
         h, w = image.shape

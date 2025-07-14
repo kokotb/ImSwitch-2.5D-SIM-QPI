@@ -44,41 +44,40 @@ class ZWOCamManager(DetectorManager):
         self.__logger = initLogger(self, instanceName=name)
         # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
         # Load the DLL
-        path = R"dlls\\ZWOASICam\\lib\\x64\\ASICamera2.dll"
-        asi = ctypes.cdll.LoadLibrary(path)  # Adjust path
+        path = R"dlls\ZWOASICam\lib\x64\ASICamera2.dll"
+        self._camera = ctypes.cdll.LoadLibrary(path)  # Adjust path
 
         # Define constants
-        ASI_EXPOSURE = 0
-        ASI_GAIN = 1
-        ASI_BRIGHTNESS = 2
-        ASI_START_CAPTURE_TIMEOUT = 2000
-        ASI_FALSE = 0
-        ASI_TRUE = 1
-        ASI_IMG_RAW8 = 0  # Grayscale 8-bit
+        self.ASI_EXPOSURE = 0
+        self.ASI_GAIN = 1
+        self.ASI_BRIGHTNESS = 2
+        self.ASI_START_CAPTURE_TIMEOUT = 2000
+        self.ASI_FALSE = 0
+        self.ASI_TRUE = 1
+        self.ASI_IMG_RAW8 = 0  # Grayscale 8-bit
 
         # Step 1: Get number of connected cameras
-        num_cameras = asi.ASIGetNumOfConnectedCameras()
+        num_cameras = self._camera.ASIGetNumOfConnectedCameras()
         if num_cameras < 1:
             raise RuntimeError("No ASI cameras found")
         
         # Step 2: Get camera info
-        cam_info = ASI_CAMERA_INFO()
-        asi.ASIGetCameraProperty(ctypes.byref(cam_info), 0)
+        self.cam_info = ASI_CAMERA_INFO()
+        self._camera.ASIGetCameraProperty(ctypes.byref(self.cam_info), 0)
 
         # Step 3: Open and initialize camera
-        cam_id = cam_info.CameraID
-        asi.ASIOpenCamera(cam_id)
-        asi.ASIInitCamera(cam_id)
-        print(asi)
-        print(num_cameras)
+        self.cam_id = self.cam_info.CameraID
+        self._camera.ASIOpenCamera(self.cam_id)
+        self._camera.ASIInitCamera(self.cam_id)
+
 
         # Step 4: Set controls
-        asi.ASISetControlValue(cam_id, ASI_EXPOSURE, 400, ASI_FALSE)  # 1 sec exposure
-        asi.ASISetControlValue(cam_id, ASI_GAIN, 0, ASI_FALSE)
-        asi.ASISetControlValue(cam_id, ASI_BRIGHTNESS, 0, ASI_FALSE)
+        # self._camera.ASISetControlValue(self.cam_id, self.ASI_EXPOSURE, 300, self.ASI_FALSE)  # 1 sec exposure
+        # self._camera.ASISetControlValue(self.cam_id, self.ASI_GAIN, 0, self.ASI_FALSE)
+        # self._camera.ASISetControlValue(self.cam_id, self.ASI_BRIGHTNESS, 1, self.ASI_FALSE)
 
         # Step 5: Set ROI format (full size, binning 1, RAW8)
-        asi.ASISetROIFormat(cam_id, cam_info.MaxWidth, cam_info.MaxHeight, 1, ASI_IMG_RAW8)
+        self._camera.ASISetROIFormat(self.cam_id, self.cam_info.MaxWidth, self.cam_info.MaxHeight, 1, self.ASI_IMG_RAW8)
         
         self._running = False
         self._adjustingParameters = False
@@ -178,15 +177,14 @@ class ZWOCamManager(DetectorManager):
     #         top = updatedParams[PxLApi.RoiParams.TOP]
     #     return [left, top, width, height]
 
-    # def setROI(self, params): #Params should be lsit of [left, top, width, height]
+    def setROI(self, params): #Params should be lsit of [left, top, width, height]
+        
+        self.left = params[0]
+        self.top = params[1]
+        self.width = params[2]
+        self.height = params[3]
 
-    #     ret = PxLApi.setFeature(self.hCamera, PxLApi.FeatureId.ROI, PxLApi.FeatureFlags.MANUAL, params)
-    #     if not PxLApi.apiSuccess(ret[0]):
-    #         print("Could not setFeature on ROI, ret: %d!" % ret[0])
-    #         PxLApi.uninitialize(self.hCamera)
-    #         return
-    #     newROI = self.getROI()
-    #     self.__logger.info(f'AF Cam ROI set to {newROI}')
+        print(f'ROI:{self.left}, {self.top}, {self.width}, {self.height}')
     
 
     # def setParameter(self, name, value):
@@ -257,12 +255,11 @@ class ZWOCamManager(DetectorManager):
 
         self._performSafeCameraAction(cropAction)
 
-    #     # # This should be the only place where self.frameStart is changed
-    #     # self._frameStart = (self._camera.getROIValue("OffsetX"), self._camera.getROIValue("OffsetY"))
-    #     # # Only place self.shapes is changed
-    #     # self._shape = (self._camera.getROIValue("Width"),self._camera.getROIValue("Height"))
+        # This should be the only place where self.frameStart is changed
+        self._frameStart = (self._camera.getROIValue("OffsetX"), self._camera.getROIValue("OffsetY"))
+        # Only place self.shapes is changed
+        self._shape = (self._camera.getROIValue("Width"),self._camera.getROIValue("Height"))
 
-    #     pass
 
     def _performSafeCameraAction(self, function):
         """ This method is used to change those camera properties that need
@@ -317,38 +314,52 @@ class ZWOCamManager(DetectorManager):
     # #     print(self.left,self.top,self.xsize,self.ysize)
     # #     return self.left,self.top,self.xsize,self.ysize
     
-    # def grabFrameOnly(self):
-    #     # def drawRect(event, x,y,flag,params):
-    #     #     top = y - 50
-    #     #     left = x - 50
-    #     #     right = x + 50
-    #     #     bottom = y + 50
-    #     #     self.xsize = 100
-    #     #     self.ysize = 100
-    #     #     self.top = top
-    #     #     self.left = left
+    def grabFrameOnly(self):
+        # def drawRect(event, x,y,flag,params):
+        #     top = y - 50
+        #     left = x - 50
+        #     right = x + 50
+        #     bottom = y + 50
+        #     self.xsize = 100
+        #     self.ysize = 100
+        #     self.top = top
+        #     self.left = left
             
 
-    #     #     if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
-    #     #         cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
-    #     #         self.oneRect = True
+        #     if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
+        #         cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
+        #         self.oneRect = True
         
-    #     # self.oneRect = False
-    #     rawFrame = create_string_buffer(1024 * 1280 * 2)
-    #     ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
-    #     ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
-    #     frameDesc = ret[1]
-    #     ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
-    #     formatedImage = ret[1]
-    #     npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
-    #     npFormatedImage.dtype = numpy.uint8
-    #     imageHeight = int(frameDesc.Roi.fHeight)
-    #     imageWidth = int(frameDesc.Roi.fWidth)
-    #     newShape = (imageHeight, imageWidth)
-    #     npFormatedImage = numpy.reshape(npFormatedImage, newShape)
-    #     ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
-    #     assert PxLApi.apiSuccess(ret[0])
-    #     return npFormatedImage
+        # self.oneRect = False
+
+        self._camera.ASIStartExposure(self.cam_id, self.ASI_FALSE)
+        status = ctypes.c_int()
+        while True:
+            self._camera.ASIGetExpStatus(self.cam_id, ctypes.byref(status))
+            if status.value == 2:  # ASI_EXP_SUCCESS
+                break
+            # time.sleep(0.001)
+        buffer_size = self.cam_info.MaxWidth * self.cam_info.MaxHeight
+        img_buffer = (ctypes.c_ubyte * buffer_size)()
+        self._camera.ASIGetDataAfterExp(self.cam_id, ctypes.byref(img_buffer), buffer_size)
+        image = np.frombuffer(img_buffer, dtype=np.uint8)
+        image = image.reshape((self.cam_info.MaxHeight, self.cam_info.MaxWidth))
+
+        # rawFrame = create_string_buffer(1024 * 1280 * 2)
+        # ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
+        # ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
+        # frameDesc = ret[1]
+        # ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
+        # formatedImage = ret[1]
+        # npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
+        # npFormatedImage.dtype = numpy.uint8
+        # imageHeight = int(frameDesc.Roi.fHeight)
+        # imageWidth = int(frameDesc.Roi.fWidth)
+        # newShape = (imageHeight, imageWidth)
+        # npFormatedImage = numpy.reshape(npFormatedImage, newShape)
+        # ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
+        # assert PxLApi.apiSuccess(ret[0])
+        return image
 
 
     # def openPropertiesDialog(self):
