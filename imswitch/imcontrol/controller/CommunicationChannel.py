@@ -151,6 +151,7 @@ class CommunicationChannel(SignalInterface):
     sigSetSpeed = Signal(float)
     sigSIMStopped = Signal()
     sigToggleAutofocus = Signal(bool)
+    sigGetAndScoreAF = Signal()
     
 
     @property
@@ -174,6 +175,15 @@ class CommunicationChannel(SignalInterface):
         self.activeDir = None
         self.stop25DNow = False
         self.lastImgDict = {488: None, 561: None,640: None}
+
+        #Autofocus variables
+        self.calCurveFit = False
+        self.initRegScore = None
+        self.initPredZ = None
+        self.offsetFromInitZ = 0
+        self.currentRegScore = None
+        self.currentPredZ = None
+        
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList

@@ -20,6 +20,7 @@ class AutofocusController(ImConWidgetController):
         # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
         self._widget.initValues()
         # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
+        self._commChannel.sigGetAndScoreAF.connect(self.getAndScoreOneLive)
         self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
@@ -29,15 +30,16 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         # self._widget.registerPlane.clicked.connect(self.onLED)
         # self._widget.clearRegPlane.clicked.connect(self.offLED)
-
+        self._manager = self._master.autofocusManager
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
         self.calCurveImgs = []
-        self.calCurveFit = False
-        self.currentRegScore = None
+        # self._commChannel.calCurveFit = False
+        # self.initRegScore = None
 
     def clearRegisteredPlane(self):
-        self.currentRegScore = None
+        self._commChannel.initRegScore = None
+        self._commChannel.initPredZ = None
         self.offLED()
 
     def onLED(self):
@@ -48,9 +50,9 @@ class AutofocusController(ImConWidgetController):
 
     def registerCurrentPlane(self):
         score = self.getAndScoreOne()
-        self.currentRegScore = score
-        predZ = self.getYfromX(self.currentRegScore)
-        print(f"Plane registered with score of {self.currentRegScore}, Z of {predZ}")
+        self._commChannel.initRegScore = score
+        self._commChannel.initPredZ = self.getYfromX(self._commChannel.initRegScore)
+        print(f"Plane registered with score of {self._commChannel.initRegScore}, Z of {self._commChannel.initPredZ}")
         self.onLED()
 
     def resetROIOnCam(self):
@@ -92,7 +94,7 @@ class AutofocusController(ImConWidgetController):
         for count, _ in enumerate(zList):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
-            time.sleep(0.01)
+            time.sleep(0.1)
             img = self.getOneFrame()
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
@@ -101,12 +103,22 @@ class AutofocusController(ImConWidgetController):
         self.scoreCalCurveImgs(zList)
 
     def getAndScoreOne(self):
-        assert self.calCurveFit, "Calibration curve not set."
+        assert self._commChannel.calCurveFit, "Calibration curve not set."
         img = self.getOneFrame()
         # currentZ = self.zPositioner._position['Z']
         score = self.scoreOneImg(img)
         zPred = self.getYfromX(score)
         return score
+
+    def getAndScoreOneLive(self):
+        assert self._commChannel.calCurveFit, "Calibration curve not set."
+        img = self.getOneFrame()
+        # currentZ = self.zPositioner._position['Z']
+        score = self.scoreOneImg(img)
+        zPred = self.getYfromX(score)
+        self._commChannel.currentRegScore = score
+        self._commChannel.currentPredZ = zPred
+        return score, zPred
     
     def setZPosition(self, z):
         self.zPositioner.setPosition(z, 'Z')
@@ -115,17 +127,11 @@ class AutofocusController(ImConWidgetController):
     #     pass
 
     def getXfromY(self, y):
-        if self.calCurveFit:
-            x = (y-self.y_int)/self.x_slp
-        else:
-            self._logger.warning('Calibration not yet set successfully.')
+        x = self._manager.getXromY(y)
         return x
 
     def getYfromX(self, x):
-        if self.calCurveFit:
-            y = (self.x_slp*x) + self.y_int
-        else:
-            self._logger.warning('Calibration not yet set successfully.')
+        y = self._manager.getYfromX(x)
         return y
     
     def scoreOneImg(self, im):
@@ -262,23 +268,25 @@ class AutofocusController(ImConWidgetController):
         model.fit(comboDataReshape, zList)
         y_pred = model.predict(comboDataReshape)
         self.x_slp = model.coef_[0]
+        self._manager.x_slp = self.x_slp
         self.y_int = model.intercept_
+        self._manager.y_int = self.y_int
         self.r2 = r2_score(zList, y_pred)
         if self.r2 >= 0.99:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
-            self.calCurveFit = True
+            self._commChannel.calCurveFit = True
         else:
             self._logger.warning("Failed to fit calibration curve to data.")
-            self.calCurveFit = False
+            self._commChannel.calCurveFit = False
 
 
         # Save calibration data
-        plt.plot(z_values, x_sigma,  'b8', markersize=2, label="σx")
-        plt.plot(z_values, y_sigma, 'r8', markersize=2, label="σy")
-        plt.plot(z_values, np.subtract(x_sigma,y_sigma), '--k', markersize=2, label="σx - σy")
+        plt.plot(x_sigma, z_values,  'b8', markersize=2, label="σx")
+        plt.plot(y_sigma, z_values, 'r8', markersize=2, label="σy")
+        plt.plot(np.subtract(x_sigma,y_sigma), z_values, '--k', markersize=2, label="σx - σy")
         plt.grid(True)
-        plt.xlabel("z-Position (µm)")
-        plt.ylabel("Width (px)")
+        plt.ylabel("z-Position (µm)")
+        plt.xlabel("Pixels")
         plt.legend()
         plt.show()
         # self.y_int, self.slp = self.estimate_coef(comboData, z_values)

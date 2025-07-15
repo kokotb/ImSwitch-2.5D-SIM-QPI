@@ -123,6 +123,7 @@ class SIMController(ImConWidgetController):
         
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+        self.AFManager = self._master.autofocusManager
 
 
     def loadSIMSettings(self, moduleDict):
@@ -943,8 +944,9 @@ class SIMController(ImConWidgetController):
             laser.setEnabled(False)
         self._master.arduinoManager.deactivateSLMWriteOnly()
         for detector in self.detectors:
-            detector.stopAcquisitionSIM()
-            detector._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
+            if detector.forAcquisition: 
+                detector.stopAcquisitionSIM()
+                detector._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
         if self.isTiling:
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
@@ -1338,6 +1340,26 @@ class SIMController(ImConWidgetController):
                 repTimerStart = time.time()
                 ####
                 while j < len(currentROI):
+                    ####Autofocus
+                    if self._commChannel.initRegScore != None:
+                        self._commChannel.sigGetAndScoreAF.emit()
+                        initPredZ = self._commChannel.initPredZ
+                        initRegScore = self._commChannel.initRegScore
+                        currentPredZ = self._commChannel.currentPredZ
+                        currentRegScore = self._commChannel.currentRegScore
+                        currentZ = self.positioner._position['Z']
+                        print(currentRegScore)
+                        if currentPredZ != None:
+                            scoreDiff = currentRegScore - initRegScore
+                            zDiff = self.AFManager.x_slp * scoreDiff
+                            wantedZ = currentZ - zDiff
+                            self.positioner.setPosition(wantedZ, 'Z')
+                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                    ####
+
+
+
+
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
                     #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
@@ -1365,9 +1387,7 @@ class SIMController(ImConWidgetController):
                         time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
                     ####
 
-                    ####Autofocus
 
-                    ####
 
                     z = 0
                     while z < len(zList):

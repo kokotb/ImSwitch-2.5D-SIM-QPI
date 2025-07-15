@@ -240,6 +240,12 @@ class ZWOCamManager(DetectorManager):
             self._camSet = False
             self._camera.suspend_live()
 
+    def stopAcquisitionSIM(self):
+        if self._running:
+            self._running = False
+            self._camSet = False
+            self._camera.suspend_live()
+
     # def stopAcquisitionForROIChange(self):
     #     self._running = False
     #     self._camera.suspend_live()

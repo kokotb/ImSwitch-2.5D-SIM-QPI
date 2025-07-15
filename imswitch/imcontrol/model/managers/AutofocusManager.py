@@ -15,45 +15,16 @@ class AutofocusManager(SignalInterface):
         super().__init__()
         self._logger = initLogger(self)
 
-    def calcAFArray(self, origin):
+    def getXfromY(self, y):
+        x = (y-self.y_int)/self.x_slp
 
-        AFList = []
-        steps = 20
-        stepSize = 0.2
-        startZ = origin - ((steps / 2)*stepSize)
-        AFList.append(startZ)
-        for i in range(steps):
-            AFList.append(round(startZ+(i+1)*stepSize,2))
+        return x
 
-        return AFList
+    def getYfromX(self, x):
+        y = (self.x_slp*x) + self.y_int
+
+        return y
             
-    def computeLaplacianArray(self, imarray, toPrint = False):
-        startTime = time.time()
-        scoreArray = []
-        for i, image in enumerate(imarray):
-            laplacian = cv2.Laplacian(image, cv2.CV_64F)  # Apply Laplacian filter
-            score = np.var(laplacian)
-            scoreArray.append(score)
-            if toPrint:
-                print(f'Laplacian {i}: {score}')
-
-        maxVal = max(range(len(scoreArray)), key=scoreArray.__getitem__)
-        endTime = time.time()
-        elapsed = endTime-startTime
-        print(f'Laplacian time: {elapsed}')
-
-            
-        return scoreArray, maxVal  # Compute variance of Laplacian
-    
-    def computeLaplacian(self, img, toPrint = False):
-
-        laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
-        score = np.var(laplacian)
-        if toPrint:
-            print(f'Laplacian {i}: {score}')           
-        return score
-
-
 
 # Copyright (C) 2020-2024 ImSwitch developers
 # This file is part of ImSwitch.
