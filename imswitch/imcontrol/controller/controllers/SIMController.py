@@ -13,6 +13,7 @@ import math
 from imswitch.imcommon.model import initLogger, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal
+import statistics
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -1291,6 +1292,7 @@ class SIMController(ImConWidgetController):
         self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
         dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         time_global_start = time.time()
+        self.AFCounter = 0
         ####
 
         if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Auto Enabled')]=='2':
@@ -1340,25 +1342,13 @@ class SIMController(ImConWidgetController):
                 repTimerStart = time.time()
                 ####
                 while j < len(currentROI):
+
                     ####Autofocus
                     if self._commChannel.initRegScore != None:
-                        self._commChannel.sigGetAndScoreAF.emit()
-                        initPredZ = self._commChannel.initPredZ
-                        initRegScore = self._commChannel.initRegScore
-                        currentPredZ = self._commChannel.currentPredZ
-                        currentRegScore = self._commChannel.currentRegScore
-                        currentZ = self.positioner._position['Z']
-                        print(currentRegScore)
-                        if currentPredZ != None:
-                            scoreDiff = currentRegScore - initRegScore
-                            zDiff = self.AFManager.x_slp * scoreDiff
-                            wantedZ = currentZ - zDiff
-                            self.positioner.setPosition(wantedZ, 'Z')
-                            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                        self.autofocusThread()
+                        self.AFThread.join()
+                        self.AFCounter += 1
                     ####
-
-
-
 
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
@@ -1598,46 +1588,36 @@ class SIMController(ImConWidgetController):
 
         # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
-
-    def autofocusLoop(self, AFList):
-        print("AF START")
-        resetStack = False
-        afIter = 0
-        listLength = len(AFList)
-        startOriginIndex = listLength // 2
-        startOriginValue = AFList[startOriginIndex]
-        channel = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
-        for tempProcessor in self.activeProcessors:
-            if tempProcessor.handle == channel:
-                AFProcessor = tempProcessor
-                break
-        while afIter < len(AFList):
+    def autofocusThread(self):
+        self.AFThread = threading.Thread(target=self.autofocusRep, args=(), daemon=True)
+        self.AFThread.start()
+        
 
 
-            self.positioner.setPosition(AFList[afIter], 'Z')
-            self._commChannel.sigUpdateZPosition.emit('Z','Z')
-            time.sleep(0.1)
+    def autofocusRep(self):
+        if self.firstLoop:
+            self.AFScores = []
+        initRegScore = self._commChannel.initRegScore
+        self._commChannel.sigGetAndScoreAF.emit()
+        currentRegScore = self._commChannel.currentRegScore
+        # currentRegScore = 70.72
+        if currentRegScore != None:
+            self.AFScores.append(currentRegScore)
+        if not (self.firstLoop) and (self.AFCounter % 10 == 0):
+            avgScore = sum(self.AFScores)/len(self.AFScores)
+            medScore = statistics.median(self.AFScores)
 
-            self._master.arduinoManager.trigger25DWriteOnly()
+            scoreDiff = avgScore - initRegScore
+            zDiff = self.AFManager.x_slp * scoreDiff
 
-            detector = AFProcessor.detObj
-            rawImg = detector._camera.grabFrame25D(1) # receive raw image stack
-            self.sigRawImgReceived.emit(rawImg,f"{AFProcessor.handle} Raw")
-
-
-
-            if afIter == 0:
-                resetStack = True
-            else:
-                resetStack = False
-
-            self._commChannel.sigRecAFStack.emit(rawImg, resetStack, AFProcessor.handle)
-
-            AFProcessor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
-            afIter += 1
-
-        # self.positioner.setPosition(startOriginValue, 'Z')
-        print("AFEND")
+            print(f'Z Difference: {zDiff}')
+            if abs(zDiff) >= 0.3:
+                currentZ = self.positioner._position['Z']
+                wantedZ = currentZ - zDiff
+                self.positioner.setPosition(wantedZ, 'Z')
+                self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                self._logger.warning('Autofocus adjustment!!')
+            self.AFScores = []
   
    
     def setSharedAttr(self, attrCategory, parameterName, value):

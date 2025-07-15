@@ -24,6 +24,7 @@ class AutofocusManager(SignalInterface):
         y = (self.x_slp*x) + self.y_int
 
         return y
+
             
 
 # Copyright (C) 2020-2024 ImSwitch developers

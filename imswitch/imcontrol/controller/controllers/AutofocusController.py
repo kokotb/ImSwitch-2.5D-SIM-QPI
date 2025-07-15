@@ -26,7 +26,7 @@ class AutofocusController(ImConWidgetController):
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
         self._widget.AFWindow.roiReset.clicked.connect(self.resetROIOnCam)
         self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
-        self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurve)
+        self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         # self._widget.registerPlane.clicked.connect(self.onLED)
         # self._widget.clearRegPlane.clicked.connect(self.offLED)
@@ -86,6 +86,9 @@ class AutofocusController(ImConWidgetController):
         img = self.AFCam.grabFrameOnly()
         return img
     
+    def runCalCurveThread(self):
+        threading.Thread(target=self.runCalCurve, args=(), daemon=True).start()
+
     def runCalCurve(self):
         zList, currentZ = self.calcZRange()
         # zList = zList.reverse()
@@ -94,7 +97,7 @@ class AutofocusController(ImConWidgetController):
         for count, _ in enumerate(zList):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
-            time.sleep(0.1)
+            time.sleep(0.01)
             img = self.getOneFrame()
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
@@ -281,14 +284,14 @@ class AutofocusController(ImConWidgetController):
 
 
         # Save calibration data
-        plt.plot(x_sigma, z_values,  'b8', markersize=2, label="σx")
-        plt.plot(y_sigma, z_values, 'r8', markersize=2, label="σy")
-        plt.plot(np.subtract(x_sigma,y_sigma), z_values, '--k', markersize=2, label="σx - σy")
-        plt.grid(True)
-        plt.ylabel("z-Position (µm)")
-        plt.xlabel("Pixels")
-        plt.legend()
-        plt.show()
+        # plt.plot(x_sigma, z_values,  'b8', markersize=2, label="σx")
+        # plt.plot(y_sigma, z_values, 'r8', markersize=2, label="σy")
+        # plt.plot(np.subtract(x_sigma,y_sigma), z_values, '--k', markersize=2, label="σx - σy")
+        # plt.grid(True)
+        # plt.ylabel("z-Position (µm)")
+        # plt.xlabel("Pixels")
+        # plt.legend()
+        # plt.show()
         # self.y_int, self.slp = self.estimate_coef(comboData, z_values)
 
 
