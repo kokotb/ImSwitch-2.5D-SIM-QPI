@@ -340,7 +340,7 @@ class ZWOCamManager(DetectorManager):
 
         self._camera.ASIStartExposure(self.cam_id, self.ASI_FALSE)
         status = ctypes.c_int()
-        while True:
+        while True: #CTNOTE maybe not needed
             self._camera.ASIGetExpStatus(self.cam_id, ctypes.byref(status))
             if status.value == 2:  # ASI_EXP_SUCCESS
                 break

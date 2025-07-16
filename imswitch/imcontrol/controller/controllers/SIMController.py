@@ -1598,14 +1598,15 @@ class SIMController(ImConWidgetController):
         if self.firstLoop:
             self.AFScores = []
         initRegScore = self._commChannel.initRegScore
-        self._commChannel.sigGetAndScoreAF.emit()
-        currentRegScore = self._commChannel.currentRegScore
-        # currentRegScore = 70.72
+        
+        # self._commChannel.sigGetAndScoreAF.emit()
+        # currentRegScore = self._commChannel.currentRegScore
+        currentRegScore = 51.5
         if currentRegScore != None:
             self.AFScores.append(currentRegScore)
         if not (self.firstLoop) and (self.AFCounter % 10 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
-            medScore = statistics.median(self.AFScores)
+            # medScore = statistics.median(self.AFScores)
 
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff

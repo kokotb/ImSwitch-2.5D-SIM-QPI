@@ -37,6 +37,11 @@ class AutofocusController(ImConWidgetController):
         # self._commChannel.calCurveFit = False
         # self.initRegScore = None
 
+        
+        self.init_guess_x = [5,890,350,40]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = [5,474,350,40]
+        self.threshold = 20 #pixel value threshold for AF image
+
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
         self._commChannel.initPredZ = None
@@ -126,9 +131,6 @@ class AutofocusController(ImConWidgetController):
     def setZPosition(self, z):
         self.zPositioner.setPosition(z, 'Z')
 
-    # def regPlaneAF(self):
-    #     pass
-
     def getXfromY(self, y):
         x = self._manager.getXromY(y)
         return x
@@ -151,8 +153,7 @@ class AutofocusController(ImConWidgetController):
             print("Unable to import curve_fit from scipy.optimize.")
 
 
-        init_guess_x = [0,905,400,40]	# Guesses for fits Background, Centre, Width, Amplitude
-        init_guess_y = [0,620,400,40]	# Guesses for fits
+
         x_sigma = []
         y_sigma = []
 
@@ -163,7 +164,7 @@ class AutofocusController(ImConWidgetController):
         # img = cv2.imread(stacks,-1)
         # im = np.asarray(img).astype(float)
         im = im-np.mean(im)/2	# Remove background
-        im[im<10] = 0			# Threshold
+        im[im<self.threshold] = 0			# Threshold
     
         # 1D Gaussian
         h1, w1 = im.shape
@@ -171,19 +172,19 @@ class AutofocusController(ImConWidgetController):
         y = np.arange(h1)
         
         # Do x fit
-        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=init_guess_x, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
         x0 = popt[1]
         sx = popt[2]
-        init_guess_x.clear()
-        init_guess_x.append(popt)
+        self.init_guess_x.clear()
+        self.init_guess_x.append(popt)
         # Do y fit
-        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=init_guess_y, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
         y0 = popt[1]
         sy = popt[2]
         
         # Replaces initial guess with final guess
-        init_guess_y.clear()
-        init_guess_y.append(popt)
+        self.init_guess_y.clear()
+        self.init_guess_y.append(popt)
     
         x_sigma = abs(sx)
         y_sigma = abs(sy)
@@ -212,8 +213,7 @@ class AutofocusController(ImConWidgetController):
             print("Unable to import curve_fit from scipy.optimize.")
 
 
-        init_guess_x = [0,905,400,40]	# Guesses for fits Background, Centre, Width, Amplitude
-        init_guess_y = [0,620,400,40]	# Guesses for fits
+
         x_c = []
         x_sigma = []
         y_sigma = []
@@ -227,7 +227,7 @@ class AutofocusController(ImConWidgetController):
             # img = cv2.imread(stacks,-1)
             # im = np.asarray(img).astype(float)
             im = im-np.mean(im)/2	# Remove background
-            im[im<10] = 0			# Threshold
+            im[im<self.threshold] = 0			# Threshold
 
             # plt.imshow(im)
 
@@ -238,19 +238,19 @@ class AutofocusController(ImConWidgetController):
             y = np.arange(h1)
             
             # Do x fit
-            popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=init_guess_x, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
             x0 = popt[1]
             sx = popt[2]
-            init_guess_x.clear()
-            init_guess_x.append(popt)
+            self.init_guess_x.clear()
+            self.init_guess_x.append(popt)
             # Do y fit
-            popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=init_guess_y, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
             y0 = popt[1]
             sy = popt[2]
             
             # Replaces initial guess with final guess
-            init_guess_y.clear()
-            init_guess_y.append(popt)
+            self.init_guess_y.clear()
+            self.init_guess_y.append(popt)
         
             x_sigma.append(abs(sx))
             y_sigma.append(abs(sy))
