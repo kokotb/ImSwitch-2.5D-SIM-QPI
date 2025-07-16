@@ -20,7 +20,7 @@ class AutofocusController(ImConWidgetController):
         # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
         self._widget.initValues()
         # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
-        self._commChannel.sigGetAndScoreAF.connect(self.getAndScoreOneLive)
+        # self._commChannel.sigGetAndScoreAF.connect(self.getAndScoreOneLive)
         self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
@@ -118,10 +118,18 @@ class AutofocusController(ImConWidgetController):
         zPred = self.getYfromX(score)
         return score
 
-    def getAndScoreOneLive(self):
+    # def getAndScoreOneLive(self):
+    #     assert self._commChannel.calCurveFit, "Calibration curve not set."
+    #     img = self.getOneFrame()
+    #     # currentZ = self.zPositioner._position['Z']
+    #     score = self.scoreOneImg(img)
+    #     zPred = self.getYfromX(score)
+    #     self._commChannel.currentRegScore = score
+    #     self._commChannel.currentPredZ = zPred
+    #     return score, zPred
+    
+    def scoreOneLive(self, img):
         assert self._commChannel.calCurveFit, "Calibration curve not set."
-        img = self.getOneFrame()
-        # currentZ = self.zPositioner._position['Z']
         score = self.scoreOneImg(img)
         zPred = self.getYfromX(score)
         self._commChannel.currentRegScore = score

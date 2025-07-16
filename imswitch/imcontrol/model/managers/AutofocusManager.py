@@ -14,6 +14,9 @@ class AutofocusManager(SignalInterface):
     def __init__(self):
         super().__init__()
         self._logger = initLogger(self)
+        self.init_guess_x = [5,890,350,40]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = [5,474,350,40]
+        self.threshold = 20 #pixel value threshold for AF image
 
     def getXfromY(self, y):
         x = (y-self.y_int)/self.x_slp
@@ -25,6 +28,63 @@ class AutofocusManager(SignalInterface):
 
         return y
 
+    def scoreOneLive(self, img):
+        score = self.scoreOneImg(img)
+        return score
+    
+    def scoreOneImg(self, im):
+        # Define the model function. In our case, a 1D Gaussian.
+        def Gaussian1D(xdata, i0, x0, sX, amp):
+            x = xdata
+            x0 = float(x0)
+            eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
+            return eq
+
+        try:
+            from scipy.optimize import curve_fit
+        except ImportError:
+            print("Unable to import curve_fit from scipy.optimize.")
+
+
+
+        x_sigma = []
+        y_sigma = []
+
+
+        # To read the acquired images and apply the Gaussian fitting
+
+        #Reading the frames
+        # img = cv2.imread(stacks,-1)
+        # im = np.asarray(img).astype(float)
+        im = im-np.mean(im)/2	# Remove background
+        im[im<self.threshold] = 0			# Threshold
+    
+        # 1D Gaussian
+        h1, w1 = im.shape
+        x = np.arange(w1)
+        y = np.arange(h1)
+        
+        # Do x fit
+        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
+        x0 = popt[1]
+        sx = popt[2]
+        self.init_guess_x.clear()
+        self.init_guess_x.append(popt)
+        # Do y fit
+        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
+        y0 = popt[1]
+        sy = popt[2]
+        
+        # Replaces initial guess with final guess
+        self.init_guess_y.clear()
+        self.init_guess_y.append(popt)
+    
+        x_sigma = abs(sx)
+        y_sigma = abs(sy)
+        score = x_sigma - y_sigma
+
+        # x_c.append(popt[1])
+        return score
             
 
 # Copyright (C) 2020-2024 ImSwitch developers

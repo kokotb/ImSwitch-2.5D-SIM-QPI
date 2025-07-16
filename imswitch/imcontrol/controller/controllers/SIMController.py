@@ -113,6 +113,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
 
+        self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
+
 
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
         try:
@@ -1598,10 +1600,12 @@ class SIMController(ImConWidgetController):
         if self.firstLoop:
             self.AFScores = []
         initRegScore = self._commChannel.initRegScore
-        
+        img = self.AFCam.grabFrameOnly()
+        currentRegScore = self.AFManager.scoreOneLive(img)
+        print(currentRegScore)
         # self._commChannel.sigGetAndScoreAF.emit()
         # currentRegScore = self._commChannel.currentRegScore
-        currentRegScore = 51.5
+        # currentRegScore = 51.5
         if currentRegScore != None:
             self.AFScores.append(currentRegScore)
         if not (self.firstLoop) and (self.AFCounter % 10 == 0):
@@ -1612,7 +1616,7 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
 
             print(f'Z Difference: {zDiff}')
-            if abs(zDiff) >= 0.3:
+            if abs(zDiff) >= 0.15:
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
                 self.positioner.setPosition(wantedZ, 'Z')
