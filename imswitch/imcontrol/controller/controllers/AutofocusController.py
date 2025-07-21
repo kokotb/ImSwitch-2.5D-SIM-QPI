@@ -38,9 +38,9 @@ class AutofocusController(ImConWidgetController):
         # self.initRegScore = None
 
         
-        self.init_guess_x = [5,890,350,40]	# Guesses for fits Background, Centre, Width, Amplitude
-        self.init_guess_y = [5,474,350,40]
-        self.threshold = 20 #pixel value threshold for AF image
+        self.init_guess_x = self._manager.init_guess_x	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = self._manager.init_guess_y
+        self.threshold = self._manager.threshold #pixel value threshold for AF image
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
@@ -148,58 +148,9 @@ class AutofocusController(ImConWidgetController):
         return y
     
     def scoreOneImg(self, im):
-        # Define the model function. In our case, a 1D Gaussian.
-        def Gaussian1D(xdata, i0, x0, sX, amp):
-            x = xdata
-            x0 = float(x0)
-            eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
-            return eq
-
-        try:
-            from scipy.optimize import curve_fit
-        except ImportError:
-            print("Unable to import curve_fit from scipy.optimize.")
-
-
-
-        x_sigma = []
-        y_sigma = []
-
-
-        # To read the acquired images and apply the Gaussian fitting
-
-        #Reading the frames
-        # img = cv2.imread(stacks,-1)
-        # im = np.asarray(img).astype(float)
-        im = im-np.mean(im)/2	# Remove background
-        im[im<self.threshold] = 0			# Threshold
-    
-        # 1D Gaussian
-        h1, w1 = im.shape
-        x = np.arange(w1)
-        y = np.arange(h1)
-        
-        # Do x fit
-        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
-        x0 = popt[1]
-        sx = popt[2]
-        self.init_guess_x.clear()
-        self.init_guess_x.append(popt)
-        # Do y fit
-        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
-        y0 = popt[1]
-        sy = popt[2]
-        
-        # Replaces initial guess with final guess
-        self.init_guess_y.clear()
-        self.init_guess_y.append(popt)
-    
-        x_sigma = abs(sx)
-        y_sigma = abs(sy)
-        score = x_sigma - y_sigma
-
-        # x_c.append(popt[1])
+        score = self._manager.scoreOneImg(im)
         return score
+    
             
 
 
@@ -248,7 +199,7 @@ class AutofocusController(ImConWidgetController):
             # Do x fit
             popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
             x0 = popt[1]
-            sx = popt[2]
+            sx = popt[2]  
             self.init_guess_x.clear()
             self.init_guess_x.append(popt)
             # Do y fit
@@ -261,6 +212,7 @@ class AutofocusController(ImConWidgetController):
             self.init_guess_y.append(popt)
         
             x_sigma.append(abs(sx))
+            # print(x_sigma)
             y_sigma.append(abs(sy))
             x_c.append(popt[1])
             # plt.plot((x0,x0+sx),(y0,y0))
@@ -287,7 +239,7 @@ class AutofocusController(ImConWidgetController):
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
             self._commChannel.calCurveFit = True
         else:
-            self._logger.warning("Failed to fit calibration curve to data.")
+            self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}")
             self._commChannel.calCurveFit = False
 
 
@@ -300,7 +252,7 @@ class AutofocusController(ImConWidgetController):
         # plt.xlabel("Pixels")
         # plt.legend()
         # plt.show()
-        # self.y_int, self.slp = self.estimate_coef(comboData, z_values)
+        # self.y_int, self.slp = self.estimate_coef(comboData, z_values)♦
 
 
 

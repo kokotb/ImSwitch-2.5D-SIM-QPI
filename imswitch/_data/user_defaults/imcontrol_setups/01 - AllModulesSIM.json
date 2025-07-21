@@ -136,11 +136,11 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 1500.0
+          "ExposureTime": 2000.0
         },
         "ROI":{
-          "OffsetX": 2600,
-          "OffsetY": 2630,
+          "OffsetX": 2429,
+          "OffsetY": 2197,
           "Width": 1024,
           "Height": 1024
         }

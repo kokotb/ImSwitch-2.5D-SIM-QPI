@@ -1593,6 +1593,7 @@ class SIMController(ImConWidgetController):
     def autofocusThread(self):
         self.AFThread = threading.Thread(target=self.autofocusRep, args=(), daemon=True)
         self.AFThread.start()
+        # self.autofocusRep()
         
 
 
@@ -1606,8 +1607,10 @@ class SIMController(ImConWidgetController):
         # self._commChannel.sigGetAndScoreAF.emit()
         # currentRegScore = self._commChannel.currentRegScore
         # currentRegScore = 51.5
-        if currentRegScore != None:
-            self.AFScores.append(currentRegScore)
+        self.AFScores.append(currentRegScore)
+        with open("AFOutput.txt", "a") as text_file:
+            line = str(round(currentRegScore, 2))
+            text_file.write(f'{line}\n')
         if not (self.firstLoop) and (self.AFCounter % 10 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
@@ -1616,7 +1619,7 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
 
             print(f'Z Difference: {zDiff}')
-            if abs(zDiff) >= 0.15:
+            if abs(zDiff) >= 2:
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
                 self.positioner.setPosition(wantedZ, 'Z')
