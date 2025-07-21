@@ -271,10 +271,10 @@ class SLM25DWidget(Widget):
 
             # Double validator
             elif (name == 'Gamma') or (name == 'Psi'):
-                self.validator = QDoubleValidator(0.1,1.0,1)
+                self.validator = QDoubleValidator(0.01,1.0,2)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QDoubleValidator(0.0,5.0,1)
+                self.validator = QDoubleValidator(-25.0,25.0,2)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
                 self.pars['UpButton' + name].setAutoRepeat(True)

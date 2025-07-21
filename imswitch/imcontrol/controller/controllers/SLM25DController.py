@@ -472,14 +472,19 @@ class SLM25DController(ImConWidgetController):
         rhomatrixleft = np.sqrt((x_coordsleft - xLeft)**2 + (y_coordsleft - yLeft)**2) / rhoPupilAperturePix
         rhomatrixright = np.sqrt((x_coordsright - xRight)**2 + (y_coordsright - yRight)**2) / rhoPupilAperturePix
 
+        thetamatrixleft = np.arctan((x_coordsleft - xLeft)/(y_coordsleft - yLeft))
+        thetamatrixright = np.arctan((x_coordsright - xRight)/(y_coordsright - yRight))
+
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
+        thetamatrix = np.concatenate((thetamatrixleft, thetamatrixright),axis=1)
         # ====================================================================================================================================
 
         circularMask = np.where(rhomatrix > 0.001, 0, 1)
         Xmatrix = np.concatenate((x_coordsleft, x_coordsright),axis=1)
         stripe_width = 50
         stripe_mask = Xmatrix % stripe_width
-        finalMask = circularMask * stripe_mask * 255 / stripe_width
+        helicalmask = thetamatrix * 255 * 2 / (2.* np.pi)
+        finalMask = circularMask * (stripe_mask * 255 / stripe_width  + helicalmask)
         
         return finalMask.astype(np.uint8)
     
