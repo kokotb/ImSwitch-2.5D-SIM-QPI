@@ -58,11 +58,16 @@ class AutofocusController(ImConWidgetController):
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
-        self._commChannel.initPredZ = None
         self.offLED()
 
     def autofocusModuleToggle(self, state):
         self._commChannel.autofocusEnabled = state
+        self._widget.toggleEnabled(state)
+        if state == False:
+            self.offLED()
+        if (state == True) and (self._commChannel.initRegScore != None):
+            self.onLED()
+
 
     def onLED(self):
         self._widget.led.turn_on()
@@ -73,8 +78,7 @@ class AutofocusController(ImConWidgetController):
     def registerCurrentPlane(self):
         score = self.getAndScoreOne()
         self._commChannel.initRegScore = score
-        self._commChannel.initPredZ = self.getYfromX(self._commChannel.initRegScore)
-        print(f"Plane registered with score of {self._commChannel.initRegScore}, Z of {self._commChannel.initPredZ}")
+        print(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
     def openSetAFWindowThread(self):
@@ -82,6 +86,7 @@ class AutofocusController(ImConWidgetController):
 
     def openSetAFWindow(self):
         self._widget.AFWindow.show()
+        self._widget.AFWindow.raise_()
         self.getOneFrameToSet()
 
 
@@ -111,27 +116,14 @@ class AutofocusController(ImConWidgetController):
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
         self.zPositioner.setPosition(currentZ, 'Z')
-        print('AF stack saved.')
         self.scoreCalCurveImgs(zList)
 
     def getAndScoreOne(self):
         assert self._commChannel.calCurveFit, "Calibration curve not set."
         img = self.getOneFrame()
-        # currentZ = self.zPositioner._position['Z']
         score = self.scoreOneImg(img)
-        zPred = self.getYfromX(score)
         return score
 
-    # def getAndScoreOneLive(self):
-    #     assert self._commChannel.calCurveFit, "Calibration curve not set."
-    #     img = self.getOneFrame()
-    #     # currentZ = self.zPositioner._position['Z']
-    #     score = self.scoreOneImg(img)
-    #     zPred = self.getYfromX(score)
-    #     self._commChannel.currentRegScore = score
-    #     self._commChannel.currentPredZ = zPred
-    #     return score, zPred
-    
     def scoreOneLive(self, img):
         assert self._commChannel.calCurveFit, "Calibration curve not set."
         score = self.scoreOneImg(img)
@@ -240,8 +232,13 @@ class AutofocusController(ImConWidgetController):
         if self.r2 >= 0.99:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
             self._commChannel.calCurveFit = True
+            self._widget.AFWindow.ccSlopeVal.setText(str(round(self.x_slp,3)))
+            self._widget.AFWindow.ccIntVal.setText(str(round(self.y_int,2)))
+            self._widget.AFWindow.ccR2Val.setText(str(round(self.r2,4)))
+            sensitivity = -1 / self.x_slp
+            self._widget.AFWindow.ccSensVal.setText(f'{round(sensitivity,2)} pixels/um')
         else:
-            self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}")
+            self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp:.3f}\nIntercept = {self.y_int:.2f}\nr^2 = {self.r2:.4f}")
             self._commChannel.calCurveFit = False
 
 

@@ -1315,8 +1315,9 @@ class SIMController(ImConWidgetController):
 
 
         ####Autofocus
-        if self._commChannel.autofocusEnabled == True:
+        if (self._commChannel.autofocusEnabled == True) and (self._commChannel.initRegScore != None) :
             self.autofocusThread()
+            self._logger.info('Autofocus active')
             
         ####
 
@@ -1608,7 +1609,6 @@ class SIMController(ImConWidgetController):
 
 
     def autofocusLoop(self):
-        print('test')
         if self.firstLoop:
             self.AFScores = []
             self.cumZDiff = 0
@@ -1626,7 +1626,7 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
             print(f'Z Difference: {zDiff}')
 
-            if abs(zDiff) >= 0.1:
+            if abs(zDiff) >= 0.05:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff

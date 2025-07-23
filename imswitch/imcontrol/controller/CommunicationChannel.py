@@ -179,7 +179,6 @@ class CommunicationChannel(SignalInterface):
         #Autofocus variables
         self.calCurveFit = False
         self.initRegScore = None
-        self.initPredZ = None
         self.offsetFromInitZ = 0
         self.currentRegScore = None
         self.currentPredZ = None

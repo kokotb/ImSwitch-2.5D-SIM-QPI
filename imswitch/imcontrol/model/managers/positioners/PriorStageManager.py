@@ -185,7 +185,10 @@ class PriorStageManager(PositionerManager):
         self.query(msg_move_relative)
         self.checkBusyLoop()
         current_position = self.get_abs()
-        self._position[axis] = float(current_position[axis_order])
+        try:
+            self._position[axis] = float(current_position[axis_order])
+        except ValueError:
+            pass
         self.__logger.info(self._position) #queries from get_abs
 
 
@@ -256,6 +259,7 @@ class PriorStageManager(PositionerManager):
     def get_abs(self):
         response = self.query("controller.stage.position.get")
         position = response[1].split(",", 1)
+        print(response)
         return position
     # def get_abs(self):
     #     cmd = 'PZ'

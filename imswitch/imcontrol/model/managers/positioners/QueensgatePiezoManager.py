@@ -137,7 +137,10 @@ class QueensgatePiezoManager(PositionerManager):
             return
         new_position = str(self.microToPico(position))
         msg_set_position = "stage.position.command.set 0"+" "+new_position
-        ret, val = self.query(msg_set_position)
+        try:
+            ret, val = self.query(msg_set_position)
+        except:
+            ret = None
         if ret == 'value': success = True
         else: success = False
         self._position[axis] = round(position,1)

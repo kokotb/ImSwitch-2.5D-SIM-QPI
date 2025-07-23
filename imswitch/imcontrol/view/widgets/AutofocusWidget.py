@@ -21,15 +21,19 @@ class AutofocusWidget(NapariHybridWidget):
 
         self.autofocusModule = QCheckBox('Autofocus Module')
         self.led = LedIndicator(self)
-        self.openPreview = QtWidgets.QPushButton('Open AF Preview')
-        self.registerPlane = QtWidgets.QPushButton('Register Plane')
-        self.clearRegPlane = QtWidgets.QPushButton('Clear Registered Plane')
+        self.openPreview = QtWidgets.QPushButton('AF Preview')
+        self.openPreview.setEnabled(False)
+        self.registerPlane = QtWidgets.QPushButton('Reg. Plane')
+        self.registerPlane.setEnabled(False)
+        self.clearRegPlane = QtWidgets.QPushButton('Clear Plane')
+        self.clearRegPlane.setEnabled(False)
 
 
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(20)
         self.calCurveRange.setMaximum(100)
         self.calCurveRange.setValue(20)
+        self.calCurveRange.setEnabled(False)
 
         
         self.rangeLabel = QLabel(self)
@@ -45,7 +49,11 @@ class AutofocusWidget(NapariHybridWidget):
         autofocusLayout.addWidget(self.calCurveRange, row + 2, 1)
 
 
-
+    def toggleEnabled(self, state):
+        self.openPreview.setEnabled(state)
+        self.registerPlane.setEnabled(state)
+        self.clearRegPlane.setEnabled(state)
+        self.calCurveRange.setEnabled(state)
 
 
     def initValues(self):
@@ -69,33 +77,71 @@ class SetAFWindow(QMainWindow):
         afWindowLayout = QtWidgets.QVBoxLayout()
         imageLayout = QtWidgets.QVBoxLayout()
         buttonAndTextLayout = QtWidgets.QVBoxLayout()
+        textLayout = QtWidgets.QGridLayout()
         buttonLayout = QtWidgets.QHBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(afWindowLayout)
         self.setCentralWidget(central_widget)
 
-        blankImage = np.zeros((1936,1096))
+        blankImage = np.zeros((1096,1936))
 
         self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
         buttonLayout.addWidget(self.acqImgButton)
-
-        self.calCurve = QtWidgets.QPushButton('Cal. Curve')
+        self.calCurve = QtWidgets.QPushButton('Run Cal. Curve')
         buttonLayout.addWidget(self.calCurve)
-
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
         buttonLayout.addWidget(self.resetEstimates)
 
-        self.embeddedImage = ClickableImage(blankImage)
+        #################
+        self.ccSlopeLabel = QLabel(self)
+        self.ccSlopeLabel.setText("Slope:")
 
+        self.ccIntLabel = QLabel(self)
+        self.ccIntLabel.setText("Intercept:")
+
+        self.ccR2Label = QLabel(self)
+        self.ccR2Label.setText("R^2:")
+
+        self.ccSensLabel = QLabel(self)
+        self.ccSensLabel.setText("Sensitivity:")
+
+        self.ccSlopeVal = QLabel(self)
+        self.ccSlopeVal.setText("-")
+        self.ccIntVal = QLabel(self)
+        self.ccIntVal.setText("-")
+        self.ccR2Val = QLabel(self)
+        self.ccR2Val.setText("-")
+        self.ccSensVal = QLabel(self)
+        self.ccSensVal.setText("-")
+        row = 0
+        textLayout.addWidget(self.ccSlopeLabel, row, 0)
+        textLayout.addWidget(self.ccIntLabel, row + 1, 0)
+        textLayout.addWidget(self.ccSlopeVal, row, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccIntVal, row + 1, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccR2Label, row + 2, 0)
+        textLayout.addWidget(self.ccR2Val, row + 2, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccSensLabel, row + 3, 0)
+        textLayout.addWidget(self.ccSensVal, row + 3, 1, alignment=Qt.AlignLeft)
+        textHorizLayout = QtWidgets.QHBoxLayout()
+        textHorizLayout.addLayout(textLayout)
+        textHorizLayout.addStretch()
+        ################
+        
+        afWindowLayout.addStretch()
+
+        self.embeddedImage = ClickableImage(blankImage)
         # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
         buttonAndTextLayout.addLayout(buttonLayout)
-        # buttonAndTextLayout.addWidget(textLabel)
+        buttonAndTextLayout.addLayout(textHorizLayout)
+
 
 
         afWindowLayout.addLayout(buttonAndTextLayout)
         imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
         afWindowLayout.addLayout(imageLayout)
+        afWindowLayout.addStretch()
 
+       
 
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
