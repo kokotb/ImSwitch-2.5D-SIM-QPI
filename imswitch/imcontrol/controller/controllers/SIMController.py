@@ -1575,7 +1575,7 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigSaveSettingsFirst.emit()
                 self.startSettingsSaved = True
 
-        if self.isRecordRaw: # Saves raw images.
+        if (self.isRecordRaw) and (self.frameCounter % 60 == 0): # Saves raw images.
             with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
                 self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
@@ -1584,7 +1584,7 @@ class SIMController(ImConWidgetController):
             processor.saveOneTime = False
             with snapshotLock: # Needed to only save one settings file per snapshot.
                 if self.snapshotSettingsSaved == False:
-                    self._commChannel.sigSaveSettingsFirst.emit()
+                    self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
                     self.snapshotSettingsSaved = True
                 
 
@@ -1600,17 +1600,14 @@ class SIMController(ImConWidgetController):
     def autofocusRep(self):
         if self.firstLoop:
             self.AFScores = []
+            self.cumZDiff = 0
         initRegScore = self._commChannel.initRegScore
         img = self.AFCam.grabFrameOnly()
         currentRegScore = self.AFManager.scoreOneLive(img)
-        print(currentRegScore)
-        # self._commChannel.sigGetAndScoreAF.emit()
-        # currentRegScore = self._commChannel.currentRegScore
-        # currentRegScore = 51.5
+        # print(currentRegScore)
+
         self.AFScores.append(currentRegScore)
-        with open("AFOutput.txt", "a") as text_file:
-            line = str(round(currentRegScore, 2))
-            text_file.write(f'{line}\n')
+
         if not (self.firstLoop) and (self.AFCounter % 10 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
@@ -1619,13 +1616,20 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
 
             print(f'Z Difference: {zDiff}')
-            if abs(zDiff) >= 2:
+            if abs(zDiff) >= 0.0:
+                
+                self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
                 self.positioner.setPosition(wantedZ, 'Z')
                 self._commChannel.sigUpdateZPosition.emit('Z','Z')
                 self._logger.warning('Autofocus adjustment!!')
+                
             self.AFScores = []
+            print(f'Total Z drift: {self.cumZDiff}')
+        with open("AFOutput.txt", "a") as text_file:
+            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+            text_file.write(f'{line}\n')
   
    
     def setSharedAttr(self, attrCategory, parameterName, value):

@@ -10,6 +10,11 @@ import time
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
+try:
+    from scipy.optimize import curve_fit
+except ImportError:
+    print("Unable to import curve_fit from scipy.optimize.")
+
 class AutofocusController(ImConWidgetController):
 
     def __init__(self, *args, **kwargs):
@@ -166,10 +171,7 @@ class AutofocusController(ImConWidgetController):
             eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
             return eq
 
-        try:
-            from scipy.optimize import curve_fit
-        except ImportError:
-            print("Unable to import curve_fit from scipy.optimize.")
+
 
 
 

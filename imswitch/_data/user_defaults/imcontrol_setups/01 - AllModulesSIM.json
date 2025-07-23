@@ -136,11 +136,11 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 2000.0
+          "ExposureTime": 700.0
         },
         "ROI":{
-          "OffsetX": 2429,
-          "OffsetY": 2197,
+          "OffsetX": 2128,
+          "OffsetY": 1698,
           "Width": 1024,
           "Height": 1024
         }
@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 100,
+      "valueInit": 0,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 100,
+    "valueInit": 0,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
