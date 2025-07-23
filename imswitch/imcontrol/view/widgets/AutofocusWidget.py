@@ -19,10 +19,12 @@ class AutofocusWidget(NapariHybridWidget):
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
+        self.autofocusModule = QCheckBox('Autofocus Module')
         self.led = LedIndicator(self)
         self.openPreview = QtWidgets.QPushButton('Open AF Preview')
         self.registerPlane = QtWidgets.QPushButton('Register Plane')
         self.clearRegPlane = QtWidgets.QPushButton('Clear Registered Plane')
+
 
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(20)
@@ -34,10 +36,11 @@ class AutofocusWidget(NapariHybridWidget):
         self.rangeLabel.setText("Scan Range:")
 
         row = 0
-        autofocusLayout.addWidget(self.openPreview, row, 0)
-        autofocusLayout.addWidget(self.registerPlane, row, 1)
-        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 0)
-        autofocusLayout.addWidget(self.led, row + 1, 1)
+        autofocusLayout.addWidget(self.autofocusModule, row, 0)
+        autofocusLayout.addWidget(self.openPreview, row+1, 0)
+        autofocusLayout.addWidget(self.registerPlane, row+1, 1)
+        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 2)
+        autofocusLayout.addWidget(self.led, row + 2, 2)
         autofocusLayout.addWidget(self.rangeLabel, row + 2, 0)
         autofocusLayout.addWidget(self.calCurveRange, row + 2, 1)
 
@@ -75,11 +78,6 @@ class SetAFWindow(QMainWindow):
 
         self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
         buttonLayout.addWidget(self.acqImgButton)
-        self.roiReset = QtWidgets.QPushButton('Reset ROI')
-        # buttonLayout.addWidget(self.roiReset)
-
-        self.roiSet = QtWidgets.QPushButton('Set ROI')
-        # buttonLayout.addWidget(self.roiSet)
 
         self.calCurve = QtWidgets.QPushButton('Cal. Curve')
         buttonLayout.addWidget(self.calCurve)

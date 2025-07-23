@@ -29,8 +29,9 @@ class AutofocusController(ImConWidgetController):
         self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
-        self._widget.AFWindow.roiReset.clicked.connect(self.resetROIOnCam)
-        self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
+        self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
+        # self._widget.AFWindow.roiReset.clicked.connect(self.resetROIOnCam)
+        # self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         # self._widget.registerPlane.clicked.connect(self.onLED)
@@ -51,6 +52,9 @@ class AutofocusController(ImConWidgetController):
         self._commChannel.initRegScore = None
         self._commChannel.initPredZ = None
         self.offLED()
+
+    def autofocusModuleToggle(self, state):
+        self._commChannel.autofocusEnabled = state
 
     def onLED(self):
         self._widget.led.turn_on()

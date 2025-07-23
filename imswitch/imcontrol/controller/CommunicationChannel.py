@@ -183,6 +183,8 @@ class CommunicationChannel(SignalInterface):
         self.offsetFromInitZ = 0
         self.currentRegScore = None
         self.currentPredZ = None
+        self.autofocusEnabled = False
+        self.autofocusActive = False
         
 
     # def storeROIList(self, roiList):

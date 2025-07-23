@@ -957,6 +957,8 @@ class SIMController(ImConWidgetController):
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.zScanActive = False
+        if self._commChannel.autofocusActive == True:
+            self._commChannel.autofocusActive = False
 
 
     def startSIM(self):
@@ -1311,6 +1313,13 @@ class SIMController(ImConWidgetController):
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
 
+
+        ####Autofocus
+        if self._commChannel.autofocusEnabled == True:
+            self.autofocusThread()
+            self.AFCounter += 1
+        ####
+
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         while self.active25D:
             self.roiIter = 0
@@ -1345,12 +1354,7 @@ class SIMController(ImConWidgetController):
                 ####
                 while j < len(currentROI):
 
-                    ####Autofocus
-                    if self._commChannel.initRegScore != None:
-                        self.autofocusThread()
-                        self.AFThread.join()
-                        self.AFCounter += 1
-                    ####
+
 
                     self.j = j # Self it for use elsewhere. Kind of sloppy.
 
@@ -1591,10 +1595,15 @@ class SIMController(ImConWidgetController):
         # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
     def autofocusThread(self):
-        self.AFThread = threading.Thread(target=self.autofocusRep, args=(), daemon=True)
+        self.AFThread = threading.Thread(target=self.autofocusRepTest, args=(), daemon=True)
         self.AFThread.start()
+        self._commChannel.autofocusActive = True
         # self.autofocusRep()
         
+    def autofocusRepTest(self):
+        while self._commChannel.autofocusActive == True:
+            print('Fired')
+            time.sleep(1)
 
 
     def autofocusRep(self):
