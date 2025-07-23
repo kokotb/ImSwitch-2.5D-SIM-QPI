@@ -30,10 +30,9 @@ class AutofocusController(ImConWidgetController):
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
         self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
-        # self._widget.AFWindow.roiReset.clicked.connect(self.resetROIOnCam)
-        # self._widget.AFWindow.roiSet.clicked.connect(self.setROIOnCam)
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
+        self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
         # self._widget.registerPlane.clicked.connect(self.onLED)
         # self._widget.clearRegPlane.clicked.connect(self.offLED)
         self._manager = self._master.autofocusManager
@@ -42,11 +41,20 @@ class AutofocusController(ImConWidgetController):
         self.calCurveImgs = []
         # self._commChannel.calCurveFit = False
         # self.initRegScore = None
-
+        self.storeInitEstimate()
         
-        self.init_guess_x = self._manager.init_guess_x	# Guesses for fits Background, Centre, Width, Amplitude
-        self.init_guess_y = self._manager.init_guess_y
+
         self.threshold = self._manager.threshold #pixel value threshold for AF image
+
+    def storeInitEstimate(self):
+        self.guess_x = self._manager.guess_x    # Guesses for fits Background, Centre, Width, Amplitude
+        self.guess_y = self._manager.guess_y
+
+
+    def resetEstimates(self):
+        self.guess_x = self._manager.init_guess_x[:]
+        self.guess_y = self._manager.init_guess_y[:]
+        self._logger.info('Initial fit guesses reset.')
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
@@ -69,25 +77,12 @@ class AutofocusController(ImConWidgetController):
         print(f"Plane registered with score of {self._commChannel.initRegScore}, Z of {self._commChannel.initPredZ}")
         self.onLED()
 
-    def resetROIOnCam(self):
-        self.AFCam.setROI([0,0,1936,1096])
-        self.getOneFrameToSet()
-
-    def setROIOnCam(self):
-        try:
-            wantedROI = self._widget.AFWindow.embeddedImage.lastClick
-            self.AFCam.setROI(wantedROI)
-            self.getOneFrameToSet()
-        except AttributeError:
-            self._logger.warning("ROI has not yet been selected. Please click the center of desired ROI.")
-
     def openSetAFWindowThread(self):
         threading.Thread(target=self.openSetAFWindow(), args=(), daemon=True).start()
 
     def openSetAFWindow(self):
         self._widget.AFWindow.show()
         self.getOneFrameToSet()
-        # self._widget.AFWindow.embeddedImage.repaintAnnot()
 
 
     def getOneFrameToSet(self):
@@ -164,6 +159,7 @@ class AutofocusController(ImConWidgetController):
 
 
     def scoreCalCurveImgs(self, zList):
+
         Range = len(zList)  	# Number of files
         # zval = 0.8    	# Step size in microns
         # lowZ = 204
@@ -203,19 +199,19 @@ class AutofocusController(ImConWidgetController):
             y = np.arange(h1)
             
             # Do x fit
-            popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.guess_x, maxfev = 50000)
             x0 = popt[1]
             sx = popt[2]  
-            self.init_guess_x.clear()
-            self.init_guess_x.append(popt)
+            self.guess_x.clear()
+            self.guess_x.append(popt)
             # Do y fit
-            popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.guess_y, maxfev = 50000)
             y0 = popt[1]
             sy = popt[2]
             
             # Replaces initial guess with final guess
-            self.init_guess_y.clear()
-            self.init_guess_y.append(popt)
+            self.guess_y.clear()
+            self.guess_y.append(popt)
         
             x_sigma.append(abs(sx))
             # print(x_sigma)

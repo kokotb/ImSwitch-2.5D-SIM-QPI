@@ -82,6 +82,9 @@ class SetAFWindow(QMainWindow):
         self.calCurve = QtWidgets.QPushButton('Cal. Curve')
         buttonLayout.addWidget(self.calCurve)
 
+        self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
+        buttonLayout.addWidget(self.resetEstimates)
+
         self.embeddedImage = ClickableImage(blankImage)
 
         # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')

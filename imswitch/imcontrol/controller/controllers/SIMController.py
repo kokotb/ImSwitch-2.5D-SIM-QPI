@@ -1317,7 +1317,7 @@ class SIMController(ImConWidgetController):
         ####Autofocus
         if self._commChannel.autofocusEnabled == True:
             self.autofocusThread()
-            self.AFCounter += 1
+            
         ####
 
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
@@ -1595,25 +1595,26 @@ class SIMController(ImConWidgetController):
         # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
     def autofocusThread(self):
-        self.AFThread = threading.Thread(target=self.autofocusRepTest, args=(), daemon=True)
-        self.AFThread.start()
         self._commChannel.autofocusActive = True
+        self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
+        self.AFThread.start()
+
         # self.autofocusRep()
         
-    def autofocusRepTest(self):
+    def autofocusStart(self):
         while self._commChannel.autofocusActive == True:
-            print('Fired')
-            time.sleep(1)
+            self.autofocusLoop()
 
 
-    def autofocusRep(self):
+
+    def autofocusLoop(self):
+        print('test')
         if self.firstLoop:
             self.AFScores = []
             self.cumZDiff = 0
         initRegScore = self._commChannel.initRegScore
         img = self.AFCam.grabFrameOnly()
         currentRegScore = self.AFManager.scoreOneLive(img)
-        # print(currentRegScore)
 
         self.AFScores.append(currentRegScore)
 
@@ -1623,10 +1624,9 @@ class SIMController(ImConWidgetController):
 
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
-
             print(f'Z Difference: {zDiff}')
-            if abs(zDiff) >= 0.0:
-                
+
+            if abs(zDiff) >= 0.1:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
@@ -1639,6 +1639,8 @@ class SIMController(ImConWidgetController):
         with open("AFOutput.txt", "a") as text_file:
             line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
             text_file.write(f'{line}\n')
+
+        self.AFCounter += 1
   
    
     def setSharedAttr(self, attrCategory, parameterName, value):

@@ -18,6 +18,8 @@ class AutofocusManager(SignalInterface):
         self.init_guess_y = [7,416,400,50]
         self.threshold = 15
          #pixel value threshold for AF image
+        self.guess_x = self.init_guess_x[:]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.guess_y = self.init_guess_y[:]
 
     def getXfromY(self, y):
         x = (y-self.y_int)/self.x_slp
@@ -35,6 +37,8 @@ class AutofocusManager(SignalInterface):
     
     def scoreOneImg(self, im):
         # Define the model function. In our case, a 1D Gaussian.
+
+
         def Gaussian1D(xdata, i0, x0, sX, amp):
             x = xdata
             x0 = float(x0)
@@ -66,19 +70,19 @@ class AutofocusManager(SignalInterface):
         y = np.arange(h1)
         
         # Do x fit
-        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.init_guess_x, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.guess_x, maxfev = 50000)
         x0 = popt[1]
         sx = popt[2]
-        self.init_guess_x.clear()
-        self.init_guess_x.append(popt)
+        self.guess_x.clear()
+        self.guess_x.append(popt)
         # Do y fit
-        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.init_guess_y, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.guess_y, maxfev = 50000)
         y0 = popt[1]
         sy = popt[2]
         
         # Replaces initial guess with final guess
-        self.init_guess_y.clear()
-        self.init_guess_y.append(popt)
+        self.guess_y.clear()
+        self.guess_y.append(popt)
     
         x_sigma = abs(sx)
         y_sigma = abs(sy)
