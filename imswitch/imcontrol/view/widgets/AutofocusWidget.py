@@ -7,7 +7,7 @@ import threading
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import QPointF
+from PyQt5.QtCore import QPointF, QRect
 
 
 class AutofocusWidget(NapariHybridWidget):
@@ -17,9 +17,7 @@ class AutofocusWidget(NapariHybridWidget):
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
-        blankImage = np.zeros((1280,1024))
         self.AFWindow = SetAFWindow()
-        # self.clickableImage = ClickableImage(blankImage)
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
@@ -99,6 +97,8 @@ class SetAFWindow(QMainWindow):
         buttonLayout.addWidget(self.calCurve)
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
         buttonLayout.addWidget(self.resetEstimates)
+        self.regReflection  = QtWidgets.QPushButton('Register Reflection Coords')
+        buttonLayout.addWidget(self.regReflection)
 
         self.sigUpdateCalibChart.connect(self.displayChart)
 
@@ -167,6 +167,8 @@ class SetAFWindow(QMainWindow):
         imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
         afWindowLayout.addLayout(imageLayout)
         # afWindowLayout.addStretch()
+
+        self.regReflection.clicked.connect(self.embeddedImage.regCoordsFunc)
 
 
     def displayChart(self, zValues, xData, yData, comboData):
@@ -262,12 +264,19 @@ class ClickableImage(QLabel):
         self.image_np = image_np
         self.pixelmap = self.convert_ndarray_to_qpixmap(self.image_np)
 
-
+        self.start_point = None
+        self.end_point = None
+        self.selection_rect = None
+        self.coords = False
 
         self.setPixmap(self.pixelmap)
         # self.setScaledContents(True)  # Ensure image scales with widget
         self.annotation_points = []
         # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
+
+    def regCoordsFunc(self):
+        self.coords = True
+
         
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
@@ -278,8 +287,37 @@ class ClickableImage(QLabel):
     
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            click_position = event.pos()  # QPoint
-            print(f"Mouse clicked at: {click_position.x()}, {click_position.y()}")
+            self.start_point = event.pos()
+            self.end_point = self.start_point
+            self.update()
+
+    def mouseMoveEvent(self, event):
+        if self.start_point:
+            self.end_point = event.pos()
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self.start_point:
+            self.end_point = event.pos()
+            self.selection_rect = QRect(self.start_point, self.end_point).normalized()
+            self.start_point = None
+            self.end_point = None
+            self.update()
+
+        if self.coords:
+            self.left = self.selection_rect.left()
+            self.right = self.selection_rect.right()
+            print(f'Coordinates registered: ({self.left},{self.right})')
+            self.coords = False
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.start_point and self.end_point:
+            painter = QPainter(self)
+            pen = QPen(QColor(0, 120, 215), 2, Qt.DashLine)
+            painter.setPen(pen)
+            rect = QRect(self.start_point, self.end_point)
+            painter.drawRect(rect.normalized())
     
 
 
