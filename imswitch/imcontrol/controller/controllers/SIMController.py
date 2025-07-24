@@ -1627,19 +1627,19 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
             # print(f'Z Difference: {zDiff}')
 
-            if abs(zDiff) >= 0.0:
+            if abs(zDiff) >= 0.05:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
-                # self.positioner.setPosition(wantedZ, 'Z')
-                # self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                # self._logger.warning('Autofocus adjustment!!')
+                self.positioner.setPosition(wantedZ, 'Z')
+                self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
                 
             self.AFScores = []
-            print(f'Total Z drift: {self.cumZDiff}')
+            
         with open("AFOutput.txt", "a") as text_file:
-            # line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
-            line = str(round(currentRegScore, 2))
+            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+            # line = str(round(currentRegScore, 2))
             text_file.write(f'{line}\n')
 
         self.AFCounter += 1

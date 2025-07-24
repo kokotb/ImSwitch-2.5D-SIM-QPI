@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication)
+from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication, QRubberBand )
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import threading
@@ -34,8 +34,8 @@ class AutofocusWidget(NapariHybridWidget):
 
 
         self.calCurveRange = QtWidgets.QSpinBox()
-        self.calCurveRange.setMinimum(20)
-        self.calCurveRange.setMaximum(100)
+        self.calCurveRange.setMinimum(1)
+        self.calCurveRange.setMaximum(200)
         self.calCurveRange.setValue(20)
         self.calCurveRange.setEnabled(False)
 
@@ -122,6 +122,7 @@ class SetAFWindow(QMainWindow):
         self.ccSlopeVal.setText("-")
         self.ccIntVal = QLabel(self)
         self.ccIntVal.setText("-")
+        self.ccIntVal.setFixedWidth(200)
         self.ccR2Val = QLabel(self)
         self.ccR2Val.setText("-")
         self.ccSensVal = QLabel(self)
@@ -146,6 +147,7 @@ class SetAFWindow(QMainWindow):
         chart_view = QChartView(self.chart)
         chart_view.setMinimumSize(1000, 600)
         chart_view.setRenderHint(QPainter.Antialiasing)
+        
         textHorizLayout.addWidget(chart_view)
 
 
@@ -154,6 +156,7 @@ class SetAFWindow(QMainWindow):
         textHorizLayout.addStretch()
 
         self.embeddedImage = ClickableImage(blankImage)
+        # self.resizableBox = ResizableBox(self.embeddedImage)
         # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
         buttonAndTextLayout.addLayout(buttonLayout)
         buttonAndTextLayout.addLayout(textHorizLayout)
@@ -186,19 +189,19 @@ class SetAFWindow(QMainWindow):
         self.chart.addSeries(self.seriesY)
         self.chart.addSeries(self.seriesCombo)
 
-        xMin = min([*xData, *yData, *comboData])
-        yMin = min(zValues)
-        xMax = max([*xData, *yData, *comboData])
-        yMax = max(zValues)
+        xMin = int(min([*xData, *yData, *comboData]))
+        yMin = int(min(zValues))
+        xMax = int(max([*xData, *yData, *comboData]))
+        yMax = int(max(zValues))
 
 
         axis_x = QValueAxis()
-        axis_x.setTitleText("Score")
+        axis_x.setAxisText("Score")
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
 
         axis_y = QValueAxis()
         axis_y.setTitleText("Z Position / um")
-        axis_y.setRange(yMin - yMin*0.02, yMax + yMax*0.02)
+        axis_y.setRange(yMin - yMin*0.01, yMax + yMax*0.01)
 
         self.chart.addAxis(axis_x, Qt.AlignBottom)
         self.chart.addAxis(axis_y, Qt.AlignLeft)
@@ -216,6 +219,40 @@ class SetAFWindow(QMainWindow):
         q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
+    
+# class ResizableBox(QRubberBand):
+#     def __init__(self, parent=None):
+#         super().__init__(QRubberBand.Rectangle, parent)
+#         self.setGeometry(100, 100, 150, 100)
+#         self.show()
+#         self._dragging = False
+#         self._resizing = False
+#         self._resizeMargin = 10
+
+#     def mousePressEvent(self, event):
+#         if self._isInResizeArea(event.pos()):
+#             self._resizing = True
+#         else:
+#             self._dragging = True
+#             self._dragOffset = event.pos()
+
+#     def mouseMoveEvent(self, event):
+#         if self._resizing:
+#             rect = self.geometry()
+#             newWidth = max(20, event.x())
+#             newHeight = max(20, event.y())
+#             self.setGeometry(rect.x(), rect.y(), newWidth, newHeight)
+#         elif self._dragging:
+#             self.move(self.mapToParent(event.pos() - self._dragOffset))
+
+#     def mouseReleaseEvent(self, event):
+#         self._dragging = False
+#         self._resizing = False
+
+#     def _isInResizeArea(self, pos):
+#         rect = self.rect()
+#         return pos.x() > rect.width() - self._resizeMargin and pos.y() > rect.height() - self._resizeMargin
+    
 
 class ClickableImage(QLabel):
     def __init__(self, image_np):
@@ -225,63 +262,24 @@ class ClickableImage(QLabel):
         self.image_np = image_np
         self.pixelmap = self.convert_ndarray_to_qpixmap(self.image_np)
 
+
+
         self.setPixmap(self.pixelmap)
         # self.setScaledContents(True)  # Ensure image scales with widget
         self.annotation_points = []
         # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
-
-    # def mousePressEvent(self, event):
-    #     if event.button() == Qt.LeftButton:
-    #         if self.painted:
-    #             self.repaintAnnot()
-    #         x = event.pos().x()
-    #         y = event.pos().y()
-
-    #         # Account for scaling
-    #         scaled_w = self.width()
-    #         scaled_h = self.height()
-    #         img_w, img_h = self.image_np.shape
-
-    #         # Map widget coordinates to image coordinates
-    #         img_x = int(x * img_w / scaled_w) 
-    #         img_y = int(y * img_h / scaled_h)
-
-    #         # Clip to image bounds
-    #         img_x = min(max(img_x, 0), img_w - 1)
-    #         img_y = min(max(img_y, 0), img_h - 1)
-
-    #         windowSize = 1000
-    #         top = img_y - windowSize/2
-    #         left = img_x - windowSize/2
-    #         width = windowSize
-    #         height = windowSize
-
-    #         if not self.painted:
-    #             self.annotation_points.append(event.pos())
-    #             self.update()  # Trigger repaint
-    #             self.lastClick = [left,top,width,height]
-    #             self.painted = True
-
-
-    # def paintEvent(self, event):
-    #     super().paintEvent(event)
-    #     painter = QPainter(self)
-    #     pen = QPen(Qt.red, 3)
-    #     painter.setPen(pen)
-    #     for point in self.annotation_points:
-    #         painter.drawRect(point.x() - 500, point.y() - 500, 1000, 1000)
-
-
-    # def repaintAnnot(self):
-    #     self.annotation_points = []
-    #     self.update()
-    #     self.painted = False
+        
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
         h, w = image.shape
         q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            click_position = event.pos()  # QPoint
+            print(f"Mouse clicked at: {click_position.x()}, {click_position.y()}")
     
 
 
