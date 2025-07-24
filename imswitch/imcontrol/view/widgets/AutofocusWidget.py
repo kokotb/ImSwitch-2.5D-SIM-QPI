@@ -5,11 +5,15 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import threading
 import numpy as np
+from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
+from PyQt5.QtGui import QPainter
+from PyQt5.QtCore import QPointF
 
 
 class AutofocusWidget(NapariHybridWidget):
 
     sigAutofocusInfoChanged = QtCore.Signal(str, str, str)
+
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -49,6 +53,8 @@ class AutofocusWidget(NapariHybridWidget):
         autofocusLayout.addWidget(self.calCurveRange, row + 2, 1)
 
 
+
+
     def toggleEnabled(self, state):
         self.openPreview.setEnabled(state)
         self.registerPlane.setEnabled(state)
@@ -68,7 +74,9 @@ class AutofocusWidget(NapariHybridWidget):
     #     self.clickableImage.clearAnnot()
 
 
+
 class SetAFWindow(QMainWindow):
+    sigUpdateCalibChart = QtCore.Signal(np.ndarray,list,list,list)
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setWindowTitle("Open AF Preview")
@@ -91,6 +99,11 @@ class SetAFWindow(QMainWindow):
         buttonLayout.addWidget(self.calCurve)
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
         buttonLayout.addWidget(self.resetEstimates)
+
+        self.sigUpdateCalibChart.connect(self.displayChart)
+
+
+
 
         #################
         self.ccSlopeLabel = QLabel(self)
@@ -122,12 +135,23 @@ class SetAFWindow(QMainWindow):
         textLayout.addWidget(self.ccR2Val, row + 2, 1, alignment=Qt.AlignLeft)
         textLayout.addWidget(self.ccSensLabel, row + 3, 0)
         textLayout.addWidget(self.ccSensVal, row + 3, 1, alignment=Qt.AlignLeft)
+        # textLayout.addStretch()
         textHorizLayout = QtWidgets.QHBoxLayout()
         textHorizLayout.addLayout(textLayout)
-        textHorizLayout.addStretch()
         ################
-        
-        afWindowLayout.addStretch()
+        #Chart
+
+        self.chart = QChart()
+        self.chart.setTitle("Calibration Data")
+        chart_view = QChartView(self.chart)
+        chart_view.setMinimumSize(1000, 600)
+        chart_view.setRenderHint(QPainter.Antialiasing)
+        textHorizLayout.addWidget(chart_view)
+
+
+
+
+        textHorizLayout.addStretch()
 
         self.embeddedImage = ClickableImage(blankImage)
         # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
@@ -139,10 +163,53 @@ class SetAFWindow(QMainWindow):
         afWindowLayout.addLayout(buttonAndTextLayout)
         imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
         afWindowLayout.addLayout(imageLayout)
-        afWindowLayout.addStretch()
+        # afWindowLayout.addStretch()
 
-       
 
+    def displayChart(self, zValues, xData, yData, comboData):
+        # self.series.clear()
+        for s in self.chart.series():
+            self.chart.removeSeries(s)
+        self.seriesX = QLineSeries()
+        self.seriesY = QLineSeries()
+        self.seriesCombo = QLineSeries()
+        self.seriesX.setName("X-Sigma")
+        self.seriesY.setName("Y Sigma")
+        self.seriesCombo.setName("X-Y")
+        for x, y in zip(xData, zValues):
+            self.seriesX.append(QPointF(x, y))
+        for x, y in zip(yData, zValues):
+            self.seriesY.append(QPointF(x, y))
+        for x, y in zip(comboData, zValues):
+            self.seriesCombo.append(QPointF(x, y))
+        self.chart.addSeries(self.seriesX)
+        self.chart.addSeries(self.seriesY)
+        self.chart.addSeries(self.seriesCombo)
+
+        xMin = min([*xData, *yData, *comboData])
+        yMin = min(zValues)
+        xMax = max([*xData, *yData, *comboData])
+        yMax = max(zValues)
+
+
+        axis_x = QValueAxis()
+        axis_x.setTitleText("Score")
+        axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
+
+        axis_y = QValueAxis()
+        axis_y.setTitleText("Z Position / um")
+        axis_y.setRange(yMin - yMin*0.02, yMax + yMax*0.02)
+
+        self.chart.addAxis(axis_x, Qt.AlignBottom)
+        self.chart.addAxis(axis_y, Qt.AlignLeft)
+        self.seriesX.attachAxis(axis_x)
+        self.seriesX.attachAxis(axis_y)
+        self.seriesY.attachAxis(axis_x)
+        self.seriesY.attachAxis(axis_y)
+        self.seriesCombo.attachAxis(axis_x)
+        self.seriesCombo.attachAxis(axis_y)
+
+        self.chart.createDefaultAxes() 
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
         h, w = image.shape

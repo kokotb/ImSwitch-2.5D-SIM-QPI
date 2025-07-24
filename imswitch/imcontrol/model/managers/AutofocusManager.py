@@ -68,21 +68,21 @@ class AutofocusManager(SignalInterface):
         h1, w1 = im.shape
         x = np.arange(w1)
         y = np.arange(h1)
-        
+        # print(self.guess_x,self.guess_y)
         # Do x fit
         popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.guess_x, maxfev = 50000)
         x0 = popt[1]
         sx = popt[2]
-        self.guess_x.clear()
-        self.guess_x.append(popt)
+        # self.guess_x.clear()
+        # self.guess_x.append(popt)
         # Do y fit
         popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.guess_y, maxfev = 50000)
         y0 = popt[1]
         sy = popt[2]
         
         # Replaces initial guess with final guess
-        self.guess_y.clear()
-        self.guess_y.append(popt)
+        # self.guess_y.clear()
+        # self.guess_y.append(popt)
     
         x_sigma = abs(sx)
         y_sigma = abs(sy)

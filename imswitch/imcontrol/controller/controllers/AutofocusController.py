@@ -26,7 +26,8 @@ class AutofocusController(ImConWidgetController):
         self._widget.initValues()
         # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
         # self._commChannel.sigGetAndScoreAF.connect(self.getAndScoreOneLive)
-        self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
+        # self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
+        self._widget.openPreview.clicked.connect(self.openSetAFWindow)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
         self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
@@ -81,8 +82,8 @@ class AutofocusController(ImConWidgetController):
         print(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
-    def openSetAFWindowThread(self):
-        threading.Thread(target=self.openSetAFWindow(), args=(), daemon=True).start()
+    # def openSetAFWindowThread(self):
+    #     threading.Thread(target=self.openSetAFWindow(), args=(), daemon=True).start()
 
     def openSetAFWindow(self):
         self._widget.AFWindow.show()
@@ -220,6 +221,7 @@ class AutofocusController(ImConWidgetController):
         z_values = zList
         comboData = np.subtract(x_sigma,y_sigma)
         comboDataReshape = comboData.reshape(-1, 1)
+        comboDataReshape1D = [j[0] for j in comboDataReshape]
 
         model = LinearRegression()
         model.fit(comboDataReshape, zList)
@@ -229,6 +231,7 @@ class AutofocusController(ImConWidgetController):
         self.y_int = model.intercept_
         self._manager.y_int = self.y_int
         self.r2 = r2_score(zList, y_pred)
+        self._widget.AFWindow.sigUpdateCalibChart.emit(z_values, x_sigma, y_sigma, comboDataReshape1D)
         if self.r2 >= 0.99:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
             self._commChannel.calCurveFit = True
@@ -243,6 +246,8 @@ class AutofocusController(ImConWidgetController):
 
 
         # Save calibration data
+
+
         # plt.plot(x_sigma, z_values,  'b8', markersize=2, label="σx")
         # plt.plot(y_sigma, z_values, 'r8', markersize=2, label="σy")
         # plt.plot(np.subtract(x_sigma,y_sigma), z_values, '--k', markersize=2, label="σx - σy")
@@ -251,7 +256,7 @@ class AutofocusController(ImConWidgetController):
         # plt.xlabel("Pixels")
         # plt.legend()
         # plt.show()
-        # self.y_int, self.slp = self.estimate_coef(comboData, z_values)♦
+        # self.y_int, self.slp = self.estimate_coef(comboData, z_values)
 
 
 

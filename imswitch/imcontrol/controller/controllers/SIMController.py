@@ -1580,7 +1580,7 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigSaveSettingsFirst.emit()
                 self.startSettingsSaved = True
 
-        if (self.isRecordRaw) and (self.frameCounter % 60 == 0): # Saves raw images.
+        if (self.isRecordRaw):# and (self.frameCounter % 60 == 0): # Saves raw images.
             with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
                 self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
@@ -1603,7 +1603,7 @@ class SIMController(ImConWidgetController):
         # self.autofocusRep()
         
     def autofocusStart(self):
-        while self._commChannel.autofocusActive == True:
+        while (self._commChannel.autofocusActive == True) and (self._commChannel.initRegScore != None):
             self.autofocusLoop()
 
 
@@ -1618,26 +1618,28 @@ class SIMController(ImConWidgetController):
 
         self.AFScores.append(currentRegScore)
 
-        if not (self.firstLoop) and (self.AFCounter % 10 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 20 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
+            # print('10 AF Frames')
 
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
-            print(f'Z Difference: {zDiff}')
+            # print(f'Z Difference: {zDiff}')
 
-            if abs(zDiff) >= 0.05:
+            if abs(zDiff) >= 0.0:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
-                self.positioner.setPosition(wantedZ, 'Z')
-                self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                self._logger.warning('Autofocus adjustment!!')
+                # self.positioner.setPosition(wantedZ, 'Z')
+                # self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                # self._logger.warning('Autofocus adjustment!!')
                 
             self.AFScores = []
             print(f'Total Z drift: {self.cumZDiff}')
         with open("AFOutput.txt", "a") as text_file:
-            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+            # line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+            line = str(round(currentRegScore, 2))
             text_file.write(f'{line}\n')
 
         self.AFCounter += 1
