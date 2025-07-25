@@ -415,7 +415,7 @@ class SLM25DController(ImConWidgetController):
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-        elif (projZernike == 2) and (proj25D == 0):
+        elif (projZernike == 2) and (proj25D == 0) and (projCenter == 0):
             #if ((self._widget.matrixZernike == 0).all()):
                 #self._widget.matrixZernike = np.ones((1920, 1080))
             projImg = self._widget.matrixZernike
@@ -432,11 +432,20 @@ class SLM25DController(ImConWidgetController):
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-        elif (projCenter == 2): # always center mask only!
+        elif (projCenter == 2) and (projZernike == 0): # always center mask only!
             self.centerMask = self.createCenterMask()
             projImg = self.centerMask
             if self.slmActive:
-                self.slm25DManager.projectMask(self.reshapeMask(np.transpose(projImg)))
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
+
+        elif (projZernike == 2) and (projCenter == 2):
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080))
+            self.centerMask = self.createCenterMask()
+            projImg = self.centerMask + self._widget.matrixZernike 
+
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         else:
             print('Center mask can be projected alone only')
@@ -473,20 +482,22 @@ class SLM25DController(ImConWidgetController):
         rhomatrixright = np.sqrt((x_coordsright - xRight)**2 + (y_coordsright - yRight)**2) / rhoPupilAperturePix
 
         thetamatrixleft = np.arctan((x_coordsleft - xLeft)/(y_coordsleft - yLeft))
+        thetamatrixleft[(y_coordsleft - yLeft) < 0] += np.pi
         thetamatrixright = np.arctan((x_coordsright - xRight)/(y_coordsright - yRight))
+        thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
 
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         thetamatrix = np.concatenate((thetamatrixleft, thetamatrixright),axis=1)
         # ====================================================================================================================================
 
-        circularMask = np.where(rhomatrix > 0.001, 0, 1)
-        Xmatrix = np.concatenate((x_coordsleft, x_coordsright),axis=1)
-        stripe_width = 50
+        #circularMask = np.where(rhomatrix > 0.001, 0, 1)
+        stripe_width = 130
+        Xmatrix = np.concatenate((x_coordsleft + stripe_width//2 - xLeft, x_coordsright + stripe_width//2 - xRight),axis=1)
         stripe_mask = Xmatrix % stripe_width
-        helicalmask = thetamatrix * 255 * 2 / (2.* np.pi)
-        finalMask = circularMask * (stripe_mask * 255 / stripe_width  + helicalmask)
+        helicalmask = thetamatrix * 255 * 1 / (2.* np.pi)
+        finalMask =  (stripe_mask * 255 / stripe_width  + helicalmask) #* circularMask
         
-        return finalMask.astype(np.uint8)
+        return np.transpose(finalMask.astype(np.uint8))
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
