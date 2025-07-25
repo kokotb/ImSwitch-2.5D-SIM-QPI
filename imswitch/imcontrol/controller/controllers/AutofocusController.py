@@ -40,6 +40,7 @@ class AutofocusController(ImConWidgetController):
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
         self.calCurveImgs = []
+        self.calCurveScores = []
         # self._commChannel.calCurveFit = False
         # self.initRegScore = None
         self.storeInitEstimate()
@@ -113,11 +114,32 @@ class AutofocusController(ImConWidgetController):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
             time.sleep(0.01)
-            img = self.getOneFrame()
+            img = self.getOneFrameToSet()
+
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
+        
         self.zPositioner.setPosition(currentZ, 'Z')
+        time.sleep(0.01)
+        self.getOneFrameToSet()
         self.scoreCalCurveImgs(zList)
+
+    # def runCalCurve(self):
+    #     zList, currentZ = self.calcZRange()
+    #     # zList = zList.reverse()
+    #     if len(self.calCurveScores) != 0:
+    #         self.calCurveScores = []
+    #     for count, _ in enumerate(zList):
+    #         # filename = f"{count:03}.tif"
+    #         self.zPositioner.setPosition(zList[count], 'Z')
+    #         time.sleep(0.01)
+    #         img = self.getOneFrame()
+    #         score = self.scoreOneImg(img)
+            
+    #         # self.saveImageInBackground(img, path, filename)
+    #         self.calCurveScores.append(score)
+    #     self.zPositioner.setPosition(currentZ, 'Z')
+    #     # self.scoreCalCurveImgs(zList)
 
     def getAndScoreOne(self):
         assert self._commChannel.calCurveFit, "Calibration curve not set."

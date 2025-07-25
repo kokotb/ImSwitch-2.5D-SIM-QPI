@@ -198,11 +198,11 @@ class SetAFWindow(QMainWindow):
 
 
         axis_x = QValueAxis()
-        axis_x.setAxisText("Score")
+        # axis_x.setTitleText("Score")
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
 
         axis_y = QValueAxis()
-        axis_y.setTitleText("Z Position / um")
+        # axis_y.setTitleText("Z Position / um")
         axis_y.setRange(yMin - yMin*0.01, yMax + yMax*0.01)
 
         self.chart.addAxis(axis_x, Qt.AlignBottom)

@@ -1637,10 +1637,10 @@ class SIMController(ImConWidgetController):
                 
             self.AFScores = []
             
-        with open("AFOutput.txt", "a") as text_file:
-            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
-            # line = str(round(currentRegScore, 2))
-            text_file.write(f'{line}\n')
+            with open("AFOutput.txt", "a") as text_file:
+                line = str(round(avgScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+                # line = str(round(currentRegScore, 2))
+                text_file.write(f'{line}\n')
 
         self.AFCounter += 1
   
