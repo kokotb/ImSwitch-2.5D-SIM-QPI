@@ -184,7 +184,8 @@ class CommunicationChannel(SignalInterface):
         self.currentPredZ = None
         self.autofocusEnabled = False
         self.autofocusActive = False
-        
+        self.AFMaskLeft = None
+        self.AFMaskRight = None
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList

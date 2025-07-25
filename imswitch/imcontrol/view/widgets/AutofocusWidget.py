@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QApplication, QRubberBand )
+from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QMessageBox )
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import threading
@@ -170,6 +170,11 @@ class SetAFWindow(QMainWindow):
 
         self.regReflection.clicked.connect(self.embeddedImage.regCoordsFunc)
 
+        self.msg_box = QMessageBox()
+        self.msg_box.setWindowTitle("Exclude Reflection?")
+        self.msg_box.setText("Excluded region not selected. Continue with complete image?")
+        button_yes = self.msg_box.addButton("Yes", QMessageBox.YesRole)
+        button_no = self.msg_box.addButton("Cancel", QMessageBox.NoRole)
 
     def displayChart(self, zValues, xData, yData, comboData):
         # self.series.clear()
@@ -268,6 +273,8 @@ class ClickableImage(QLabel):
         self.end_point = None
         self.selection_rect = None
         self.coords = False
+        self.left = None
+        self.right = None
 
         self.setPixmap(self.pixelmap)
         # self.setScaledContents(True)  # Ensure image scales with widget

@@ -21,21 +21,25 @@ class AutofocusManager(SignalInterface):
         self.guess_x = self.init_guess_x[:]	# Guesses for fits Background, Centre, Width, Amplitude
         self.guess_y = self.init_guess_y[:]
 
-    def getXfromY(self, y):
-        x = (y-self.y_int)/self.x_slp
+    # def getXfromY(self, y):
+    #     x = (y-self.y_int)/self.x_slp
 
-        return x
+    #     return x
 
     def getYfromX(self, x):
         y = (self.x_slp*x) + self.y_int
 
         return y
 
-    def scoreOneLive(self, img):
-        score = self.scoreOneImg(img)
+    def scoreOneLive(self, img, left, right):
+        score = self.scoreOneImg(img, left, right)
         return score
     
-    def scoreOneImg(self, im):
+    def removeColumns(self, img, left, right):
+        imgMasked = np.delete(img,range(left,right),1)
+        return imgMasked
+    
+    def scoreOneImg(self, im, left, right):
         # Define the model function. In our case, a 1D Gaussian.
 
 
@@ -68,15 +72,17 @@ class AutofocusManager(SignalInterface):
         h1, w1 = im.shape
         x = np.arange(w1)
         y = np.arange(h1)
+        xMasked = np.delete(x, range(left, right))
+        imgMaskDel = self.removeColumns(im, left, right)
         # print(self.guess_x,self.guess_y)
         # Do x fit
-        popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.guess_x, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
         x0 = popt[1]
         sx = popt[2]
         # self.guess_x.clear()
         # self.guess_x.append(popt)
         # Do y fit
-        popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.guess_y, maxfev = 50000)
+        popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000)
         y0 = popt[1]
         sy = popt[2]
         

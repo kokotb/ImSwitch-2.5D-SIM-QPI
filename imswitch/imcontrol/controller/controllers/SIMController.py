@@ -1317,6 +1317,8 @@ class SIMController(ImConWidgetController):
         ####Autofocus
         if (self._commChannel.autofocusEnabled == True) and (self._commChannel.initRegScore != None) :
             self.autofocusThread()
+            self.AFMaskLeft = self._commChannel.AFMaskLeft
+            self.AFMaskRight = self._commChannel.AFMaskRight
             self._logger.info('Autofocus active')
             
         ####
@@ -1614,7 +1616,7 @@ class SIMController(ImConWidgetController):
             self.cumZDiff = 0
         initRegScore = self._commChannel.initRegScore
         img = self.AFCam.grabFrameOnly()
-        currentRegScore = self.AFManager.scoreOneLive(img)
+        currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
 
         self.AFScores.append(currentRegScore)
 
@@ -1637,10 +1639,10 @@ class SIMController(ImConWidgetController):
                 
             self.AFScores = []
             
-            with open("AFOutput.txt", "a") as text_file:
-                line = str(round(avgScore, 2)) + ',' + str(round(self.cumZDiff, 2))
-                # line = str(round(currentRegScore, 2))
-                text_file.write(f'{line}\n')
+        with open("AFOutput.txt", "a") as text_file:
+            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
+            # line = str(round(currentRegScore, 2))
+            text_file.write(f'{line}\n')
 
         self.AFCounter += 1
   

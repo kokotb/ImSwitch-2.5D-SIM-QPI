@@ -25,7 +25,6 @@ class AutofocusController(ImConWidgetController):
         # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
         self._widget.initValues()
         # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
-        # self._commChannel.sigGetAndScoreAF.connect(self.getAndScoreOneLive)
         # self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.openPreview.clicked.connect(self.openSetAFWindow)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
@@ -83,29 +82,38 @@ class AutofocusController(ImConWidgetController):
         print(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
-    # def openSetAFWindowThread(self):
-    #     threading.Thread(target=self.openSetAFWindow(), args=(), daemon=True).start()
-
     def openSetAFWindow(self):
         self._widget.AFWindow.show()
         self._widget.AFWindow.raise_()
         self.getOneFrameToSet()
 
-
     def getOneFrameToSet(self):
-        img = self.AFCam.grabFrameOnly()
-        pixmapImg = self._widget.AFWindow.convert_ndarray_to_qpixmap(img)
-        self._widget.AFWindow.embeddedImage.setPixmap(pixmapImg)
+        img = self.getOneFrame()
+        self.setOneFrame(img)
         return img
 
     def getOneFrame(self): 
         img = self.AFCam.grabFrameOnly()
         return img
-    
+
+    def setOneFrame(self, img): 
+        pixmapImg = self._widget.AFWindow.convert_ndarray_to_qpixmap(img)
+        self._widget.AFWindow.embeddedImage.setPixmap(pixmapImg)
+
     def runCalCurveThread(self):
         threading.Thread(target=self.runCalCurve, args=(), daemon=True).start()
 
+
+    
+    def colToZero(self, img):
+        imgMaskZero = img[:]
+        imgMaskZero[:,range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right)] = 0
+        return imgMaskZero
+
+
     def runCalCurve(self):
+        if self._widget.AFWindow.embeddedImage.left == None:
+            self._widget.AFWindow.msg_box.exec_()
         zList, currentZ = self.calcZRange()
         # zList = zList.reverse()
         if len(self.calCurveImgs) != 0:
@@ -114,32 +122,19 @@ class AutofocusController(ImConWidgetController):
             # filename = f"{count:03}.tif"
             self.zPositioner.setPosition(zList[count], 'Z')
             time.sleep(0.01)
-            img = self.getOneFrameToSet()
-
+            img = self.getOneFrame()
+            imgMaskZero = self.colToZero(img)
+            self.setOneFrame(imgMaskZero)
             # self.saveImageInBackground(img, path, filename)
             self.calCurveImgs.append(img)
         
         self.zPositioner.setPosition(currentZ, 'Z')
         time.sleep(0.01)
-        self.getOneFrameToSet()
+        img = self.getOneFrame()
+        imgMaskZero = self.colToZero(img)
+        self.setOneFrame(imgMaskZero)
+        
         self.scoreCalCurveImgs(zList)
-
-    # def runCalCurve(self):
-    #     zList, currentZ = self.calcZRange()
-    #     # zList = zList.reverse()
-    #     if len(self.calCurveScores) != 0:
-    #         self.calCurveScores = []
-    #     for count, _ in enumerate(zList):
-    #         # filename = f"{count:03}.tif"
-    #         self.zPositioner.setPosition(zList[count], 'Z')
-    #         time.sleep(0.01)
-    #         img = self.getOneFrame()
-    #         score = self.scoreOneImg(img)
-            
-    #         # self.saveImageInBackground(img, path, filename)
-    #         self.calCurveScores.append(score)
-    #     self.zPositioner.setPosition(currentZ, 'Z')
-    #     # self.scoreCalCurveImgs(zList)
 
     def getAndScoreOne(self):
         assert self._commChannel.calCurveFit, "Calibration curve not set."
@@ -147,38 +142,30 @@ class AutofocusController(ImConWidgetController):
         score = self.scoreOneImg(img)
         return score
 
-    def scoreOneLive(self, img):
-        assert self._commChannel.calCurveFit, "Calibration curve not set."
-        score = self.scoreOneImg(img)
-        zPred = self.getYfromX(score)
-        self._commChannel.currentRegScore = score
-        self._commChannel.currentPredZ = zPred
-        return score, zPred
+    # def scoreOneLive(self, img):
+    #     assert self._commChannel.calCurveFit, "Calibration curve not set."
+    #     score = self.scoreOneImg(img)
+    #     zPred = self.getYfromX(score)
+    #     self._commChannel.currentRegScore = score
+    #     self._commChannel.currentPredZ = zPred
+    #     return score, zPred
     
     def setZPosition(self, z):
         self.zPositioner.setPosition(z, 'Z')
 
-    def getXfromY(self, y):
-        x = self._manager.getXromY(y)
-        return x
+    # def getXfromY(self, y):
+    #     x = self._manager.getXromY(y)
+    #     return x
 
     def getYfromX(self, x):
         y = self._manager.getYfromX(x)
         return y
     
     def scoreOneImg(self, im):
-        score = self._manager.scoreOneImg(im)
+        score = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
         return score
     
-            
-
-
     def scoreCalCurveImgs(self, zList):
-
-        Range = len(zList)  	# Number of files
-        # zval = 0.8    	# Step size in microns
-        # lowZ = 204
-
         # Define the model function. In our case, a 1D Gaussian.
         def Gaussian1D(xdata, i0, x0, sX, amp):
             x = xdata
@@ -186,18 +173,14 @@ class AutofocusController(ImConWidgetController):
             eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
             return eq
 
-
-
-
-
-        x_c = []
+        # x_c = []
         x_sigma = []
         y_sigma = []
-        i_values = []
+        # i_values = []
 
         # To read the acquired images and apply the Gaussian fitting
         for i in range(len(self.calCurveImgs)):
-            i_values.append(i)
+            # i_values.append(i)
             #Reading the frames
             im = self.calCurveImgs[i]
             # img = cv2.imread(stacks,-1)
@@ -212,15 +195,17 @@ class AutofocusController(ImConWidgetController):
             h1, w1 = im.shape
             x = np.arange(w1)
             y = np.arange(h1)
+            xMasked = np.delete(x, range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right))
+            imgMaskDel = self._manager.removeColumns(im, self._widget.AFWindow.embeddedImage.left, self._widget.AFWindow.embeddedImage.right)
             
             # Do x fit
-            popt, pcov = curve_fit(Gaussian1D, x, np.mean(im,axis=0), p0=self.guess_x, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
             x0 = popt[1]
             sx = popt[2]  
             self.guess_x.clear()
             self.guess_x.append(popt)
             # Do y fit
-            popt, pcov = curve_fit(Gaussian1D, y, np.mean(im,axis=1), p0=self.guess_y, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000)
             y0 = popt[1]
             sy = popt[2]
             
@@ -231,7 +216,7 @@ class AutofocusController(ImConWidgetController):
             x_sigma.append(abs(sx))
             # print(x_sigma)
             y_sigma.append(abs(sy))
-            x_c.append(popt[1])
+            # x_c.append(popt[1])
             # plt.plot((x0,x0+sx),(y0,y0))
             # plt.plot((x0,x0),(y0,y0+sy))
             # plt.imshow(im)
@@ -239,11 +224,13 @@ class AutofocusController(ImConWidgetController):
             
         # This is just to set the x-axis of the graph to the axial values
         # StepSize = zval
-        i_values = np.array(i_values)
+        # i_values = np.array(i_values)
         z_values = zList
         comboData = np.subtract(x_sigma,y_sigma)
         comboDataReshape = comboData.reshape(-1, 1)
         comboDataReshape1D = [j[0] for j in comboDataReshape]
+        self._commChannel.AFMaskLeft = self._widget.AFWindow.embeddedImage.left
+        self._commChannel.AFMaskRight = self._widget.AFWindow.embeddedImage.right
 
         model = LinearRegression()
         model.fit(comboDataReshape, zList)
@@ -265,39 +252,6 @@ class AutofocusController(ImConWidgetController):
         else:
             self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp:.3f}\nIntercept = {self.y_int:.2f}\nr^2 = {self.r2:.4f}")
             self._commChannel.calCurveFit = False
-
-
-        # Save calibration data
-
-
-        # plt.plot(x_sigma, z_values,  'b8', markersize=2, label="σx")
-        # plt.plot(y_sigma, z_values, 'r8', markersize=2, label="σy")
-        # plt.plot(np.subtract(x_sigma,y_sigma), z_values, '--k', markersize=2, label="σx - σy")
-        # plt.grid(True)
-        # plt.ylabel("z-Position (µm)")
-        # plt.xlabel("Pixels")
-        # plt.legend()
-        # plt.show()
-        # self.y_int, self.slp = self.estimate_coef(comboData, z_values)
-
-
-
-    # def estimate_coef(self, x, y):
-    #     # number of observations/points
-    #     n = np.size(x)
-
-    #     # mean of x and y vector
-    #     m_x = np.mean(x)
-    #     m_y = np.mean(y)
-
-    #     # calculating cross-deviation and deviation about x
-    #     SS_xy = np.sum(y*x) - n*m_y*m_x
-    #     SS_xx = np.sum(x*x) - n*m_x*m_x
-    #     # calculating regression coefficients
-    #     b_1 = SS_xy / SS_xx
-    #     b_0 = m_y - b_1*m_x
-
-    #     return (b_0, b_1)
         
 
     def calcZRange(self):
@@ -310,7 +264,6 @@ class AutofocusController(ImConWidgetController):
         return zList, currentZ
 
 
-    
     def saveImageInBackground(self, image, path, filename):
         try:
             # self.folder = self._widget.getRecFolder()
