@@ -481,9 +481,9 @@ class SLM25DController(ImConWidgetController):
         rhomatrixleft = np.sqrt((x_coordsleft - xLeft)**2 + (y_coordsleft - yLeft)**2) / rhoPupilAperturePix
         rhomatrixright = np.sqrt((x_coordsright - xRight)**2 + (y_coordsright - yRight)**2) / rhoPupilAperturePix
 
-        thetamatrixleft = np.arctan((x_coordsleft - xLeft)/(y_coordsleft - yLeft))
+        thetamatrixleft = np.arctan((x_coordsleft - xLeft) / (y_coordsleft - yLeft))
         thetamatrixleft[(y_coordsleft - yLeft) < 0] += np.pi
-        thetamatrixright = np.arctan((x_coordsright - xRight)/(y_coordsright - yRight))
+        thetamatrixright = np.arctan((x_coordsright - xRight) / (y_coordsright - yRight))
         thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
 
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
