@@ -27,6 +27,10 @@ class SLM25DWidget(Widget):
     update25DMask = QtCore.Signal(str)
     updateCenterMask = QtCore.Signal(str)
     sigUpdateZernikeMask = QtCore.Signal(str)
+
+    updateDiameterMask = QtCore.Signal(str)
+    sigStepUpDiameterClicked = QtCore.Signal(str)
+    sigStepDownDiameterClicked = QtCore.Signal(str)
 #Signals to control red highlighting of incorreect QLineEdit entries
     sigCheckValidityAbsPos = QtCore.Signal(str)
     sigCheckValidityStep = QtCore.Signal(str)
@@ -313,8 +317,9 @@ class SLM25DWidget(Widget):
                 self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
-
-
+        self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
+        self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
+        self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
 
         # self.stepLabel = QtWidgets.QLabel(f'<strong>Step</strong>')
         # self.stepLabel.setTextFormat(QtCore.Qt.RichText)
