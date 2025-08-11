@@ -78,7 +78,7 @@ class SLM25DManager(SignalInterface):
         def fitfunc(x, a, b, c):
             return c - a * (x + b) ** 2   
         
-        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ)
+        popt, pcov = curve_fit(fitfunc, calibValues, self.arrayImgScoresAZ, p0=[200., 0.1, 450.])
         optimalCoeff = popt[1]
         
         return optimalCoeff

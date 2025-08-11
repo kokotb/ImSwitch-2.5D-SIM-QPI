@@ -112,6 +112,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+        self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
 
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
@@ -1299,12 +1300,20 @@ class SIMController(ImConWidgetController):
         self.AFCounter = 0
         ####
 
+        def debug_slot():
+            print("Signal was emitted and caught!")
+
+        self._commChannel.sigStartAutoZern.connect(debug_slot)
+
+        self._commChannel.sigStartAutoZern.emit()
+
         if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Auto Enabled')]=='2':
             autoZern = True
             autoZernRep = 0
         else:
             autoZern = False
             autoZernRep = -1
+
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
@@ -1390,9 +1399,20 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-                        if autoZern and autoZernRep < 154:         #!!! put 154 instead of 462 again - later have it un-hadrcoded           
+
+                        try:   #!!! EXTREMELY DUMB WAY TO DO IT!    
+                            finerLoop
+                        except NameError:
+                            finerLoop = False
+
+                        if autoZernRep == -1 and finerLoop:
+                            self._commChannel.sigStartAutoZernFinerLoop.emit()
+                            autoZernRep = 0
+                            
+
+                        if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:                    
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                            time.sleep(0.1) #can prob be deleted
+                            time.sleep(0.1) # !!!can prob be deleted
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -1477,17 +1497,23 @@ class SIMController(ImConWidgetController):
 
 
             if autoZern:
-                if ((autoZernRep + 1) % 7 == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+                if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
-                    try:
-                        optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(self._commChannel.autoZernCalibValues)     
-                    except: 
-                        self._logger.error('!!!FIT UNSUCCESSFUL!!!')
-                        optimalCoefficient = 3
                     
-                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(self._commChannel.autoZernCalibValues)
+                    if finerLoop:
+                        # try:
+                        #     optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
+                        #     self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
+                        # except: 
+                        #     self._logger.error('!!!FIT UNSUCCESSFUL!!!')
+                        #     #optimalCoefficient = 3 # !!! FIND better way to do it
+                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
+                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+
+                    else:
+                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
                     # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
 
@@ -1495,13 +1521,17 @@ class SIMController(ImConWidgetController):
                     self._master.slm25DManager.resetList()
 
 
-                if autoZernRep >= 153:  # hardcoded, 22 parameters with 7 options at the moment.
+                if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  
                     autoZernRep = -1
-                    self._commChannel.sigToggleAutoZern.emit(False)
-                    autoZern = False
+                    if finerLoop == False:
+                        finerLoop = True
+                        autoZern = True
+                    else:
+                        self._commChannel.sigToggleAutoZern.emit(False)
+                        autoZern = False
                 else:
                     autoZernRep += 1
-                    time.sleep(.1)
+                    time.sleep(.1) # !!!
 
 
 
@@ -1660,6 +1690,11 @@ class SIMController(ImConWidgetController):
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
         finally:
             self.settingAttr = False
+
+    def listLengthAZTestParams(self, AZlen, testValuesLen):
+        self.AutoZernCalibValuesListLength = AZlen
+        self.numCalibValues = testValuesLen
+
             
     # def setParameter(self, parameterName, value):
     #     # FIXME: Just a place holder

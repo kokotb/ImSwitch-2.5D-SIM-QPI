@@ -25,7 +25,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit = QLineEdit("")
         self.zStepDistance_textedit._name = 'Step Size'
         self.zStepDistance_textedit._type = 'str'
-        self.validator = QDoubleValidator(0.1, 20.0, 1)
+        self.validator = QDoubleValidator(0.1, 20.0, 3)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
         self.zStepDistance_textedit.setToolTip('Size between steps in microns. Smallest is 0.1 um.') 

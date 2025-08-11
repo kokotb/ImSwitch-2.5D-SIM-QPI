@@ -27,6 +27,10 @@ class SLM25DWidget(Widget):
     update25DMask = QtCore.Signal(str)
     updateCenterMask = QtCore.Signal(str)
     sigUpdateZernikeMask = QtCore.Signal(str)
+
+    updateDiameterMask = QtCore.Signal(str)
+    sigStepUpDiameterClicked = QtCore.Signal(str)
+    sigStepDownDiameterClicked = QtCore.Signal(str)
 #Signals to control red highlighting of incorreect QLineEdit entries
     sigCheckValidityAbsPos = QtCore.Signal(str)
     sigCheckValidityStep = QtCore.Signal(str)
@@ -78,6 +82,9 @@ class SLM25DWidget(Widget):
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(True)
         self.project25D.setEnabled(False)
+        self.projectCenter = QCheckBox('Project Center')
+        self.projectCenter.setChecked(True)
+        self.projectCenter.setEnabled(False)
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
@@ -90,9 +97,14 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Auto Enabled',str(value)))
+        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value))) #!!! ask Cody???
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
+
+        self.maskCenterCheckbox = QCheckBox("Mask Center")
+        self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.maskCenterCheckbox.setEnabled(False)
+        self.maskCenterCheckbox.setChecked(False)
         
         
 
@@ -105,11 +117,13 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.activate25DSLM,0,2)
         self.grid.addWidget(self.projectZernike,0,3)
         self.grid.addWidget(self.project25D,0,4)
-        self.grid.addWidget(self.slmPreview, 0, 5)
+        self.grid.addWidget(self.projectCenter,0,5)
+        self.grid.addWidget(self.slmPreview, 0, 6)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
         self.grid.addWidget(self.autoZernCheckbox, 4, 4)
+        self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
         self.grid.addWidget(self.reset25D, 17, 5)
         
         # Horizontal lines separating logic sections
@@ -261,10 +275,10 @@ class SLM25DWidget(Widget):
 
             # Double validator
             elif (name == 'Gamma') or (name == 'Psi'):
-                self.validator = QDoubleValidator(0.1,1.0,1)
+                self.validator = QDoubleValidator(0.01,1.0,2)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QDoubleValidator(0.0,5.0,1)
+                self.validator = QDoubleValidator(-25.0,25.0,2)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
                 self.pars['UpButton' + name].setAutoRepeat(True)
@@ -303,8 +317,9 @@ class SLM25DWidget(Widget):
                 self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
-
-
+        self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
+        self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
+        self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
 
         # self.stepLabel = QtWidgets.QLabel(f'<strong>Step</strong>')
         # self.stepLabel.setTextFormat(QtCore.Qt.RichText)
@@ -387,11 +402,13 @@ class SLM25DWidget(Widget):
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
+        self.maskCenterCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
+        self.projectCenter.setEnabled(False)
         self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
@@ -419,12 +436,14 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
+        self.maskCenterCheckbox.setEnabled(True)
         self.valLabel2.setEnabled(True)
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
+        self.projectCenter.setEnabled(True)
         self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)

@@ -102,6 +102,12 @@ class CommunicationChannel(SignalInterface):
 
     #sigRequestScannersInScan = Signal()
 
+    sigStartAutoZern = Signal()
+
+    sigStartAutoZernFinerLoop = Signal()
+
+    sigSendAutoZernListLen = Signal(int, int)
+
     sigSetAutoZern = Signal(int)
 
     sigSetOptimalZern = Signal(int, float)

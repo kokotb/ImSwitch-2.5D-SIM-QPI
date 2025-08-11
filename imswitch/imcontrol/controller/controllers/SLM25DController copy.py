@@ -37,14 +37,6 @@ class SLM25DController(ImConWidgetController):
         self.ZernikeAllMasksSumFloatRight = np.zeros((1080, 960))
         self.ZernikeAllMasksSumFloatLeft = np.zeros((1080, 960))
         self.ZernikeAllMasksSumFloat = np.zeros((1920, 1080))
-
-        self.centerMaskLeft = np.zeros((1080, 960))
-        self.centerMaskRight = np.zeros((1080, 960))
-        
-
-        self.mask25dbinaryLeft = np.zeros((1080, 960))
-        self.mask25dbinaryRight = np.zeros((1080, 960))
-        
         # self._widget.start25D.toggled.connect(self._commChannel.sig25DAcqToggled.emit())
         # self._widget.start25D.toggled.connect(lambda value: self._commChannel.sig25DAcqToggled.emit(value))
 
@@ -68,13 +60,9 @@ class SLM25DController(ImConWidgetController):
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
-        self._widget.updateDiameterMask.connect(self.updateAll)
-        self._widget.sigStepUpDiameterClicked.connect(self.updateAll)
-        self._widget.sigStepDownDiameterClicked.connect(self.updateAll) #!!! fix this
-
-        self._widget.updateCenterMask.connect(self.combineAndProject)
-        self._widget.sigStepUpCenterClicked.connect(self.combineAndProject)
-        self._widget.sigStepDownCenterClicked.connect(self.combineAndProject)
+        self._widget.updateCenterMask.connect(self.updateAll)
+        self._widget.sigStepUpCenterClicked.connect(self.updateAll)
+        self._widget.sigStepDownCenterClicked.connect(self.updateAll)
 
         self._widget.update25DMask.connect(self.updatePhaseMask)
         self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
@@ -152,41 +140,8 @@ class SLM25DController(ImConWidgetController):
         self.combineAndProject()
 
     def updatePhaseMask(self , recalc = True):
-        self.calculatePhaseMask()
-
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-
-        # current values 
-        parameters = self.getAllWidgetParams()
-        xleftcenterC = parameters["Left Center-X"]
-        yleftcenterC = parameters["Left Center-Y"]
-        xrightcenterC = parameters["Right Center-X"]
-        yrightcenterC = parameters["Right Center-Y"]
-
-        xleftShift = xleftcenterC - xleftcenter
-        yleftShift = yleftcenterC - yleftcenter
-        xrightShift = xrightcenterC - xrightcenter
-        yrightShift = yrightcenterC - yrightcenter
-
-        projectImageLeft = np.zeros((1080, 960))
-        projectImageRight = np.zeros((1080, 960))
-
-
-        if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-            projectImageLeft += self.shiftMaskZeroPad(self.mask25dbinaryLeft, xleftShift, yleftShift)
-            projectImageRight += self.shiftMaskZeroPad(self.mask25dbinaryRight, xrightShift, yrightShift)
-        else:
-            projectImageLeft += self.mask25dbinaryLeft
-            projectImageRight += self.mask25dbinaryRight
-
-        projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
-        projImg = projImg.astype(np.uint8)
+        self._widget.matrix25d = self.calculatePhaseMask()
         
-        self._widget.matrix25d = projImg
         self._widget.img25d.setImage(self._widget.matrix25d)
         self.mask25D = self._widget.matrix25d
         # self._widget.vb25D.setAspectLocked(True)
@@ -288,10 +243,10 @@ class SLM25DController(ImConWidgetController):
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter = parameters["Left Center-X"]
+        yleftcenter = parameters["Left Center-Y"]
+        xrightcenter = parameters["Right Center-X"]
+        yrightcenter = parameters["Right Center-Y"]
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -340,24 +295,29 @@ class SLM25DController(ImConWidgetController):
                         # if name == '(0,0)':
                         if order == (0,0):
                             zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
-                            self.ZernikeAllMasksSumFloatLeft += zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) *256
+                            self.ZernikeAllMasksSumFloatLeft = zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) *256
                         else:
                             zernikeLeft = zernpol.Zernpol.func_cart(order, xleftnormalized, yleftnormalized, masked=False)
                             zernikeLeft = (zernikeLeft-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
-                            self.ZernikeAllMasksSumFloatLeft += zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                            self.ZernikeAllMasksSumFloatLeft = zernikeLeft * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
                             
                     elif side == "Right":
                         # if name == '(0,0)':
                         if order == (0,0):
                             zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
-                            self.ZernikeAllMasksSumFloatRight += zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                            self.ZernikeAllMasksSumFloatRight = zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
                         else:
                             zernikeRight = zernpol.Zernpol.func_cart(order, xrightnormalized, yrightnormalized, masked=False)
                             zernikeRight = (zernikeRight-self.zernikeNormalizationDict[order][0])/(self.zernikeNormalizationDict[order][1]-self.zernikeNormalizationDict[order][0])
-                            self.ZernikeAllMasksSumFloatRight += zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
+                            self.ZernikeAllMasksSumFloatRight = zernikeRight * (zernikeParametersNew[name] - self.zernikeParametersOld[name]) * 256
                             
-                self.zernikeMask = np.concatenate((self.ZernikeAllMasksSumFloatLeft, self.ZernikeAllMasksSumFloatRight), axis=1)
-                self.zernikeMask = self.zernikeMask.transpose()
+                            
+                if side == 'Left':
+                    zernikeMaskupdate = np.concatenate((self.ZernikeAllMasksSumFloatLeft, np.zeros((1080, 960))), axis=1)
+                elif side == 'Right':
+                    zernikeMaskupdate = np.concatenate(( np.zeros((1080, 960)), self.ZernikeAllMasksSumFloatRight), axis=1)
+                # zernikeMaskupdate = np.concatenate((self.ZernikeAllMasksSumFloatLeft, self.ZernikeAllMasksSumFloatRight), axis=1)
+                self.zernikeMask = zernikeMaskupdate.transpose()
                 self.ZernikeAllMasksSumFloat += self.zernikeMask
 
         else:
@@ -376,10 +336,10 @@ class SLM25DController(ImConWidgetController):
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter = parameters["Left Center-X"]
+        yleftcenter = parameters["Left Center-Y"]
+        xrightcenter = parameters["Right Center-X"]
+        yrightcenter = parameters["Right Center-Y"]
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -442,176 +402,53 @@ class SLM25DController(ImConWidgetController):
 
         return self.ZernikeAllMasksSum
     
-    # def combineAndProject(self):
-    #     projZernike = self._widget.projectZernike.checkState()
-    #     proj25D = self._widget.project25D.checkState()
-    #     projCenter = self._widget.projectCenter.checkState()
-
-    #     if (projZernike == 2) and (proj25D == 2):
-    #         #if ((self._widget.matrixZernike == 0).all()):
-    #             #self._widget.matrixZernike = np.ones((1920, 1080))
-    #         projImg = self.mask25D + self._widget.matrixZernike 
-
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     elif (projZernike == 2) and (proj25D == 0) and (projCenter == 0):
-    #         #if ((self._widget.matrixZernike == 0).all()):
-    #             #self._widget.matrixZernike = np.ones((1920, 1080))
-    #         projImg = self._widget.matrixZernike
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     elif (projZernike == 0) and (proj25D == 2):
-    #         projImg = self.mask25D
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     elif (projZernike == 0) and (proj25D == 0) and (projCenter == 0):
-    #         projImg = np.zeros((1920, 1080))
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     elif (projCenter == 2) and (projZernike == 0): # always center mask only!
-    #         self.centerMask = self.createCenterMask()
-    #         projImg = self.centerMask
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     elif (projZernike == 2) and (projCenter == 2):
-    #         #if ((self._widget.matrixZernike == 0).all()):
-    #             #self._widget.matrixZernike = np.ones((1920, 1080))
-    #         self.centerMask = self.createCenterMask()
-    #         projImg = self.centerMask + self._widget.matrixZernike 
-
-    #         if self.slmActive:
-    #             self.slm25DManager.projectMask(self.reshapeMask(projImg))
-
-    #     else:
-    #         print('Center mask can be projected alone only')
-
-    import numpy as np
-
-    def shiftMaskZeroPad(self, mask, x_shift: int, y_shift: int):
-        shifted = np.zeros_like(mask)
-        h, w = mask.shape
-
-        if x_shift >= 0:
-            x_src_start, x_src_end = 0, w - x_shift
-            x_dst_start, x_dst_end = x_shift, w
-        else:
-            x_src_start, x_src_end = -x_shift, w
-            x_dst_start, x_dst_end = 0, w + x_shift
-
-        if y_shift >= 0:
-            y_src_start, y_src_end = 0, h - y_shift
-            y_dst_start, y_dst_end = y_shift, h
-        else:
-            y_src_start, y_src_end = -y_shift, h
-            y_dst_start, y_dst_end = 0, h + y_shift
-
-        shifted[y_dst_start:y_dst_end, x_dst_start:x_dst_end] = mask[y_src_start:y_src_end, x_src_start:x_src_end]
-
-        return shifted
-
-
-    def shiftMask(self, mask):
-        
-        shifted_mask = self.shiftMaskZeroPad(mask, xShift, yShift)
-
-
     def combineAndProject(self):
-
-        self.createCenterDotImage()
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-
-        # current values 
-        parameters = self.getAllWidgetParams()
-        xleftcenterC = parameters["Left Center-X"]
-        yleftcenterC = parameters["Left Center-Y"]
-        xrightcenterC = parameters["Right Center-X"]
-        yrightcenterC = parameters["Right Center-Y"]
-
-        xleftShift = xleftcenterC - xleftcenter
-        yleftShift = yleftcenterC - yleftcenter
-        xrightShift = xrightcenterC - xrightcenter
-        yrightShift = yrightcenterC - yrightcenter
-
-
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
         projCenter = self._widget.projectCenter.checkState()
 
-        projectImageLeft = np.zeros((1080, 960))
-        projectImageRight = np.zeros((1080, 960))
+        if (projZernike == 2) and (proj25D == 2):
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080))
+            projImg = self.mask25D + self._widget.matrixZernike 
 
-        if (proj25D == 2):
-            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-                projectImageLeft += self.shiftMaskZeroPad(self.mask25dbinaryLeft, xleftShift, yleftShift)
-                projectImageRight += self.shiftMaskZeroPad(self.mask25dbinaryRight, xrightShift, yrightShift)
-                
-                widget25dMask = np.concatenate((self.shiftMaskZeroPad(self.mask25dbinaryLeft, xleftShift, yleftShift),self.shiftMaskZeroPad(self.mask25dbinaryRight, xrightShift, yrightShift)), axis=1).transpose()
-                widget25dMask = widget25dMask.astype(np.uint8)
-        
-                self._widget.matrix25d = widget25dMask
-                self._widget.img25d.setImage(self._widget.matrix25d)
-                self.mask25D = self._widget.matrix25d
-            else:
-                projectImageLeft += self.mask25dbinaryLeft
-                projectImageRight += self.mask25dbinaryRight
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-                widget25dMask = np.concatenate((self.mask25dbinaryLeft,self.mask25dbinaryRight), axis=1).transpose()
-                widget25dMask = widget25dMask.astype(np.uint8)
-        
-                self._widget.matrix25d = widget25dMask
-                self._widget.img25d.setImage(self._widget.matrix25d)
-                self.mask25D = self._widget.matrix25d
+        elif (projZernike == 2) and (proj25D == 0) and (projCenter == 0):
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080))
+            projImg = self._widget.matrixZernike
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-        if (projZernike == 2):
-            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-                projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift)
-                projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)
-            
-                widgetZernikeMask = np.concatenate((self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift),self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)), axis=1).transpose()
-                widgetZernikeMask = widgetZernikeMask.astype(np.uint8)
-        
-                self._widget.matrixZernike = widgetZernikeMask
-                self._widget.imgZernike.setImage(self._widget.matrixZernike)
-                self.maskZernike = self._widget.matrixZernike
+        elif (projZernike == 0) and (proj25D == 2):
+            projImg = self.mask25D
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-            else:
-                projectImageLeft += self.ZernikeAllMasksSumFloatLeft
-                projectImageRight += self.ZernikeAllMasksSumFloatRight
+        elif (projZernike == 0) and (proj25D == 0) and (projCenter == 0):
+            projImg = np.zeros((1920, 1080))
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-                widgetZernikeMask = np.concatenate((self.ZernikeAllMasksSumFloatLeft, self.ZernikeAllMasksSumFloatRight), axis=1).transpose()
-                widgetZernikeMask = widgetZernikeMask.astype(np.uint8)
-        
-                self._widget.matrixZernike = widgetZernikeMask
-                self._widget.imgZernike.setImage(self._widget.matrixZernike)
-                self.maskZernike = self._widget.matrixZernike
+        elif (projCenter == 2) and (projZernike == 0): # always center mask only!
+            self.centerMask = self.createCenterMask()
+            projImg = self.centerMask
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
-        if (projCenter == 2):
-            self.createCenterMask()
-            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-                projectImageLeft += self.shiftMaskZeroPad(self.centerMaskLeft, xleftShift, yleftShift)
-                projectImageRight += self.shiftMaskZeroPad(self.centerMaskRight, xrightShift, yrightShift)
-            else:
-                projectImageLeft += self.centerMaskLeft
-                projectImageRight += self.centerMaskRight
+        elif (projZernike == 2) and (projCenter == 2):
+            #if ((self._widget.matrixZernike == 0).all()):
+                #self._widget.matrixZernike = np.ones((1920, 1080))
+            self.centerMask = self.createCenterMask()
+            projImg = self.centerMask + self._widget.matrixZernike 
 
-
-        projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
-        projImg = projImg.astype(np.uint8)
-
-        if self.slmActive:
-            self.slm25DManager.projectMask(self.reshapeMask(projImg))
+            if self.slmActive:
+                self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         else:
-            print('No masks projected')
+            print('Center mask can be projected alone only')
         
         
 
@@ -627,19 +464,13 @@ class SLM25DController(ImConWidgetController):
         return valueList[0], valueList[1], valueList[2], valueList[3], 
 
     def createCenterMask(self):
-        #xLeft, yLeft, xRight, yRight = self.getCurrentCenters()
-
-        xLeft = int(self._widget.valueDict25D["Left Center-X"])
-        yLeft = int(self._widget.valueDict25D["Left Center-Y"])
-        xRight = int(self._widget.valueDict25D["Right Center-X"])
-        yRight = int(self._widget.valueDict25D["Right Center-Y"])
-
+        xLeft, yLeft, xRight, yRight = self.getCurrentCenters()
 
         # SLM screen size parameters
         numberXpix = 1920
         numberYpix = 1080
         pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = self.getAllWidgetParams()['Beam Diameter']  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
+        rhoPupilAperture = 3.  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
         rhoPupilAperturePix = rhoPupilAperture/pszSLM
         
         # ====================================================================================================================================
@@ -661,16 +492,12 @@ class SLM25DController(ImConWidgetController):
 
         #circularMask = np.where(rhomatrix > 0.001, 0, 1)
         stripe_width = 130
-        XmatrixLeft = x_coordsleft + stripe_width//2 - xLeft
-        XmatrixRight =  x_coordsright + stripe_width//2 - xRight
-        stripe_maskLeft = XmatrixLeft % stripe_width
-        stripe_maskRight = XmatrixRight % stripe_width
-        helicalmaskLeft = thetamatrixleft * 255 * 1 / (2.* np.pi)
-        helicalmaskRight = thetamatrixright * 255 * 1 / (2.* np.pi)
-        self.centerMaskLeft =  (stripe_maskLeft * 255 / stripe_width  + helicalmaskLeft) #* circularMask
-        self.centerMaskRight =  (stripe_maskRight * 255 / stripe_width  + helicalmaskRight)
+        Xmatrix = np.concatenate((x_coordsleft + stripe_width//2 - xLeft, x_coordsright + stripe_width//2 - xRight),axis=1)
+        stripe_mask = Xmatrix % stripe_width
+        helicalmask = thetamatrix * 255 * 1 / (2.* np.pi)
+        finalMask =  (stripe_mask * 255 / stripe_width  + helicalmask) #* circularMask
         
-        #return np.transpose(finalMask.astype(np.uint8))
+        return np.transpose(finalMask.astype(np.uint8))
     
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
@@ -683,14 +510,10 @@ class SLM25DController(ImConWidgetController):
         parameters = self.getAllWidgetParams()
 
         rho = parameters["Beam Diameter"]
-        # xleftcenter = parameters["Left Center-X"]
-        # yleftcenter = parameters["Left Center-Y"]
-        # xrightcenter = parameters["Right Center-X"]
-        # yrightcenter = parameters["Right Center-Y"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter = parameters["Left Center-X"]
+        yleftcenter = parameters["Left Center-Y"]
+        xrightcenter = parameters["Right Center-X"]
+        yrightcenter = parameters["Right Center-Y"]
         gamma = parameters["Gamma"]
         psi = parameters["Psi"]
 
@@ -713,94 +536,25 @@ class SLM25DController(ImConWidgetController):
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         # ====================================================================================================================================
 
-        maskLeft = self.phase_function_fast(gamma, psi, rhomatrixleft) 
-        maskRight = self.phase_function_fast(gamma, psi, rhomatrixright) 
+        mask = self.phase_function_fast(gamma, psi, rhomatrix) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 127, 0)
-        self.mask25dbinaryRight = np.where(maskRight >= 0, 127, 0)
-        # maskbinary = maskbinary.astype(np.uint8)
-        # maskbinary = maskbinary.transpose()
+        maskbinary = np.where(mask >= 0, 127, 0)
+        maskbinary = maskbinary.astype(np.uint8)
+        maskbinary = maskbinary.transpose()
 
-        #return maskbinary
+        return maskbinary
     
 
     
     def updateZernikePhaseMask(self):
-
-        self.calculateZernikePhaseMask()
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-
-        # current values 
-        parameters = self.getAllWidgetParams()
-        xleftcenterC = parameters["Left Center-X"]
-        yleftcenterC = parameters["Left Center-Y"]
-        xrightcenterC = parameters["Right Center-X"]
-        yrightcenterC = parameters["Right Center-Y"]
-
-        xleftShift = xleftcenterC - xleftcenter
-        yleftShift = yleftcenterC - yleftcenter
-        xrightShift = xrightcenterC - xrightcenter
-        yrightShift = yrightcenterC - yrightcenter
-
-
-        projectImageLeft = np.zeros((1080, 960))
-        projectImageRight = np.zeros((1080, 960))
-
-        if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-            projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift)
-            projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)
-        else:
-            projectImageLeft += self.ZernikeAllMasksSumFloatLeft
-            projectImageRight += self.ZernikeAllMasksSumFloatRight
-
-        projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
-        projImg = projImg.astype(np.uint8)
-        
-        self._widget.matrixZernike = projImg
+        self._widget.matrixZernike = self.calculateZernikePhaseMask()
         self._widget.imgZernike.setImage(self._widget.matrixZernike, levels=(0,255))
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
 
     def recalculateZernikePhaseMask(self):
-        self.calculateNewZernikePhaseMask()
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-
-        # current values 
-        parameters = self.getAllWidgetParams()
-        xleftcenterC = parameters["Left Center-X"]
-        yleftcenterC = parameters["Left Center-Y"]
-        xrightcenterC = parameters["Right Center-X"]
-        yrightcenterC = parameters["Right Center-Y"]
-
-        xleftShift = xleftcenterC - xleftcenter
-        yleftShift = yleftcenterC - yleftcenter
-        xrightShift = xrightcenterC - xrightcenter
-        yrightShift = yrightcenterC - yrightcenter
-
-
-        projectImageLeft = np.zeros((1080, 960))
-        projectImageRight = np.zeros((1080, 960))
-
-        if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-            projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift)
-            projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)
-        else:
-            projectImageLeft += self.ZernikeAllMasksSumFloatLeft
-            projectImageRight += self.ZernikeAllMasksSumFloatRight
-
-        projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
-        projImg = projImg.astype(np.uint8)
-        
-        self._widget.matrixZernike = projImg
+        self._widget.matrixZernike = self.calculateNewZernikePhaseMask()
         self._widget.imgZernike.setImage(self._widget.matrixZernike, levels=(0,255))
         # self._widget.vbZernike.addItem(self._widget.imgZernike)
         # self._widget.vbZernike.setAspectLocked(True)
