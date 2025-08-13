@@ -62,12 +62,17 @@ class AutofocusController(ImConWidgetController):
         self.offLED()
 
     def autofocusModuleToggle(self, state):
-        self._commChannel.autofocusEnabled = state
-        self._widget.toggleEnabled(state)
-        if state == False:
-            self.offLED()
-        if (state == True) and (self._commChannel.initRegScore != None):
-            self.onLED()
+        if not self.AFCam.initAFCam:
+            self._logger.info('Autofocus camera was not initialized.')
+            time.sleep(0.1)
+            self._widget.autofocusModule.setCheckState(False)
+        else:
+            self._commChannel.autofocusEnabled = state
+            self._widget.toggleEnabled(state)
+            if state == False:
+                self.offLED()
+            if (state == True) and (self._commChannel.initRegScore != None):
+                self.onLED()
 
 
     def onLED(self):

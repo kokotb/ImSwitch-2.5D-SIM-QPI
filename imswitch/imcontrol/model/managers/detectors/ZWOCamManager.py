@@ -58,8 +58,11 @@ class ZWOCamManager(DetectorManager):
 
         # Step 1: Get number of connected cameras
         num_cameras = self._camera.ASIGetNumOfConnectedCameras()
+        self.initAFCam = False
         if num_cameras < 1:
-            raise RuntimeError("No ASI cameras found")
+            self.__logger.warning('Autofocus camera failed to initialize.')
+        else:
+            self.initAFCam = True
         
         # Step 2: Get camera info
         self.cam_info = ASI_CAMERA_INFO()

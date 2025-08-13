@@ -19,7 +19,6 @@ class LUCIDManager(DetectorManager):
 
     def __init__(self, device_infos, detectorInfo, name, **_lowLevelManagers):
         self.__logger = initLogger(self, instanceName=name)
-        # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
         self._camera = self._getCamObj(detectorInfo.managerProperties['cameraListIndex'], device_infos) #Goes to LC.py to create object and set parameters for first time
         
         self._running = False
@@ -40,16 +39,10 @@ class LUCIDManager(DetectorManager):
         self._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
         self._camera.setPropertyValue('ExposureAuto', "Off", toPrint=False)
 
-
-
-        #Read all camProperties in config file and set on cams. This operation is only for properties, not ROIs
-        # for propertyName, propertyValue in self.setupInfo.items():
-        #     self._camera.setPropertyValue(propertyName, propertyValue)
-
         
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
         fullShape = (self.roiInfo['Width'] ,self.roiInfo['Height'])
-        fullShapeSensor = (5320 , 4600)
+        fullShapeSensor = (self._camera.SensorWidth, self._camera.SensorHeight)
         frameStartGlobal = (detectorInfo.managerProperties['x0_global'], detectorInfo.managerProperties['y0_global'])
         frameStart = (self.roiInfo['OffsetX'], self.roiInfo['OffsetY'])
         # offsetRelative = (self.setupInfo['x0_global'], self.setupInfo['y0_global'])
@@ -75,8 +68,7 @@ class LUCIDManager(DetectorManager):
             # 'ExposureAuto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
             #                                     editable=False),
             'TriggerMode': DetectorListParameter(group='Acq. Control', value=trigmode_init, options=['Off','On'],
-                                                editable=True)
-                                                         
+                                                editable=True)                                             
         }
 
         ## No actions connected yet. If you want to enable, need to add actions=actions to super().__init__ below.
@@ -232,19 +224,13 @@ class LUCIDManager(DetectorManager):
 
     def _getCamObj(self, cameraId, device_infos):
         try:
-
-
             camera = LucidCam(cameraId, device_infos)
-
-
-            # print(camera)
         except Exception:
             self.__logger.warning(f'Failed to initialize Lucid camera {cameraId}, loading mocker')
             from imswitch.imcontrol.model.interfaces.MockLucidCamManager import LucidCamMock
             camera = LucidCamMock()
-            print(camera)
 
-        self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}')  #Prints "Initialized camera. serial ending...."
+        self.__logger.info(f'Initialized camera, serial ending: {camera.model[-2:]}') 
         return camera
     
     def close(self):

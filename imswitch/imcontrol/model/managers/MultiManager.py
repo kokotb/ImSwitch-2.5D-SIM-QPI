@@ -15,7 +15,7 @@ class MultiManager(ABC):
         self._subManagers = {}
         currentPackage = '.'.join(__name__.split('.')[:-1])
         if managedDeviceInfos:
-            if subManagersPackage == 'detectors':
+            if subManagersPackage == 'detectors': # This call takes a couple seconds and was previously done for each camera line. Only needs to be done once. Moved to here so it only exceutes once and passes device_infos to managers that need it.
                 device_infos = system.device_infos
             for managedDeviceName, managedDeviceInfo in managedDeviceInfos.items():
                 # Create sub-manager
@@ -26,7 +26,7 @@ class MultiManager(ABC):
                                             managedDeviceInfo.managerName)
                 )
                 manager = getattr(package, managedDeviceInfo.managerName)
-                if subManagersPackage == 'detectors':
+                if subManagersPackage == 'detectors': # Include deive_infos if a detector. Easier than putting a placeholder on every manager.
                     self._subManagers[managedDeviceName] = manager(device_infos,
                         managedDeviceInfo, managedDeviceName, **lowLevelManagers)
                 else:
