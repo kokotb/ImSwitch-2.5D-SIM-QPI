@@ -1307,7 +1307,7 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigStartAutoZern.emit()
 
-        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Auto Enabled')]=='2':
+        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
             autoZern = True
             autoZernRep = 0
         else:

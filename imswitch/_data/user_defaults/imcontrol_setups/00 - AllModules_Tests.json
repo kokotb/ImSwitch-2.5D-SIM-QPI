@@ -87,11 +87,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 19000.0
+        "ExposureTime": 400.0
       },
       "ROI":{  
-        "OffsetX": 2568,
-        "OffsetY": 2020,
+        "OffsetX": 2130,
+        "OffsetY": 1200,
         "Width": 1024,
         "Height": 1024
       } 
@@ -114,8 +114,8 @@
         "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 2110,
-        "OffsetY": 2300,
+        "OffsetX": 2130,
+        "OffsetY": 1670,
         "Width": 1024,
         "Height": 1024
       }
@@ -165,8 +165,8 @@
           "ExposureTime": 1000.0
         },
         "ROI":{
-          "OffsetX": 2408,
-          "OffsetY": 2790,
+          "OffsetX": 2100,
+          "OffsetY": 2320,
           "Width": 1024,
           "Height": 1024
         }
@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 0,
+      "valueInit": 100,
       "maxdBmValue": 17.6
       
       },
@@ -248,7 +248,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 100,
+    "valueInit": 0,
 
     "maxdBmValue": 21.8
     }

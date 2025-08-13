@@ -128,7 +128,7 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Zernike SLM Parameters','Right', 'Horizontal Coma'),
                                 ('Zernike SLM Parameters','Right', 'Horizontal Trefoil'),
                                 ('Zernike SLM Parameters','Right', 'Spherical'),
-                                ('Zernike SLM Parameters','Both', 'Auto Enabled'),
+                                ('Zernike SLM Parameters','Both', 'Enabled'),
                                 ('Autofocus Settings','Autofocus Checkbox'),
                                 ('Autofocus Settings','Autofocus Channel')]
         
