@@ -17,10 +17,10 @@ class LUCIDManager(DetectorManager):
     - ``tis`` -- dictionary of TIS camera properties
     """
 
-    def __init__(self, detectorInfo, name, **_lowLevelManagers):
+    def __init__(self, device_infos, detectorInfo, name, **_lowLevelManagers):
         self.__logger = initLogger(self, instanceName=name)
         # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
-        self._camera = self._getCamObj(detectorInfo.managerProperties['cameraListIndex']) #Goes to LC.py to create object and set parameters for first time
+        self._camera = self._getCamObj(detectorInfo.managerProperties['cameraListIndex'], device_infos) #Goes to LC.py to create object and set parameters for first time
         
         self._running = False
         self._adjustingParameters = False
@@ -230,11 +230,11 @@ class LUCIDManager(DetectorManager):
     def openPropertiesDialog(self):
         self._camera.openPropertiesGUI()
 
-    def _getCamObj(self, cameraId):
+    def _getCamObj(self, cameraId, device_infos):
         try:
 
 
-            camera = LucidCam(cameraId)
+            camera = LucidCam(cameraId, device_infos)
 
 
             # print(camera)

@@ -1387,12 +1387,12 @@ class SIMController(ImConWidgetController):
                     if self.firstLoop:
                         self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
-                    #### Stage wait times for giggle.
+                    #### Stage wait times for jiggle.
                     self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
                     if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                        time.sleep(.5) #Wait time for giggle if the stage is moving from end to origin to start another tile.
+                        time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
                     else:
-                        time.sleep(.05) #Wait time for giggle if only moving to adjacent ROI.
+                        time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
 

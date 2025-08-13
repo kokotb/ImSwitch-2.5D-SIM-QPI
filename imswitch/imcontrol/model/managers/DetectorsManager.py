@@ -6,6 +6,7 @@ from imswitch.imcommon.framework import Mutex, Signal, SignalInterface, Thread, 
 from .MultiManager import MultiManager
 
 
+
 class DetectorsManager(MultiManager, SignalInterface):
     """ DetectorsManager is an interface for dealing with DetectorManagers. It
     is a MultiManager for detectors. """

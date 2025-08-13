@@ -611,7 +611,8 @@ class SLM25DController(ImConWidgetController):
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         else:
-            print('No masks projected')
+            pass
+            # print('No masks projected')
         
         
 

@@ -14,14 +14,14 @@ from arena_api.__future__.save import Writer
 from datetime import datetime
 
 class LucidCam:
-    def __init__(self, cameraNo):
+    def __init__(self, cameraNo, device_infos):
         super().__init__()
         
         self.__logger = initLogger(self, tryInheritParent=True)
 
         device = []
         
-        # cameraNo is a two digit number unique to our cams (LUCID)
+        # cameraNo is the last 2 digits of the Lucid Cam serial number
         cameraNo_string = "{}".format(cameraNo)
         camerNo_num_digit = len(cameraNo_string)
         camera_found = False
@@ -29,7 +29,7 @@ class LucidCam:
         device_infos = None
         selected_index = None
         
-        device_infos = system.device_infos #CTNOTE How long does this step take? It gathers all camera info every loop. Can reduce time by 2/3.
+        # device_infos = system.device_infos #CTNOTE How long does this step take? It gathers all camera info every loop. Can reduce time by 2/3.
 
         for i in range(len(device_infos)):
             if cameraNo_string == device_infos[i]['serial'][-camerNo_num_digit:]:

@@ -40,7 +40,7 @@ class ZWOCamManager(DetectorManager):
     - ``tis`` -- dictionary of TIS camera properties
     """
 
-    def __init__(self, detectorInfo, name, **_lowLevelManagers):
+    def __init__(self, device_infos, detectorInfo, name, **_lowLevelManagers):
         self.__logger = initLogger(self, instanceName=name)
         # self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,**lowLevelManagers)
         # Load the DLL
