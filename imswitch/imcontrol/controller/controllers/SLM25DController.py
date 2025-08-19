@@ -108,9 +108,11 @@ class SLM25DController(ImConWidgetController):
         self.mask25D = np.zeros((1920, 1080))
         self.centerMask = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
-        self.init25DWidgetValues()
 
-        self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
+        # self.init25DWidgetValues()
+        # self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
+
+
         self.fullZernList = self.createFullZernList1stLoop()
         
     def toggleAutoZern(self, state):
@@ -612,7 +614,7 @@ class SLM25DController(ImConWidgetController):
 
         else:
             pass
-            # print('No masks projected')
+            print('No masks projected')
         
         
 
