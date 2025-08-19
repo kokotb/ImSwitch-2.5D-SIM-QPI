@@ -77,6 +77,10 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser2.handle = str(self.SimProcessorLaser2.exWavelength) + 'F'
         self.SimProcessorLaser3.handle = str(self.SimProcessorLaser3.exWavelength) + 'F'
         self.SimProcessorLaser4.handle = str(self.SimProcessorLaser4.exWavelength) + 'S'
+        self.SimProcessorLaser1.source = 'fluor'
+        self.SimProcessorLaser2.source = 'fluor'
+        self.SimProcessorLaser3.source = 'fluor'
+        self.SimProcessorLaser4.source = 'scatter'
         self.SimProcessorLaser1.roOrder = 1
         self.SimProcessorLaser2.roOrder = 2
         self.SimProcessorLaser3.roOrder = 3
@@ -181,31 +185,25 @@ class SIMController(ImConWidgetController):
 
         
     def performSIMExperimentThread(self, sim_parameters):
-        """
-        Select a sequence on the SLM that will choose laser combination.
-        Run the sequence by sending the trigger to the SLM.
-        Run continuous on a single frame. 
-        Run snake scan for larger FOVs.
-        """
-        
-        self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
-        projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
-
+        #CTNOTE: Change to dynamic
+        projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
-        else:
+        else: 
             self.scatterCam = False
-
-        # Check if lasers are set and have power in them select only lasers with powers
+        #   
+        self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
+        # Create list of powered (active) lasers.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
-                poweredLasers.append(laser.wavelength)
-        if 488 in poweredLasers and self.scatterCam:
-            poweredLasers.append(490)
-
+                poweredLasers.append(str(laser.wavelength)+'F')
+        if '488F' in poweredLasers and self.scatterCam:
+            poweredLasers.append(str('488S'))
+        #
         self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
-
+        ####Set flags for using in logic later.
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
         else:
@@ -227,7 +225,6 @@ class SIMController(ImConWidgetController):
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
-
         # Set running order on SLM
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
@@ -235,31 +232,34 @@ class SIMController(ImConWidgetController):
         self.expTimeMax, self.numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
         expectedLoopTime = ((self.expTimeMax*18*self.numSLMChannels)+(20*3))/1000000*1.15
         self.setActiveSLMChannels(self.numSLMChannels, chansSLM)
+
+        #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
         for processor in self.processors:
             for detector in self.detectors:
-                if processor.handle == detector._wavelength:
+                if processor.handle == detector.handle:
                     processor.detObj = detector
                     processor.shape = detector._shape
-                    
-            if (processor.slmActive == True) and (processor.handle in poweredLasers):
+
+            if (processor.slmActive == True) and (processor.handle in poweredLasers): #Is "(processor.slmActive == True)" needed?
                 self.activeProcessors.append(processor)
+        
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations. Check SLM running order and laser power.")
+            self.stopSIM()
+            return
 
-
-
-
-        shapeList = []
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
-        if self.scatterCam and (488 in poweredLasers):
-            self.SimProcessorLaser4.processorIndex = 0
-        if len(self.activeProcessors) == 0:
-            self._logger.error("No active laser/detector combinations. Check SLM running order and powered lasers.")
-            self.stopSIM()
-            return
+        if ('488S' in poweredLasers):
+            self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
+        ####
+
+
         
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        shapeList = []
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
@@ -280,22 +280,11 @@ class SIMController(ImConWidgetController):
         ####
 
 
-
-        ''' # For nameing tiling squares A1, A2, .....C5 etc.
-        # gridNamesX = [str(x+1) for x in range(self.num_grid_x)]
-        # gridNamesY = list(string.ascii_uppercase)[:self.num_grid_y]
-        # test = []
-        # for item in gridNamesY:
-        #     for value in gridNamesX:
-        #         test.append(item+value)
-        '''
-        
-       
-
         # Set all SIM parameters from GUI to each processor. All will be the same, except Recon WL
         self.updateProcessorParameters()
 
-        
+        #### Flags for state control, constant varables, this that need one time initialization.
+        self.zLength = len(zList)
         self.numAllFrames = 0 # Number of frames, including dropped frames
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
         self.framesPerDetector = 9
@@ -311,7 +300,7 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
-        self.zLength = len(zList)
+
         startLoopTime = time.time()
         
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
@@ -486,18 +475,21 @@ class SIMController(ImConWidgetController):
 
         k = processor.processorIndex
         roOrder = processor.roOrder
+        if self.scatterCam:
+            numFluorProcessors = len(self.activeProcessors) - 1
+        else:
+            numFluorProcessors = len(self.activeProcessors)
 
-        if k+1 == len(self.activeProcessors):
+        if k+1 == numFluorProcessors:
             lastChan = True
         else: 
             lastChan = False
+        if processor.handle == '488S': lastChan = False
 
-        broken = False
-        
-        # Set current detector being used
-        detector = processor.detObj
+        broken = False # Initialize flag
+        detector = processor.detObj # Set current detector object associated with proecssor.
 
-        if self.numSLMChannels == 3:
+        if self.numSLMChannels == 3: #seems like I am missing something here. How does 2 channels behanve?
             time.sleep(self.expTimeMax/1000000*(roOrder)*18) #approximately how long it will start for detector to start receiving images in buffer.
         else:
             time.sleep(self.expTimeMax/1000000*18)
@@ -549,13 +541,14 @@ class SIMController(ImConWidgetController):
             self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
             
             # Set sim stack for reconstruction
-            processor.setSIMStack(rawStack)
+            # processor.setSIMStack(rawStack)
+            processor.stack = rawStack
             # Average raw stacks to make WF
-            imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor?
+            imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor? This function also sends to display.
             imageWF = imageWF.astype(np.uint16)
 
             
-            if self.isReconstruction:
+            if (self.isReconstruction):
                 # Pass shared attributes to SIMprocessor
                 processor.setCurrentSharedAttrs(self._commChannel.sharedAttrs)
                 processor.reconstructSIMStackBackgroundLBF()
@@ -571,21 +564,22 @@ class SIMController(ImConWidgetController):
                     self.startSettingsSaved = True
 
             with saveStackLock:
-                if self.isRecordRaw:
-                    self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
+                if processor.source == 'fluor':
+                    if self.isRecordRaw:
+                        self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
 
                 if self.isRecordWF:
                     self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z, self.roiIter)
-
-                if self.isRecordRecon and self.isReconstruction:
+                if self.isRecordRecon and self.isReconstruction and processor.source == 'fluor':
                     self.recordSIMFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
 
             
             if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-                self.recordOneSetRaw(self.j, processor)
                 self.recordOneSetWF(self.j, imageWF, processor)
-                if self.isReconstruction:
-                    self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
+                if processor.source == 'fluor':
+                    self.recordOneSetRaw(self.j, processor)
+                    if self.isReconstruction:
+                        self.recordOneSetSIM(self.j, processor.SIMReconstruction, processor)
                 processor.saveOneTime = False
                 with snapshotLock: # Needed to only save one settings file per snapshot.
                     if self.snapshotSettingsSaved == False:
@@ -1198,21 +1192,20 @@ class SIMController(ImConWidgetController):
     def perform25DExperimentThread(self):
         #CTNOTE: Change to dynamic
         projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
-
+        #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
         else: 
             self.scatterCam = False
-        # Check if lasers are set and have power in them. Only channels with active lasers will be used.
+        # Create list of powered (active) lasers.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(str(laser.wavelength)+'F')
         if '488F' in poweredLasers and self.scatterCam:
             poweredLasers.append(str('488S'))
-
+        #
         self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
-
         ####Set flags for using in logic later.
         if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
             self.isTiling = True
@@ -1235,7 +1228,7 @@ class SIMController(ImConWidgetController):
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zList
-        ####
+        #
 
         #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
@@ -1247,14 +1240,11 @@ class SIMController(ImConWidgetController):
             if processor.handle in poweredLasers:
                 self.activeProcessors.append(processor)
 
-
-
-        # self.activeProcessors.append(processor)
         if len(self.activeProcessors) == 0:
-            self._logger.error("No active laser/detector combinations.")
-            self.stopSIM()
+            self._logger.error("No active laser/detector combinations. Check if lasers are > 0% power.")
+            self.stop25D()
             return
-        shapeList = []
+        
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
             shapeList.append(processor.shape)
@@ -1263,6 +1253,7 @@ class SIMController(ImConWidgetController):
         ####
             
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        shapeList = []
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
