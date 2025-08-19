@@ -155,18 +155,18 @@
       "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 47,
-        "wavelength": 490,
+        "wavelength": 488,
         "x0_global": 0,
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 1000.0
+          "ExposureTime": 50.0
         },
         "ROI":{
-          "OffsetX": 2100,
-          "OffsetY": 2320,
+          "OffsetX": 2176,
+          "OffsetY": 2160,
           "Width": 1024,
           "Height": 1024
         }

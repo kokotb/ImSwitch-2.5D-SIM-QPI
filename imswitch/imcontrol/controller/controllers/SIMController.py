@@ -665,7 +665,7 @@ class SIMController(ImConWidgetController):
         rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameCounter:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_raw.tif"
+        rawFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_raw.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
@@ -677,9 +677,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
         if isTiling:
-            rawFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            rawFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         else:
-            rawFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            rawFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
@@ -687,7 +687,7 @@ class SIMController(ImConWidgetController):
         wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
-        wfFilenames = f"f{self.frameCounter:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_WF.tif"
+        wfFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_WF.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
@@ -699,9 +699,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(wfSavePath):
             os.makedirs(wfSavePath)
         if isTiling:
-            wfFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            wfFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         else:
-            wfFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            wfFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
@@ -709,7 +709,7 @@ class SIMController(ImConWidgetController):
         simSavePath = os.path.join(self.exptFolderPath,'Snapshot')
         if not os.path.exists(simSavePath):
             os.makedirs(simSavePath)
-        simFilenames = f"f{self.frameCounter:04}_pos{j:04}_{int(processor.handle):03}_{self.exptTimeElapsedStr}_SIM.tif"
+        simFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_SIM.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
         self.saveImageInBackground(im,simSavePath, simFilenames)
 
@@ -721,9 +721,9 @@ class SIMController(ImConWidgetController):
         if not os.path.exists(reconSavePath):
             os.makedirs(reconSavePath)
         if isTiling:
-            reconFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{pos_num:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            reconFilenames = f"f{tilingRep:04}_roi{roiIterator:03}_pos{pos_num:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         else:
-            reconFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{pos_num:04}_z{z:03}_{int(processor.handle):03}_{self.exptTimeElapsedStr}.tif"
+            reconFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{pos_num:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
         self.saveImageInBackground(processor.SIMReconstruction, reconSavePath,reconFilenames)
 
@@ -1541,6 +1541,8 @@ class SIMController(ImConWidgetController):
         k = processor.processorIndex
         if self.scatterCam:
             numFluorProcessors = len(self.activeProcessors) - 1
+        else:
+            numFluorProcessors = len(self.activeProcessors)
         if k+1 == numFluorProcessors: # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
             lastChan = True 
         else: 
@@ -1588,6 +1590,7 @@ class SIMController(ImConWidgetController):
             self.lastImgDict[processor.handle] = rawImg
 
         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+        # self.displayRawImage(rawImg, f"{processor.handle} Raw")
         processor.stack = rawImg
 
         self._commChannel.sigGetLastRawImgs.emit(rawImg, processor.handle)
@@ -1601,9 +1604,7 @@ class SIMController(ImConWidgetController):
                 resetStack = False
             self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
         ####
-                
-        # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
-        
+      
         #### Emits every 2.5D image to tiling preview window.
         if self.tilePreview and self.isTiling:
             # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
@@ -1616,14 +1617,14 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigSaveSettingsFirst.emit()
                 self.startSettingsSaved = True
 
-        if (self.isRecordRaw):# and (self.frameCounter % 60 == 0): # Saves raw images.
+        if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
             with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
                 self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-            self.recordOneSetRaw(self.j, processor) # Save one image from each active channel.
+            self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
             processor.saveOneTime = False
-            with snapshotLock: # Needed to only save one settings file per snapshot.
+            with snapshotLock: #Needed to only save one settings file per snapshot.
                 if self.snapshotSettingsSaved == False:
                     self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
                     self.snapshotSettingsSaved = True
@@ -1635,14 +1636,10 @@ class SIMController(ImConWidgetController):
         self._commChannel.autofocusActive = True
         self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
         self.AFThread.start()
-
-        # self.autofocusRep()
         
     def autofocusStart(self):
         while (self._commChannel.autofocusActive == True) and (self._commChannel.initRegScore != None):
             self.autofocusLoop()
-
-
 
     def autofocusLoop(self):
         if self.firstLoop:

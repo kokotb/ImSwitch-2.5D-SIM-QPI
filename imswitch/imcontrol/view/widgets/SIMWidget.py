@@ -125,11 +125,6 @@ class SIMWidget(NapariHybridWidget):
         self.viewer.layers.move_multiple(sortingKey)
 
 
-
-
-
-
-
     def contrastReconFunc(self):
             
         layerList = self.getAllLayerNames()
