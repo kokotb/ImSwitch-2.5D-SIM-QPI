@@ -118,6 +118,9 @@ class SettingsController(ImConWidgetController):
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
 
         self._widget.scatterCamActive.stateChanged.connect(self.toggleScatterCam)
+        if self._master.detectorsManager._subManagers['Scatter Cam']:
+            self._widget.scatterCamActive.setEnabled(True)
+
 
     def toggleScatterCam(self, state):
         self._commChannel.scatterCamActive = state

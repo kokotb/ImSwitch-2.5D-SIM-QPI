@@ -167,6 +167,7 @@ class SettingsWidget(Widget):
         self.detectorListBox.addWidget(self.nextDetectorButton)
 
         self.scatterCamActive = QCheckBox('Activate Scatter Cam')
+        self.scatterCamActive.setEnabled(False)
 
         # Add elements to GridLayout
         self.layout = QtWidgets.QVBoxLayout()
