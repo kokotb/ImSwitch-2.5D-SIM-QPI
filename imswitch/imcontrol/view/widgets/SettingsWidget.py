@@ -1,6 +1,6 @@
 from pyqtgraph.parametertree import ParameterTree, Parameter
 from qtpy import QtCore, QtWidgets
-
+from PyQt5.QtWidgets import QCheckBox
 from imswitch.imcommon.model import shortcut
 from imswitch.imcommon.view.guitools import naparitools
 from imswitch.imcontrol.view import guitools
@@ -145,6 +145,7 @@ class SettingsWidget(Widget):
     sigROIChanged = QtCore.Signal()
     sigDetectorChanged = QtCore.Signal(str)  # (detectorName)
     sigNextDetectorClicked = QtCore.Signal()
+    sigScatterCamToggle = QtCore.Signal(bool)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -165,12 +166,15 @@ class SettingsWidget(Widget):
         self.detectorListBox.addWidget(self.detectorList, 1)
         self.detectorListBox.addWidget(self.nextDetectorButton)
 
+        self.scatterCamActive = QCheckBox('Activate Scatter Cam')
+
         # Add elements to GridLayout
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
         self.layout.addWidget(detectorTitle)
         self.layout.addWidget(self.stack)
         self.layout.addLayout(self.detectorListBox)
+        self.layout.addWidget(self.scatterCamActive)
 
         # Connect signals
         self.ROI.sigROIChanged.connect(self.sigROIChanged)
@@ -178,6 +182,8 @@ class SettingsWidget(Widget):
             lambda index: self.sigDetectorChanged.emit(self.detectorList.itemData(index))
         )
         self.nextDetectorButton.clicked.connect(self.sigNextDetectorClicked)
+
+
 
     def addDetector(self, detectorName, detectorModel, detectorParameters, detectorActions,
                     supportedBinnings, roiInfos):

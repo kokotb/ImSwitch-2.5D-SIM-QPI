@@ -192,6 +192,8 @@ class CommunicationChannel(SignalInterface):
         self.autofocusActive = False
         self.AFMaskLeft = None
         self.AFMaskRight = None
+        #Scatter Cam 
+        self.scatterCamActive = 0 #False
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList

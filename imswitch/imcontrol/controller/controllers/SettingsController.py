@@ -117,6 +117,11 @@ class SettingsController(ImConWidgetController):
         self._widget.sigDetectorChanged.connect(self.detectorSwitchClicked)
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
 
+        self._widget.scatterCamActive.stateChanged.connect(self.toggleScatterCam)
+
+    def toggleScatterCam(self, state):
+        self._commChannel.scatterCamActive = state
+
     def writeParamsFromCamFunc(self, detector, value):
         self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'].value = value
         self._master.detectorsManager._subManagers[detector.name].parameters['TriggerMode'].value = 'On'
