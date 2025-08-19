@@ -68,11 +68,15 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL1)
         self.SimProcessorLaser2 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL2)
         self.SimProcessorLaser3 = SIMProcessor(self, self.sim_parameters, wavelength=self.sim_parameters.ReconWL3)
-        self.SimProcessorLaser4 = SIMProcessor(self, self.sim_parameters, wavelength=490)
-        self.SimProcessorLaser1.handle = 488 #This handle is used to keep naming consistent when wavelengths may change.
-        self.SimProcessorLaser2.handle = 561
-        self.SimProcessorLaser3.handle = 640
-        self.SimProcessorLaser4.handle = 490
+        self.SimProcessorLaser4 = SIMProcessor(self, self.sim_parameters, wavelength=488)
+        self.SimProcessorLaser1.exWavelength = 488 #This handle is used to keep naming consistent when wavelengths may change.
+        self.SimProcessorLaser2.exWavelength = 561
+        self.SimProcessorLaser3.exWavelength = 640
+        self.SimProcessorLaser4.exWavelength = 488
+        self.SimProcessorLaser1.handle = str(self.SimProcessorLaser1.exWavelength) + 'F'
+        self.SimProcessorLaser2.handle = str(self.SimProcessorLaser2.exWavelength) + 'F'
+        self.SimProcessorLaser3.handle = str(self.SimProcessorLaser3.exWavelength) + 'F'
+        self.SimProcessorLaser4.handle = str(self.SimProcessorLaser4.exWavelength) + 'S'
         self.SimProcessorLaser1.roOrder = 1
         self.SimProcessorLaser2.roOrder = 2
         self.SimProcessorLaser3.roOrder = 3
@@ -80,7 +84,11 @@ class SIMController(ImConWidgetController):
         self.processors = [self.SimProcessorLaser1,self.SimProcessorLaser2,self.SimProcessorLaser3,self.SimProcessorLaser4] #processor object list
         self.detectors = []
         for detector in self._master.detectorsManager: #detector object list
-            self.detectors.append(detector[1])
+            if detector[1]._DetectorManager__forAcquisition:
+                fullName = detector[0]
+                shortName = fullName[:5].replace(" ", "")
+                detector[1].handle = shortName
+                self.detectors.append(detector[1])
 
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
@@ -183,17 +191,17 @@ class SIMController(ImConWidgetController):
         self.sim_parameters = sim_parameters #Make starting parameters available to all of SIMController.py
         projCamPixelSize = (sim_parameters.Pixelsize)/(sim_parameters.Magnification) # This may be very slightly miscalced (sig figs). Conversion to pixel space gives 512.05, not 512.
 
-        if self._widget.scatterCamEnable.checkState() == 2:
-            scatterCam = True
+        if self._commChannel.scatterCamActive == 2:
+            self.scatterCam = True
         else:
-            scatterCam = False
+            self.scatterCam = False
 
         # Check if lasers are set and have power in them select only lasers with powers
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
                 poweredLasers.append(laser.wavelength)
-        if 488 in poweredLasers and scatterCam:
+        if 488 in poweredLasers and self.scatterCam:
             poweredLasers.append(490)
 
         self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
@@ -244,7 +252,7 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
-        if scatterCam and (488 in poweredLasers):
+        if self.scatterCam and (488 in poweredLasers):
             self.SimProcessorLaser4.processorIndex = 0
         if len(self.activeProcessors) == 0:
             self._logger.error("No active laser/detector combinations. Check SLM running order and powered lasers.")
@@ -979,9 +987,6 @@ class SIMController(ImConWidgetController):
         
 
 
-        
-        # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
-
         self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
         self.simThread.start()
 
@@ -996,8 +1001,6 @@ class SIMController(ImConWidgetController):
         
 
 
-        
-        # self._commChannel.sharedAttrs._data[('Detector','488 Cam','ROI')][2:]
 
         self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
         self.thread25D.start()
@@ -1196,17 +1199,17 @@ class SIMController(ImConWidgetController):
         #CTNOTE: Change to dynamic
         projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
 
-        if self._widget.scatterCamEnable.checkState() == 2:
-            scatterCam = True
+        if self._commChannel.scatterCamActive == 2:
+            self.scatterCam = True
         else: 
-            scatterCam = False
+            self.scatterCam = False
         # Check if lasers are set and have power in them. Only channels with active lasers will be used.
         poweredLasers = []
         for laser in self.lasers:
             if laser.percentPower > 0:
-                poweredLasers.append(laser.wavelength)
-        if 488 in poweredLasers and scatterCam:
-            poweredLasers.append(490)
+                poweredLasers.append(str(laser.wavelength)+'F')
+        if '488F' in poweredLasers and self.scatterCam:
+            poweredLasers.append(str('488S'))
 
         self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
 
@@ -1236,11 +1239,9 @@ class SIMController(ImConWidgetController):
 
         #### Set attributes to processors and select only active processors (processors with powered lasers).
         self.activeProcessors = []
-        # if self._widget.scatterCamEnable.checkState() == 2:
-        #     scatterCam = True
         for processor in self.processors:
             for detector in self.detectors: # Associate detector object with processor object.
-                if processor.handle == detector._wavelength:
+                if processor.handle == detector.handle:
                     processor.detObj = detector
                     processor.shape = detector._shape
             if processor.handle in poweredLasers:
@@ -1257,8 +1258,8 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
             shapeList.append(processor.shape)
-        if scatterCam and (488 in poweredLasers):
-            self.SimProcessorLaser4.processorIndex = 0
+        if ('488S' in poweredLasers):
+            self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
         ####
             
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
@@ -1308,7 +1309,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStartAutoZern.emit()
 
         if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
-            autoZern = True
+            autoZern  = True
             autoZernRep = 0
         else:
             autoZern = False
@@ -1538,10 +1539,13 @@ class SIMController(ImConWidgetController):
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
         k = processor.processorIndex
-        if k+1 == len(self.activeProcessors): # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
-            lastChan = True
+        if self.scatterCam:
+            numFluorProcessors = len(self.activeProcessors) - 1
+        if k+1 == numFluorProcessors: # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
+            lastChan = True 
         else: 
             lastChan = False
+        if processor.handle == '488S': lastChan = False
 
         broken = False # Initialize flag
         detector = processor.detObj # Set current detector object associated with proecssor.

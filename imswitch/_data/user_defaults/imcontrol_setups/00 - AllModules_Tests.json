@@ -74,7 +74,7 @@
     "isMock": false
 },
 "detectors": {
-  "488 Cam": {
+  "488 Fluor": {
     "analogChannel": null,
     "digitalLine": null,
     "managerName": "LUCIDManager",
@@ -98,7 +98,7 @@
     },
     "forAcquisition": true
   },
-  "561 Cam": {
+  "561 Fluor": {
     "analogChannel": null,
     "digitalLine": null,
     "managerName": "LUCIDManager",
@@ -122,7 +122,7 @@
     },
     "forAcquisition": true
   },
-    "640 Cam": {
+    "640 Fluor": {
       "analogChannel": null,
 
       "digitalLine": null,
@@ -148,7 +148,7 @@
       "forAcquisition": true
     },
 
-    "Scatter Cam": {
+    "488 Scatter": {
       "analogChannel": null,
 
       "digitalLine": null,

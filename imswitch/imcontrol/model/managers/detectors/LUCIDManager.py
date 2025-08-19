@@ -31,7 +31,7 @@ class LUCIDManager(DetectorManager):
         
         #Properties that will not EVER change, but are also not defult
 
-        if name == 'Scatter Cam':
+        if name == '488 Scatter':
             self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 1500, toPrint=False) #The MD ethernet port can only take 1500 byte packets
         else:
             self._camera.setPropertyValue('DeviceStreamChannelPacketSize', 9014, toPrint=False) 

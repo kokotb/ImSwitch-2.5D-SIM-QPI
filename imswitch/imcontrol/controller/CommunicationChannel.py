@@ -180,7 +180,7 @@ class CommunicationChannel(SignalInterface):
         self.simActive = False
         self.activeDir = None
         self.stop25DNow = False
-        self.lastImgDict = {488: None, 561: None,640: None}
+        self.lastImgDict = {'488F': None, '561F': None,'640F': None, '488S': None}
 
         #Autofocus variables
         self.calCurveFit = False

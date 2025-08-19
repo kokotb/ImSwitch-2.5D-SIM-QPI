@@ -109,8 +109,8 @@ class SLM25DController(ImConWidgetController):
         self.centerMask = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
 
-        # self.init25DWidgetValues()
-        # self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
+        self.init25DWidgetValues()
+        self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
 
 
         self.fullZernList = self.createFullZernList1stLoop()
