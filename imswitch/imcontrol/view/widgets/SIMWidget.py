@@ -20,8 +20,6 @@ class SIMWidget(NapariHybridWidget):
 
     sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
-    # sigCalibrateToggled = QtCore.Signal(bool)
-    # sigSIMAcqToggled = QtCore.Signal(bool)
     sigStartSIM = QtCore.Signal()
     sigStopSIM = QtCore.Signal()
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
@@ -69,7 +67,7 @@ class SIMWidget(NapariHybridWidget):
         ]
         # Set layer properties
         self.layer = None
-        self.laserColormaps = {'488':'cyan','561':'green','640':'red'}
+        self.laserColormaps = {'488F':'cyan','561F':'green','640F':'red', '488S': 'grayclip'}
         self.micronsPerPixel = [.1233,.1233]
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
@@ -81,7 +79,7 @@ class SIMWidget(NapariHybridWidget):
         
     def setSIMImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            colormap = self.laserColormaps[name[:3]]
+            colormap = self.laserColormaps[name[:4]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = [x/2 for x in self.micronsPerPixel] #SIM image recon result is 2x size of WF and raw images. So scale needs to be reduced by half.
@@ -106,7 +104,7 @@ class SIMWidget(NapariHybridWidget):
 
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            colormap = self.laserColormaps[name[:3]]
+            colormap = self.laserColormaps[name[:4]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
@@ -137,14 +135,14 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].contrast_limits = [0,percentile9999]
 
     def colormapToggleReconFunc(self, channel):
-        self.laserColormaps
+        # self.laserColormaps
         layerList = self.getAllLayerNames()
         reconLayerList = [x for x in layerList if 'Recon' in x]
         if channel not in reconLayerList:
             return
         currentColor = self.viewer.layers[channel].colormap.name
         if currentColor == 'grayclip':
-            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:3]]
+            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:4]]
         else:
             self.viewer.layers[channel].colormap = 'grayclip'
 

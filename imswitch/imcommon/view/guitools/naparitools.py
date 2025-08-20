@@ -86,7 +86,7 @@ class NapariBaseWidget(QtWidgets.QWidget):
         super().__init__()
         self.viewer = napariViewer
         # self.viewer = napari.Viewer() #This line creates new window for viewer object, but leaves the original one also.
-        self.viewer.grid.shape = (3,3) #CTNOTE Napari
+        self.viewer.grid.shape = (4,3) #CTNOTE Napari
         # self.viewer.grid.enabled = True
         # self.viewer.camera.zoom = 4.42
 

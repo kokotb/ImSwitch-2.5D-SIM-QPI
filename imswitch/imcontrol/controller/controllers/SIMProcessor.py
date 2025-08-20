@@ -75,8 +75,6 @@ class SIMProcessor(object):
         '''
         #current parameters is setting for 60x objective 488nm illumination
         self.parent = parent
-        # self.mFile = "/Users/bene/Dropbox/Dokumente/Promotion/PROJECTS/MicronController/PYTHON/NAPARI-SIM-PROCESSOR/DATA/SIMdata_2019-11-05_15-21-42.tiff"
-        # self.zStack25D = []
         self.NA = simParameters.NA
         self.n = simParameters.n
         self.wavelength = wavelength/1000
@@ -135,24 +133,6 @@ class SIMProcessor(object):
             pinned_mempool = cp.get_default_pinned_memory_pool()
             memory_start = mempool.used_bytes()
 
-    # def loadPattern(self, path=None, filetype="bmp"):
-    #     # sort filenames numerically
-    #     import glob
-    #     import cv2
-
-    #     if path is None:
-    #         path = sim_parameters["patternPath"]
-    #     allPatternPaths = sorted(glob.glob(os.path.join(path, "*."+filetype)))
-    #     self.allPatterns = []
-    #     for iPatternPath in allPatternPaths:
-    #         mImage = cv2.imread(iPatternPath)
-    #         mImage = cv2.cvtColor(mImage, cv2.COLOR_BGR2GRAY)
-    #         self.allPatterns.append(mImage)
-    #     return self.allPatterns
-
-    # def getPattern(self, iPattern):
-    #     # return ith sim pattern
-    #     return self.allPatterns[iPattern]
 
     def setParameters(self, sim_parameters):
         # uses parameters from GUI
@@ -329,35 +309,6 @@ class SIMProcessor(object):
     def getIsCalibrated(self):
         return self.isCalibrated
 
-
-    
-    # def reconstructSIMStackLBF(self,exptPath, frameSetCount, pos_num, exptTimeElapsedStr):
-    #     '''
-    #     reconstruct the image stack asychronously
-    #     '''
-    #     # TODO: Perhaps we should work with quees?
-    #     # reconstruct and save the stack in background to not block the main thread
-    #     # print(threading.current_thread())
-
-
-    #     if not self.isReconstructing:  # not
-    #         self.isReconstructing=True
-    #         mStackCopy = np.array(self.stack.copy())
-    #         # self.mReconstructionThread = threading.Thread(target=self.reconstructSIMStackBackgroundLBF(mStackCopy, date, frame_num, pos_num, dt_frame), args=(mStackCopy, ), daemon=True)
-    #         # self.mReconstructionThread.start()
-    #         self.reconstructSIMStackBackgroundLBF(mStackCopy, exptPath, frameSetCount, pos_num, exptTimeElapsedStr)
-
-    # def setRecordingMode(self, isRecording):
-    #     self.isRecording = isRecording
-
-    # def setReconstructionMode(self, isReconstruction):
-    #     self.isReconstruction = isReconstruction
-
-    # def setDate(self, date):
-    #     self.date = date
-        
-    # def setPath(self, path):
-    #     self.path = path
         
     def setFrameNum(self, frame_num):
         self.frame_num = frame_num
@@ -424,27 +375,6 @@ class SIMProcessor(object):
         
         self.isReconstructing = False
 
-
-
-    # def recordOneSetSIM(self, exptPath, frameSetCount,pos_num,exptTimeElapsedStr):
-    #     reconSavePath = exptPath
-    #     reconFilenames = f"f{frameSetCount:04}_pos{pos_num:04}_{int(self.laserWL):03}_{exptTimeElapsedStr}_recon.tif"
-    #     # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
-    #     self.saveImageInBackground(self.SIMReconstruction, reconSavePath,reconFilenames)
-
-    # def saveImageInBackground(self, image, savePath, saveName ):
-    #     print(threading.current_thread())
-    #     try:
-    #         if not os.path.exists(savePath):
-    #             os.makedirs(savePath)
-            
-    #         # self.folder = self.path
-    #         filePath = os.path.join(savePath,saveName) #FIXME: Remove hardcoded path
-    #         tif.imwrite(filePath, image, imagej=True)
-    #         self._logger.debug("Saving file: "+filePath)
-    #     except  Exception as e:
-    #         self._logger.error(e)
-
     def reconstruct(self, currentImage):
         '''
         reconstruction
@@ -504,17 +434,4 @@ class SIMProcessor(object):
     def setCurrentSharedAttrs(self, sharedAttrs):
         # Set shared attributes to local object recieved from SIMController
         self.sharedAttrs = sharedAttrs
-    # def simSimulator(self, Nx=512, Ny=512, Nrot=3, Nphi=3):
-    #     Isample = np.zeros((Nx,Ny))
-    #     Isample[np.random.random(Isample.shape)>0.999]=1
 
-    #     allImages = []
-    #     for iRot in range(Nrot):
-    #         for iPhi in range(Nphi):
-    #             IGrating = 1+np.sin(((iRot/Nrot)*nip.xx((Nx,Ny))+(Nrot-iRot)/Nrot*nip.yy((Nx,Ny)))*np.pi/2+np.pi*iPhi/Nphi)
-    #             allImages.append(nip.gaussf(IGrating*Isample,3))
-
-    #     allImages=np.array(allImages)
-    #     allImages-=np.min(allImages)
-    #     allImages/=np.max(allImages)
-    #     return allImages
