@@ -121,6 +121,23 @@ class SIMWidget(NapariHybridWidget):
         sortingKey = [i[0] for i in sorted(enumerate(layerNames), key= lambda x:x[1] )]
         sortingKey.reverse()
         self.viewer.layers.move_multiple(sortingKey)
+        # print("tets")
+        # maxLayerIndex = len(self.viewer.layers) - 1
+        # layerNames = []
+        # searchList = ['488S Raw', '488S Recon', '488S WF']
+        # for searchKey in searchList:
+        #     for layerObj in self.viewer.layers:
+        #         layerNames.append(layerObj.name)
+        #     matching_index = next((i for i, item in enumerate(layerNames) if searchKey in item), -1)
+        #     if matching_index == -1:
+        #         continue
+        #     layer = self.viewer.layers[matching_index]
+            
+        #     self.viewer.layers.remove(layer)
+        #     self.viewer.layers.insert(maxLayerIndex,layer)         
+
+
+            
 
 
     def contrastReconFunc(self):
@@ -424,7 +441,12 @@ class SIMWidget(NapariHybridWidget):
         # tab.setLayout(wholeTabVertLayout)
         return wholeTabVertLayout
     
+    def toggleBoxes(self, state):
 
+        self.path_edit.setEnabled(not state)
+        self.user_edit.setEnabled(not state)
+        self.expt_edit.setEnabled(not state)
+        self.openFolderButton.setEnabled(not state)
 
     
     def addROName(self, roIndex, roName):

@@ -125,6 +125,7 @@ class SIMController(ImConWidgetController):
         # self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
         self._commChannel.sigStart25D.connect(self.start25D)
         self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleBoxes)
 
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
@@ -940,6 +941,8 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
+        self._widget.checkbox_record_reconstruction.setEnabled(True)
+        self._widget.checkbox_record_WF.setEnabled(True)
         self.active25D = False
         self._commChannel.updateSIMActive(self.active25D)
         try:
@@ -990,6 +993,10 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(True)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
+        self._widget.checkbox_record_reconstruction.setEnabled(False)
+        self._widget.checkbox_record_WF.setEnabled(False)
+        self._widget.checkbox_record_reconstruction.setCheckState(False)
+        self._widget.checkbox_record_WF.setCheckState(False)
         self.active25D = True
         self._commChannel.updateSIMActive(self.active25D)
         

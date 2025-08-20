@@ -125,8 +125,7 @@ class ZWOCamManager(DetectorManager):
             # 'ExposureAuto': DetectorListParameter(group='Acq. Control', value=exposureauto_init, options=['Off','Once','Continuous'],
             #                                     editable=False),
             'TriggerMode': DetectorListParameter(group='Acq. Control', value=trigmode_init, options=['Off','On'],
-                                                editable=True)
-                                                         
+                                                editable=True)        
         }
 
         ## No actions connected yet. If you want to enable, need to add actions=actions to super().__init__ below.

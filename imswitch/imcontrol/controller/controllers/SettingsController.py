@@ -111,6 +111,7 @@ class SettingsController(ImConWidgetController):
         self._commChannel.sigDetectorSwitched.connect(self.detectorSwitched)
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigWriteParamsFromCam.connect(self.writeParamsFromCamFunc)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
 
         # Connect SettingsWidget signals
         self._widget.sigROIChanged.connect(self.ROIchanged)

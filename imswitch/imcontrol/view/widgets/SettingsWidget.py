@@ -184,6 +184,8 @@ class SettingsWidget(Widget):
         )
         self.nextDetectorButton.clicked.connect(self.sigNextDetectorClicked)
 
+    def toggleCheckboxes(self, state):
+        self.scatterCamActive.setEnabled(not state)
 
 
     def addDetector(self, detectorName, detectorModel, detectorParameters, detectorActions,
