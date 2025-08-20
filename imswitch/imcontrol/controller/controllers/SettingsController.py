@@ -378,8 +378,10 @@ class SettingsController(ImConWidgetController):
 
     def updateParamsFromDetector(self, *, detector):
         """ Update the parameter values from the detector. """
-
-        params = self.allParams[detector.name]
+        try: #CTNOTE put here to suppress AFCAM error. Keep eye.
+            params = self.allParams[detector.name]
+        except KeyError:
+            return
 
         # Detector parameters
         for parameterName, parameter in detector.parameters.items():

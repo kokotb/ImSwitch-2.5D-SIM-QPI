@@ -229,8 +229,8 @@ class SIMProcessor(object):
     # def setSIMStack(self, stack):
     #     self.zStack25D = stack
 
-    # def setSIMStack(self, stack):
-    #     self.stack = stack
+    def setSIMStack(self, stack):
+        self.stack = stack
 
     def getSIMStack(self):
         return np.array(self.stack)
@@ -384,36 +384,38 @@ class SIMProcessor(object):
         # self._logger.debug("Processing frames")
         # print(threading.current_thread())
         shape = self.shape
-        if self.source == 'fluor':
+        # if self.source == 'fluor':
         # Check if ROIcal matches ROI on cam if not set flags to false
-            ROI_cam_key = ('Detector', self.detObj._DetectorManager__name, 'ROI')
-            ROI_calib_key = ('Detector', self.detObj._DetectorManager__name, 'ROIcal')     
-            ROI_cam = self.sharedAttrs[ROI_cam_key]
+        ROI_cam_key = ('Detector', self.detObj._DetectorManager__name, 'ROI')
+        ROI_calib_key = ('Detector', self.detObj._DetectorManager__name, 'ROIcal')     
+        ROI_cam = self.sharedAttrs[ROI_cam_key]
+        
+        # Check if key exists to avoid key error
+        if self.sharedAttrs._data.get(ROI_calib_key):
+            ROI_calib = self.sharedAttrs[ROI_calib_key]
+        else:
+            ROI_calib = None
+        
+        # Set the flags to false if ROIs don't match
+        if not ROI_cam == ROI_calib:
+            self.isReconstructing = False
+            self.isCalibrated = False
+        
+        if not self.isReconstructing:
+            self.isReconstructing=True
+            mStack = np.array(self.stack.copy())
+        if not self.getIsCalibrated():
             
-            # Check if key exists to avoid key error
-            if self.sharedAttrs._data.get(ROI_calib_key):
-                ROI_calib = self.sharedAttrs[ROI_calib_key]
-            else:
-                ROI_calib = None
-            
-            # Set the flags to false if ROIs don't match
-            if not ROI_cam == ROI_calib:
-                self.isReconstructing = False
-                self.isCalibrated = False
-            
-            if not self.isReconstructing:
-                self.isReconstructing=True
-                mStack = np.array(self.stack.copy())
-            if not self.getIsCalibrated():
-                
-                self.setReconstructor()
-                self.calibrate(mStack)
-                self.sharedAttrs[ROI_calib_key] = ROI_cam
-                self.parent._widget.contrastReconFunc()
+            self.setReconstructor()
+            self.calibrate(mStack)
+            self.sharedAttrs[ROI_calib_key] = ROI_cam
+            self.parent._widget.contrastReconFunc()
+
+        if self.source == 'fluor':
             self.SIMReconstruction = self.reconstruct(mStack)
             self.parent.sigSIMProcessorImageComputed.emit(np.array(self.SIMReconstruction), f"{self.handle} Recon") #Reconstruction emit
         else:
-            blank = np.zeros((shape[0].shape[1]))     
+            blank = np.zeros((shape[0],shape[1]))     
             self.parent.sigSIMProcessorImageComputed.emit(np.array(blank), f"{self.handle} Recon")
 
 

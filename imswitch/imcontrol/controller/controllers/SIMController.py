@@ -248,7 +248,8 @@ class SIMController(ImConWidgetController):
             self._logger.error("No active laser/detector combinations. Check SLM running order and laser power.")
             self.stopSIM()
             return
-
+        
+        shapeList = []
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
@@ -256,10 +257,8 @@ class SIMController(ImConWidgetController):
             self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
         ####
 
-
-        
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
-        shapeList = []
+        
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
@@ -541,8 +540,8 @@ class SIMController(ImConWidgetController):
             self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
             
             # Set sim stack for reconstruction
-            # processor.setSIMStack(rawStack)
-            processor.stack = rawStack
+            processor.setSIMStack(rawStack)
+            # processor.stack = rawStack
             # Average raw stacks to make WF
             imageWF = processor.computeWFlbf(rawStack) # Why is this function in SIMProcessor? This function also sends to display.
             imageWF = imageWF.astype(np.uint16)
@@ -1245,6 +1244,7 @@ class SIMController(ImConWidgetController):
             self.stop25D()
             return
         
+        shapeList = []
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
             shapeList.append(processor.shape)
@@ -1253,7 +1253,7 @@ class SIMController(ImConWidgetController):
         ####
             
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
-        shapeList = []
+        
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
