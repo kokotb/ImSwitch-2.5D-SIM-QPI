@@ -415,7 +415,7 @@ class SIMController(ImConWidgetController):
                         self.errorQ = [] #List to be populated with error results from within processor threads
                         self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
 
-                        with ThreadPoolExecutor(max_workers=4) as executor: #
+                        with ThreadPoolExecutor(max_workers=5) as executor: #
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
@@ -1435,7 +1435,7 @@ class SIMController(ImConWidgetController):
                         self.lastImgDict = dict()
 
 
-                        with ThreadPoolExecutor(max_workers=4) as executor:
+                        with ThreadPoolExecutor(max_workers=5) as executor:
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
