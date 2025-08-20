@@ -122,7 +122,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadSIMSettings)
         self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
-        self._commChannel.sigStop25D.connect(self.stop25D)
+        # self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
         self._commChannel.sigStart25D.connect(self.start25D)
         self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
 
@@ -432,15 +432,16 @@ class SIMController(ImConWidgetController):
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                         self.firstLoop = False
 
-                        procTimeDur = time.time()-procTimeStart
+                        procTimeDur = round(time.time()-procTimeStart,3)
 
-                        endLoopTime = time.time() - startLoopTime
+                        endLoopTime = round(time.time()-startLoopTime,3)
                         startLoopTime = time.time()
 
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.info(f'Loop time (s): {endLoopTime}')
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                        self._logger.info(f'Loop time (s): {endLoopTime}')
+                        
                         
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
@@ -1290,6 +1291,7 @@ class SIMController(ImConWidgetController):
         dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         time_global_start = time.time()
         self.AFCounter = 0
+        startLoopTime = time.time()
         ####
 
         def debug_slot():
@@ -1459,11 +1461,14 @@ class SIMController(ImConWidgetController):
                         self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
 
                         procTimeDur = round(time.time()-procTimeStart,3) # Actual elapsed time for processing images.
+                        endLoopTime = round(time.time()-startLoopTime,3)
+                        startLoopTime = time.time()
 
                         #### Print timing and frame information.
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
+                        self._logger.info(f'Loop time (s): {endLoopTime}')
                         ####
 
 
