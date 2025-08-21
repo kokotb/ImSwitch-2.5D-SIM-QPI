@@ -101,7 +101,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.scale_bar.visible = True
             
         else:
-            labelledIm = self.putNameLabel(im, name, 0.5)
+            copiedIm = im.copy()
+            labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
             
 
@@ -224,18 +225,18 @@ class SIMWidget(NapariHybridWidget):
     
     def putNameLabel(self, im, name, scale):
         imgstack = []
+        
         if len(im) != 9:
-            # copyIm = im.copy()
             im = [im]
         for i in range(len(im)):
             labelledIm = cv2.putText(
                 im[i],
                 name,
-                org=(40, 40),
+                org=(int(80*scale), int(80*scale)),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=scale,
+                fontScale=2*scale,
                 color=(4000),              
-                thickness=1,
+                thickness=int(4*scale),
                 lineType=cv2.LINE_AA
             )
             imgstack.append(labelledIm)
