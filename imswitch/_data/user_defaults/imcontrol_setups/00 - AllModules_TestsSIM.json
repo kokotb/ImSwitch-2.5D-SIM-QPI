@@ -87,13 +87,13 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 400.0
+        "ExposureTime": 9000.0
       },
       "ROI":{  
-        "OffsetX": 2200,
-        "OffsetY": 1000,
-        "Width": 1024,
-        "Height": 1024
+        "OffsetX": 2375,
+        "OffsetY": 1195,
+        "Width": 512,
+        "Height": 512
       } 
     },
     "forAcquisition": true
@@ -114,10 +114,10 @@
         "ExposureTime": 9000.0
       },
       "ROI":{
-        "OffsetX": 2130,
-        "OffsetY": 1670,
-        "Width": 1024,
-        "Height": 1024
+        "OffsetX": 2910,
+        "OffsetY": 1240,
+        "Width": 512,
+        "Height": 512
       }
     },
     "forAcquisition": true
@@ -136,13 +136,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 1200.0
+          "ExposureTime": 3500.0
         },
         "ROI":{
-          "OffsetX": 2128,
-          "OffsetY": 1698,
-          "Width": 1024,
-          "Height": 1024
+          "OffsetX": 2130,
+          "OffsetY": 1950,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -162,13 +162,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 50.0
+          "ExposureTime": 3000.0
         },
         "ROI":{
-          "OffsetX": 2176,
-          "OffsetY": 2160,
-          "Width": 1024,
-          "Height": 1024
+          "OffsetX": 2320,
+          "OffsetY": 2295,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 10,
+    "valueInit": 100,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -248,7 +248,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 10,
+    "valueInit": 100,
 
     "maxdBmValue": 21.8
     }

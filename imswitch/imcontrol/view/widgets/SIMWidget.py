@@ -7,6 +7,7 @@ from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtCore import QLocale
+import cv2
 
 import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
@@ -85,7 +86,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].scale = [x/2 for x in self.micronsPerPixel] #SIM image recon result is 2x size of WF and raw images. So scale needs to be reduced by half.
             self.viewer.layers[name].contrast_limits_range = [0,4095]
         else:
-            self.viewer.layers[name].data = im
+            labelledIm = self.putNameLabel(im, name, 1)
+            self.viewer.layers[name].data = labelledIm
     
     def setRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
@@ -99,7 +101,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.scale_bar.visible = True
             
         else:
-            self.viewer.layers[name].data = im
+            labelledIm = self.putNameLabel(im, name, 0.5)
+            self.viewer.layers[name].data = labelledIm
             
 
     def setWFImage(self, im, name):
@@ -112,7 +115,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name]._keep_auto_contrast = True
 
         else:
-            self.viewer.layers[name].data = im
+            labelledIm = self.putNameLabel(im, name, 0.5)
+            self.viewer.layers[name].data = labelledIm
 
     def sortLayersByName(self):
         layerNames = []
@@ -217,6 +221,28 @@ class SIMWidget(NapariHybridWidget):
         for i in range(len(self.viewer.layers)):
             layerList.append(self.viewer.layers[i].name)
         return layerList
+    
+    def putNameLabel(self, im, name, scale):
+        imgstack = []
+        if len(im) != 9:
+            # copyIm = im.copy()
+            im = [im]
+        for i in range(len(im)):
+            labelledIm = cv2.putText(
+                im[i],
+                name,
+                org=(40, 40),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=scale,
+                color=(4000),              
+                thickness=1,
+                lineType=cv2.LINE_AA
+            )
+            imgstack.append(labelledIm)
+        
+        imgstack = np.stack(imgstack, axis=0)
+
+        return imgstack
 
     def create_layer_control_tab(self):
 
@@ -447,6 +473,7 @@ class SIMWidget(NapariHybridWidget):
         self.user_edit.setEnabled(not state)
         self.expt_edit.setEnabled(not state)
         self.openFolderButton.setEnabled(not state)
+        self.roSelectList.setEnabled(not state)
 
     
     def addROName(self, roIndex, roName):
