@@ -154,7 +154,7 @@ class SIMWidget(NapariHybridWidget):
         #     return
         for name in reconLayerList:
             # initMaxLimit = np.max(self.viewer.layers[name].data_raw)
-            percentile9999 = np.percentile(self.viewer.layers[name].data_raw, 99.99)
+            percentile9999 = np.percentile(self.viewer.layers[name].data_raw[0][82:], 99.99) #This restricts the data to calculate correct brightness level, ignoring the first X rows for the label.
             self.viewer.layers[name].contrast_limits = [0,percentile9999]
 
     def colormapToggleReconFunc(self, channel):
@@ -235,7 +235,7 @@ class SIMWidget(NapariHybridWidget):
                 org=(int(80*scale), int(80*scale)),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=2*scale,
-                color=(4000),              
+                color=(2100),              
                 thickness=int(4*scale),
                 lineType=cv2.LINE_AA
             )
