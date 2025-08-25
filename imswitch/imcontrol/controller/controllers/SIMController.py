@@ -108,6 +108,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
+        self._commChannel.sigRecordPSFStack.connect(self.recordPSFStackSetFlag)
         self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
 
         # self._commChannel.sigRunAutofocus.conn
@@ -121,6 +122,10 @@ class SIMController(ImConWidgetController):
         
         # self.setSharedAttr(attrCategory, parameterName, value):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
+        self.recordPSFStackFlag = False
+
+    def recordPSFStackSetFlag(self):
+        self.recordPSFStackFlag = True
 
     def loadSIMSettings(self, moduleDict):
         try:
@@ -429,6 +434,7 @@ class SIMController(ImConWidgetController):
                         self._logger.info(f'Loop time (s): {endLoopTime}')
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         
+                    
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
                     j += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                     completeZ += 1
@@ -1439,7 +1445,10 @@ class SIMController(ImConWidgetController):
                         self._logger.info(f'Acquisition time (s): {procTimeDur}')
                         ####
 
-
+                    # if self.recordPSFStackFlag:
+                    #     recordedPSFStack = self._commChannel.getPSFStack()[0]
+                    #     self._commChannel.sigSendZstackToRecordWindow.emit(recordedPSFStack)
+                    #     self.recordPSFStackFlag = True
                         
                     
                     j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.

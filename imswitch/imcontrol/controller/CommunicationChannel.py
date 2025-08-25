@@ -30,6 +30,10 @@ class CommunicationChannel(SignalInterface):
 
     sigStart25D = Signal()
 
+    sigRecordPSFStack = Signal()
+
+    sigSendZstackToRecordWindow = Signal(list)
+
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
@@ -196,12 +200,17 @@ class CommunicationChannel(SignalInterface):
 
 
     def getPSFStack(self):
-        if not self.zStackList488:
-            self.zStackList488 = []
-        if not self.zStackList561:
-            self.zStackList561 = []
-        if not self.zStackList640:
-            self.zStackList640 = []
+        # if not self.zStackList488:
+        #     self.zStackList488 = []
+        # if not self.zStackList561:
+        #     self.zStackList561 = []
+        # if not self.zStackList640:
+        #     self.zStackList640 = []
+
+        self.zStackList488 = getattr(self, "zStackList488", [])
+        self.zStackList561 = getattr(self, "zStackList561", [])
+        self.zStackList640 = getattr(self, "zStackList640", [])
+
         allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
         return allPSFStacks
 

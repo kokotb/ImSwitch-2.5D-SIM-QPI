@@ -1,6 +1,7 @@
 import numpy as np
 from imswitch.imcommon.model import initLogger
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
+import time
 
 class PSFAnalysisController(ImConWidgetController):
     """Linked to InfoGatheringWidget. Needs to be connected to widget to get initialized and connected to signals."""
@@ -14,7 +15,10 @@ class PSFAnalysisController(ImConWidgetController):
 
     def startRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(False)
+        #self._commChannel.sigRecordPSFStack.emit()
         self._commChannel.sigStart25D.emit()
+        time.sleep(4)
+        self.stopRecImagesFunc()
         
     def stopRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(True)

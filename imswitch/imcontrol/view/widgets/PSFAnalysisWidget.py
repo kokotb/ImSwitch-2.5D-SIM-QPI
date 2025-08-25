@@ -27,35 +27,35 @@ class PSFAnalysisWidget(NapariHybridWidget):
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
-        self.loadingPopup = PSFWindow(self)
+        # self.loadingPopup = PSFWindow(self)
         self.loadingPopupRecord = PSFWindowRecord(self)
-        self.loadingPopupTest = PSFWindowTest(self)
+        # self.loadingPopupTest = PSFWindowTest(self)
 
         # Main widget 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
-        self.loadButton = QPushButton("PSF Analysis Popup window - load images")
+        # self.loadButton = QPushButton("PSF Analysis Popup window - load images")
         self.recordButton = QPushButton("PSF Analysis Popup window - record images")
-        self.testButton = QPushButton("PSF Analysis Popup window - test images")
-        self.layout.addWidget(self.loadButton, 1, 0)
-        self.layout.addWidget(self.recordButton, 2, 0)
-        self.layout.addWidget(self.testButton, 3, 0)
+        # self.testButton = QPushButton("PSF Analysis Popup window - test images")
+        # self.layout.addWidget(self.loadButton, 1, 0)
+        self.layout.addWidget(self.recordButton, 1, 0)
+        # self.layout.addWidget(self.testButton, 3, 0)
 
 
-        self.loadButton.clicked.connect(self.openLoadWindowThread)
+        # self.loadButton.clicked.connect(self.openLoadWindowThread)
         self.recordButton.clicked.connect(self.openRecordWindowThread)
-        self.testButton.clicked.connect(self.openTestWindowThread)
+        # self.testButton.clicked.connect(self.openTestWindowThread)
         # self.saveSettings.clicked.connect(self.saveFileDialog)
 
-    def toggleLoadButton(self, state):
-        state = not state
-        self.loadButton.setEnabled(state)
+    # def toggleLoadButton(self, state):
+    #     state = not state
+    #     self.loadButton.setEnabled(state)
    
-    def openLoadWindowThread(self):
-        threading.Thread(target=self.openLoadWindow(), args=(), daemon=True).start()
+    # def openLoadWindowThread(self):
+    #     threading.Thread(target=self.openLoadWindow(), args=(), daemon=True).start()
 
-    def openLoadWindow(self):
-        self.loadingPopup.show()
+    # def openLoadWindow(self):
+    #     self.loadingPopup.show()
 
 
     def toggleRecordButton(self, state):
@@ -69,15 +69,15 @@ class PSFAnalysisWidget(NapariHybridWidget):
         self.loadingPopupRecord.show()
 
 
-    def toggleTestButton(self, state):
-        state = not state
-        self.testButton.setEnabled(state)
+    # def toggleTestButton(self, state):
+    #     state = not state
+    #     self.testButton.setEnabled(state)
 
-    def openTestWindowThread(self):
-        threading.Thread(target=self.openTestWindow(), args=(), daemon=True).start()
+    # def openTestWindowThread(self):
+    #     threading.Thread(target=self.openTestWindow(), args=(), daemon=True).start()
 
-    def openTestWindow(self):
-        self.loadingPopupTest.show()
+    # def openTestWindow(self):
+    #     self.loadingPopupTest.show()
 
 # class MovableScatterPlotItem(pg.ScatterPlotItem):
 #     def __init__(self, *args, imageSizeXy, **kargs):
@@ -677,9 +677,9 @@ class PSFWindowRecord(QMainWindow):
         self.PSFstack = np.zeros((20,20,10))
 
         # Center of PSF, selected by clicking on zstack image pixel
-        self.selectedX = 0
-        self.selectedY = 0
-        self.selectedZ = 0
+        self.selectedX = 512
+        self.selectedY = 512
+        self.selectedZ = 512
 
         # Current projection coordinates in PSF view
         self.current_indexX = 0
@@ -920,71 +920,6 @@ class PSFWindowRecord(QMainWindow):
 
 
 
-
-class PSFWindowTest(QMainWindow):
-    def __init__(self, parent = None): 
-        super().__init__(parent) 
-        self.init_gui() 
-  
-    def init_gui(self): 
-        self.psfLayout = QtWidgets.QHBoxLayout()
-        central_widget = QWidget()
-        central_widget.setLayout(self.psfLayout) # self.psfLayout is main layout
-        self.setCentralWidget(central_widget)
-        self.setWindowTitle("PSF analysis window - load")
-
-
-        # Z Stack Layout - displays whole stack of images at full size (512x512 usually) =====================================
-        self.ZstackLayout = QtWidgets.QGridLayout()
-  
-        self.zStackFrame = pg.GraphicsLayoutWidget()
-        self.zStackFrame.setEnabled(True)
-        self.vbZStack = self.zStackFrame.addViewBox(row=0, col=1, enableMouse=True, border='w', lockAspect=True)
-
-        self.imgZStack = pg.ImageItem()
-        self.vbZStack.addItem(self.imgZStack)
-        self.testarray = np.zeros((100,100))
-        self.testarray[0:20] = 200
-        self.testarray[80:97] = 200
-        self.imgZStack.setImage(self.testarray)
-
-
-        self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
-
-        self.psfLayout.addLayout(self.ZstackLayout)
-
-
-"""class PSFWindowTest(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.init_gui()
-
-    def init_gui(self):
-        self.setWindowTitle("Image Popup Window")
-        
-        # Glavna postavitev
-        self.mainLayout = QtWidgets.QHBoxLayout()
-        central_widget = QtWidgets.QWidget()
-        central_widget.setLayout(self.mainLayout)
-        self.setCentralWidget(central_widget)
-        
-        # Layout za prikaz slike
-        self.imageLayout = QtWidgets.QGridLayout()
-        self.imageFrame = pg.GraphicsLayoutWidget()
-        self.viewBox = self.imageFrame.addViewBox(enableMouse=True, border='w', lockAspect=True)
-        
-        # Slika
-        self.imgItem = pg.ImageItem()
-        self.viewBox.addItem(self.imgItem)
-        
-        # Testna slika
-        self.testArray = np.zeros((100, 100))
-        self.testArray[0:20] = 200
-        self.testArray[80:97] = 200
-        self.imgItem.setImage(self.testArray)
-        
-        self.imageLayout.addWidget(self.imageFrame, 0, 0)
-        self.mainLayout.addLayout(self.imageLayout)"""
         # ====================================================================================================================
 
 # Copyright (C) 2020-2023 ImSwitch developers
