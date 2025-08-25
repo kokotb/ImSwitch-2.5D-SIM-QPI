@@ -553,7 +553,7 @@ class PSFWindowRecord(QMainWindow):
 
         # Z Stack Layout - displays whole stack of images at full size (512x512 usually) =====================================
         self.ZstackLayout = QtWidgets.QGridLayout()
-  
+        self.zStackAndButtons = QtWidgets.QVBoxLayout()
         self.zStackFrame = pg.GraphicsLayoutWidget()
         self.zStackFrame.setEnabled(False)
         self.zStackFrame.addLabel('Z-Stack of images', angle=-90, row=0, col=0)
@@ -601,14 +601,22 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.saveZstack, 5, 2)
         self.savePSFstack = QPushButton("Save PSFstack")
         self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
+        self.messageForUser = QLabel("Please select settings for Z-stack in main window, then click the 'Record Stack' button in this window.")
+
+
         
         self.checkboxRecordRed = QRadioButton('Red')
+        self.checkboxRecordRed.setChecked(True)
         self.checkboxRecordGreen = QRadioButton('Green')
         self.checkboxRecordBlue = QRadioButton('Blue')
 
         self.ZstackLayout.addWidget(self.checkboxRecordRed, 3, 3)
         self.ZstackLayout.addWidget(self.checkboxRecordGreen, 3, 4)
         self.ZstackLayout.addWidget(self.checkboxRecordBlue, 3, 5)
+
+        self.zStackAndButtons.addLayout(self.ZstackLayout)
+        self.zStackAndButtons.addWidget(self.messageForUser)
+
 
         self.button_group = QButtonGroup()  
         self.button_group.addButton(self.checkboxRecordRed)
@@ -622,7 +630,7 @@ class PSFWindowRecord(QMainWindow):
         self.savePSFstack.clicked.connect(self.savePSFfunc)
         self.saveZstack.clicked.connect(self.saveZstackfunc)
 
-        self.psfLayout.addLayout(self.ZstackLayout)
+        self.psfLayout.addLayout(self.zStackAndButtons)
         # ====================================================================================================================
 
 
