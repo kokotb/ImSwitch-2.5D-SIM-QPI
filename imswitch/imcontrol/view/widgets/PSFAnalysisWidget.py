@@ -58,6 +58,7 @@ class PSFAnalysisWidget(NapariHybridWidget):
     #     self.loadingPopup.show()
 
 
+
     def toggleRecordButton(self, state):
         state = not state
         self.recordButton.setEnabled(state)
@@ -920,6 +921,12 @@ class PSFWindowRecord(QMainWindow):
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 4095))
         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
         self.updatelines()
+
+    def askYesNoQuestion(self):
+        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+        result = QtWidgets.QMessageBox.question(self, 'Need to Stop Acquisition', 'Acquisition must be stopped to record PSF. Would you like to stop acquisition?',
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        return result == QtWidgets.QMessageBox.Yes
     
 
     # def toggleLoadButton(self, state):

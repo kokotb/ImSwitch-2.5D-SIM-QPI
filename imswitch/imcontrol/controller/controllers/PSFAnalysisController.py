@@ -1,6 +1,7 @@
 import numpy as np
 from imswitch.imcommon.model import initLogger
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
+import time
 
 
 class PSFAnalysisController(ImConWidgetController):
@@ -14,10 +15,19 @@ class PSFAnalysisController(ImConWidgetController):
         self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
     def startRecImagesFunc(self):
-        self._widget.loadingPopupRecord.recordImages.setEnabled(False)
-        self._commChannel.sigSetForPSF.emit(True)
-        self._commChannel.sigStart25D.emit()
-        self.recordingPSF = True
+        if not self._commChannel.simActive:
+            self._widget.loadingPopupRecord.recordImages.setEnabled(False)
+            self._commChannel.sigSetForPSF.emit(True)
+            self._commChannel.sigStart25D.emit()
+            self.recordingPSF = True
+        else:
+            reply = self._widget.loadingPopupRecord.askYesNoQuestion()
+            if reply == True:
+                self._commChannel.stop25DNow = True
+             
+            else:
+                self._logger.warning('Please stop acquisition before recording a PSF.')
+            
         
     def stopRecImagesFunc(self):
         if (self.recordingPSF):
