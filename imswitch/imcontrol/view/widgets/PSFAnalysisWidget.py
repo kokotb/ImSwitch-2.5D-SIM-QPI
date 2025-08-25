@@ -35,7 +35,7 @@ class PSFAnalysisWidget(NapariHybridWidget):
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
         # self.loadButton = QPushButton("PSF Analysis Popup window - load images")
-        self.recordButton = QPushButton("PSF Analysis Popup window - record images")
+        self.recordButton = QPushButton("PSF Analysis")
         # self.testButton = QPushButton("PSF Analysis Popup window - test images")
         # self.layout.addWidget(self.loadButton, 1, 0)
         self.layout.addWidget(self.recordButton, 1, 0)
