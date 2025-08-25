@@ -146,12 +146,14 @@ class SLM25DController(ImConWidgetController):
 
     def updateZernike(self):
         self.updateZernikePhaseMask()
-        self.combineAndProject()
+        if self.slmActive:
+            self.combineAndProject()
 
     def updateAll(self):
         self.updatePhaseMask(False) # False tell this function to not combineAndProject, as that is handled 2 lines later.
         self.recalculateZernikePhaseMask()
-        self.combineAndProject()
+        if self.slmActive:
+            self.combineAndProject()
 
     def updatePhaseMask(self , recalc = True):
         self.calculatePhaseMask()
@@ -653,10 +655,16 @@ class SLM25DController(ImConWidgetController):
         rhomatrixleft = np.sqrt((x_coordsleft - xLeft)**2 + (y_coordsleft - yLeft)**2) / rhoPupilAperturePix
         rhomatrixright = np.sqrt((x_coordsright - xRight)**2 + (y_coordsright - yRight)**2) / rhoPupilAperturePix
 
-        thetamatrixleft = np.arctan((x_coordsleft - xLeft) / (y_coordsleft - yLeft))
-        thetamatrixleft[(y_coordsleft - yLeft) < 0] += np.pi
-        thetamatrixright = np.arctan((x_coordsright - xRight) / (y_coordsright - yRight))
-        thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
+        with np.errstate(invalid ='ignore', divide='ignore'):
+            thetamatrixleft = np.arctan((x_coordsleft - xLeft) / (y_coordsleft - yLeft))
+            thetamatrixleft[np.isnan(thetamatrixleft)] = - np.pi / 2 
+            thetamatrixleft[(y_coordsleft - yLeft) < 0] += np.pi
+            thetamatrixright = np.arctan((x_coordsright - xRight) / (y_coordsright - yRight))
+            thetamatrixright[np.isnan(thetamatrixright)] = - np.pi / 2 
+            thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
+
+        
+        
 
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         thetamatrix = np.concatenate((thetamatrixleft, thetamatrixright),axis=1)
