@@ -1,7 +1,7 @@
 import numpy as np
 from imswitch.imcommon.model import initLogger
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
-import time
+
 
 class PSFAnalysisController(ImConWidgetController):
     """Linked to InfoGatheringWidget. Needs to be connected to widget to get initialized and connected to signals."""
@@ -15,18 +15,18 @@ class PSFAnalysisController(ImConWidgetController):
 
     def startRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(False)
+        self._commChannel.sigSetForPSF.emit(True)
         self._commChannel.sigStart25D.emit()
         self.recordingPSF = True
-        # time.sleep(4)
-        # self.stopRecImagesFunc()
         
     def stopRecImagesFunc(self):
         if (self.recordingPSF):
             self.recordingPSF = False
+            self._commChannel.sigSetForPSF.emit(False)
             self._widget.loadingPopupRecord.recordImages.setEnabled(True)
             try:
                 image_stack = self._commChannel.getPSFStack()
-                # self.image_stack = self._widget.loadingPopupRecord.image_stack DUMB THINGS HERE TOO !!!
+
 
                 # 2 = red,  1 = green,  0 = blue
                 if self._widget.loadingPopupRecord.checkboxRecordRed.isChecked():
@@ -43,7 +43,7 @@ class PSFAnalysisController(ImConWidgetController):
                 # self._widget.loadingPopupRecord.updatePSFYZimage()
                 self._widget.loadingPopupRecord.showSelectedPSF()
             except AttributeError:
-                pass
+                print('Stop recording fuction for PSF failed to complete.')
 
 
 
