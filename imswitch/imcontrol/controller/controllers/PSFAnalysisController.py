@@ -9,39 +9,41 @@ class PSFAnalysisController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        # self._commChannel.sigStart25D.emit()
         self._widget.loadingPopupRecord.recordImages.clicked.connect(self.startRecImagesFunc)
+        self.recordingPSF = False
         self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
     def startRecImagesFunc(self):
         self._widget.loadingPopupRecord.recordImages.setEnabled(False)
-        #self._commChannel.sigRecordPSFStack.emit()
         self._commChannel.sigStart25D.emit()
-        time.sleep(4)
-        self.stopRecImagesFunc()
+        self.recordingPSF = True
+        # time.sleep(4)
+        # self.stopRecImagesFunc()
         
     def stopRecImagesFunc(self):
-        self._widget.loadingPopupRecord.recordImages.setEnabled(True)
-        try:
-            image_stack = self._commChannel.getPSFStack()
-            # self.image_stack = self._widget.loadingPopupRecord.image_stack DUMB THINGS HERE TOO !!!
+        if (self.recordingPSF):
+            self.recordingPSF = False
+            self._widget.loadingPopupRecord.recordImages.setEnabled(True)
+            try:
+                image_stack = self._commChannel.getPSFStack()
+                # self.image_stack = self._widget.loadingPopupRecord.image_stack DUMB THINGS HERE TOO !!!
 
-            # 2 = red,  1 = green,  0 = blue
-            if self._widget.loadingPopupRecord.checkboxRecordRed.isChecked():
-                self.channelStack = np.array(image_stack[2])   
-            elif self._widget.loadingPopupRecord.checkboxRecordGreen.isChecked():
-                self.channelStack = np.array(image_stack[1])
-            elif self._widget.loadingPopupRecord.checkboxRecordBlue.isChecked():
-                self.channelStack = np.array(image_stack[0])
+                # 2 = red,  1 = green,  0 = blue
+                if self._widget.loadingPopupRecord.checkboxRecordRed.isChecked():
+                    self.channelStack = np.array(image_stack[2])   
+                elif self._widget.loadingPopupRecord.checkboxRecordGreen.isChecked():
+                    self.channelStack = np.array(image_stack[1])
+                elif self._widget.loadingPopupRecord.checkboxRecordBlue.isChecked():
+                    self.channelStack = np.array(image_stack[0])
 
-            self._widget.loadingPopupRecord.image_stack = self.channelStack
-            self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack[0], levels=(0,4095))
-            # self._widget.loadingPopupRecord.updatePSFXYimage()
-            # self._widget.loadingPopupRecord.updatePSFXZimage()
-            # self._widget.loadingPopupRecord.updatePSFYZimage()
-            self._widget.loadingPopupRecord.showSelectedPSF()
-        except AttributeError:
-            pass
+                self._widget.loadingPopupRecord.image_stack = self.channelStack
+                self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack[0], levels=(0,4095))
+                # self._widget.loadingPopupRecord.updatePSFXYimage()
+                # self._widget.loadingPopupRecord.updatePSFXZimage()
+                # self._widget.loadingPopupRecord.updatePSFYZimage()
+                self._widget.loadingPopupRecord.showSelectedPSF()
+            except AttributeError:
+                pass
 
 
 

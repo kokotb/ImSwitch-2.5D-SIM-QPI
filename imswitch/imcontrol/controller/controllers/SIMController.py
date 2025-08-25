@@ -1406,6 +1406,7 @@ class SIMController(ImConWidgetController):
                         snapshotLock = threading.Lock()
                         self.snapshotSettingsSaved = False
                         lastImgLock = threading.Lock()
+                        
                         ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
@@ -1569,7 +1570,7 @@ class SIMController(ImConWidgetController):
                 resetStack = True
             else:
                 resetStack = False
-            self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
+            self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
         ####
                 
         # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
