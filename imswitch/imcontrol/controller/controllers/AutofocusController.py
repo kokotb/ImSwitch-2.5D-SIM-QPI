@@ -29,7 +29,7 @@ class AutofocusController(ImConWidgetController):
         self._widget.openPreview.clicked.connect(self.openSetAFWindow)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
-        self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
+        # self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
@@ -40,12 +40,23 @@ class AutofocusController(ImConWidgetController):
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
         self.calCurveImgs = []
         self.calCurveScores = []
+        
         # self._commChannel.calCurveFit = False
         # self.initRegScore = None
         self.storeInitEstimate()
+        self.initWidget()
         
 
         self.threshold = self._manager.threshold #pixel value threshold for AF image
+
+        self._widget.AFWindow.embeddedImage.sigUpdateWithMask.connect(self.updateImageWithMask)
+
+
+    def initWidget(self):
+        if self.AFCam.initAFCam:
+            self._widget.openPreview.setEnabled(True)
+            self._widget.registerPlane.setEnabled(True)
+            self._widget.clearRegPlane.setEnabled(True)
 
     def storeInitEstimate(self):
         self.guess_x = self._manager.guess_x    # Guesses for fits Background, Centre, Width, Amplitude
@@ -61,18 +72,18 @@ class AutofocusController(ImConWidgetController):
         self._commChannel.initRegScore = None
         self.offLED()
 
-    def autofocusModuleToggle(self, state):
-        if not self.AFCam.initAFCam:
-            self._logger.info('Autofocus camera was not initialized.')
-            time.sleep(0.1)
-            self._widget.autofocusModule.setCheckState(False)
-        else:
-            self._commChannel.autofocusEnabled = state
-            self._widget.toggleEnabled(state)
-            if state == False:
-                self.offLED()
-            if (state == True) and (self._commChannel.initRegScore != None):
-                self.onLED()
+    # def autofocusModuleToggle(self, state):
+    #     if not self.AFCam.initAFCam:
+    #         self._logger.info('Autofocus camera was not initialized.')
+    #         time.sleep(0.1)
+    #         self._widget.autofocusModule.setCheckState(False)
+    #     else:
+    #         self._commChannel.autofocusEnabled = state
+    #         self._widget.toggleEnabled(state)
+    #         if state == False:
+    #             self.offLED()
+    #         if (state == True) and (self._commChannel.initRegScore != None):
+    #             self.onLED()
 
 
     def onLED(self):
@@ -114,6 +125,11 @@ class AutofocusController(ImConWidgetController):
         imgMaskZero = img[:]
         imgMaskZero[:,range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right)] = 0
         return imgMaskZero
+
+    def updateImageWithMask(self):
+        img = self.getOneFrame()
+        imgMaskZero = self.colToZero(img)
+        self.setOneFrame(imgMaskZero)
 
 
     def runCalCurve(self):
@@ -261,7 +277,7 @@ class AutofocusController(ImConWidgetController):
 
     def calcZRange(self):
         currentZ = self.zPositioner._position['Z']
-        rangeVal = self._widget.calCurveRange.value()
+        rangeVal = self._widget.AFWindow.calCurveRange.value()
         bottom = currentZ - rangeVal/2
         top = currentZ + rangeVal/2
         steps = 21

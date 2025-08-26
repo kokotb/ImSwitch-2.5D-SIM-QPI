@@ -63,7 +63,7 @@ class ZWOCamManager(DetectorManager):
             self.__logger.warning('Autofocus camera failed to initialize.')
         else:
             self.initAFCam = True
-            self.__logger.warning('Autofocus camera initialized.')
+            self.__logger.info('Autofocus camera initialized.')
         
         # Step 2: Get camera info
         self.cam_info = ASI_CAMERA_INFO()

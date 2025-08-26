@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QMessageBox )
+from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QMessageBox,QFrame )
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import threading
@@ -8,6 +8,7 @@ import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import QPointF, QRect
+
 
 
 class AutofocusWidget(NapariHybridWidget):
@@ -21,7 +22,7 @@ class AutofocusWidget(NapariHybridWidget):
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
 
-        self.autofocusModule = QCheckBox('Autofocus Module')
+        # self.autofocusModule = QCheckBox('Autofocus Module')
         self.led = LedIndicator(self)
         self.openPreview = QtWidgets.QPushButton('AF Preview')
         self.openPreview.setEnabled(False)
@@ -31,24 +32,19 @@ class AutofocusWidget(NapariHybridWidget):
         self.clearRegPlane.setEnabled(False)
 
 
-        self.calCurveRange = QtWidgets.QSpinBox()
-        self.calCurveRange.setMinimum(1)
-        self.calCurveRange.setMaximum(200)
-        self.calCurveRange.setValue(20)
-        self.calCurveRange.setEnabled(False)
+
 
         
-        self.rangeLabel = QLabel(self)
-        self.rangeLabel.setText("Scan Range:")
+
 
         row = 0
-        autofocusLayout.addWidget(self.autofocusModule, row, 0)
+        # autofocusLayout.addWidget(self.autofocusModule, row, 0)
         autofocusLayout.addWidget(self.openPreview, row+1, 0)
         autofocusLayout.addWidget(self.registerPlane, row+1, 1)
         autofocusLayout.addWidget(self.clearRegPlane, row + 1, 2)
         autofocusLayout.addWidget(self.led, row + 2, 2)
-        autofocusLayout.addWidget(self.rangeLabel, row + 2, 0)
-        autofocusLayout.addWidget(self.calCurveRange, row + 2, 1)
+
+        
 
 
 
@@ -57,7 +53,7 @@ class AutofocusWidget(NapariHybridWidget):
         self.openPreview.setEnabled(state)
         self.registerPlane.setEnabled(state)
         self.clearRegPlane.setEnabled(state)
-        self.calCurveRange.setEnabled(state)
+        # self.calCurveRange.setEnabled(state)
 
 
     def initValues(self):
@@ -80,10 +76,18 @@ class SetAFWindow(QMainWindow):
         self.setWindowTitle("Open AF Preview")
         self.setGeometry(100, 100, 1280, 1024)
 
+        self.frame1 = QFrame()
+        self.frame1.setFrameShape(QFrame.StyledPanel)
+        self.frame1.setFrameShadow(QFrame.Plain)
+        self.frame1.setLineWidth(5)
+
+        
+
         afWindowLayout = QtWidgets.QVBoxLayout()
         imageLayout = QtWidgets.QVBoxLayout()
         buttonAndTextLayout = QtWidgets.QVBoxLayout()
-        textLayout = QtWidgets.QGridLayout()
+        textLayout = QtWidgets.QGridLayout(self.frame1)
+        # textLayout = QtWidgets.QGridLayout()
         buttonLayout = QtWidgets.QHBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(afWindowLayout)
@@ -97,7 +101,8 @@ class SetAFWindow(QMainWindow):
         buttonLayout.addWidget(self.calCurve)
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
         buttonLayout.addWidget(self.resetEstimates)
-        self.regReflection  = QtWidgets.QPushButton('Register Reflection Coords')
+        self.regReflection  = QtWidgets.QPushButton('Register Reflection Coordinates')
+        self.regReflection.setCheckable(True)
         buttonLayout.addWidget(self.regReflection)
 
         self.sigUpdateCalibChart.connect(self.displayChart)
@@ -127,18 +132,34 @@ class SetAFWindow(QMainWindow):
         self.ccR2Val.setText("-")
         self.ccSensVal = QLabel(self)
         self.ccSensVal.setText("-")
+
+        self.rangeLabel = QLabel(self)
+        self.rangeLabel.setText("Scan Range:")
+
+        self.calCurveRange = QtWidgets.QSpinBox()
+        self.calCurveRange.setMinimum(1)
+        self.calCurveRange.setMaximum(100)
+        self.calCurveRange.setValue(20)
+
+        
+
         row = 0
-        textLayout.addWidget(self.ccSlopeLabel, row, 0)
-        textLayout.addWidget(self.ccIntLabel, row + 1, 0)
-        textLayout.addWidget(self.ccSlopeVal, row, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccIntVal, row + 1, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccR2Label, row + 2, 0)
-        textLayout.addWidget(self.ccR2Val, row + 2, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccSensLabel, row + 3, 0)
-        textLayout.addWidget(self.ccSensVal, row + 3, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.rangeLabel, row , 0)
+        textLayout.addWidget(self.calCurveRange, row , 1)
+        textLayout.addWidget(self.ccSlopeLabel, row + 1, 0)
+        textLayout.addWidget(self.ccSlopeVal, row + 1, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccIntLabel, row + 2, 0)
+        textLayout.addWidget(self.ccIntVal, row + 2, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccR2Label, row + 3, 0)
+        textLayout.addWidget(self.ccR2Val, row + 3, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccSensLabel, row + 4, 0)
+        textLayout.addWidget(self.ccSensVal, row + 4, 1, alignment=Qt.AlignLeft)
+        textLayoutBoxed = QtWidgets.QVBoxLayout()
+        textLayoutBoxed.addWidget(self.frame1)
+        
         # textLayout.addStretch()
         textHorizLayout = QtWidgets.QHBoxLayout()
-        textHorizLayout.addLayout(textLayout)
+        textHorizLayout.addLayout(textLayoutBoxed)
         ################
         #Chart
 
@@ -155,7 +176,7 @@ class SetAFWindow(QMainWindow):
 
         textHorizLayout.addStretch()
 
-        self.embeddedImage = ClickableImage(blankImage)
+        self.embeddedImage = ClickableImage(blankImage, self)
         # self.resizableBox = ResizableBox(self.embeddedImage)
         # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
         buttonAndTextLayout.addLayout(buttonLayout)
@@ -166,15 +187,29 @@ class SetAFWindow(QMainWindow):
         afWindowLayout.addLayout(buttonAndTextLayout)
         imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
         afWindowLayout.addLayout(imageLayout)
+        self.regReflection.clicked.connect(self.regCoordsFunc)
+
+        self.msg = QMessageBox()
+        self.msg.setWindowTitle("Set Coordinates")
+        self.msg.setText("Please click-hold-drag to cover back reflection. Only left to right matters.")
+        self.msg.setIcon(QMessageBox.Information)
+        self.msg.setStandardButtons(QMessageBox.Ok)
         # afWindowLayout.addStretch()
 
-        self.regReflection.clicked.connect(self.embeddedImage.regCoordsFunc)
+        
 
         # self.msg_box = QMessageBox()
         # self.msg_box.setWindowTitle("Do Not Exclude Reflection?")
         # self.msg_box.setText("Excluded region not selected. Continue with complete image?")
         # button_yes = self.msg_box.addButton("Yes", QMessageBox.YesRole)
         # button_no = self.msg_box.addButton("Cancel", QMessageBox.NoRole)
+
+
+    def regCoordsFunc(self):
+        self.embeddedImage.coords = True
+        self.regReflection.setChecked(True)
+        self.regReflection.setEnabled(False)
+        self.msg.show()
 
     def displayChart(self, zValues, xData, yData, comboData):
         # self.series.clear()
@@ -262,8 +297,12 @@ class SetAFWindow(QMainWindow):
     
 
 class ClickableImage(QLabel):
-    def __init__(self, image_np):
-        super().__init__()
+
+    sigUpdateWithMask = QtCore.Signal()
+
+    def __init__(self, image_np, parent=None):
+        super().__init__(parent)
+        self.parent = parent
         self.painted = False
         # Convert NumPy image to QImage and then to QPixmap
         self.image_np = image_np
@@ -281,9 +320,10 @@ class ClickableImage(QLabel):
         self.annotation_points = []
         # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
 
-    def regCoordsFunc(self):
-        self.coords = True
-
+    # def colToZero(self, img):
+    #     imgMaskZero = img[:]
+    #     imgMaskZero[:,range(self.left,self.right)] = 0
+    #     return imgMaskZero
         
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
@@ -316,6 +356,10 @@ class ClickableImage(QLabel):
             self.right = self.selection_rect.right()
             print(f'Coordinates registered: ({self.left},{self.right})')
             self.coords = False
+            self.parent.regReflection.setChecked(False)
+            self.parent.regReflection.setEnabled(True)
+            self.sigUpdateWithMask.emit()
+
 
     def paintEvent(self, event):
         super().paintEvent(event)
