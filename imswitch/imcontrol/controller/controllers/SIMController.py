@@ -1651,7 +1651,7 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusStart(self):
-        while (self._commChannel.autofocusActive == True) and (self._commChannel.initRegScore != None):
+        while (self._commChannel.initRegScore != None) and (self.active25D):
             self.autofocusLoop()
 
     def autofocusLoop(self):
