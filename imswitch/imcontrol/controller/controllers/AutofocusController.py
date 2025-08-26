@@ -109,9 +109,15 @@ class AutofocusController(ImConWidgetController):
         self.getOneFrameToSet()
 
     def getOneFrameToSet(self):
-        img = self.getOneFrame()
-        self.setOneFrame(img)
-        return img
+        if self._widget.AFWindow.coordsRegistered:
+            img = self.getOneFrame()
+            imgMaskZero = self.colToZero(img)
+            self.setOneFrame(imgMaskZero)
+            return imgMaskZero
+        else:
+            img = self.getOneFrame()
+            self.setOneFrame(img)
+            return img
 
     def getOneFrame(self): 
         img = self.AFCam.grabFrameOnly()

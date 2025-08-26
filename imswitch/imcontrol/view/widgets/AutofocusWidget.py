@@ -1,12 +1,12 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QLabel, QMainWindow, QWidget, QMessageBox, QFrame)
+from PyQt5.QtWidgets import (QLabel, QMainWindow, QWidget, QMessageBox, QFrame, QApplication)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import QPointF, QRect, QPoint
+from PyQt5.QtCore import QPointF, QRect, QPoint, Qt, QTimer
 
 
 
@@ -22,9 +22,9 @@ class AutofocusWidget(NapariHybridWidget):
         overallLayout = QtWidgets.QHBoxLayout()
         self.setLayout(overallLayout)
         self.led = LedIndicator(self)
-        self.openPreview = QtWidgets.QPushButton('AF Preview')
+        self.openPreview = QtWidgets.QPushButton('Autofocus Preview')
         self.openPreview.setEnabled(False)
-        self.registerPlane = QtWidgets.QPushButton('Reg. Plane')
+        self.registerPlane = QtWidgets.QPushButton('Register Plane')
         self.registerPlane.setEnabled(False)
         self.clearRegPlane = QtWidgets.QPushButton('Clear Plane')
         self.clearRegPlane.setEnabled(False)
@@ -49,7 +49,7 @@ class SetAFWindow(QMainWindow):
     sigUpdateCalibChart = QtCore.Signal(np.ndarray,list,list,list)
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setWindowTitle("Open AF Preview")
+        self.setWindowTitle("Autofocus")
         self.setGeometry(100, 100, 1280, 1024)
 
         self.frame1 = QFrame()
@@ -171,17 +171,19 @@ class SetAFWindow(QMainWindow):
         afWindowLayout.addLayout(imageLayout)
         self.regReflection.clicked.connect(self.regCoordsFunc)
 
-        self.msg = QMessageBox()
-        self.msg.setWindowTitle("Set Coordinates")
-        self.msg.setText("Please click and drag horizontally to cover all of the back reflection.")
-        self.msg.setIcon(QMessageBox.Information)
-        self.msg.setStandardButtons(QMessageBox.Ok)
+        # self.msg = QMessageBox()
+        # self.msg.setWindowTitle("Set Coordinates")
+        # self.msg.setText("Please click and drag horizontally to cover all of the back reflection.")
+        # self.msg.setIcon(QMessageBox.Information)
+        # self.msg.setStandardButtons(QMessageBox.Ok)
 
     def regCoordsFunc(self):
         self.embeddedImage.coords = True
         self.regReflection.setChecked(True)
         self.regReflection.setEnabled(False)
-        self.msg.show()
+        # self.msg.show()
+        self.popup = PopupMessage("Please click and hold to draw horizontal line covering vertical reflection.")
+        self.popup.show_message()
 
     # def showMaskMSG(self):
     #     self.msgMask.show()
@@ -235,7 +237,10 @@ class SetAFWindow(QMainWindow):
         q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
-     
+    
+    def closeEvent(self, event):
+        self.popup.close()
+        event.accept()
 
 class ClickableImage(QLabel):
 
@@ -295,6 +300,7 @@ class ClickableImage(QLabel):
             self.update()
 
         if self.coords:
+            self.parent.popup.close()
             self.left = self.selection_rect.left()
             self.right = self.selection_rect.right()
             print(f'Mask registered: (Left: {self.left}, Right: {self.right})')
@@ -303,6 +309,7 @@ class ClickableImage(QLabel):
             self.parent.regReflection.setEnabled(True)
             self.parent.coordsRegistered = True
             self.sigUpdateWithMask.emit()
+            
 
 
     def paintEvent(self, event):
@@ -344,6 +351,39 @@ class LedIndicator(QWidget):
         painter.setPen(Qt.black)
         rect = self.rect().adjusted(5, 5, -5, -5)
         painter.drawEllipse(rect)
+
+
+class PopupMessage(QWidget):
+    def __init__(self, message, timeout=None):
+        super().__init__()
+
+        self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #333;
+                color: white;
+                border-radius: 10px;
+                padding: 15px;
+                font-size: 32px;
+            }
+        """)
+
+        layout = QtWidgets.QVBoxLayout()
+        label = QLabel(message)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        self.setLayout(layout)
+        self.adjustSize()
+        # if timeout:
+        #     QTimer.singleShot(timeout, self.close)
+
+    def show_message(self, parent=None, pos=None):
+        if parent:
+            self.setParent(parent)
+        if pos:
+            self.move(pos)
+        self.show()
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
