@@ -69,9 +69,12 @@ class AutofocusController(ImConWidgetController):
             self._widget.AFWindow.coordsRegistered = False
             self.getOneFrameToSet()
             self._logger.info('Reflection mask deleted.')
-            self._widget.AFWindow.instruction_label1.setStyleSheet("color: white;")
-            self._widget.AFWindow.instruction_label2.setStyleSheet("color: gray;")
-            self._widget.AFWindow.instruction_label3.setStyleSheet("color: gray;")
+            for name in self._widget.AFWindow.instructionList:
+                if name.order == 0:
+                    name.setStyleSheet("color: white;")
+                else:
+                    name.setStyleSheet("color: gray;")
+
         else:
             self._logger.info('Reflection mask is not currently registered.')
 

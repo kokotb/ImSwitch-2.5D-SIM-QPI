@@ -171,20 +171,24 @@ class SetAFWindow(QMainWindow):
         instruction_layout = QtWidgets.QVBoxLayout()
         self.instruction_label1 = QLabel("1. Click the 'Register Reflection Mask' button.")
         self.instruction_label1.setWordWrap(True)  # Enable text wrapping 
-        # instruction_label1.setFont(QFont(instruction_label1.font().family(), instruction_label1.font().pointSize(), QFont.Bold))
-        # instruction_label1.setStyleSheet("color: gray; font-weight: bold;")
+
         self.instruction_label1.setStyleSheet("color: white;")
 
 
         self.instruction_label2 = QLabel("2. Click the center of the bright vertical reflection.")
         self.instruction_label2.setWordWrap(True)  # Enable text wrapping 
         self.instruction_label2.setStyleSheet("color: gray;")
-        self.instruction_label3 = QLabel("3. Click the 'Run Cal. Curve' button once mask is set to obtain calibration curve.\n\n-- If successful, calibration curve data will appear in the chart. Acceptable sensitivity is >7 pixels/um.")
+
+        self.instruction_label3 = QLabel("3. Click the 'Run Cal. Curve' button to obtain calibration curve.\n\n-- If successful, calibration curve data will appear in the chart. Acceptable sensitivity is >7 pixels/um.")
         self.instruction_label3.setWordWrap(True)  # Enable text wrapping
         self.instruction_label3.setStyleSheet("color: gray;")
-        instruction_layout.addWidget(self.instruction_label1)
-        instruction_layout.addWidget(self.instruction_label2)
-        instruction_layout.addWidget(self.instruction_label3)
+
+        self.instructionList = [self.instruction_label1,self.instruction_label2,self.instruction_label3]
+
+        for i, name in enumerate(self.instructionList):     
+            instruction_layout.addWidget(name)
+            name.order = i
+
         instruction_box.setLayout(instruction_layout)
         textHorizLayout.addWidget(instruction_box)
         # textHorizLayout.addStretch()
@@ -222,13 +226,15 @@ class SetAFWindow(QMainWindow):
             self.instruction_label2.setStyleSheet("color: white;")
             self.popup.show_message()
 
-    # def showMaskMSG(self):
-    #     self.msgMask.show()
 
     def displayChart(self, zValues, xData, yData, comboData):
         # self.series.clear()
         for s in self.chart.series():
             self.chart.removeSeries(s)
+        if self.chart.axisX():
+            self.chart.removeAxis(self.chart.axisX())
+        if self.chart.axisY():
+            self.chart.removeAxis(self.chart.axisY())
         self.seriesX = QLineSeries()
         self.seriesY = QLineSeries()
         self.seriesCombo = QLineSeries()
@@ -252,12 +258,12 @@ class SetAFWindow(QMainWindow):
 
         axis_x = QValueAxis()
         axis_x.setTitleText("\nScore")
-        axis_x.setTitleFont(QFont("Arial", 14))
+        axis_x.setTitleFont(QFont("Arial", 12))
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
 
         axis_y = QValueAxis()
         axis_y.setTitleText("Z Position / um\n")
-        axis_y.setTitleFont(QFont("Arial", 14))
+        axis_y.setTitleFont(QFont("Arial", 12))
         axis_y.setRange(yMin - yMin*0.01, yMax + yMax*0.01)
 
         self.chart.addAxis(axis_x, Qt.AlignBottom)
@@ -281,9 +287,12 @@ class SetAFWindow(QMainWindow):
         if self.regReflection.isChecked():
             self.regReflection.setChecked(False)
             self.embeddedImage.setCoords = False
-            self.instruction_label1.setStyleSheet("color: white;")
-            self.instruction_label2.setStyleSheet("color: gray;")
-            self.instruction_label3.setStyleSheet("color: gray;")
+        for name in self.instructionList:
+            if name.order == 0:
+                name.setStyleSheet("color: white;")
+            else:
+                name.setStyleSheet("color: gray;")
+
         try:
             self.popup.close()
         except AttributeError:
