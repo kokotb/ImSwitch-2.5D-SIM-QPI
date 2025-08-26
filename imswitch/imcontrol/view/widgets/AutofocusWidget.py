@@ -7,7 +7,7 @@ import threading
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import QPointF, QRect
+from PyQt5.QtCore import QPointF, QRect, QPoint
 
 
 
@@ -96,16 +96,21 @@ class SetAFWindow(QMainWindow):
         blankImage = np.zeros((1096,1936))
 
         self.acqImgButton = QtWidgets.QPushButton('Refresh Image')
+        self.acqImgButton.setStyleSheet("QPushButton { height: 100px;font-size: 24px; }")
         buttonLayout.addWidget(self.acqImgButton)
         self.calCurve = QtWidgets.QPushButton('Run Cal. Curve')
+        self.calCurve.setStyleSheet("QPushButton { height: 100px;font-size: 24px; }")
         buttonLayout.addWidget(self.calCurve)
 
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
+        self.resetEstimates.setStyleSheet("QPushButton { height: 100px;font-size: 24px; }")
         buttonLayout.addWidget(self.resetEstimates)
         self.regReflection  = QtWidgets.QPushButton('Register Reflection Mask')
         self.regReflection.setCheckable(True)
+        self.regReflection.setStyleSheet("QPushButton { height: 100px;font-size: 24px; }")
         buttonLayout.addWidget(self.regReflection)
         self.resetMask = QtWidgets.QPushButton('Reset Reflection Mask')
+        self.resetMask.setStyleSheet("QPushButton { height: 100px;font-size: 24px; }")
         buttonLayout.addWidget(self.resetMask)
 
         self.sigUpdateCalibChart.connect(self.displayChart)
@@ -200,7 +205,7 @@ class SetAFWindow(QMainWindow):
 
         self.msg = QMessageBox()
         self.msg.setWindowTitle("Set Coordinates")
-        self.msg.setText("Please click-hold-drag to cover back reflection. Only left to right matters.")
+        self.msg.setText("Please click and drag horizontally to cover all of the back reflection.")
         self.msg.setIcon(QMessageBox.Information)
         self.msg.setStandardButtons(QMessageBox.Ok)
         # afWindowLayout.addStretch()
@@ -348,12 +353,18 @@ class ClickableImage(QLabel):
 
     def mouseMoveEvent(self, event):
         if self.start_point:
-            self.end_point = event.pos()
+            # self.end_point = event.pos()
+            x = event.pos().x()
+            y = self.start_point.y()
+            self.end_point = QPoint(x, y)
             self.update()
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and self.start_point:
-            self.end_point = event.pos()
+            # self.end_point = event.pos()
+            x = event.pos().x()
+            y = self.start_point.y() 
+            self.end_point = QPoint(x, y)
             self.selection_rect = QRect(self.start_point, self.end_point).normalized()
             self.start_point = None
             self.end_point = None
