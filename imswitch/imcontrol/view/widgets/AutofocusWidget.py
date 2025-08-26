@@ -5,7 +5,7 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QFont
 from PyQt5.QtCore import QPointF, QRect, QPoint, Qt, QTimer
 
 
@@ -102,7 +102,7 @@ class SetAFWindow(QMainWindow):
         self.ccIntLabel.setText("Intercept:")
 
         self.ccR2Label = QLabel(self)
-        self.ccR2Label.setText("R^2:")
+        self.ccR2Label.setText("Linearity (R^2):")
 
         self.ccSensLabel = QLabel(self)
         self.ccSensLabel.setText("Sensitivity:")
@@ -188,12 +188,18 @@ class SetAFWindow(QMainWindow):
         # self.msg.setStandardButtons(QMessageBox.Ok)
 
     def regCoordsFunc(self):
-        self.embeddedImage.coords = True
-        self.regReflection.setChecked(True)
-        self.regReflection.setEnabled(False)
-        # self.msg.show()
-        self.popup = PopupMessage("Please click the center of the bright vertical relfection to mask it out of the image.")
-        self.popup.show_message()
+        if self.embeddedImage.setCoords:
+            self.regReflection.setChecked(False)
+            self.embeddedImage.setCoords = False
+            try:
+                self.popup.close()
+            except AttributeError:
+                pass
+        else:
+            self.embeddedImage.setCoords = True
+            self.regReflection.setChecked(True)
+            self.popup = PopupMessage("Please click the center of the bright vertical reflection to mask it out of the image.")
+            self.popup.show_message()
 
     # def showMaskMSG(self):
     #     self.msgMask.show()
@@ -224,11 +230,13 @@ class SetAFWindow(QMainWindow):
         yMax = int(max(zValues))
 
         axis_x = QValueAxis()
-        axis_x.setTitleText("Score")
+        axis_x.setTitleText("\nScore")
+        axis_x.setTitleFont(QFont("Arial", 14))
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
 
         axis_y = QValueAxis()
-        # axis_y.setTitleText("Z Position / um")
+        axis_y.setTitleText("Z Position / um\n")
+        axis_y.setTitleFont(QFont("Arial", 14))
         axis_y.setRange(yMin - yMin*0.01, yMax + yMax*0.01)
 
         self.chart.addAxis(axis_x, Qt.AlignBottom)
@@ -240,7 +248,7 @@ class SetAFWindow(QMainWindow):
         self.seriesCombo.attachAxis(axis_x)
         self.seriesCombo.attachAxis(axis_y)
 
-        self.chart.createDefaultAxes() 
+        # self.chart.createDefaultAxes()
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
         h, w = image.shape
@@ -251,8 +259,7 @@ class SetAFWindow(QMainWindow):
     def closeEvent(self, event):
         if self.regReflection.isChecked():
             self.regReflection.setChecked(False)
-            self.regReflection.setEnabled(True)
-            self.embeddedImage.coords = False
+            self.embeddedImage.setCoords = False
         try:
             self.popup.close()
         except AttributeError:
@@ -274,7 +281,7 @@ class ClickableImage(QLabel):
         self.start_point = None
         self.end_point = None
         self.selection_rect = None
-        self.coords = False
+        self.setCoords = False
         self.left = None
         self.right = None
 
@@ -298,7 +305,7 @@ class ClickableImage(QLabel):
             x = event.pos().x()
             self.update()
 
-            if self.coords:
+            if self.setCoords:
                 self.parent.popup.close()
                 maskWidth = self.parent.maskWidth.value()
                 self.left = x - int(maskWidth/2)
@@ -306,9 +313,9 @@ class ClickableImage(QLabel):
                 # self.left = self.selection_rect.left()
                 # self.right = self.selection_rect.right()
                 print(f'Mask registered: (Left: {self.left}, Right: {self.right})')
-                self.coords = False
+                self.setCoords = False
                 self.parent.regReflection.setChecked(False)
-                self.parent.regReflection.setEnabled(True)
+                # self.parent.regReflection.setEnabled(True)
                 self.parent.coordsRegistered = True
                 self.sigUpdateWithMask.emit()
 
