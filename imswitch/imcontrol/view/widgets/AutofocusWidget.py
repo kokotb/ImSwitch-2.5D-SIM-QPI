@@ -17,8 +17,10 @@ class AutofocusWidget(NapariHybridWidget):
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         self.AFWindow = SetAFWindow()
-        autofocusLayout = QtWidgets.QGridLayout()
-        self.setLayout(autofocusLayout)
+        autofocusButtonLayout = QtWidgets.QVBoxLayout()
+        
+        overallLayout = QtWidgets.QHBoxLayout()
+        self.setLayout(overallLayout)
         self.led = LedIndicator(self)
         self.openPreview = QtWidgets.QPushButton('AF Preview')
         self.openPreview.setEnabled(False)
@@ -27,11 +29,12 @@ class AutofocusWidget(NapariHybridWidget):
         self.clearRegPlane = QtWidgets.QPushButton('Clear Plane')
         self.clearRegPlane.setEnabled(False)
 
-        row = 0
-        autofocusLayout.addWidget(self.openPreview, row, 0)
-        autofocusLayout.addWidget(self.registerPlane, row, 1)
-        autofocusLayout.addWidget(self.clearRegPlane, row , 2)
-        autofocusLayout.addWidget(self.led, row + 1, 2)
+        # row = 0
+        autofocusButtonLayout.addWidget(self.openPreview)
+        autofocusButtonLayout.addWidget(self.registerPlane)
+        autofocusButtonLayout.addWidget(self.clearRegPlane)
+        overallLayout.addLayout(autofocusButtonLayout)
+        overallLayout.addWidget(self.led)
 
     def toggleEnabled(self, state):
         self.openPreview.setEnabled(state)
@@ -158,8 +161,6 @@ class SetAFWindow(QMainWindow):
         textHorizLayout.addStretch()
 
         self.embeddedImage = ClickableImage(blankImage, self)
-        # self.resizableBox = ResizableBox(self.embeddedImage)
-        # textLabel = QtWidgets.QLabel('Find sample focus. Refresh to display focus beam image. Click the center of the focus beam. Click ''Set ROI''. Close window.')
         buttonAndTextLayout.addLayout(buttonLayout)
         buttonAndTextLayout.addLayout(textHorizLayout)
 
@@ -170,27 +171,11 @@ class SetAFWindow(QMainWindow):
         afWindowLayout.addLayout(imageLayout)
         self.regReflection.clicked.connect(self.regCoordsFunc)
 
-        # self.msgMask = QMessageBox()
-        # self.msgMask.setWindowTitle("Please set reflection mask.")
-        # self.msgMask.setText("Please set the reflection mask by using the 'Register Reflection Coordinates' button.")
-        # self.msgMask.setIcon(QMessageBox.Information)
-        # self.msgMask.setStandardButtons(QMessageBox.Ok)
-
         self.msg = QMessageBox()
         self.msg.setWindowTitle("Set Coordinates")
         self.msg.setText("Please click and drag horizontally to cover all of the back reflection.")
         self.msg.setIcon(QMessageBox.Information)
         self.msg.setStandardButtons(QMessageBox.Ok)
-        # afWindowLayout.addStretch()
-
-        
-
-        # self.msg_box = QMessageBox()
-        # self.msg_box.setWindowTitle("Do Not Exclude Reflection?")
-        # self.msg_box.setText("Excluded region not selected. Continue with complete image?")
-        # button_yes = self.msg_box.addButton("Yes", QMessageBox.YesRole)
-        # button_no = self.msg_box.addButton("Cancel", QMessageBox.NoRole)
-
 
     def regCoordsFunc(self):
         self.embeddedImage.coords = True
@@ -226,7 +211,6 @@ class SetAFWindow(QMainWindow):
         xMax = int(max([*xData, *yData, *comboData]))
         yMax = int(max(zValues))
 
-
         axis_x = QValueAxis()
         # axis_x.setTitleText("Score")
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
@@ -251,40 +235,7 @@ class SetAFWindow(QMainWindow):
         q_image = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
 
         return QPixmap.fromImage(q_image)
-    
-# class ResizableBox(QRubberBand):
-#     def __init__(self, parent=None):
-#         super().__init__(QRubberBand.Rectangle, parent)
-#         self.setGeometry(100, 100, 150, 100)
-#         self.show()
-#         self._dragging = False
-#         self._resizing = False
-#         self._resizeMargin = 10
-
-#     def mousePressEvent(self, event):
-#         if self._isInResizeArea(event.pos()):
-#             self._resizing = True
-#         else:
-#             self._dragging = True
-#             self._dragOffset = event.pos()
-
-#     def mouseMoveEvent(self, event):
-#         if self._resizing:
-#             rect = self.geometry()
-#             newWidth = max(20, event.x())
-#             newHeight = max(20, event.y())
-#             self.setGeometry(rect.x(), rect.y(), newWidth, newHeight)
-#         elif self._dragging:
-#             self.move(self.mapToParent(event.pos() - self._dragOffset))
-
-#     def mouseReleaseEvent(self, event):
-#         self._dragging = False
-#         self._resizing = False
-
-#     def _isInResizeArea(self, pos):
-#         rect = self.rect()
-#         return pos.x() > rect.width() - self._resizeMargin and pos.y() > rect.height() - self._resizeMargin
-    
+     
 
 class ClickableImage(QLabel):
 
@@ -346,7 +297,7 @@ class ClickableImage(QLabel):
         if self.coords:
             self.left = self.selection_rect.left()
             self.right = self.selection_rect.right()
-            print(f'Mask registered: (Left:{self.left}, Right:{self.right})')
+            print(f'Mask registered: (Left: {self.left}, Right: {self.right})')
             self.coords = False
             self.parent.regReflection.setChecked(False)
             self.parent.regReflection.setEnabled(True)
@@ -371,7 +322,7 @@ class LedIndicator(QWidget):
         super().__init__(parent)
         self._on = False
         self._diameter = diameter
-        self.setFixedSize(QSize(diameter + 10, diameter + 10))
+        self.setFixedSize(QSize(diameter + 50, diameter + 50))
 
     def turn_on(self):
         self._on = True
