@@ -21,6 +21,17 @@ class ZStackController(ImConWidgetController):
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
+        self._commChannel.sigSetForPSF.connect(self.editForPSF)
+
+    def editForPSF(self, start):
+        if start:
+            self.initCenter = self._widget.checkbox_zStackCenter.isChecked()
+            self.initEnabled = self._widget.checkbox_zStack.isChecked()
+            self._widget.checkbox_zStackCenter.setChecked(True)
+            self._widget.checkbox_zStack.setChecked(True)
+        if not start:
+            self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
+            self._widget.checkbox_zStack.setChecked(self.initEnabled)
 
     def runZStackToggle(self, state):
         if state == 0:

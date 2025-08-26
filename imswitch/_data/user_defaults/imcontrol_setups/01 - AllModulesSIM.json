@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 0,
+      "valueInit": 100,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 0,
+    "valueInit": 100,
     "maxdBmValue": 20.1
     },
   "640AOTF": {

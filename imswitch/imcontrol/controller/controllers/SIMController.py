@@ -124,6 +124,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
         # self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
         self._commChannel.sigStart25D.connect(self.start25D)
+        self._commChannel.sigRecordPSFStack.connect(self.recordPSFStackSetFlag)
         self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleBoxes)
 
@@ -142,6 +143,10 @@ class SIMController(ImConWidgetController):
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self.AFManager = self._master.autofocusManager
 
+        self.recordPSFStackFlag = False
+
+    def recordPSFStackSetFlag(self):
+        self.recordPSFStackFlag = True
 
     def loadSIMSettings(self, moduleDict):
         try:
@@ -1436,6 +1441,7 @@ class SIMController(ImConWidgetController):
                         snapshotLock = threading.Lock()
                         self.snapshotSettingsSaved = False
                         lastImgLock = threading.Lock()
+                        
                         ####
 
                         self.errorQ = [] #List to be populated with error results from within processor threads
@@ -1478,7 +1484,10 @@ class SIMController(ImConWidgetController):
                         self._logger.info(f'Loop time (s): {endLoopTime}')
                         ####
 
-
+                    # if self.recordPSFStackFlag:
+                    #     recordedPSFStack = self._commChannel.getPSFStack()[0]
+                    #     self._commChannel.sigSendZstackToRecordWindow.emit(recordedPSFStack)
+                    #     self.recordPSFStackFlag = True
                         
                     
                     j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
@@ -1600,8 +1609,16 @@ class SIMController(ImConWidgetController):
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
 
- 
-      
+        if self.zScanActive: 
+            if z == 0:
+                resetStack = True
+            else:
+                resetStack = False
+            self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
+        ####
+                
+        # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
+        
         #### Emits every 2.5D image to tiling preview window.
         if self.tilePreview and self.isTiling:
             # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.

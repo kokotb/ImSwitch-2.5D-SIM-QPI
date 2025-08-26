@@ -30,6 +30,10 @@ class CommunicationChannel(SignalInterface):
 
     sigStart25D = Signal()
 
+    sigRecordPSFStack = Signal()
+
+    sigSendZstackToRecordWindow = Signal(list)
+
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
@@ -136,7 +140,7 @@ class CommunicationChannel(SignalInterface):
 
     sigSaveSettingsFirst = Signal()
  
-    sigRecPSFStack = Signal(np.ndarray, bool, int)
+    # sigRecPSFStack = Signal(np.ndarray, bool, int)
 
     sigRecAFStack = Signal(np.ndarray, bool, int)
 
@@ -158,6 +162,7 @@ class CommunicationChannel(SignalInterface):
     sigSIMStopped = Signal()
     sigToggleAutofocus = Signal(bool)
     sigGetAndScoreAF = Signal()
+    sigSetForPSF = Signal(bool)
     
 
     @property
@@ -172,7 +177,7 @@ class CommunicationChannel(SignalInterface):
         self._scriptExecution = False
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
-        self.sigRecPSFStack.connect(self.storeRecPSFStack)
+        # self.sigRecPSFStack.connect(self.storeRecPSFStack)
         self.sigRecAFStack.connect(self.storeRecAFStack)
         self.sigStop25D.connect(self.updateStop25DCommand)
         self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
@@ -209,13 +214,11 @@ class CommunicationChannel(SignalInterface):
     #     self.AFParams = AFParams
 
     def getPSFStack(self):
-        if not self.zStackList488:
-            self.zStackList488 = []
-        if not self.zStackList561:
-            self.zStackList561 = []
-        if not self.zStackList640:
-            self.zStackList640 = []
+        self.zStackList488 = getattr(self, "zStackList488", [])
+        self.zStackList561 = getattr(self, "zStackList561", [])
+        self.zStackList640 = getattr(self, "zStackList640", [])
         allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
+
         return allPSFStacks
 
     def storeRecPSFStack(self, stack, reset, handle):

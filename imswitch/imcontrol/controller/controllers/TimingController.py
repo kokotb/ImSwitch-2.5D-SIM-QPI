@@ -23,6 +23,18 @@ class TimingController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes) #Still on sigSIMAcqToggled
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
         #
+        self._commChannel.sigSetForPSF.connect(self.editForPSF)
+
+    def editForPSF(self, start):
+        if start:
+            self.initReps = self._widget.totalReps_textedit.text()
+            self.initEnabled = self._widget.checkbox_tilingReps.isChecked()
+            self._widget.checkbox_tilingReps.setChecked(True)
+            self._widget.totalReps_textedit.setText('1')
+        if not start:
+            self._widget.checkbox_tilingReps.setChecked(self.initEnabled)
+            self._widget.totalReps_textedit.setText(self.initReps)
+
 
     def loadSettings(self, moduleDict):
         try:
