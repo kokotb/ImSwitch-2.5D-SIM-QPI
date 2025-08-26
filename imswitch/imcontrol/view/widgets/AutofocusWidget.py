@@ -1,9 +1,8 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QCheckBox, QLineEdit, QLabel, QMainWindow, QWidget, QMessageBox,QFrame )
+from PyQt5.QtWidgets import (QLabel, QMainWindow, QWidget, QMessageBox, QFrame)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
-import threading
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtGui import QPainter
@@ -15,14 +14,11 @@ class AutofocusWidget(NapariHybridWidget):
 
     sigAutofocusInfoChanged = QtCore.Signal(str, str, str)
 
-
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         self.AFWindow = SetAFWindow()
         autofocusLayout = QtWidgets.QGridLayout()
         self.setLayout(autofocusLayout)
-
-        # self.autofocusModule = QCheckBox('Autofocus Module')
         self.led = LedIndicator(self)
         self.openPreview = QtWidgets.QPushButton('AF Preview')
         self.openPreview.setEnabled(False)
@@ -31,23 +27,11 @@ class AutofocusWidget(NapariHybridWidget):
         self.clearRegPlane = QtWidgets.QPushButton('Clear Plane')
         self.clearRegPlane.setEnabled(False)
 
-
-
-
-        
-
-
         row = 0
-        # autofocusLayout.addWidget(self.autofocusModule, row, 0)
-        autofocusLayout.addWidget(self.openPreview, row+1, 0)
-        autofocusLayout.addWidget(self.registerPlane, row+1, 1)
-        autofocusLayout.addWidget(self.clearRegPlane, row + 1, 2)
-        autofocusLayout.addWidget(self.led, row + 2, 2)
-
-        
-
-
-
+        autofocusLayout.addWidget(self.openPreview, row, 0)
+        autofocusLayout.addWidget(self.registerPlane, row, 1)
+        autofocusLayout.addWidget(self.clearRegPlane, row , 2)
+        autofocusLayout.addWidget(self.led, row + 1, 2)
 
     def toggleEnabled(self, state):
         self.openPreview.setEnabled(state)
@@ -55,19 +39,8 @@ class AutofocusWidget(NapariHybridWidget):
         self.clearRegPlane.setEnabled(state)
         # self.calCurveRange.setEnabled(state)
 
-
     def initValues(self):
         pass
-
-    # def openSetAFWindow(self):
-    #     self.AFWindow.show()
-    #     self.AFWindow.embeddedImage
-
-
-    # def clearAnnot(self):
-    #     self.clickableImage.clearAnnot()
-
-
 
 class SetAFWindow(QMainWindow):
     sigUpdateCalibChart = QtCore.Signal(np.ndarray,list,list,list)
@@ -373,7 +346,7 @@ class ClickableImage(QLabel):
         if self.coords:
             self.left = self.selection_rect.left()
             self.right = self.selection_rect.right()
-            print(f'Coordinates registered: ({self.left},{self.right})')
+            print(f'Mask registered: (Left:{self.left}, Right:{self.right})')
             self.coords = False
             self.parent.regReflection.setChecked(False)
             self.parent.regReflection.setEnabled(True)

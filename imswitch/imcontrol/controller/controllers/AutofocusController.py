@@ -22,32 +22,24 @@ class AutofocusController(ImConWidgetController):
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         # self._widget.sigAutofocusInfoChanged.connect(self.valueChanged)
-        # self._widget.checkbox_Autofocus.stateChanged.connect(self.testFunc)
+
         self._widget.initValues()
-        # self._commChannel.sigToggleAutofocus.connect(self.toggleAutofocusCheckbox)
-        # self._widget.openPreview.clicked.connect(self.openSetAFWindowThread)
         self._widget.openPreview.clicked.connect(self.openSetAFWindow)
         self._widget.registerPlane.clicked.connect(self.registerCurrentPlane)
         self._widget.clearRegPlane.clicked.connect(self.clearRegisteredPlane)
-        # self._widget.autofocusModule.clicked.connect(self.autofocusModuleToggle)
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
         self._widget.AFWindow.resetMask.clicked.connect(self.resetMask)
-        # self._widget.registerPlane.clicked.connect(self.onLED)
-        # self._widget.clearRegPlane.clicked.connect(self.offLED)
         self._manager = self._master.autofocusManager
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
         self.calCurveImgs = []
         self.calCurveScores = []
         
-        # self._commChannel.calCurveFit = False
-        # self.initRegScore = None
         self.storeInitEstimate()
         self.initWidget()
         
-
         self.threshold = self._manager.threshold #pixel value threshold for AF image
 
         self._widget.AFWindow.embeddedImage.sigUpdateWithMask.connect(self.updateImageWithMask)
