@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QLabel, QMainWindow, QWidget, QMessageBox, QFrame, QApplication)
+from PyQt5.QtWidgets import (QLabel, QMainWindow, QWidget, QFrame, QGroupBox)
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import numpy as np
@@ -160,19 +160,40 @@ class SetAFWindow(QMainWindow):
         self.chart = QChart()
         self.chart.setTitle("Calibration Curve Data")
         chart_view = QChartView(self.chart)
-        chart_view.setMinimumSize(1000, 600)
+        chart_view.setMinimumHeight(600)
+        chart_view.setMaximumWidth(1000)
+
         chart_view.setRenderHint(QPainter.Antialiasing)
         
         textHorizLayout.addWidget(chart_view)
 
+        instruction_box = QGroupBox("Instructions")
+        instruction_layout = QtWidgets.QVBoxLayout()
+        self.instruction_label1 = QLabel("1. Click the 'Register Reflection Mask' button.")
+        self.instruction_label1.setWordWrap(True)  # Enable text wrapping 
+        # instruction_label1.setFont(QFont(instruction_label1.font().family(), instruction_label1.font().pointSize(), QFont.Bold))
+        # instruction_label1.setStyleSheet("color: gray; font-weight: bold;")
+        self.instruction_label1.setStyleSheet("color: white;")
 
-        self.coordsRegistered = False
 
-        textHorizLayout.addStretch()
+        self.instruction_label2 = QLabel("2. Click the center of the bright vertical reflection.")
+        self.instruction_label2.setWordWrap(True)  # Enable text wrapping 
+        self.instruction_label2.setStyleSheet("color: gray;")
+        self.instruction_label3 = QLabel("3. Click the 'Run Cal. Curve' button once mask is set to obtain calibration curve.\n\n-- If successful, calibration curve data will appear in the chart. Acceptable sensitivity is >7 pixels/um.")
+        self.instruction_label3.setWordWrap(True)  # Enable text wrapping
+        self.instruction_label3.setStyleSheet("color: gray;")
+        instruction_layout.addWidget(self.instruction_label1)
+        instruction_layout.addWidget(self.instruction_label2)
+        instruction_layout.addWidget(self.instruction_label3)
+        instruction_box.setLayout(instruction_layout)
+        textHorizLayout.addWidget(instruction_box)
+        # textHorizLayout.addStretch()
 
         self.embeddedImage = ClickableImage(blankImage, self)
         buttonAndTextLayout.addLayout(buttonLayout)
         buttonAndTextLayout.addLayout(textHorizLayout)
+
+
 
 
 
@@ -181,16 +202,14 @@ class SetAFWindow(QMainWindow):
         afWindowLayout.addLayout(imageLayout)
         self.regReflection.clicked.connect(self.regCoordsFunc)
 
-        # self.msg = QMessageBox()
-        # self.msg.setWindowTitle("Set Coordinates")
-        # self.msg.setText("Please click and drag horizontally to cover all of the back reflection.")
-        # self.msg.setIcon(QMessageBox.Information)
-        # self.msg.setStandardButtons(QMessageBox.Ok)
+        self.coordsRegistered = False
 
     def regCoordsFunc(self):
         if self.embeddedImage.setCoords:
             self.regReflection.setChecked(False)
             self.embeddedImage.setCoords = False
+            self.instruction_label1.setStyleSheet("color: white;")
+            self.instruction_label2.setStyleSheet("color: gray;")
             try:
                 self.popup.close()
             except AttributeError:
@@ -199,6 +218,8 @@ class SetAFWindow(QMainWindow):
             self.embeddedImage.setCoords = True
             self.regReflection.setChecked(True)
             self.popup = PopupMessage("Please click the center of the bright vertical reflection to mask it out of the image.")
+            self.instruction_label1.setStyleSheet("color: gray;")
+            self.instruction_label2.setStyleSheet("color: white;")
             self.popup.show_message()
 
     # def showMaskMSG(self):
@@ -260,6 +281,9 @@ class SetAFWindow(QMainWindow):
         if self.regReflection.isChecked():
             self.regReflection.setChecked(False)
             self.embeddedImage.setCoords = False
+            self.instruction_label1.setStyleSheet("color: white;")
+            self.instruction_label2.setStyleSheet("color: gray;")
+            self.instruction_label3.setStyleSheet("color: gray;")
         try:
             self.popup.close()
         except AttributeError:
@@ -307,6 +331,8 @@ class ClickableImage(QLabel):
 
             if self.setCoords:
                 self.parent.popup.close()
+                self.parent.instruction_label2.setStyleSheet("color: gray;")
+                self.parent.instruction_label3.setStyleSheet("color: white;")
                 maskWidth = self.parent.maskWidth.value()
                 self.left = x - int(maskWidth/2)
                 self.right = x + int(maskWidth/2)
@@ -318,29 +344,6 @@ class ClickableImage(QLabel):
                 # self.parent.regReflection.setEnabled(True)
                 self.parent.coordsRegistered = True
                 self.sigUpdateWithMask.emit()
-
-    # def mouseMoveEvent(self, event):
-    #     if self.start_point:
-    #         # self.end_point = event.pos()
-    #         x = event.pos().x()
-    #         y = self.start_point.y()
-    #         self.end_point = QPoint(x, y)
-    #         self.update()
-
-    # def mouseReleaseEvent(self, event):
-    #     if event.button() == Qt.LeftButton and self.start_point:
-    #         # self.end_point = event.pos()
-    #         x = event.pos().x()
-    #         y = self.start_point.y() 
-    #         self.end_point = QPoint(x, y)
-    #         self.selection_rect = QRect(self.start_point, self.end_point).normalized()
-    #         self.start_point = None
-    #         self.end_point = None
-    #         self.update()
-
-
-            
-
 
     def paintEvent(self, event):
         super().paintEvent(event)

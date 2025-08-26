@@ -69,6 +69,9 @@ class AutofocusController(ImConWidgetController):
             self._widget.AFWindow.coordsRegistered = False
             self.getOneFrameToSet()
             self._logger.info('Reflection mask deleted.')
+            self._widget.AFWindow.instruction_label1.setStyleSheet("color: white;")
+            self._widget.AFWindow.instruction_label2.setStyleSheet("color: gray;")
+            self._widget.AFWindow.instruction_label3.setStyleSheet("color: gray;")
         else:
             self._logger.info('Reflection mask is not currently registered.')
 
@@ -152,6 +155,7 @@ class AutofocusController(ImConWidgetController):
             self._logger.warning("Reflection mask must be set before running calibration curve.")
         
         else:
+            
             zList, currentZ = self.calcZRange()
             # zList = zList.reverse()
             if len(self.calCurveImgs) != 0:
@@ -170,9 +174,12 @@ class AutofocusController(ImConWidgetController):
             time.sleep(0.01)
             img = self.getOneFrame()
             imgMaskZero = self.colToZero(img)
+            self._widget.AFWindow.instruction_label3.setStyleSheet("color: gray;")
+            self._widget.AFWindow.instruction_label1.setStyleSheet("color: white;")
             self.setOneFrame(imgMaskZero)
             
             self.scoreCalCurveImgs(zList)
+
 
     def getAndScoreOne(self):
         assert self._commChannel.calCurveFit, "Calibration curve not set."
@@ -280,15 +287,15 @@ class AutofocusController(ImConWidgetController):
         self.r2 = r2_score(zList, y_pred)
         self._widget.AFWindow.sigUpdateCalibChart.emit(z_values, x_sigma, y_sigma, comboDataReshape1D)
         if self.r2 >= 0.99:
-            self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nr^2 = {self.r2}')
+            self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nR^2 = {self.r2}')
             self._commChannel.calCurveFit = True
             self._widget.AFWindow.ccSlopeVal.setText(str(round(self.x_slp,3)))
             self._widget.AFWindow.ccIntVal.setText(str(round(self.y_int,2)))
-            self._widget.AFWindow.ccR2Val.setText(str(round(self.r2,4)))
+            self._widget.AFWindow.ccR2Val.setText(str(round(self.r2,5)))
             sensitivity = -1 / self.x_slp
             self._widget.AFWindow.ccSensVal.setText(f'{round(sensitivity,2)} pixels/um')
         else:
-            self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp:.3f}\nIntercept = {self.y_int:.2f}\nr^2 = {self.r2:.4f}")
+            self._logger.warning(f"Failed to fit calibration curve to data.\nSlope = {self.x_slp:.3f}\nIntercept = {self.y_int:.2f}\nR^2 = {self.r2:.4f}")
             self._commChannel.calCurveFit = False
         
 
