@@ -170,11 +170,11 @@ class SetAFWindow(QMainWindow):
 
         self.regReflection.clicked.connect(self.embeddedImage.regCoordsFunc)
 
-        self.msg_box = QMessageBox()
-        self.msg_box.setWindowTitle("Exclude Reflection?")
-        self.msg_box.setText("Excluded region not selected. Continue with complete image?")
-        button_yes = self.msg_box.addButton("Yes", QMessageBox.YesRole)
-        button_no = self.msg_box.addButton("Cancel", QMessageBox.NoRole)
+        # self.msg_box = QMessageBox()
+        # self.msg_box.setWindowTitle("Do Not Exclude Reflection?")
+        # self.msg_box.setText("Excluded region not selected. Continue with complete image?")
+        # button_yes = self.msg_box.addButton("Yes", QMessageBox.YesRole)
+        # button_no = self.msg_box.addButton("Cancel", QMessageBox.NoRole)
 
     def displayChart(self, zValues, xData, yData, comboData):
         # self.series.clear()

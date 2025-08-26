@@ -117,8 +117,8 @@ class AutofocusController(ImConWidgetController):
 
 
     def runCalCurve(self):
-        if self._widget.AFWindow.embeddedImage.left == None:
-            self._widget.AFWindow.msg_box.exec_()
+        # if self._widget.AFWindow.embeddedImage.left == None:
+        #     self._widget.AFWindow.msg_box.exec_()
         zList, currentZ = self.calcZRange()
         # zList = zList.reverse()
         if len(self.calCurveImgs) != 0:

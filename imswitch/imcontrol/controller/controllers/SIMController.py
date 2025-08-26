@@ -1600,13 +1600,7 @@ class SIMController(ImConWidgetController):
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
 
-        if self.zScanActive: 
-            if z == 0:
-                resetStack = True
-            else:
-                resetStack = False
-            self._commChannel.sigRecPSFStack.emit(rawImg, resetStack, processor.handle)
-        ####
+ 
       
         #### Emits every 2.5D image to tiling preview window.
         if self.tilePreview and self.isTiling:

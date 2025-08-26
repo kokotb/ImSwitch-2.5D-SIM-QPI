@@ -220,17 +220,17 @@ class CommunicationChannel(SignalInterface):
 
     def storeRecPSFStack(self, stack, reset, handle):
         
-        if handle == 488:
+        if handle == '488F':
             if reset == True:
                 self.zStackList488 = []
             self.zStackList488.append(stack)
 
-        elif handle == 561:
+        elif handle == '561F':
             if reset == True:
                 self.zStackList561 = []
             self.zStackList561.append(stack)
 
-        elif handle == 640:
+        elif handle == '640F':
             if reset == True:
                 self.zStackList640 = []   
             self.zStackList640.append(stack)

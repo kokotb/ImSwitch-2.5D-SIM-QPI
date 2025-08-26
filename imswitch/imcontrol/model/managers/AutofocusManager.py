@@ -14,9 +14,9 @@ class AutofocusManager(SignalInterface):
     def __init__(self):
         super().__init__()
         self._logger = initLogger(self)
-        self.init_guess_x = [5,940,900,40]	# Guesses for fits Background, Centre, Width, Amplitude
-        self.init_guess_y = [5,620,900,40]
-        self.threshold = 15
+        self.init_guess_x = [5,1020,500,30]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = [5,550,500,30]
+        self.threshold = 5
          #pixel value threshold for AF image
         self.guess_x = self.init_guess_x[:]	# Guesses for fits Background, Centre, Width, Amplitude
         self.guess_y = self.init_guess_y[:]
