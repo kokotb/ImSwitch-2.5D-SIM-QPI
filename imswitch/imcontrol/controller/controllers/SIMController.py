@@ -1330,12 +1330,11 @@ class SIMController(ImConWidgetController):
 
 
         ####Autofocus
-        if (self._commChannel.autofocusEnabled == True) and (self._commChannel.initRegScore != None) :
+        if (self._commChannel.initRegScore != None) :
             self.autofocusThread()
             self.AFMaskLeft = self._commChannel.AFMaskLeft
             self.AFMaskRight = self._commChannel.AFMaskRight
-            self._logger.info('Autofocus active')
-            
+            self._logger.info('Autofocus active')    
         ####
 
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.

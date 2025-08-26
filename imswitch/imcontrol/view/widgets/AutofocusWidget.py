@@ -120,6 +120,14 @@ class SetAFWindow(QMainWindow):
         self.rangeLabel = QLabel(self)
         self.rangeLabel.setText("Scan Range:")
 
+        self.maskWidthLabel = QLabel(self)
+        self.maskWidthLabel.setText("Mask Width:")
+
+        self.maskWidth = QtWidgets.QSpinBox()
+        self.maskWidth.setMinimum(10)
+        self.maskWidth.setMaximum(120)
+        self.maskWidth.setValue(90)
+
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(1)
         self.calCurveRange.setMaximum(100)
@@ -128,16 +136,18 @@ class SetAFWindow(QMainWindow):
         
 
         row = 0
-        textLayout.addWidget(self.rangeLabel, row , 0)
-        textLayout.addWidget(self.calCurveRange, row , 1)
-        textLayout.addWidget(self.ccSlopeLabel, row + 1, 0)
-        textLayout.addWidget(self.ccSlopeVal, row + 1, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccIntLabel, row + 2, 0)
-        textLayout.addWidget(self.ccIntVal, row + 2, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccR2Label, row + 3, 0)
-        textLayout.addWidget(self.ccR2Val, row + 3, 1, alignment=Qt.AlignLeft)
-        textLayout.addWidget(self.ccSensLabel, row + 4, 0)
-        textLayout.addWidget(self.ccSensVal, row + 4, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.maskWidthLabel, row , 0)
+        textLayout.addWidget(self.maskWidth, row , 1)
+        textLayout.addWidget(self.rangeLabel, row + 1 , 0)
+        textLayout.addWidget(self.calCurveRange, row+1, 1)
+        textLayout.addWidget(self.ccSlopeLabel, row + 2, 0)
+        textLayout.addWidget(self.ccSlopeVal, row + 2, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccIntLabel, row + 3, 0)
+        textLayout.addWidget(self.ccIntVal, row + 3, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccR2Label, row + 4, 0)
+        textLayout.addWidget(self.ccR2Val, row + 4, 1, alignment=Qt.AlignLeft)
+        textLayout.addWidget(self.ccSensLabel, row + 5, 0)
+        textLayout.addWidget(self.ccSensVal, row + 5, 1, alignment=Qt.AlignLeft)
         textLayoutBoxed = QtWidgets.QVBoxLayout()
         textLayoutBoxed.addWidget(self.frame1)
         
@@ -148,7 +158,7 @@ class SetAFWindow(QMainWindow):
         #Chart
 
         self.chart = QChart()
-        self.chart.setTitle("Calibration Data")
+        self.chart.setTitle("Calibration Curve Data")
         chart_view = QChartView(self.chart)
         chart_view.setMinimumSize(1000, 600)
         chart_view.setRenderHint(QPainter.Antialiasing)
@@ -182,7 +192,7 @@ class SetAFWindow(QMainWindow):
         self.regReflection.setChecked(True)
         self.regReflection.setEnabled(False)
         # self.msg.show()
-        self.popup = PopupMessage("Please click and hold to draw horizontal line covering vertical reflection.")
+        self.popup = PopupMessage("Please click the center of the bright vertical relfection to mask it out of the image.")
         self.popup.show_message()
 
     # def showMaskMSG(self):
@@ -214,7 +224,7 @@ class SetAFWindow(QMainWindow):
         yMax = int(max(zValues))
 
         axis_x = QValueAxis()
-        # axis_x.setTitleText("Score")
+        axis_x.setTitleText("Score")
         axis_x.setRange(xMin - xMin*0.05, xMax + xMax*0.01)
 
         axis_y = QValueAxis()
@@ -239,7 +249,14 @@ class SetAFWindow(QMainWindow):
         return QPixmap.fromImage(q_image)
     
     def closeEvent(self, event):
-        self.popup.close()
+        if self.regReflection.isChecked():
+            self.regReflection.setChecked(False)
+            self.regReflection.setEnabled(True)
+            self.embeddedImage.coords = False
+        try:
+            self.popup.close()
+        except AttributeError:
+            pass
         event.accept()
 
 class ClickableImage(QLabel):
@@ -276,39 +293,45 @@ class ClickableImage(QLabel):
     
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.start_point = event.pos()
-            self.end_point = self.start_point
-            self.update()
-
-    def mouseMoveEvent(self, event):
-        if self.start_point:
-            # self.end_point = event.pos()
+            # self.start_point = event.pos()
+            # self.end_point = self.start_point
             x = event.pos().x()
-            y = self.start_point.y()
-            self.end_point = QPoint(x, y)
             self.update()
 
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.start_point:
-            # self.end_point = event.pos()
-            x = event.pos().x()
-            y = self.start_point.y() 
-            self.end_point = QPoint(x, y)
-            self.selection_rect = QRect(self.start_point, self.end_point).normalized()
-            self.start_point = None
-            self.end_point = None
-            self.update()
+            if self.coords:
+                self.parent.popup.close()
+                maskWidth = self.parent.maskWidth.value()
+                self.left = x - int(maskWidth/2)
+                self.right = x + int(maskWidth/2)
+                # self.left = self.selection_rect.left()
+                # self.right = self.selection_rect.right()
+                print(f'Mask registered: (Left: {self.left}, Right: {self.right})')
+                self.coords = False
+                self.parent.regReflection.setChecked(False)
+                self.parent.regReflection.setEnabled(True)
+                self.parent.coordsRegistered = True
+                self.sigUpdateWithMask.emit()
 
-        if self.coords:
-            self.parent.popup.close()
-            self.left = self.selection_rect.left()
-            self.right = self.selection_rect.right()
-            print(f'Mask registered: (Left: {self.left}, Right: {self.right})')
-            self.coords = False
-            self.parent.regReflection.setChecked(False)
-            self.parent.regReflection.setEnabled(True)
-            self.parent.coordsRegistered = True
-            self.sigUpdateWithMask.emit()
+    # def mouseMoveEvent(self, event):
+    #     if self.start_point:
+    #         # self.end_point = event.pos()
+    #         x = event.pos().x()
+    #         y = self.start_point.y()
+    #         self.end_point = QPoint(x, y)
+    #         self.update()
+
+    # def mouseReleaseEvent(self, event):
+    #     if event.button() == Qt.LeftButton and self.start_point:
+    #         # self.end_point = event.pos()
+    #         x = event.pos().x()
+    #         y = self.start_point.y() 
+    #         self.end_point = QPoint(x, y)
+    #         self.selection_rect = QRect(self.start_point, self.end_point).normalized()
+    #         self.start_point = None
+    #         self.end_point = None
+    #         self.update()
+
+
             
 
 

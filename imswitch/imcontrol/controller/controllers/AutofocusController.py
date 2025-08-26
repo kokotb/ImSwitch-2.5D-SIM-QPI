@@ -316,20 +316,6 @@ class AutofocusController(ImConWidgetController):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def valueChanged(self, attrCategory, parameterName, value):
         self.setSharedAttr(attrCategory, parameterName, value)
 
