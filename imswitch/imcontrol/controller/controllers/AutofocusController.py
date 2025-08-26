@@ -33,6 +33,7 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.calCurve.clicked.connect(self.runCalCurveThread)
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
+        self._widget.AFWindow.resetMask.clicked.connect(self.resetMask)
         # self._widget.registerPlane.clicked.connect(self.onLED)
         # self._widget.clearRegPlane.clicked.connect(self.offLED)
         self._manager = self._master.autofocusManager
@@ -66,7 +67,19 @@ class AutofocusController(ImConWidgetController):
     def resetEstimates(self):
         self.guess_x = self._manager.init_guess_x[:]
         self.guess_y = self._manager.init_guess_y[:]
-        self._logger.info('Initial fit guesses reset.')
+
+        self._logger.info('Gaussian fit parameters reset to initial.')
+
+    def resetMask(self):
+        if self._widget.AFWindow.coordsRegistered:
+            self._widget.AFWindow.embeddedImage.left = None
+            self._widget.AFWindow.embeddedImage.right = None
+            self._widget.AFWindow.coordsRegistered = False
+            self.getOneFrameToSet()
+            self._logger.info('Reflection mask deleted.')
+        else:
+            self._logger.info('Reflection mask is not currently registered.')
+
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
@@ -122,8 +135,10 @@ class AutofocusController(ImConWidgetController):
 
     
     def colToZero(self, img):
+
         imgMaskZero = img[:]
         imgMaskZero[:,range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right)] = 0
+
         return imgMaskZero
 
     def updateImageWithMask(self):
@@ -135,27 +150,31 @@ class AutofocusController(ImConWidgetController):
     def runCalCurve(self):
         # if self._widget.AFWindow.embeddedImage.left == None:
         #     self._widget.AFWindow.msg_box.exec_()
-        zList, currentZ = self.calcZRange()
-        # zList = zList.reverse()
-        if len(self.calCurveImgs) != 0:
-            self.calCurveImgs = []
-        for count, _ in enumerate(zList):
-            # filename = f"{count:03}.tif"
-            self.zPositioner.setPosition(zList[count], 'Z')
+        if not self._widget.AFWindow.coordsRegistered:
+            self._logger.warning("Reflection mask must be set before running calibration curve.")
+        
+        else:
+            zList, currentZ = self.calcZRange()
+            # zList = zList.reverse()
+            if len(self.calCurveImgs) != 0:
+                self.calCurveImgs = []
+            for count, _ in enumerate(zList):
+                # filename = f"{count:03}.tif"
+                self.zPositioner.setPosition(zList[count], 'Z')
+                time.sleep(0.01)
+                img = self.getOneFrame()
+                imgMaskZero = self.colToZero(img)
+                self.setOneFrame(imgMaskZero)
+                # self.saveImageInBackground(img, path, filename)
+                self.calCurveImgs.append(img)
+            
+            self.zPositioner.setPosition(currentZ, 'Z')
             time.sleep(0.01)
             img = self.getOneFrame()
             imgMaskZero = self.colToZero(img)
             self.setOneFrame(imgMaskZero)
-            # self.saveImageInBackground(img, path, filename)
-            self.calCurveImgs.append(img)
-        
-        self.zPositioner.setPosition(currentZ, 'Z')
-        time.sleep(0.01)
-        img = self.getOneFrame()
-        imgMaskZero = self.colToZero(img)
-        self.setOneFrame(imgMaskZero)
-        
-        self.scoreCalCurveImgs(zList)
+            
+            self.scoreCalCurveImgs(zList)
 
     def getAndScoreOne(self):
         assert self._commChannel.calCurveFit, "Calibration curve not set."

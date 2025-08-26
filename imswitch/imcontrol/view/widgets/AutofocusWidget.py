@@ -99,11 +99,14 @@ class SetAFWindow(QMainWindow):
         buttonLayout.addWidget(self.acqImgButton)
         self.calCurve = QtWidgets.QPushButton('Run Cal. Curve')
         buttonLayout.addWidget(self.calCurve)
+
         self.resetEstimates = QtWidgets.QPushButton('Reset Estimates')
         buttonLayout.addWidget(self.resetEstimates)
-        self.regReflection  = QtWidgets.QPushButton('Register Reflection Coordinates')
+        self.regReflection  = QtWidgets.QPushButton('Register Reflection Mask')
         self.regReflection.setCheckable(True)
         buttonLayout.addWidget(self.regReflection)
+        self.resetMask = QtWidgets.QPushButton('Reset Reflection Mask')
+        buttonLayout.addWidget(self.resetMask)
 
         self.sigUpdateCalibChart.connect(self.displayChart)
 
@@ -172,7 +175,7 @@ class SetAFWindow(QMainWindow):
         textHorizLayout.addWidget(chart_view)
 
 
-
+        self.coordsRegistered = False
 
         textHorizLayout.addStretch()
 
@@ -188,6 +191,12 @@ class SetAFWindow(QMainWindow):
         imageLayout.addWidget(self.embeddedImage, alignment=Qt.AlignCenter)
         afWindowLayout.addLayout(imageLayout)
         self.regReflection.clicked.connect(self.regCoordsFunc)
+
+        # self.msgMask = QMessageBox()
+        # self.msgMask.setWindowTitle("Please set reflection mask.")
+        # self.msgMask.setText("Please set the reflection mask by using the 'Register Reflection Coordinates' button.")
+        # self.msgMask.setIcon(QMessageBox.Information)
+        # self.msgMask.setStandardButtons(QMessageBox.Ok)
 
         self.msg = QMessageBox()
         self.msg.setWindowTitle("Set Coordinates")
@@ -210,6 +219,9 @@ class SetAFWindow(QMainWindow):
         self.regReflection.setChecked(True)
         self.regReflection.setEnabled(False)
         self.msg.show()
+
+    # def showMaskMSG(self):
+    #     self.msgMask.show()
 
     def displayChart(self, zValues, xData, yData, comboData):
         # self.series.clear()
@@ -320,10 +332,6 @@ class ClickableImage(QLabel):
         self.annotation_points = []
         # self.lastClick = (0,0,1280,1024) #Left,Top,width,height of last image click.
 
-    # def colToZero(self, img):
-    #     imgMaskZero = img[:]
-    #     imgMaskZero[:,range(self.left,self.right)] = 0
-    #     return imgMaskZero
         
 
     def convert_ndarray_to_qpixmap(self, image: np.ndarray) -> QPixmap:
@@ -358,6 +366,7 @@ class ClickableImage(QLabel):
             self.coords = False
             self.parent.regReflection.setChecked(False)
             self.parent.regReflection.setEnabled(True)
+            self.parent.coordsRegistered = True
             self.sigUpdateWithMask.emit()
 
 
@@ -367,8 +376,8 @@ class ClickableImage(QLabel):
             painter = QPainter(self)
             pen = QPen(QColor(0, 120, 215), 2, Qt.DashLine)
             painter.setPen(pen)
-            rect = QRect(self.start_point, self.end_point)
-            painter.drawRect(rect.normalized())
+            # rect = QRect(self.start_point, self.end_
+            painter.drawLine(self.start_point, self.end_point)
     
 
 
