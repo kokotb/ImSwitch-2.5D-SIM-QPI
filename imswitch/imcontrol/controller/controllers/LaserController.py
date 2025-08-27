@@ -50,6 +50,7 @@ class LaserController(ImConWidgetController):
         # Connect LaserWidget signals
         self._widget.sigEnableChanged.connect(self.toggleLaser)
         self._widget.sigValueChanged.connect(self.valueChanged)
+        # self._widget.control.enableButton.toggled.connect(self.manualToggle)
 
         # self._widget.sigModEnabledChanged.connect(self.toggleModulation)
         # self._widget.sigFreqChanged.connect(self.frequencyChanged)

@@ -278,6 +278,7 @@ class LaserModule(QtWidgets.QWidget):
         self.enableButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
                                         QtWidgets.QSizePolicy.Expanding)
         self.enableButton.setCheckable(True)
+        self.enableButton.setEnabled(False)
 
         # Add elements to QHBoxLayout
         self.layout = QtWidgets.QHBoxLayout()
@@ -289,10 +290,10 @@ class LaserModule(QtWidgets.QWidget):
             sizePolicy.setRetainSizeWhenHidden(True)
             powerFrame.setSizePolicy(sizePolicy)
             powerFrame.hide()
-        # self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
+        self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
 
         # Connect signals
-        self.enableButton.toggled.connect(self.sigEnableChanged)
+        
         self.slider.valueChanged.connect( 
             lambda value: self.sigValueChanged.emit(value)
         )
