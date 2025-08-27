@@ -81,6 +81,7 @@ class AutofocusController(ImConWidgetController):
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
+        self._commChannel.sigSendZDrift.emit(0.0)
         # self._commChannel.initZ = None
         self.offLED()
 
@@ -105,6 +106,7 @@ class AutofocusController(ImConWidgetController):
         self._widget.led.turn_off()
 
     def registerCurrentPlane(self):
+        self._commChannel.sigSendZDrift.emit(0.0)
         score = self.getAndScoreOne()
         self._commChannel.initRegScore = score
         # registeredZ = self.zPositioner.get_abs()
