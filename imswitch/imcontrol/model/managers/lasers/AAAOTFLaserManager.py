@@ -57,10 +57,10 @@ class AAAOTFLaserManager(LaserManager):
 
     def externalControl(self):
         """Switch the channel to external control""" 
-        cmd = 'L' + str(self._channel) + 'I1' #1=external, 0=internal
-        ans = self._rs232manager.query(cmd)
-        channel = self.laserDict[ans.split('F')[0].split('l')[1]]
-        self._logger.info(f'{channel} laser external control enabled')
+        cmd = 'I1' #1=external, 0=internal
+        self._rs232manager.write(cmd)
+        # channel = self.laserDict[ans.split('F')[0].split('l')[1]]
+        # self._logger.info(f'{channel} laser external control enabled')
 
     def powerPercentTodBm(self,maxdBm,power):
         try:
