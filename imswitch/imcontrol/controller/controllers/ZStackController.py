@@ -59,6 +59,7 @@ class ZStackController(ImConWidgetController):
             totalDist = float(self._widget.totalZ_textedit.text())
         except ValueError:
             return
+        
         zScanDir = self._widget.zStackScanDir.currentText()
         currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position'])
         centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
@@ -80,7 +81,7 @@ class ZStackController(ImConWidgetController):
 
             for i in range(floorSteps):
                 zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
-            self._widget.numSteps_textedit.setText(str(len(zScanList) + 1))
+            self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
         else:
             zScanList.append(round(currentZ,1))
