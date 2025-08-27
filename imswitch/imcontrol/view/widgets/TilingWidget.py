@@ -80,7 +80,7 @@ class TilingWidget(NapariHybridWidget):
         self.elementList.append(self.numGridY_textedit)
         self.elementList.append(self.overlap_textedit)
         self.elementList.append(self.checkbox_tiling)
-        self.elementList.append(self.checkbox_tilepreview)
+        # self.elementList.append(self.checkbox_tilepreview) #CTNOTE: Not working very well, removing for now 27/8/25
 
 
 

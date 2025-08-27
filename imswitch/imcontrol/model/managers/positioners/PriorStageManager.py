@@ -171,6 +171,8 @@ class PriorStageManager(PositionerManager):
             axis_order = 'None'
             print(f"{axis} axis is invalid input for Prior XY stage!")
         old_pos = self.get_abs()
+        while old_pos == ['']: #Ask until the stage returns a valid answer.
+            old_pos = self.get_abs()
 
         if float(old_pos[axis_order])+dist > self.moveLimitsRegHolder[axis_order]:
             self.__logger.error(f'Out of bounds request on {axis} axis. Limit is ±{self.moveLimitsRegHolder[axis_order]}.')
@@ -185,10 +187,15 @@ class PriorStageManager(PositionerManager):
         self.query(msg_move_relative)
         self.checkBusyLoop()
         current_position = self.get_abs()
-        try:
-            self._position[axis] = float(current_position[axis_order])
-        except ValueError:
-            pass
+        while current_position == ['']: #Ask until the stage returns a valid answer.
+            current_position = self.get_abs()
+        self._position[axis] = float(current_position[axis_order])
+
+        # try:
+        #     self._position[axis] = float(current_position[axis_order])
+        # except (ValueError, IndexError):
+        #     pass
+
         self.__logger.info(self._position) #queries from get_abs
 
 
@@ -259,7 +266,7 @@ class PriorStageManager(PositionerManager):
     def get_abs(self):
         response = self.query("controller.stage.position.get")
         position = response[1].split(",", 1)
-        print(response)
+        # print(response)
         return position
     # def get_abs(self):
     #     cmd = 'PZ'

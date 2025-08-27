@@ -445,8 +445,8 @@ class SIMController(ImConWidgetController):
 
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.info(f'Acquisition time (s): {procTimeDur}')
-                        self._logger.info(f'Loop time (s): {endLoopTime}')
+                        self._logger.debug(f'Acquisition time (s): {procTimeDur}')
+                        self._logger.debug(f'Loop time (s): {endLoopTime}')
                         
                         
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
@@ -466,7 +466,7 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1
                 self.roiIter += 1
                 
-                self._logger.info(f'Elapsed time (s): {totalEndTime}')
+                self._logger.debug(f'Elapsed time (s): {totalEndTime}\n')
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                 if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
@@ -1479,8 +1479,8 @@ class SIMController(ImConWidgetController):
                         #### Print timing and frame information.
                         self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.info(f'Acquisition time (s): {procTimeDur}')
-                        self._logger.info(f'Loop time (s): {endLoopTime}')
+                        self._logger.debug(f'Acquisition time (s): {procTimeDur}')
+                        self._logger.debug(f'Loop time (s): {endLoopTime}')
                         ####
 
                     # if self.recordPSFStackFlag:
@@ -1502,7 +1502,7 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1 # Used in filenames of saved files.
                 self.roiIter += 1 # Increment roi index
                 ####
-                self._logger.info(f'Elapsed time (s): {totalEndTime}')
+                self._logger.debug(f'Elapsed time (s): {totalEndTime}\n')
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime: #Will this stop in middle of tiling if duration hits?
                 self.stop25D() # Stops system is duration based imaging is selected.
@@ -1655,6 +1655,7 @@ class SIMController(ImConWidgetController):
             self.autofocusLoop()
 
     def autofocusLoop(self):
+        # periodInSec = self.getPeriodInSec()
         if self.firstLoop:
             self.AFScores = []
             self.cumZDiff = 0
