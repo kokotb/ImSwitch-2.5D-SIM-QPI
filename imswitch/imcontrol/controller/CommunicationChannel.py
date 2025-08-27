@@ -146,6 +146,8 @@ class CommunicationChannel(SignalInterface):
 
     sigGetLastRawImgs = Signal(np.ndarray, int)
 
+    sigSendZDrift = Signal(float)
+
     # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
@@ -190,9 +192,10 @@ class CommunicationChannel(SignalInterface):
         #Autofocus variables
         self.calCurveFit = False
         self.initRegScore = None
-        self.offsetFromInitZ = 0
+        # self.offsetFromInitZ = 0.0
         self.currentRegScore = None
         self.currentPredZ = None
+        self.initZ = None
         self.autofocusEnabled = False
         self.autofocusActive = False
         self.AFMaskLeft = None

@@ -39,6 +39,7 @@ class PositionerController(ImConWidgetController):
         self._commChannel.sigUpdateZPosition.connect(self.updatePosition)
         self._commChannel.sigUpdateZPositionConfirmed.connect(self.updatePositionConfirmedVal)
         self._commChannel.sigUpdateXYPosition.connect(self.updatePosition)
+        self._commChannel.sigSendZDrift.connect(self.updateZDrift)
         
 
         # self._commChannel.sigSetSpeed.connect(lambda absPos: self.setAbsPosGUI(speed)) #commented when changing speed function to AbsPos
@@ -52,6 +53,11 @@ class PositionerController(ImConWidgetController):
         # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
+
+    def updateZDrift(self, drift):
+ 
+        self._widget.pars['DriftZ--Z'].setText(f'({drift:.2f} µm)')
+
 
 
     def loadSettings(self, moduleDict):

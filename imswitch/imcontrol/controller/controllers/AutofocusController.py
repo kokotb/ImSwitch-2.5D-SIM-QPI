@@ -81,6 +81,7 @@ class AutofocusController(ImConWidgetController):
 
     def clearRegisteredPlane(self):
         self._commChannel.initRegScore = None
+        # self._commChannel.initZ = None
         self.offLED()
 
     # def autofocusModuleToggle(self, state):
@@ -106,7 +107,9 @@ class AutofocusController(ImConWidgetController):
     def registerCurrentPlane(self):
         score = self.getAndScoreOne()
         self._commChannel.initRegScore = score
-        print(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
+        # registeredZ = self.zPositioner.get_abs()
+        # self._commChannel.initZ = registeredZ
+        self._logger.info(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
     def openSetAFWindow(self):

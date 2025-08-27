@@ -1680,6 +1680,8 @@ class SIMController(ImConWidgetController):
                 wantedZ = currentZ - zDiff
                 self.positioner.setPosition(wantedZ, 'Z')
                 self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                # self._commChannel.offsetFromInitZ = self.cumZDiff
+                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
                 self._logger.warning(f'Total Z drift: {self.cumZDiff}')
                 
             self.AFScores = []
