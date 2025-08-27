@@ -99,7 +99,7 @@ class TilingWidget(NapariHybridWidget):
         overallLayout.addWidget(self.overlap_textedit, 2, 2)
 
         overallLayout.addWidget(self.checkbox_tiling, 3, 0)
-        overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
+        # overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
 
 
         self.numGridY_textedit.textChanged.connect(lambda *args, name='numGridY': self.sigCheckValidity.emit(name))

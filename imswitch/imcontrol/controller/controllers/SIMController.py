@@ -326,6 +326,27 @@ class SIMController(ImConWidgetController):
 
             self.roiIter = 0
 
+            #### For timing period. Check every 1/10s if period time is exceeded yet.
+            if self.completeFrameSets != 0:
+                repTimer = time.time() - repTimerStart
+                while repTimer < expectedLoopTime:
+                    time.sleep(expectedLoopTime / 1000)
+                    repTimer = time.time() - repTimerStart
+
+            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                repTimer = time.time() - repTimerStart
+                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                while (repTimer < timingPeriodInSec):
+                    time.sleep(timingPeriodInSec / 100)
+                    repTimer = time.time() - repTimerStart
+                    if self._widget.stop_button.isChecked(): #allows exit of the loop
+                        self._widget.stop_button.setChecked(False)
+                        self.stopSIM()
+                        return
+            repTimerStart = time.time()
+            ####
+
             while self.roiIter < len(positions):
 
                 #### Set variables for current and next positions. These will be used to move stage XY.
@@ -338,26 +359,8 @@ class SIMController(ImConWidgetController):
                     currentROI = [currentROI]
                     nextROI = [nextROI]
                 ####
-                #### For timing period. Check every 1/10s if period time is exceeded yet.
-                if self.completeFrameSets != 0:
-                    repTimer = time.time() - repTimerStart
-                    while repTimer < expectedLoopTime:
-                        time.sleep(expectedLoopTime / 1000)
-                        repTimer = time.time() - repTimerStart
 
-                if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                    repTimer = time.time() - repTimerStart
-                    if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-                        self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                    while (repTimer < timingPeriodInSec):
-                        time.sleep(timingPeriodInSec / 100)
-                        repTimer = time.time() - repTimerStart
-                        if self._widget.stop_button.isChecked(): #allows exit of the loop
-                            self._widget.stop_button.setChecked(False)
-                            self.stopSIM()
-                            return
-                repTimerStart = time.time()
-                ####
+
                 j = 0 # Position iterator
 
                 while j < len(currentROI):
@@ -1340,7 +1343,22 @@ class SIMController(ImConWidgetController):
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         while self.active25D:
             self.roiIter = 0
+            #### For timing period. Check every 1/10s if period time is exceeded yet.
+            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                repTimer = time.time() - repTimerStart
+                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                while repTimer < timingPeriodInSec:
+                    time.sleep(timingPeriodInSec / 100)
+                    repTimer = time.time() - repTimerStart
+                    if self._commChannel.stop25DNow: #allows exit of the loop
+                        self.stop25D()
+                        return
+            repTimerStart = time.time()
+            ####
+
             while self.roiIter < len(positions):
+
 
                
 
@@ -1356,19 +1374,7 @@ class SIMController(ImConWidgetController):
                 ####
 
                 j = 0 # Position (tile) iterator
-                #### For timing period. Check every 1/10s if period time is exceeded yet.
-                if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                    repTimer = time.time() - repTimerStart
-                    if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
-                        self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-                    while repTimer < timingPeriodInSec:
-                        time.sleep(timingPeriodInSec / 100)
-                        repTimer = time.time() - repTimerStart
-                        if self._commChannel.stop25DNow: #allows exit of the loop
-                            self.stop25D()
-                            return
-                repTimerStart = time.time()
-                ####
+
                 while j < len(currentROI):
 
 
