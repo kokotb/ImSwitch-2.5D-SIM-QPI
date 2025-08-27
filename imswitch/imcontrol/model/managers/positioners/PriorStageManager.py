@@ -260,13 +260,23 @@ class PriorStageManager(PositionerManager):
         self.checkBusyLoop()
         _ = self.get_abs()
         return self._position
+    
+    def is_integer(self, s):
+        try:
+            int(s[0])
+            int(s[1])
+            return True
+        except (ValueError, TypeError, IndexError):
+            return False
 
     def get_abs(self):
         response = self.query("controller.stage.position.get")
         position = response[1].split(",", 1)
-        while position == ['']: #Ask until the stage returns a valid answer.
+        areIntegers = self.is_integer(position)
+        while (not areIntegers): #Ask until the stage returns a valid answer.
             # print(position)
             position = self.get_abs()
+            areIntegers = self.is_integer(position)
         # print(response)
         return position
     # def get_abs(self):

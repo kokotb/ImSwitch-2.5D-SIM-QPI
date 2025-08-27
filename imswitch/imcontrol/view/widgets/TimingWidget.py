@@ -25,7 +25,7 @@ class TimingWidget(NapariHybridWidget):
         self.validator = QDoubleValidator()
         self.validator.setBottom(0.0)
         self.timingPeriod_textedit.setValidator(self.validator)
-        self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. If this time is shorter that the image cycle, it will run as fast as possible.')
+        self.timingPeriod_textedit.setToolTip('Time from the start of one set of images to another. Will execute z-stack, tiling and ROI as soon as possible, and then wait until time is reached.')
         self.timingPeriod_textedit.setFixedWidth(50)
 
         self.timingPeriod_textedit.setEnabled(False)
@@ -48,7 +48,7 @@ class TimingWidget(NapariHybridWidget):
         self.validator = QDoubleValidator()
         self.validator.setBottom(0.0)
         self.timingDuration_textedit.setValidator(self.validator)
-        self.timingDuration_textedit.setToolTip('Length of time to execute experiment.')
+        self.timingDuration_textedit.setToolTip('Length of time to execute experiment. Will complete current set of data before exiting.')
         self.timingDuration_textedit.setFixedWidth(50)
 
         ####
