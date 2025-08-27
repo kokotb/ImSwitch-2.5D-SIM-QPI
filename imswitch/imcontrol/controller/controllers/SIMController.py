@@ -335,11 +335,12 @@ class SIMController(ImConWidgetController):
 
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                if timingPeriodInSec > 30: 
                     self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while (repTimer < timingPeriodInSec):
                     time.sleep(timingPeriodInSec / 100)
                     repTimer = time.time() - repTimerStart
+
                     if self._widget.stop_button.isChecked(): #allows exit of the loop
                         self._widget.stop_button.setChecked(False)
                         self.stopSIM()
@@ -446,8 +447,8 @@ class SIMController(ImConWidgetController):
                         endLoopTime = round(time.time()-startLoopTime,3)
                         startLoopTime = time.time()
 
-                        self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                        self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
+                        # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.debug(f'Acquisition time (s): {procTimeDur}')
                         self._logger.debug(f'Loop time (s): {endLoopTime}')
                         
@@ -1346,7 +1347,7 @@ class SIMController(ImConWidgetController):
             #### For timing period. Check every 1/10s if period time is exceeded yet.
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-                if repTimer*100 < timingPeriodInSec: #Only print info if wait time is ~100x repetition time.
+                if timingPeriodInSec > 30:
                     self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while repTimer < timingPeriodInSec:
                     time.sleep(timingPeriodInSec / 100)
@@ -1483,8 +1484,9 @@ class SIMController(ImConWidgetController):
                         startLoopTime = time.time()
 
                         #### Print timing and frame information.
-                        self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                        self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
+                        self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
+                        # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
                         self._logger.debug(f'Acquisition time (s): {procTimeDur}')
                         self._logger.debug(f'Loop time (s): {endLoopTime}')
                         ####
@@ -1509,6 +1511,8 @@ class SIMController(ImConWidgetController):
                 self.roiIter += 1 # Increment roi index
                 ####
                 self._logger.debug(f'Elapsed time (s): {totalEndTime}\n')
+
+                
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime: #Will this stop in middle of tiling if duration hits?
                 self.stop25D() # Stops system is duration based imaging is selected.

@@ -265,7 +265,7 @@ class PriorStageManager(PositionerManager):
         response = self.query("controller.stage.position.get")
         position = response[1].split(",", 1)
         while position == ['']: #Ask until the stage returns a valid answer.
-            print(position)
+            # print(position)
             position = self.get_abs()
         # print(response)
         return position
