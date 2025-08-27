@@ -14,6 +14,7 @@ class LaserController(ImConWidgetController):
 
         self.settingAttr = False
         self.presetBeforeScan = None
+        self._widget.userControlCheckbox.stateChanged.connect(self.toggleControl)
 
         # Set up lasers
         for lName, lManager in self._master.lasersManager:
@@ -60,6 +61,12 @@ class LaserController(ImConWidgetController):
         # self._widget.sigSavePresetAsClicked.connect(self.savePresetAs)
         # self._widget.sigDeletePresetClicked.connect(self.deletePreset)
         # self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
+
+    def toggleControl(self, state):
+        if state == 2:
+            num = 0
+        else: num = 1
+        list(self._master.lasersManager._subManagers.values())[0].externalControl(num)
 
 
     def loadSettings(self, moduleDict):

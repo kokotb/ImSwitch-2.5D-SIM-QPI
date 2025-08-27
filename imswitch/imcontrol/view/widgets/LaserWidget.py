@@ -48,6 +48,10 @@ class LaserWidget(Widget):
         self.lasersGridContainer.installEventFilter(self)
 
         self.layout.addWidget(self.scrollArea, 0, 0)
+        
+        self.userControlCheckbox = QtWidgets.QCheckBox('User Control')
+        
+        self.layout.addWidget(self.userControlCheckbox, 1, 0)
 
 
     def addLaser(self, laserName, valueUnits, valueDecimals, wavelength, valueRange=None,
@@ -99,6 +103,9 @@ class LaserWidget(Widget):
 
         self.lasersGrid.addWidget(nameLabel, len(self.laserModules), 0)
         self.lasersGrid.addWidget(control, len(self.laserModules), 1)
+
+
+
         self.laserModules[laserName] = control
 
     def isLaserActive(self, laserName):
@@ -239,6 +246,8 @@ class LaserModule(QtWidgets.QWidget):
         self.slider = guitools.FloatSlider(QtCore.Qt.Horizontal, self, allowScrollChanges=True,
                                            decimals=valueDecimals)
         self.slider.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        
 
         if not isBinary:
             valueRangeMin, valueRangeMax = valueRange
