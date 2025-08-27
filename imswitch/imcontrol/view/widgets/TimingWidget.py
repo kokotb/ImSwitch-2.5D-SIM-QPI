@@ -48,7 +48,7 @@ class TimingWidget(NapariHybridWidget):
         self.validator = QDoubleValidator()
         self.validator.setBottom(0.0)
         self.timingDuration_textedit.setValidator(self.validator)
-        self.timingDuration_textedit.setToolTip('Length of time to execute experiment. Will complete current set of data before exiting.')
+        self.timingDuration_textedit.setToolTip('Length of time to execute experiment. Will complete set of data before exiting.')
         self.timingDuration_textedit.setFixedWidth(50)
 
         ####
@@ -65,6 +65,7 @@ class TimingWidget(NapariHybridWidget):
         self.totalReps_textedit._name = 'Repetitions'
         self.totalReps_textedit._type = 'str'
         self.totalReps_textedit.setEnabled(False)
+        self.totalReps_textedit.setToolTip('Total number of repetitions before stopping the experiment.')
         self.validator = QIntValidator(1,1000000,self)
         self.totalReps_textedit.setFixedWidth(50)
         self.totalReps_textedit.setValidator(self.validator)

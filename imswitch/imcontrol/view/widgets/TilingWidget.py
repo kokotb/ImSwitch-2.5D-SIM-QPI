@@ -34,6 +34,7 @@ class TilingWidget(NapariHybridWidget):
         self.numGridX_textedit = QLineEdit("")
         self.numGridX_textedit._name = 'Steps - X'
         self.numGridX_textedit._type = 'str'
+        self.numGridX_textedit.setToolTip('Number of tile in the X-direction.')  
         self.validator = QIntValidator(0,500,self)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridX_textedit.setValidator(self.validator)
@@ -44,6 +45,7 @@ class TilingWidget(NapariHybridWidget):
         self.numGridY_textedit = QLineEdit("")
         self.numGridY_textedit._name = 'Steps - Y'
         self.numGridY_textedit._type = 'str'
+        self.numGridY_textedit.setToolTip('Number of tile in the Y-direction.')  
         self.validator = QIntValidator(0,500,self)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numGridY_textedit.setValidator(self.validator)
@@ -55,18 +57,19 @@ class TilingWidget(NapariHybridWidget):
         self.overlap_textedit._name = 'Overlap'
         self.overlap_textedit._type = 'str'
 
-        self.validator = QDoubleValidator(0.00,1.00,2)
+        self.validator = QDoubleValidator(0.00,0.99,2)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.overlap_textedit.setValidator(self.validator)
 
         self.overlap_textedit.setFixedWidth(50)
-        self.overlap_textedit.setToolTip('Enter a value >= 0.0 and < 1. Entry validation not working on this box.')  
+        self.overlap_textedit.setToolTip('Tile overlap in X and Y diections. 0.0 < value < 0.99.')  
         self.overlap_textedit.textChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Overlap", value))
         
 
         self.checkbox_tiling =  QCheckBox("Run Tiling")
         self.checkbox_tiling._name = 'Tiling Checkbox'
         self.checkbox_tiling._type = 'int'
+        self.checkbox_tiling.setToolTip('Check here to enable tiling.') 
         self.checkbox_tiling.stateChanged.connect(self.toggleRunTilingActive)
         self.checkbox_tiling.stateChanged.connect(lambda value: self.sigTilingInfoChanged.emit('Tiling Settings',"Tiling Checkbox", str(value)))
         
