@@ -109,7 +109,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStop25D.connect(self.stop25D)
         self._commChannel.sigStart25D.connect(self.start25D)
         self._commChannel.sigRecordPSFStack.connect(self.recordPSFStackSetFlag)
-        self._commChannel.sigSendAutoZernListLen.connect(self.listLengthAZTestParams)
+
 
         # self._commChannel.sigRunAutofocus.conn
         #Get RO names from SLM4DDManager and send values to widget function to populate RO list, selects currently active RO. (default or last used if not powered down)
@@ -1271,16 +1271,16 @@ class SIMController(ImConWidgetController):
         time_global_start = time.time()
         ####
 
-        def debug_slot():
-            print("Signal was emitted and caught!")
 
-        self._commChannel.sigStartAutoZern.connect(debug_slot)
+        
 
-        self._commChannel.sigStartAutoZern.emit()
-
-        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'Enabled')]=='2':
+        # Set autoZern flag to True, if AZ checkbox is checked, create param list ========================================
+        if self.sharedAttrs[('Zernike SLM Parameters','Both', 'AZEnabled')]=='2':
             autoZern = True
             autoZernRep = 0
+            self._commChannel.sigStartAutoZern.emit()
+            time.sleep(1.) #ask Cody, if this can be done without signals
+            self.listLengthAZTestParams()
         else:
             autoZern = False
             autoZernRep = -1
@@ -1371,16 +1371,7 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
-                        try:   #!!! EXTREMELY DUMB WAY TO DO IT!    
-                            finerLoop
-                        except NameError:
-                            finerLoop = False
-
-                        if autoZernRep == -1 and finerLoop:
-                            self._commChannel.sigStartAutoZernFinerLoop.emit()
-                            autoZernRep = 0
-                            
-
+                        # Sets current value to Zernike coefficient ========================
                         if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:                    
                             self._commChannel.sigSetAutoZern.emit(autoZernRep)
                             time.sleep(0.1) # !!!can prob be deleted
@@ -1423,8 +1414,9 @@ class SIMController(ImConWidgetController):
 
                         # last images are available
 
+                        # score in the manager, put score in a list.
                         if autoZern:
-                            self._master.slm25DManager.calcAutoZern(self.lastImgDict) # score in the manager, put score in a list.
+                            self._master.slm25DManager.calcAutoZern(self.lastImgDict) 
                         
 
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
@@ -1474,21 +1466,9 @@ class SIMController(ImConWidgetController):
             if autoZern:
                 if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
-                    
-                    if finerLoop:
-                        # try:
-                        #     optimalCoefficientFit = self._master.slm25DManager.optimalCoeffValueFit(list(self._commChannel.autoZernCalibValuesDict.values())[(autoZernRep + 1) // self.numCalibValues])     
-                        #     self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
-                        # except: 
-                        #     self._logger.error('!!!FIT UNSUCCESSFUL!!!')
-                        #     #optimalCoefficient = 3 # !!! FIND better way to do it
-                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
-                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
-
-                    else:
-                        optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
+                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
                     # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-                        self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
+                    self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
                     #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
 
@@ -1498,15 +1478,13 @@ class SIMController(ImConWidgetController):
 
                 if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  
                     autoZernRep = -1
-                    if finerLoop == False:
-                        finerLoop = True
-                        autoZern = True
-                    else:
-                        self._commChannel.sigToggleAutoZern.emit(False)
-                        autoZern = False
+                    self._commChannel.sigToggleAutoZern.emit(False)
+                    autoZern = False
+                    self._widget.stop_button.setChecked(False)
+                    self.stop25D()
                 else:
                     autoZernRep += 1
-                    time.sleep(.1) # !!!
+                    time.sleep(.1) # !!! IMPORTANT, without that the loop skips frames, no idea why
 
 
 
@@ -1655,9 +1633,9 @@ class SIMController(ImConWidgetController):
         finally:
             self.settingAttr = False
 
-    def listLengthAZTestParams(self, AZlen, testValuesLen):
-        self.AutoZernCalibValuesListLength = AZlen
-        self.numCalibValues = testValuesLen
+    def listLengthAZTestParams(self):
+        self.AutoZernCalibValuesListLength = self._commChannel.numAZAlltestPoints
+        self.numCalibValues = self._commChannel.numAZTestValuesPerZernCoeff
 
             
     # def setParameter(self, parameterName, value):

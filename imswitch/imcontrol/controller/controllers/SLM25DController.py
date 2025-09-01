@@ -53,7 +53,6 @@ class SLM25DController(ImConWidgetController):
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
         self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
-        self._commChannel.sigStartAutoZernFinerLoop.connect(self.startAutoZernFinerLoop)
         self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
@@ -817,6 +816,7 @@ class SLM25DController(ImConWidgetController):
         tempZernList = []
         self.autoZernCalibValuesDict = {}
         testValues = [-1., -0.6, -0.2, 0., 0.2, 0.6, 1.]
+        testValues = [-1., 1.] # fast for test runs
         for name in self._widget.ZernikeCoefficientNames:
             if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
@@ -855,7 +855,7 @@ class SLM25DController(ImConWidgetController):
 
     def setAutoZern(self, rep):
         self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-        print('set '+str(rep))
+        print('set ' + str(rep))
 
 
     def setOptimalZern(self, rep, optimalValue):
@@ -863,19 +863,21 @@ class SLM25DController(ImConWidgetController):
 
     def startAutoZern(self):
         self.fullZernList = self.createFullZernList1stLoop()
-        numAZtestPoints = len(self.fullZernList)
+        numAZAlltestPoints = len(self.fullZernList)
         self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
-        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
-        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
+        numAZTestValuesPerZernCoeff = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
+        self._commChannel.numAZAlltestPoints = numAZAlltestPoints
+        self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
         time.sleep(0.1) # makes sure this last signal is executed before countiniouing
         print("AZ signal called properly")
 
     def startAutoZernFinerLoop(self):
         self.fullZernList = self.createFullZernListFinerLoop()
-        numAZtestPoints = len(self.fullZernList)
+        numAZAlltestPoints = len(self.fullZernList)
         self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
-        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
-        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
+        numAZTestValuesPerZernCoeff = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
+        self._commChannel.numAZAlltestPoints = numAZAlltestPoints
+        self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
         print("AZ signal called properly")
 
 

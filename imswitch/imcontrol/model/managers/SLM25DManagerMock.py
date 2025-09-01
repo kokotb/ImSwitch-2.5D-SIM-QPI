@@ -73,6 +73,7 @@ class SLM25DManagerMock(SignalInterface):
  
         ind = self.arrayImgScoresAZ.index(max(self.arrayImgScoresAZ))
         optimalCoeff = calibValues[ind]
+        print('list score image len = ' + str(len(self.arrayImgScoresAZ)))
         
         return optimalCoeff
     

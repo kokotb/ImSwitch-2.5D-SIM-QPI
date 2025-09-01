@@ -112,10 +112,6 @@ class CommunicationChannel(SignalInterface):
 
     sigStartAutoZern = Signal()
 
-    sigStartAutoZernFinerLoop = Signal()
-
-    sigSendAutoZernListLen = Signal(int, int)
-
     sigSetAutoZern = Signal(int)
 
     sigSetOptimalZern = Signal(int, float)
@@ -188,6 +184,9 @@ class CommunicationChannel(SignalInterface):
         self.activeDir = None
         self.stop25DNow = False
         self.lastImgDict = {488: None, 561: None,640: None}
+        self.autoZernListLen = None
+        self.numAZAlltestPoints = None
+        self.numAZTestValuesPerZernCoeff = None
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
