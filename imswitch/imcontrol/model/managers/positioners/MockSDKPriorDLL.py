@@ -33,15 +33,15 @@ class MockSDKPriorDLL(PositionerManager):
         ret = 0
         value_out = '0,0'
         if msg == "controller.stage.position.get":
-            value_x = self._position['X']
-            value_y = self._position['Y']
+            value_x = int(self._position['X'])
+            value_y = int(self._position['Y'])
             value_out = str(value_x)+","+str(value_y)
             ret = 0
         elif "controller.stage.goto-position" in msg:
             ret = 0
             value_x = self._position['X']
             value_y = self._position['Y']
-            value_out = str(value_x)+","+str(value_y)
+            value_out = str(int(value_x))+","+str(int(value_y))
         elif "controller.stage.speed.get" in msg:
             ret = 0
             value_out = '1'

@@ -123,6 +123,8 @@ class PriorStageManager(PositionerManager):
             ret, value_out = self.SDKPrior.PriorScientificSDK_cmd(self, 
                 self.sessionID, create_string_buffer(msg.encode()), self.rx
             )
+            ret = 0
+
         else:    
             ret = self.SDKPrior.PriorScientificSDK_cmd(
                 self.sessionID, create_string_buffer(msg.encode()), self.rx
@@ -152,7 +154,7 @@ class PriorStageManager(PositionerManager):
         new_position = [str(position_x), str(position_y)]
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         ret = self.query(msg_set_position)
-        if ret[1] == '0':
+        if ret[0] == '0':
             self._position['X'] = position_x
             self._position['Y'] = position_y
         else:
