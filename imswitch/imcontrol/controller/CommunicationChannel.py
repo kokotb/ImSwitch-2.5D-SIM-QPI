@@ -37,12 +37,8 @@ class CommunicationChannel(SignalInterface):
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
-
-    # sigTriggerModeToggled = Signal()
-    
-    # sigRunAcquireSetStarted = Signal()
-    
-    # sigRunAcquireSetStopped = Signal()
+# 
+    # sigAutoFocus
 
     sigRunAutofocus = Signal()
 
@@ -146,6 +142,8 @@ class CommunicationChannel(SignalInterface):
 
     sigGetLastRawImgs = Signal(np.ndarray, int)
 
+    sigSendZDrift = Signal(float)
+
     # sigGetROIOrigins = Signal()
 
     # sigCalcZStack = Signal()
@@ -160,6 +158,8 @@ class CommunicationChannel(SignalInterface):
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
     sigSIMStopped = Signal()
+    sigToggleAutofocus = Signal(bool)
+    sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
     
 
@@ -183,7 +183,21 @@ class CommunicationChannel(SignalInterface):
         self.simActive = False
         self.activeDir = None
         self.stop25DNow = False
-        self.lastImgDict = {488: None, 561: None,640: None}
+        self.lastImgDict = {'488F': None, '561F': None,'640F': None, '488S': None}
+
+        #Autofocus variables
+        self.calCurveFit = False
+        self.initRegScore = None
+        # self.offsetFromInitZ = 0.0
+        self.currentRegScore = None
+        self.currentPredZ = None
+        self.initZ = None
+        self.autofocusEnabled = False
+        self.autofocusActive = False
+        self.AFMaskLeft = None
+        self.AFMaskRight = None
+        #Scatter Cam 
+        self.scatterCamActive = 0 #False
         self.autoZernListLen = None
         self.numAZAlltestPoints = None
         self.numAZTestValuesPerZernCoeff = None
@@ -198,6 +212,8 @@ class CommunicationChannel(SignalInterface):
     def saveLastRawImgs(self, rawImg, handle):
         self.lastImgDict[handle] = rawImg
 
+    # def saveLastROIClickAF(self, AFParams):
+    #     self.AFParams = AFParams
 
     def getPSFStack(self):
         self.zStackList488 = getattr(self, "zStackList488", [])
@@ -209,17 +225,17 @@ class CommunicationChannel(SignalInterface):
 
     def storeRecPSFStack(self, stack, reset, handle):
         
-        if handle == 488:
+        if handle == '488F':
             if reset == True:
                 self.zStackList488 = []
             self.zStackList488.append(stack)
 
-        elif handle == 561:
+        elif handle == '561F':
             if reset == True:
                 self.zStackList561 = []
             self.zStackList561.append(stack)
 
-        elif handle == 640:
+        elif handle == '640F':
             if reset == True:
                 self.zStackList640 = []   
             self.zStackList640.append(stack)

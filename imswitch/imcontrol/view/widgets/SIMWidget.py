@@ -7,6 +7,7 @@ from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtCore import QLocale
+import cv2
 
 import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
@@ -20,8 +21,6 @@ class SIMWidget(NapariHybridWidget):
 
     sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
     sigPatternID = QtCore.Signal(int)  # (display pattern id)
-    # sigCalibrateToggled = QtCore.Signal(bool)
-    # sigSIMAcqToggled = QtCore.Signal(bool)
     sigStartSIM = QtCore.Signal()
     sigStopSIM = QtCore.Signal()
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
@@ -69,7 +68,7 @@ class SIMWidget(NapariHybridWidget):
         ]
         # Set layer properties
         self.layer = None
-        self.laserColormaps = {'488':'cyan','561':'green','640':'red'}
+        self.laserColormaps = {'488F':'cyan','561F':'green','640F':'red', '488S': 'grayclip'}
         self.micronsPerPixel = [.1233,.1233]
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
@@ -81,13 +80,14 @@ class SIMWidget(NapariHybridWidget):
         
     def setSIMImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            colormap = self.laserColormaps[name[:3]]
+            colormap = self.laserColormaps[name[:4]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = [x/2 for x in self.micronsPerPixel] #SIM image recon result is 2x size of WF and raw images. So scale needs to be reduced by half.
             self.viewer.layers[name].contrast_limits_range = [0,4095]
         else:
-            self.viewer.layers[name].data = im
+            labelledIm = self.putNameLabel(im, name, 1)
+            self.viewer.layers[name].data = labelledIm
     
     def setRawImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
@@ -101,12 +101,14 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.scale_bar.visible = True
             
         else:
-            self.viewer.layers[name].data = im
+            copiedIm = im.copy()
+            labelledIm = self.putNameLabel(copiedIm, name, 0.5)
+            self.viewer.layers[name].data = labelledIm
             
 
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
-            colormap = self.laserColormaps[name[:3]]
+            colormap = self.laserColormaps[name[:4]]
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
@@ -114,7 +116,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name]._keep_auto_contrast = True
 
         else:
-            self.viewer.layers[name].data = im
+            labelledIm = self.putNameLabel(im, name, 0.5)
+            self.viewer.layers[name].data = labelledIm
 
     def sortLayersByName(self):
         layerNames = []
@@ -123,32 +126,46 @@ class SIMWidget(NapariHybridWidget):
         sortingKey = [i[0] for i in sorted(enumerate(layerNames), key= lambda x:x[1] )]
         sortingKey.reverse()
         self.viewer.layers.move_multiple(sortingKey)
+        # print("tets")
+        # maxLayerIndex = len(self.viewer.layers) - 1
+        # layerNames = []
+        # searchList = ['488S Raw', '488S Recon', '488S WF']
+        # for searchKey in searchList:
+        #     for layerObj in self.viewer.layers:
+        #         layerNames.append(layerObj.name)
+        #     matching_index = next((i for i, item in enumerate(layerNames) if searchKey in item), -1)
+        #     if matching_index == -1:
+        #         continue
+        #     layer = self.viewer.layers[matching_index]
+            
+        #     self.viewer.layers.remove(layer)
+        #     self.viewer.layers.insert(maxLayerIndex,layer)         
 
 
-
-
-
+            
 
 
     def contrastReconFunc(self):
             
         layerList = self.getAllLayerNames()
         reconLayerList = [x for x in layerList if 'Recon' in x]
+        reconLayerList = [item for item in reconLayerList if '488S' not in item]
         # if reconLayerList == []:
         #     return
         for name in reconLayerList:
-            initMaxLimit = np.max(self.viewer.layers[name].data_raw)
-            self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
+            # initMaxLimit = np.max(self.viewer.layers[name].data_raw)
+            percentile9999 = np.percentile(self.viewer.layers[name].data_raw[0][82:], 99.99) #This restricts the data to calculate correct brightness level, ignoring the first X rows for the label.
+            self.viewer.layers[name].contrast_limits = [0,percentile9999]
 
     def colormapToggleReconFunc(self, channel):
-        self.laserColormaps
+        # self.laserColormaps
         layerList = self.getAllLayerNames()
         reconLayerList = [x for x in layerList if 'Recon' in x]
         if channel not in reconLayerList:
             return
         currentColor = self.viewer.layers[channel].colormap.name
         if currentColor == 'grayclip':
-            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:3]]
+            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:4]]
         else:
             self.viewer.layers[channel].colormap = 'grayclip'
 
@@ -205,6 +222,28 @@ class SIMWidget(NapariHybridWidget):
         for i in range(len(self.viewer.layers)):
             layerList.append(self.viewer.layers[i].name)
         return layerList
+    
+    def putNameLabel(self, im, name, scale):
+        imgstack = []
+        
+        if len(im) != 9:
+            im = [im]
+        for i in range(len(im)):
+            labelledIm = cv2.putText(
+                im[i],
+                name,
+                org=(int(80*scale), int(80*scale)),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=2*scale,
+                color=(2100),              
+                thickness=int(4*scale),
+                lineType=cv2.LINE_AA
+            )
+            imgstack.append(labelledIm)
+        
+        imgstack = np.stack(imgstack, axis=0)
+
+        return imgstack
 
     def create_layer_control_tab(self):
 
@@ -234,36 +273,38 @@ class SIMWidget(NapariHybridWidget):
         layersContrastBoxed.addWidget(self.myframe)
 
         # Recon colormap toggle buttons boxed by channel.
-        self.colormapToggleLabel = QtWidgets.QLabel('Toggle Recon Colormaps')
-        self.colormapToggleLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.colormapToggle488 = QPushButton("488")
-        self.colormapToggle561 = QPushButton("561")
-        self.colormapToggle640 = QPushButton("640")
-        self.myframe = QFrame()
-        self.myframe.setFrameShape(QFrame.StyledPanel)
-        self.myframe.setFrameShadow(QFrame.Plain)
-        self.myframe.setLineWidth(5)
-        layersColormapToggle = QVBoxLayout(self.myframe)
-        layersColormapToggle.addWidget(self.colormapToggle488)
-        layersColormapToggle.addWidget(self.colormapToggle561)
-        layersColormapToggle.addWidget(self.colormapToggle640)
-        layersColormapToggleBoxed = QVBoxLayout()
-        layersColormapToggleBoxed.addWidget(self.myframe)
+        # self.colormapToggleLabel = QtWidgets.QLabel('Toggle Recon Colormaps')
+        # self.colormapToggleLabel.setAlignment(QtCore.Qt.AlignCenter)
+        # self.colormapToggle488 = QPushButton("488")
+        # self.colormapToggle561 = QPushButton("561")
+        # self.colormapToggle640 = QPushButton("640")
+        # self.myframe = QFrame()
+        # self.myframe.setFrameShape(QFrame.StyledPanel)
+        # self.myframe.setFrameShadow(QFrame.Plain)
+        # self.myframe.setLineWidth(5)
+        # layersColormapToggle = QVBoxLayout(self.myframe)
+        # layersColormapToggle.addWidget(self.colormapToggle488)
+        # layersColormapToggle.addWidget(self.colormapToggle561)
+        # layersColormapToggle.addWidget(self.colormapToggle640)
+        # layersColormapToggleBoxed = QVBoxLayout()
+        # layersColormapToggleBoxed.addWidget(self.myframe)
 
         # Hide/show buttons boxed by channel.
         self.hideShowChanLabel = QtWidgets.QLabel('Hide/Show by Channel')
         self.hideShowChanLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.hideShow488Layers = QPushButton("488")
-        self.hideShow561Layers = QPushButton("561")
-        self.hideShow640Layers = QPushButton("640")
+        self.hideShow488FLayers = QPushButton("488 Fluor")
+        self.hideShow561FLayers = QPushButton("561 Fluor")
+        self.hideShow640FLayers = QPushButton("640 Fluor")
+        self.hideShow488SLayers = QPushButton("488 Scatter")
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.StyledPanel)
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(5)
         layersHideShowChannel = QVBoxLayout(self.myframe)
-        layersHideShowChannel.addWidget(self.hideShow488Layers)
-        layersHideShowChannel.addWidget(self.hideShow561Layers)
-        layersHideShowChannel.addWidget(self.hideShow640Layers)
+        layersHideShowChannel.addWidget(self.hideShow488FLayers)
+        layersHideShowChannel.addWidget(self.hideShow561FLayers)
+        layersHideShowChannel.addWidget(self.hideShow640FLayers)
+        layersHideShowChannel.addWidget(self.hideShow488SLayers)
         layersHideShowChannelBoxed = QVBoxLayout()
         layersHideShowChannelBoxed.addWidget(self.myframe)
 
@@ -289,8 +330,8 @@ class SIMWidget(NapariHybridWidget):
         #Add elements in order you want them to appear
         parentLayout.addWidget(self.contrastLabel)
         parentLayout.addLayout(layersContrastBoxed)
-        parentLayout.addWidget(self.colormapToggleLabel)
-        parentLayout.addLayout(layersColormapToggleBoxed)
+        # parentLayout.addWidget(self.colormapToggleLabel)
+        # parentLayout.addLayout(layersColormapToggleBoxed)
         parentLayout.addWidget(self.hideShowChanLabel)
         parentLayout.addLayout(layersHideShowChannelBoxed)
         parentLayout.addWidget(self.hideShowTypeLabel)
@@ -301,15 +342,16 @@ class SIMWidget(NapariHybridWidget):
         self.contrastRecon.clicked.connect(self.contrastReconFunc)
         self.contrastFSRaw.clicked.connect(self.contrastRawsFSFunc)
         self.contrastRaw.clicked.connect(self.contrastRawsFunc)
-        self.colormapToggle488.clicked.connect(lambda: self.colormapToggleReconFunc('488 Recon'))
-        self.colormapToggle561.clicked.connect(lambda: self.colormapToggleReconFunc('561 Recon'))
-        self.colormapToggle640.clicked.connect(lambda: self.colormapToggleReconFunc('640 Recon'))
+        # self.colormapToggle488.clicked.connect(lambda: self.colormapToggleReconFunc('488 Recon'))
+        # self.colormapToggle561.clicked.connect(lambda: self.colormapToggleReconFunc('561 Recon'))
+        # self.colormapToggle640.clicked.connect(lambda: self.colormapToggleReconFunc('640 Recon'))
         self.hideShowReconLayers.clicked.connect(lambda: self.hideShowLayerByType('Recon'))
         self.hideShowWFLayers.clicked.connect(lambda: self.hideShowLayerByType('WF'))
         self.hideShowRawLayers.clicked.connect(lambda: self.hideShowLayerByType('Raw'))
-        self.hideShow488Layers.clicked.connect(lambda: self.hideShowLayerByChannel('488'))
-        self.hideShow561Layers.clicked.connect(lambda: self.hideShowLayerByChannel('561'))
-        self.hideShow640Layers.clicked.connect(lambda: self.hideShowLayerByChannel('640'))
+        self.hideShow488FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('488F'))
+        self.hideShow561FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('561F'))
+        self.hideShow640FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('640F'))
+        self.hideShow488SLayers.clicked.connect(lambda: self.hideShowLayerByChannel('488S'))
         self.hideShowAllLayers.clicked.connect(self.hideShowAllLayersFunc)
 
         # tab.setLayout(parentLayout)
@@ -349,6 +391,7 @@ class SIMWidget(NapariHybridWidget):
         self.checkbox_record_reconstruction = QCheckBox('Save Reconstruction')
         self.checkbox_record_raw = QCheckBox('Save Raw Data')
         self.checkbox_record_WF = QCheckBox('Save Widefield')
+        # self.scatterCamEnable = QCheckBox('Scatter Cam')
         # self.checkbox_logging = QCheckBox("Logging")
         # self.checkbox_tilepreview =  QCheckBox("Tile Preview")
         checkbox_layout = QtWidgets.QVBoxLayout()
@@ -356,6 +399,7 @@ class SIMWidget(NapariHybridWidget):
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
         checkbox_layout.addWidget(self.checkbox_record_WF)
+        # checkbox_layout.addWidget(self.scatterCamEnable)
         # checkbox_layout.addWidget(self.checkbox_logging)
         # checkbox_layout.addWidget(self.checkbox_tilepreview)
         tabBottomVertLayout1.addLayout(checkbox_layout)
@@ -424,7 +468,13 @@ class SIMWidget(NapariHybridWidget):
         # tab.setLayout(wholeTabVertLayout)
         return wholeTabVertLayout
     
+    def toggleBoxes(self, state):
 
+        self.path_edit.setEnabled(not state)
+        self.user_edit.setEnabled(not state)
+        self.expt_edit.setEnabled(not state)
+        self.openFolderButton.setEnabled(not state)
+        self.roSelectList.setEnabled(not state)
 
     
     def addROName(self, roIndex, roName):

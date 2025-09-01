@@ -1,7 +1,7 @@
 import importlib
 from abc import ABC, abstractmethod
 from imswitch.imcommon.model import initLogger
-
+from arena_api.system import system
 from imswitch.imcommon.model import pythontools
 
 
@@ -15,6 +15,8 @@ class MultiManager(ABC):
         self._subManagers = {}
         currentPackage = '.'.join(__name__.split('.')[:-1])
         if managedDeviceInfos:
+            if subManagersPackage == 'detectors': # This call takes a couple seconds and was previously done for each camera line. Only needs to be done once. Moved to here so it only exceutes once and passes device_infos to managers that need it.
+                device_infos = system.device_infos
             for managedDeviceName, managedDeviceInfo in managedDeviceInfos.items():
                 # Create sub-manager
                 #self.__logger.debug(f'{currentPackage}.{subManagersPackage}, {managedDeviceInfo.managerName}')
@@ -24,8 +26,11 @@ class MultiManager(ABC):
                                             managedDeviceInfo.managerName)
                 )
                 manager = getattr(package, managedDeviceInfo.managerName)
-                self._subManagers[managedDeviceName] = manager(
-                    managedDeviceInfo, managedDeviceName, **lowLevelManagers)
+                if subManagersPackage == 'detectors': # Include deive_infos if a detector. Easier than putting a placeholder on every manager.
+                    self._subManagers[managedDeviceName] = manager(device_infos,
+                        managedDeviceInfo, managedDeviceName, **lowLevelManagers)
+                else:
+                    self._subManagers[managedDeviceName] = manager(managedDeviceInfo, managedDeviceName, **lowLevelManagers)
 
     def hasDevices(self):
         """ Returns whether this manager manages any devices. """

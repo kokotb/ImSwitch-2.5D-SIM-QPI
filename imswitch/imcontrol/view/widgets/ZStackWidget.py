@@ -28,7 +28,7 @@ class ZStackWidget(NapariHybridWidget):
         self.validator = QDoubleValidator(0.1, 20.0, 3)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
-        self.zStepDistance_textedit.setToolTip('Size between steps in microns. Smallest is 0.1 um.') 
+        self.zStepDistance_textedit.setToolTip('Size between steps in microns. 0.1< Value <20.0') 
         self.zStepDistance_textedit.setEnabled(False)
         self.zStepDistance_textedit.setFixedWidth(50)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
@@ -43,7 +43,7 @@ class ZStackWidget(NapariHybridWidget):
         self.validator = QDoubleValidator(0.2, 450.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.totalZ_textedit.setValidator(self.validator)
-        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only complete steps calculated. 10.9 steps = 10 steps.')  
+        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only whole steps calculated. If "Center" is selected, "Total Z" will force itself to an even number.')  
         self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z /um", value))
         self.totalZ_textedit.setText("")
         self.totalZ_textedit.setFixedWidth(50)
@@ -55,6 +55,7 @@ class ZStackWidget(NapariHybridWidget):
         self.checkbox_zStack = QCheckBox('Run Z Stack')
         self.checkbox_zStack._name = 'Z-Stack Checkbox'
         self.checkbox_zStack._type = 'int'
+        self.checkbox_zStack.setToolTip('Check this box to enable z-stack control.')  
         self.checkbox_zStack.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", str(value)))
         self.checkbox_zStack.stateChanged.connect(lambda value: self.runZStackToggle.emit(value))
         
@@ -69,7 +70,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zOffset_textedit = QLineEdit("")
         self.validator = QDoubleValidator()
         self.zOffset_textedit.setValidator(self.validator)
-        self.zOffset_textedit.setToolTip('Offset from current position to scan start position')
+        self.zOffset_textedit.setToolTip('Offset from current position to scan start position.')
         self.zOffset_textedit.setFixedWidth(50)
         # self.zOffset_textedit.setReadOnly(True)
         self.zOffset_textedit.setEnabled(False)
@@ -77,7 +78,7 @@ class ZStackWidget(NapariHybridWidget):
 
         self.numSteps_label = QLabel("Steps") 
         self.numSteps_textedit = QLineEdit("2")
-        self.numSteps_textedit.setToolTip('Number of steps in the z-stack')
+        self.numSteps_textedit.setToolTip('Number of steps in the z-stack.')
         self.numSteps_textedit.setFixedWidth(50)
         self.numSteps_textedit.setEnabled(False)
         # self.numSteps_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
@@ -85,6 +86,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStackScanDir = QtWidgets.QComboBox()
         self.zStackScanDir._name = 'Scan Direction'
         self.zStackScanDir._type = 'combostr'
+        self.zStackScanDir.setToolTip('Direction of scan with respect to the sample. "Up" means sample starts farthest away from objective and focal plane scans up though the sample.')
         self.zStackScanDir.setFixedWidth(75)
         self.zStackScanDir.setEnabled(False)
 

@@ -57,24 +57,24 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Timing Settings', 'Repetitions'),
                                 ('Timing Settings', 'Rep Checkbox'),
                                 ('Timing Settings', 'Duration Checkbox'),
-                                ('Detector', '488 Cam', 'Model'), 
-                                ('Detector', '488 Cam', 'ROI'),
-                                ('Detector', '488 Cam', 'Param', 'ExposureTime'),
-                                ('Detector', '488 Cam', 'Param', 'Gain'),
-                                ('Detector', '488 Cam', 'Param', 'Gamma'),
-                                ('Detector', '488 Cam', 'Param', 'TriggerMode'),
-                                ('Detector', '561 Cam', 'Model'),
-                                ('Detector', '561 Cam', 'ROI'),
-                                ('Detector', '561 Cam', 'Param', 'ExposureTime'),
-                                ('Detector', '561 Cam', 'Param', 'Gain'),
-                                ('Detector', '561 Cam', 'Param', 'Gamma'),
-                                ('Detector', '561 Cam', 'Param', 'TriggerMode'),
-                                ('Detector', '640 Cam', 'Model'),
-                                ('Detector', '640 Cam', 'ROI'),
-                                ('Detector', '640 Cam', 'Param', 'ExposureTime'),
-                                ('Detector', '640 Cam', 'Param', 'Gain'),
-                                ('Detector', '640 Cam', 'Param', 'Gamma'),
-                                ('Detector', '640 Cam', 'Param', 'TriggerMode'),
+                                ('Detector', '488 Fluor', 'Model'), 
+                                ('Detector', '488 Fluor', 'ROI'),
+                                ('Detector', '488 Fluor', 'Param', 'ExposureTime'),
+                                ('Detector', '488 Fluor', 'Param', 'Gain'),
+                                ('Detector', '488 Fluor', 'Param', 'Gamma'),
+                                ('Detector', '488 Fluor', 'Param', 'TriggerMode'),
+                                ('Detector', '561 Fluor', 'Model'),
+                                ('Detector', '561 Fluor', 'ROI'),
+                                ('Detector', '561 Fluor', 'Param', 'ExposureTime'),
+                                ('Detector', '561 Fluor', 'Param', 'Gain'),
+                                ('Detector', '561 Fluor', 'Param', 'Gamma'),
+                                ('Detector', '561 Fluor', 'Param', 'TriggerMode'),
+                                ('Detector', '640 Fluor', 'Model'),
+                                ('Detector', '640 Fluor', 'ROI'),
+                                ('Detector', '640 Fluor', 'Param', 'ExposureTime'),
+                                ('Detector', '640 Fluor', 'Param', 'Gain'),
+                                ('Detector', '640 Fluor', 'Param', 'Gamma'),
+                                ('Detector', '640 Fluor', 'Param', 'TriggerMode'),
                                 ('SIM Parameters', 'ReconWL1'),
                                 ('SIM Parameters', 'ReconWL2'),
                                 ('SIM Parameters', 'ReconWL3'),
@@ -128,6 +128,7 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Zernike SLM Parameters','Right', 'Horizontal Coma'),
                                 ('Zernike SLM Parameters','Right', 'Horizontal Trefoil'),
                                 ('Zernike SLM Parameters','Right', 'Spherical'),
+                                ('Zernike SLM Parameters','Both', 'Enabled'),
                                 ('Autofocus Settings','Autofocus Checkbox'),
                                 ('Autofocus Settings','Autofocus Channel')]
         
@@ -172,7 +173,7 @@ class InfoGatheringController(ImConWidgetController):
             outfile.write(jsonOutput)
         self.lastSavePath = filePath
         self.lastSaveName = os.path.split(filePath)[-1]
-        print('Settings JSON saved at: ' + self.lastSavePath)
+        print('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up
 
 
     def updateSharedAttributes(self):

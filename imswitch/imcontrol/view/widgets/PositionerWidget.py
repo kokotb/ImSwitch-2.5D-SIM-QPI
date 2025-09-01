@@ -31,16 +31,23 @@ class PositionerWidget(Widget):
         initialValueCoarse = 5
         parNameSuffix = self._getParNameSuffix(positionerName, axis)
         label = f'{positionerName} -- {axis}' if positionerName != axis else positionerName
-
-
+        zDriftLayout = QtWidgets.QVBoxLayout()
         self.wholeZLayout = QtWidgets.QHBoxLayout()
+
         self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
+        self.wholeZLayout.addWidget(self.pars['Label' + parNameSuffix])
+
+
         self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix].setFixedWidth(100)
-        self.wholeZLayout.addWidget(self.pars['Label' + parNameSuffix])
-        self.wholeZLayout.addWidget(self.pars['Position' + parNameSuffix])
+        zDriftLayout.addWidget(self.pars['Position' + parNameSuffix], alignment=QtCore.Qt.AlignHCenter)
+
+        self.pars['Drift' + parNameSuffix] = QtWidgets.QLabel(f'({0:.2f} µm)')
+
+        self.pars['Drift' + parNameSuffix].setFixedWidth(100)
+        zDriftLayout.addWidget(self.pars['Drift' + parNameSuffix], alignment=QtCore.Qt.AlignHCenter)
 
 
         self.gridZCoarseFine = QtWidgets.QGridLayout()
@@ -71,6 +78,8 @@ class PositionerWidget(Widget):
         self.gridZCoarseFine.addWidget(self.pars['StepUnit' + parNameSuffix], 0, 4)
         self.gridZCoarseFine.addWidget(self.pars['StepEditCoarse' + parNameSuffix], 1, 3)
         self.gridZCoarseFine.addWidget(self.pars['StepUnitCoarse' + parNameSuffix], 1, 4)
+
+        self.wholeZLayout.addLayout(zDriftLayout)
         self.wholeZLayout.addLayout(self.gridZCoarseFine)
 
 
@@ -131,7 +140,7 @@ class PositionerWidget(Widget):
 
         self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0.0:.1f} µm</strong>')
         self.pars['Position' + parNameSuffix].setFixedWidth(120)
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('→')
@@ -139,7 +148,7 @@ class PositionerWidget(Widget):
 
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
         self.pars['StepEdit' + parNameSuffix].setMaximumWidth(50)
-        self.validator = QDoubleValidator()
+        self.validator = QIntValidator()
         self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')
         self.pars['AbsPos' + parNameSuffix] = QtWidgets.QLabel(f'<strong>Pos:</strong>')
@@ -196,14 +205,14 @@ class PositionerWidget(Widget):
 
         self.pars['Label' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{label}</strong>')
         self.pars['Label' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
-        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0:.2f} µm</strong>')
+        self.pars['Position' + parNameSuffix] = QtWidgets.QLabel(f'<strong>{0.0:.1f} µm</strong>')
         self.pars['Position' + parNameSuffix].setTextFormat(QtCore.Qt.RichText)
         self.pars['Position' + parNameSuffix].setFixedWidth(120)
         self.pars['UpButton' + parNameSuffix] = guitools.BetterPushButton('↑')
         self.pars['DownButton' + parNameSuffix] = guitools.BetterPushButton('↓')
 
         self.pars['StepEdit' + parNameSuffix] = QtWidgets.QLineEdit(initialStepValue)
-        self.validator = QDoubleValidator()
+        self.validator = QIntValidator()
         self.pars['StepEdit' + parNameSuffix].setMaximumWidth(50)
         self.pars['StepEdit' + parNameSuffix].setValidator(self.validator)
         self.pars['StepUnit' + parNameSuffix] = QtWidgets.QLabel('µm')

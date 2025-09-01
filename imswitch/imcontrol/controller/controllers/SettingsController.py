@@ -111,11 +111,20 @@ class SettingsController(ImConWidgetController):
         self._commChannel.sigDetectorSwitched.connect(self.detectorSwitched)
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigWriteParamsFromCam.connect(self.writeParamsFromCamFunc)
+        self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
 
         # Connect SettingsWidget signals
         self._widget.sigROIChanged.connect(self.ROIchanged)
         self._widget.sigDetectorChanged.connect(self.detectorSwitchClicked)
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
+
+        self._widget.scatterCamActive.stateChanged.connect(self.toggleScatterCam)
+        if self._master.detectorsManager._subManagers['488 Scatter']:
+            self._widget.scatterCamActive.setEnabled(True)
+
+
+    def toggleScatterCam(self, state):
+        self._commChannel.scatterCamActive = state
 
     def writeParamsFromCamFunc(self, detector, value):
         self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'].value = value
@@ -370,8 +379,10 @@ class SettingsController(ImConWidgetController):
 
     def updateParamsFromDetector(self, *, detector):
         """ Update the parameter values from the detector. """
-
-        params = self.allParams[detector.name]
+        try: #CTNOTE put here to suppress AFCAM error. Keep eye.
+            params = self.allParams[detector.name]
+        except KeyError:
+            return
 
         # Detector parameters
         for parameterName, parameter in detector.parameters.items():

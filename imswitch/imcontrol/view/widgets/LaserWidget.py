@@ -48,6 +48,15 @@ class LaserWidget(Widget):
         self.lasersGridContainer.installEventFilter(self)
 
         self.layout.addWidget(self.scrollArea, 0, 0)
+        
+        self.userControlCheckbox = QtWidgets.QCheckBox('User Control')
+        
+        self.layout.addWidget(self.userControlCheckbox, 1, 0)
+        
+        
+
+
+
 
 
     def addLaser(self, laserName, valueUnits, valueDecimals, wavelength, valueRange=None,
@@ -63,12 +72,17 @@ class LaserWidget(Widget):
             initialPower=valueRange[0] if valueRange is not None else 0,
             frequencyRange=frequencyRange
         )
-        # control.sigEnableChanged.connect(
-        #     lambda enabled: self.sigEnableChanged.emit(laserName, enabled)
-        # )
+        control.sigEnableChanged.connect(
+            lambda enabled: self.sigEnableChanged.emit(laserName, enabled)
+        )
         control.sigValueChanged.connect(
             lambda value: self.sigValueChanged.emit(laserName, value)
         )
+
+        # control.enableButton.clicked.connect(self.userEnableLaser)
+        # self.userControlCheckbox.stateChanged.connect(self.enableLaserButtons)
+
+        # self.userControl
 
         if all(num > 0 for num in frequencyRange):
             control.sigModEnabledChanged.connect(
@@ -99,7 +113,17 @@ class LaserWidget(Widget):
 
         self.lasersGrid.addWidget(nameLabel, len(self.laserModules), 0)
         self.lasersGrid.addWidget(control, len(self.laserModules), 1)
+
+
+
         self.laserModules[laserName] = control
+
+    # def userEnableLaser(self, state):
+    #     print(self)
+    #     print(state)
+
+    # def enableLaserButtons(self):
+    #     pass
 
     def isLaserActive(self, laserName):
         """ Returns whether the specified laser is powered on. """
@@ -240,6 +264,8 @@ class LaserModule(QtWidgets.QWidget):
                                            decimals=valueDecimals)
         self.slider.setFocusPolicy(QtCore.Qt.NoFocus)
 
+        
+
         if not isBinary:
             valueRangeMin, valueRangeMax = valueRange
 
@@ -265,10 +291,17 @@ class LaserModule(QtWidgets.QWidget):
         
       
                 
-        self.enableButton = guitools.BetterPushButton('ON')
-        self.enableButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
-                                        QtWidgets.QSizePolicy.Expanding)
+        self.enableButton = guitools.BetterPushButton('On')
+        # self.enableButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
+        #                                 QtWidgets.QSizePolicy.Expanding)
         self.enableButton.setCheckable(True)
+        self.enableButton.setEnabled(False)
+        self.enableButton.setFixedWidth(200)
+
+
+        self.enableButton.clicked.connect( 
+            lambda value: self.sigEnableChanged.emit(value)
+        )
 
         # Add elements to QHBoxLayout
         self.layout = QtWidgets.QHBoxLayout()
@@ -280,10 +313,10 @@ class LaserModule(QtWidgets.QWidget):
             sizePolicy.setRetainSizeWhenHidden(True)
             powerFrame.setSizePolicy(sizePolicy)
             powerFrame.hide()
-        # self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
+        self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
 
         # Connect signals
-        self.enableButton.toggled.connect(self.sigEnableChanged)
+        
         self.slider.valueChanged.connect( 
             lambda value: self.sigValueChanged.emit(value)
         )
@@ -294,6 +327,9 @@ class LaserModule(QtWidgets.QWidget):
 
         self.setPointEdit.textChanged.connect(self.checkValidity)
 
+    # def toggleLaserEnabled(self, state):
+    #     print(self)
+    #     print(state)
 
 
     def checkValidity(self):

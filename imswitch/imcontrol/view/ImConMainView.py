@@ -70,11 +70,12 @@ class ImConMainView(QtWidgets.QMainWindow):
             
         }
         leftDockInfos = {
-            'View': _DockInfo(name='Image Controls', yPosition=0),
+            # 'View': _DockInfo(name='Image Controls', yPosition=0),
             'Settings': _DockInfo(name='Detector Settings', yPosition=0),
             # 'Recording': _DockInfo(name='Recording', yPosition=2),
-            'SLM25D': _DockInfo(name='SLM25D', yPosition=2),
-            'SIM': _DockInfo(name = 'SIM', yPosition = 2)
+                        'SIM': _DockInfo(name = 'SIM', yPosition = 2),
+            'SLM25D': _DockInfo(name='SLM25D', yPosition=2)
+
 
             # 'Console': _DockInfo(name='Console', yPosition=5)
             

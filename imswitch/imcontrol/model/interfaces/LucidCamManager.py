@@ -14,22 +14,22 @@ from arena_api.__future__.save import Writer
 from datetime import datetime
 
 class LucidCam:
-    def __init__(self, cameraNo):
+    def __init__(self, cameraNo, device_infos):
         super().__init__()
         
         self.__logger = initLogger(self, tryInheritParent=True)
 
         device = []
         
-        # cameraNo is a two digit number unique to our cams (LUCID)
+        # cameraNo is the last 2 digits of the Lucid Cam serial number
         cameraNo_string = "{}".format(cameraNo)
         camerNo_num_digit = len(cameraNo_string)
         camera_found = False
         
-        device_infos = None
+
         selected_index = None
         
-        device_infos = system.device_infos #CTNOTE How long does this step take? It gathers all camera info every loop. Can reduce time by 2/3.
+        # device_infos = system.device_infos #CTNOTE How long does this step take? It gathers all camera info every loop. Can reduce time by 2/3.
 
         for i in range(len(device_infos)):
             if cameraNo_string == device_infos[i]['serial'][-camerNo_num_digit:]:
@@ -50,36 +50,20 @@ class LucidCam:
 ##Populate a reference to all device nodes. Some settings are in 'tl stream modemap'
         self.nodemap = device.nodemap
         self.tl_stream_nodemap = device.tl_stream_nodemap
-        # self.tl_stream_nodemap["StreamBufferHandlingMode"].value = "NewestOnly" #move to somewhere in liveview
 
-##Create list with all possible wanted node names from camera
+
+##Create list with all possible user-wanted node names
         self.propNodeNames = ['ExposureTime','ExposureAuto', 'Gain','Gamma','AcquisitionFrameRateEnable','AcquisitionFrameRate',
                            'ADCBitDepth', 'WidthMax', 'HeightMax','TriggerSource','TriggerMode', 'TriggerSelector', 'PixelFormat','DeviceStreamChannelPacketSize']
         self.roiNodeNames = ['OffsetX', 'OffsetY', 'Width', 'Height']
 
-# Get nodes from camera. These are the lists called to change actual cam values
+# Get user-wanted nodes from camera. These are the lists called to change actual cam values
         self.propNodes = self.nodemap.get_node(self.propNodeNames)
         self.roiNodes = self.nodemap.get_node(self.roiNodeNames)
 
         self.SensorHeight = 4600
         self.SensorWidth = 5320
         self.model = device_info['serial']
-
-        # Get all current cam parameters
-        # self.propNodeValues = {}
-        # for node_name in self.node_names:
-        #     if node_name in self.node_names_dict:
-        #         # print(self.getPropertyValue(self.node_names_dict[node_name]))
-        #         self.parameters[self.node_names_dict[node_name]] = self.getPropertyValue(self.node_names_dict[node_name])
-        
-        # self.exposure = 100.1negotbuffer
-        # self.gain = 0.0
-        # self.gamma = 1
-        # self.SensorHeight = self.parameters['sensor_height']
-        # self.SensorWidth = self.parameters['sensor_width']
-        # Setting image shape to full sensor
-        # self.shape = (self.SensorHeight,self.SensorWidth)
-
 
     def start_live(self):
         # print("start_live1")
@@ -112,79 +96,6 @@ class LucidCam:
 
     # def toggleTrigger(self):
 
-    # def grabFrame(self):
-    #     buffer_type = "Mono16"
-
-    #     print(self.device)
-    #     # waitingBuffers = self.device.getBufferValue()
-
-    #     buffer = self.device.get_buffer()
-    #     # # print(self.device)
-    #     # # print(buffer)
-    #     # """
-    #     # Copy buffer and requeue to avoid running out of buffers
-    #     # """
-    #     item = BufferFactory.copy(buffer)
-    #     self.device.requeue_buffer(buffer)
-
-    #     if buffer_type == "Mono16":
-    #         # pass
-    #         # FIXME: Include this in live view also? Now is hardcoded...
-    #         # Development only done for Mono8 at this point for live view
-    #         """
-    #         Mono12/Mono16 buffer data as cpointers can be cast to (uint16, c_ushort)
-    #         """
-    #         array = ctypes.cast(item.pdata, ctypes.POINTER(ctypes.c_ushort))
-    #         array = np.ctypeslib.as_array(array, (item.height, item.width))
-    #         frame = array
-    #         print(frame)
-
-
-    #         """
-    #             Destroy the copied item to prevent memory leaks
-    #         """
-    #         BufferFactory.destroy(item)
-    #     # if buffer_type == "Mono8":
-            
-    #     #     buffer_bytes_per_pixel = int(len(item.data)/(item.width * item.height))
-    #     #     """
-    #     #     Buffer data as cpointers can be accessed using buffer.pbytes
-    #     #     """
-    #     #     num_channels = 1
-    #     #     prev_frame_time = 0
-    #     #     array = (ctypes.c_ubyte * num_channels * item.width * item.height).from_address(ctypes.addressof(item.pbytes))
-            
-    #     #     """
-    #     #     Create a reshaped NumPy array to display using OpenCV
-    #     #     """
-    #     #     frame = np.ndarray(buffer=array, dtype=np.uint8, shape=(item.height, item.width, buffer_bytes_per_pixel))
-    #     #     # print(np.shape(frame))
-    #     #     # print(buffer_bytes_per_pixel)
-    #     #     # width = item.width
-    #     #     # height = item.height
-    #     #     # depth = 0
-
-    #     #     # fps = str(1/(curr_frame_time - prev_frame_time))
-            
-    #     #     # frame, width, height, depth = self.cam.get_image_data()
-    #     #     # frame = np.array(frame, dtype='float64')
-    #     #     # Check if below is giving the right dimensions out
-    #     #     # TODO: do this smarter, as I can just take every 3rd value instead of creating a reshaped
-    #     #     #       3D array and taking the first plane of that
-    #     #     # frame = np.reshape(frame, (height, width, depth))[:, :, 0]
-    #     #     frame = np.transpose(frame)
-    #     #     frame = np.moveaxis(frame, 1 , 2)
-    #     #     # self.device.stop_stream()
-    #     #     """
-    #     #         Destroy the copied item to prevent memory leaks
-    #     #     """
-            
-    #     #     # time.sleep(.25)     
-    #     else:
-    #         self.__logger.warning("Unsupported data type! Mono16 currently supported")
-    #         frame = None
-    #     # BufferFactory.destroy(item)
-    #     return (np.random.rand(1024, 1024)*4095).astype(np.int16)
     
     def forceValidROI(self, hpos, vpos, hsize, vsize):
 

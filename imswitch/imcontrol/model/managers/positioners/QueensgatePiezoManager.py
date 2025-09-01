@@ -72,9 +72,13 @@ class QueensgatePiezoManager(PositionerManager):
     def query(self, msg):
         """Sends commands to stage using PriorSDK."""
         # print(msg)
-        ret, val = self.dll.DoCommand(msg)[0]
+        try:
+            ret, val = self.dll.DoCommand(msg)[0] #CTNOTE fails here when a command fails to piezo
+            return ret, val
+        except:
+            pass
 
-        return ret, val
+        
     
     def microToPico(self, microVal):
         return microVal * 1e6
@@ -133,7 +137,10 @@ class QueensgatePiezoManager(PositionerManager):
             return
         new_position = str(self.microToPico(position))
         msg_set_position = "stage.position.command.set 0"+" "+new_position
-        ret, val = self.query(msg_set_position)
+        try:
+            ret, val = self.query(msg_set_position)
+        except:
+            ret = None
         if ret == 'value': success = True
         else: success = False
         self._position[axis] = round(position,1)

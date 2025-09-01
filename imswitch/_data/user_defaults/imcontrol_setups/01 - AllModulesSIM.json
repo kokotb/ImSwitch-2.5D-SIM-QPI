@@ -87,11 +87,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 19000.0
       },
-      "ROI":{
+      "ROI":{  
         "OffsetX": 2568,
-        "OffsetY": 2088,
+        "OffsetY": 2020,
         "Width": 1024,
         "Height": 1024
       } 
@@ -109,9 +109,9 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 0.0,  
+        "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{
         "OffsetX": 2110,
@@ -136,16 +136,69 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 2000.0
+          "ExposureTime": 700.0
         },
         "ROI":{
-          "OffsetX": 1973,
-          "OffsetY": 1996,
+          "OffsetX": 2128,
+          "OffsetY": 1698,
           "Width": 1024,
           "Height": 1024
         }
       },
       "forAcquisition": true
+    },
+
+    "Scatter Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "LUCIDManager",
+      "managerProperties": {
+        "cameraListIndex": 47,
+        "wavelength": 490,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 1000.0
+        },
+        "ROI":{
+          "OffsetX": 2408,
+          "OffsetY": 2790,
+          "Width": 1024,
+          "Height": 1024
+        }
+      },
+      "forAcquisition": true
+    },
+
+    "AF Cam": {
+      "analogChannel": null,
+
+      "digitalLine": null,
+      "managerName": "ZWOCamManager",
+      "managerProperties": {
+        "cameraListIndex": 21,
+        "wavelength": 808,
+        "x0_global": 0,
+        "y0_global": 0,
+        "camProperties": {
+          "TriggerMode": "Off",
+          "Gain": 0.0,
+          "Gamma": 1.0,
+          "ExposureTime": 450.0
+        },
+        "ROI":{
+          "OffsetX": 0,
+          "OffsetY": 0,
+          "Width": 1936,
+          "Height": 1096
+        }
+      },
+      "forAcquisition": false,
+      "forFocusLock": true
     }
 
 

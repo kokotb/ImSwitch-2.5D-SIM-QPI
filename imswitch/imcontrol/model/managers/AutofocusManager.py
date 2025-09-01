@@ -14,46 +14,89 @@ class AutofocusManager(SignalInterface):
     def __init__(self):
         super().__init__()
         self._logger = initLogger(self)
+        self.init_guess_x = [5,1020,500,30]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = [5,550,500,30]
+        self.threshold = 5
+         #pixel value threshold for AF image
+        self.guess_x = self.init_guess_x[:]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.guess_y = self.init_guess_y[:]
 
-    def calcAFArray(self, origin):
+    # def getXfromY(self, y):
+    #     x = (y-self.y_int)/self.x_slp
 
-        AFList = []
-        startZ = origin - 2
-        steps = 20
-        stepSize = 0.2
-        AFList.append(startZ)
-        for i in range(steps):
-            AFList.append(startZ+(i+1)*stepSize)
+    #     return x
 
-        return AFList
-            
-    def computeLaplacianArray(self, imarray, toPrint = False):
-        startTime = time.time()
-        scoreArray = []
-        for i, image in enumerate(imarray):
-            laplacian = cv2.Laplacian(image, cv2.CV_64F)  # Apply Laplacian filter
-            score = np.var(laplacian)
-            scoreArray.append(score)
-            if toPrint:
-                print(f'Laplacian {i}: {score}')
+    def getYfromX(self, x):
+        y = (self.x_slp*x) + self.y_int
 
-        maxVal = max(range(len(scoreArray)), key=scoreArray.__getitem__)
-        endTime = time.time()
-        elapsed = endTime-startTime
-        print(f'Laplacian time: {elapsed}')
+        return y
 
-            
-        return scoreArray, maxVal  # Compute variance of Laplacian
-    
-    def computeLaplacian(self, img, toPrint = False):
-
-        laplacian = cv2.Laplacian(img, cv2.CV_64F)  # Apply Laplacian filter
-        score = np.var(laplacian)
-        if toPrint:
-            print(f'Laplacian {i}: {score}')           
+    def scoreOneLive(self, img, left, right):
+        score = self.scoreOneImg(img, left, right)
         return score
+    
+    def removeColumns(self, img, left, right):
+        imgMasked = np.delete(img,range(left,right),1)
+        return imgMasked
+    
+    def scoreOneImg(self, im, left, right):
+        # Define the model function. In our case, a 1D Gaussian.
 
 
+        def Gaussian1D(xdata, i0, x0, sX, amp):
+            x = xdata
+            x0 = float(x0)
+            eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
+            return eq
+
+        try:
+            from scipy.optimize import curve_fit
+        except ImportError:
+            print("Unable to import curve_fit from scipy.optimize.")
+
+
+
+        x_sigma = []
+        y_sigma = []
+
+
+        # To read the acquired images and apply the Gaussian fitting
+
+        #Reading the frames
+        # img = cv2.imread(stacks,-1)
+        # im = np.asarray(img).astype(float)
+        im = im-np.mean(im)/2	# Remove background
+        im[im<self.threshold] = 0			# Threshold
+    
+        # 1D Gaussian
+        h1, w1 = im.shape
+        x = np.arange(w1)
+        y = np.arange(h1)
+        xMasked = np.delete(x, range(left, right))
+        imgMaskDel = self.removeColumns(im, left, right)
+        # print(self.guess_x,self.guess_y)
+        # Do x fit
+        popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
+        x0 = popt[1]
+        sx = popt[2]
+        # self.guess_x.clear()
+        # self.guess_x.append(popt)
+        # Do y fit
+        popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000)
+        y0 = popt[1]
+        sy = popt[2]
+        
+        # Replaces initial guess with final guess
+        # self.guess_y.clear()
+        # self.guess_y.append(popt)
+    
+        x_sigma = abs(sx)
+        y_sigma = abs(sy)
+        score = x_sigma - y_sigma
+
+        # x_c.append(popt[1])
+        return score
+            
 
 # Copyright (C) 2020-2024 ImSwitch developers
 # This file is part of ImSwitch.

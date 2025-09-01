@@ -123,6 +123,8 @@ class PriorStageManager(PositionerManager):
             ret, value_out = self.SDKPrior.PriorScientificSDK_cmd(self, 
                 self.sessionID, create_string_buffer(msg.encode()), self.rx
             )
+            ret = 0
+
         else:    
             ret = self.SDKPrior.PriorScientificSDK_cmd(
                 self.sessionID, create_string_buffer(msg.encode()), self.rx
@@ -152,7 +154,7 @@ class PriorStageManager(PositionerManager):
         new_position = [str(position_x), str(position_y)]
         msg_set_position = "controller.stage.goto-position "+new_position[0]+" "+new_position[1]
         ret = self.query(msg_set_position)
-        if ret[1] == '0':
+        if ret[0] == '0':
             self._position['X'] = position_x
             self._position['Y'] = position_y
         else:
@@ -172,6 +174,7 @@ class PriorStageManager(PositionerManager):
             print(f"{axis} axis is invalid input for Prior XY stage!")
         old_pos = self.get_abs()
 
+
         if float(old_pos[axis_order])+dist > self.moveLimitsRegHolder[axis_order]:
             self.__logger.error(f'Out of bounds request on {axis} axis. Limit is ±{self.moveLimitsRegHolder[axis_order]}.')
             self._position['X'] = float(old_pos[0])
@@ -185,7 +188,14 @@ class PriorStageManager(PositionerManager):
         self.query(msg_move_relative)
         self.checkBusyLoop()
         current_position = self.get_abs()
+
         self._position[axis] = float(current_position[axis_order])
+
+        # try:
+        #     self._position[axis] = float(current_position[axis_order])
+        # except (ValueError, IndexError):
+        #     pass
+
         self.__logger.info(self._position) #queries from get_abs
 
 
@@ -252,10 +262,24 @@ class PriorStageManager(PositionerManager):
         self.checkBusyLoop()
         _ = self.get_abs()
         return self._position
+    
+    def is_integer(self, s):
+        try:
+            int(s[0])
+            int(s[1])
+            return True
+        except (ValueError, TypeError, IndexError):
+            return False
 
     def get_abs(self):
         response = self.query("controller.stage.position.get")
         position = response[1].split(",", 1)
+        areIntegers = self.is_integer(position)
+        while (not areIntegers): #Ask until the stage returns a valid answer.
+            # print(position)
+            position = self.get_abs()
+            areIntegers = self.is_integer(position)
+        # print(response)
         return position
     # def get_abs(self):
     #     cmd = 'PZ'
