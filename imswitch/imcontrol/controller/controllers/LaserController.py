@@ -86,12 +86,13 @@ class LaserController(ImConWidgetController):
             num = 1
             text = 'Ext'
 
-        list(self._master.lasersManager._subManagers.values())[0].externalControl(num) 
+        list(self._master.lasersManager._subManagers.values())[0].externalControl(num) #Execute on onlz one fo the lasers, as this commands controls all channels.
 
-        for name in list(self._widget.laserModules.keys()):
-            self._widget.laserModules[name].enableButton.setChecked(state)
-            self._widget.laserModules[name].enableButton.setEnabled(state)
-            self._widget.laserModules[name].enableButton.setText(text)
+        for lName, lManager in self._master.lasersManager:
+            ans = lManager.getStatus()
+            self._widget.laserModules[lName].enableButton.setChecked(ans)
+            self._widget.laserModules[lName].enableButton.setEnabled(state)
+            self._widget.laserModules[lName].enableButton.setText(text)
 
 
     def loadSettings(self, moduleDict):

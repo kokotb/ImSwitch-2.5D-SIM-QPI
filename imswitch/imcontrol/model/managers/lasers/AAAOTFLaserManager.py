@@ -28,6 +28,13 @@ class AAAOTFLaserManager(LaserManager):
         super().__init__(laserInfo, name, isBinary=False, valueUnits='%', valueDecimals=0)
 
 
+    def getStatus(self, ):
+        cmd = 'L' + str(self._channel)
+        ans = self._rs232manager.query(cmd)
+        status = int(ans.split('S')[-1])
+        return status
+
+
     def setEnabled(self, enabled):
         """Turn on (1) or off (0) laser emission"""
         if enabled:
