@@ -14,7 +14,7 @@ class LaserController(ImConWidgetController):
 
         self.settingAttr = False
         self.presetBeforeScan = None
-        self._widget.userControlCheckbox.stateChanged.connect(self.toggleControl)
+        self._widget.userControlCheckbox.stateChanged.connect(self.toggleUserControl)
 
         # Set up lasers
         for lName, lManager in self._master.lasersManager:
@@ -25,6 +25,7 @@ class LaserController(ImConWidgetController):
                 (lManager.freqRangeMin, lManager.freqRangeMax, lManager.freqRangeInit) if lManager.isModulated else (0, 0, 0)
             )
 
+
             if not lManager.isBinary:
                 # self.valueChanged(lName, lManager.valueRangeMin)
                 power = lManager._LaserManager__valueInit
@@ -32,6 +33,14 @@ class LaserController(ImConWidgetController):
 
             self.setSharedAttr(lName, _enabledAttr, self._widget.isLaserActive(lName))
             self.setSharedAttr(lName, _valueAttr, self._widget.getValue(lName))
+
+
+        # for name in list(self._widget.laserModules.keys()):
+        #     self._widget.laserModules[name].enableButton.clicked.connect(self.toggleLaserEnabled)
+
+
+
+
 
         # Load presets
         # for laserPresetName in self._setupInfo.laserPresets:
@@ -63,11 +72,26 @@ class LaserController(ImConWidgetController):
         # self._widget.sigDeletePresetClicked.connect(self.deletePreset)
         # self._widget.sigPresetScanDefaultToggled.connect(self.presetScanDefaultToggled)
 
-    def toggleControl(self, state):
+    # def toggleLaserEnabled(self, test, state):
+    #     print(self)
+    #     print(test, state)
+
+
+    def toggleUserControl(self, state):
         if state == 2:
             num = 0
-        else: num = 1
-        list(self._master.lasersManager._subManagers.values())[0].externalControl(num)
+            text = 'On'
+
+        else: 
+            num = 1
+            text = 'Ext'
+
+        list(self._master.lasersManager._subManagers.values())[0].externalControl(num) 
+
+        for name in list(self._widget.laserModules.keys()):
+            self._widget.laserModules[name].enableButton.setChecked(state)
+            self._widget.laserModules[name].enableButton.setEnabled(state)
+            self._widget.laserModules[name].enableButton.setText(text)
 
 
     def loadSettings(self, moduleDict):
@@ -91,7 +115,7 @@ class LaserController(ImConWidgetController):
     def toggleLaser(self, laserName, enabled):
         """ Enable or disable laser (on/off)."""
         self._master.lasersManager[laserName].setEnabled(enabled)
-        self.setSharedAttr(laserName, _enabledAttr, enabled)
+        # self.setSharedAttr(laserName, _enabledAttr, enabled)
 
     def valueChanged(self, laserName, magnitude):
         """ Change magnitude. """
