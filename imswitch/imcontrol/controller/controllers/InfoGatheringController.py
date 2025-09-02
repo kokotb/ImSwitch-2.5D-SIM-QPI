@@ -40,19 +40,22 @@ class InfoGatheringController(ImConWidgetController):
 
                                 ('Positioner', 'Z', 'Z', 'Position'),('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Positioner', 'Z', 'Z', 'Drift'),
 
-                                ('Tiling Settings', 'Steps - X'),
-                                ('Tiling Settings', 'Steps - Y'),
-                                ('Tiling Settings', 'Overlap'),
-                                ('Tiling Settings', 'Tiling Preview'),
-                                ('Tiling Settings', 'Tiling Checkbox'),
+                                ('Tiling Settings', 'Tiling Checkbox'),('Tiling Settings', 'Steps - X'),('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Preview'),
+
                                 ('Timing Settings', 'Period Checkbox'),
-                                ('Timing Settings', 'Timing Unit'),
                                 ('Timing Settings', 'Timing Period'),
+                                ('Timing Settings', 'Timing Unit'),
+                                ('Timing Settings', 'Duration Checkbox'),
                                 ('Timing Settings', 'Duration'),
                                 ('Timing Settings', 'Duration Unit'),
-                                ('Timing Settings', 'Repetitions'),
                                 ('Timing Settings', 'Rep Checkbox'),
-                                ('Timing Settings', 'Duration Checkbox'),
+                                ('Timing Settings', 'Repetitions'),
+                                
+                                
+
+
+
+
                                 ('Detector', '488 Fluor', 'Model'), 
                                 ('Detector', '488 Fluor', 'ROI'),
                                 ('Detector', '488 Fluor', 'Param', 'ExposureTime'),
