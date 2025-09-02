@@ -66,6 +66,11 @@ class LaserController(ImConWidgetController):
             self._widget.laserModules[lName].enableButton.setEnabled(state)
             self._widget.laserModules[lName].enableButton.setText(text)
 
+        if state == 2:
+            self._logger.info('Lasers under user (manual) control.')
+        else:
+            self._logger.info('Lasers under instrument (external) control.')
+
 
     def loadSettings(self, moduleDict):
         try:
