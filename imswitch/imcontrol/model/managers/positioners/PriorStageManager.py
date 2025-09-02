@@ -258,7 +258,7 @@ class PriorStageManager(PositionerManager):
     @property
     def position(self):
         self.checkBusyLoop()
-        _ = self.get_abs()
+        _ = self.get_abs()  
         return self._position
     
     def is_integer(self, s):
