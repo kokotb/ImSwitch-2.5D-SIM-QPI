@@ -119,9 +119,7 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Zernike SLM Parameters','Right', 'Horizontal Coma'),
                                 ('Zernike SLM Parameters','Right', 'Horizontal Trefoil'),
                                 ('Zernike SLM Parameters','Right', 'Spherical'),
-                                ('Zernike SLM Parameters','Both', 'Enabled'),
-                                ('Autofocus Settings','Autofocus Checkbox'),
-                                ('Autofocus Settings','Autofocus Channel')]
+                                ('Zernike SLM Parameters','Both', 'Enabled')]
         
         
         self._widget.loadingPopup.okButton.clicked.connect(self.loadJSONFromFile)
