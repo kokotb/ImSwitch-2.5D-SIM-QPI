@@ -53,10 +53,8 @@ class LaserController(ImConWidgetController):
     def toggleUserControl(self, state):
         if state == 2: #If enabled
             cmd = 0 # number to pass to AOTF
-            text = 'On'
         else: 
             cmd = 1
-            text = 'Ext'
 
         list(self._master.lasersManager._subManagers.values())[0].externalControl(cmd) #Execute on only the first laser, as this commands controls all channels.
 
@@ -64,12 +62,19 @@ class LaserController(ImConWidgetController):
             ans = lManager.getStatus()
             self._widget.laserModules[lName].enableButton.setChecked(ans)
             self._widget.laserModules[lName].enableButton.setEnabled(state)
+            if (state == 2) and (ans == 0):
+                text = 'Off'
+            elif (state == 2) and (ans == 1):
+                text = 'On'
+            else:
+                text = 'Ext'
+            
             self._widget.laserModules[lName].enableButton.setText(text)
 
         if state == 2:
-            self._logger.info('Lasers under user (manual) control.')
+            self._logger.info('Laser control: User (manual).')
         else:
-            self._logger.info('Lasers under instrument (external) control.')
+            self._logger.info('Laser control: External (instrument).')
 
 
     def loadSettings(self, moduleDict):

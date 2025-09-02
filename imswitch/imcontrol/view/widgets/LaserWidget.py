@@ -233,6 +233,8 @@ class LaserModule(QtWidgets.QWidget):
             lambda value: self.sigEnableChanged.emit(value)
         )
 
+        self.enableButton.clicked.connect(self.toggleEnableText)
+
         # Add elements to QHBoxLayout
         self.layout = QtWidgets.QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -253,6 +255,12 @@ class LaserModule(QtWidgets.QWidget):
             lambda: self.slider.setValue(self.getValue()))
         
         self.setPointEdit.textChanged.connect(self.checkValidity)
+
+    def toggleEnableText(self, state):
+        if state:
+            self.enableButton.setText('On')
+        else:
+            self.enableButton.setText('Off')
 
     def checkValidity(self):
         valid = self.setPointEdit.hasAcceptableInput()
