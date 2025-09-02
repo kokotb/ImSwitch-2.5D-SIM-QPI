@@ -105,7 +105,7 @@ class LaserController(ImConWidgetController):
 
     def enableChanged(self, laserName, enabled):
         self._master.lasersManager[laserName].setEnabled(enabled)
-        self._widget.setLaserEnable(laserName, enabled)
+        self._widget.setLaserChecked(laserName, enabled)
         self.setSharedAttr(laserName,'Enabled', enabled)
 
 

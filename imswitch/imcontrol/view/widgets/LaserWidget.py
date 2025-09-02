@@ -132,10 +132,10 @@ class LaserWidget(Widget):
         uses. """
         self.laserModules[laserName].setValue(value)
 
-    def setLaserEnable(self, laserName, enabled):
+    def setLaserChecked(self, laserName, enabled):
         """ Sets the value of the specified laser, in the units that the laser
         uses. """
-        self.laserModules[laserName].setLaserEnable(enabled)
+        self.laserModules[laserName].setLaserChecked(enabled)
     
     def setModulationFrequency(self, laserName, value):
         """ Sets the modulation frequency of the specified laser. """
@@ -270,10 +270,10 @@ class LaserModule(QtWidgets.QWidget):
         uses. """
         return float(self.setPointEdit.text())
     
-    def setLaserEnable(self, enabled):
+    def setLaserChecked(self, enabled):
         """ Sets the value of the specified laser, in the units that the laser
         uses. """
-        self.enableButton.setEnabled(enabled)
+        self.enableButton.setChecked(enabled)
     
     def getFrequency(self):
         """ Returns the selected frequency of the laser.
