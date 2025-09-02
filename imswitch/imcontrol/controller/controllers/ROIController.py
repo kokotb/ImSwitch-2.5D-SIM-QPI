@@ -128,7 +128,7 @@ class ROIController(ImConWidgetController):
             attr (_type_): type of a attribute (value, enabled, ...)
             value (_type_): value of the parameter read from wdiget
         """
-        self.settingAttr = True
+        self.settingAttr = True 
         try:
             self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
         finally:
