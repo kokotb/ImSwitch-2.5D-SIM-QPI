@@ -45,7 +45,7 @@ class AAAOTFLaserManager(LaserManager):
             status = 'disabled'
         cmd = 'L' + str(self._channel) + 'O' + str(value)
         ans = self._rs232manager.query(cmd)
-        channel = self.laserDict[ans.split('F')[0].split('l')[1]]
+        channel = self.laserDict[str(self._channel)]
         self._logger.info(f'{channel} laser {status}')
 
     def setValue(self, percentPower):
@@ -59,7 +59,7 @@ class AAAOTFLaserManager(LaserManager):
         cmd = 'L' + str(self._channel) + 'D' + str(valueaotf)
         ans = self._rs232manager.query(cmd)
         channel = self.laserDict[ans.split('F')[0].split('l')[1]]
-        self._logger.info(f'{channel} laser {percentPower}% power')
+        self._logger.info(f'{channel} laser {percentPower:.0f}% power')
 
 
     def externalControl(self, state):

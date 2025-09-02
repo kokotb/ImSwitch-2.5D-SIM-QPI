@@ -169,7 +169,7 @@ class InfoGatheringController(ImConWidgetController):
             outfile.write(jsonOutput)
         self.lastSavePath = filePath
         self.lastSaveName = os.path.split(filePath)[-1]
-        print('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up
+        self._logger.info('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up sometimes
 
 
     def updateSharedAttributes(self):

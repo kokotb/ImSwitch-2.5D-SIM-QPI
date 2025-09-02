@@ -221,7 +221,7 @@ class LaserModule(QtWidgets.QWidget):
         
       
                 
-        self.enableButton = guitools.BetterPushButton('On')
+        self.enableButton = guitools.BetterPushButton('Ext')
         # self.enableButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
         #                                 QtWidgets.QSizePolicy.Expanding)
         self.enableButton.setCheckable(True)

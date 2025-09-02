@@ -16,7 +16,6 @@ class LaserController(ImConWidgetController):
         super().__init__(*args, **kwargs)
 
         self.settingAttr = False
-        self.presetBeforeScan = None
         self._widget.userControlCheckbox.stateChanged.connect(self.toggleUserControl)
 
         # Set up lasers
@@ -40,7 +39,7 @@ class LaserController(ImConWidgetController):
 
 
         # Connect CommunicationChannel signals
-        self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
+        # self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
         # Connect LaserWidget signals
@@ -94,7 +93,7 @@ class LaserController(ImConWidgetController):
         self._master.lasersManager.execOnAll(lambda l: l.setEnabled(0))
 
 
-    def toggleLaser(self, laserName, enabled):
+    def toggleLaser(self, laserName, _, enabled):
         """ Enable or disable laser (on/off)."""
         self._master.lasersManager[laserName].setEnabled(enabled)
 
