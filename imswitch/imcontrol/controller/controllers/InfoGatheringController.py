@@ -136,7 +136,10 @@ class InfoGatheringController(ImConWidgetController):
         # self._widget.loadingPopup.lasersCheckbox.loadSignal = self._commChannel.sigLoadLasersSettings
 
     def openLoadWindow(self):
-        self._widget.loadingPopup.filePath.setText(self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')])
+        if self._widget.loadingPopup.lastPath == None:
+            path = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
+        else: path = self._widget.loadingPopup.lastPath
+        self._widget.loadingPopup.filePath.setText(path)
         self._widget.loadingPopup.exec_()
 
          

@@ -62,6 +62,7 @@ class MyInputDialog(QDialog):
         super().__init__(parent)
         self._logger = initLogger(self)
         self.setWindowTitle("Load Settings")
+        self.lastPath = None
         self.elementList = []
 
 
@@ -159,10 +160,12 @@ class MyInputDialog(QDialog):
 
     def loadJSON(self):
         jsonPath = self.filePath.text()
+
         if jsonPath == '':
             self._logger.warning('No file path selected')
             jsonObject = dict()
         else:
+            self.lastPath = jsonPath
             with open(jsonPath, 'r') as openfile:    
                 # Reading from json file
                 jsonObject = json.load(openfile)
