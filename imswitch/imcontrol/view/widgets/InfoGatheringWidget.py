@@ -68,6 +68,7 @@ class MyInputDialog(QDialog):
 
         self.filePath = QtWidgets.QLineEdit()
         self.openDialog = QPushButton("Browse")
+        self.openDialog.setMinimumWidth(150)
         self.allCheckbox = QtWidgets.QCheckBox("All")
         self.lasersCheckbox = QtWidgets.QCheckBox('Lasers')
         self.positionersCheckbox = QtWidgets.QCheckBox("Positioners")
