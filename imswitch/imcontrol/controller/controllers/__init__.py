@@ -22,7 +22,7 @@ from .SettingsController import SettingsController
 # from .SLMController import SLMController
 from .TilingController import TilingController
 from .SLM25DController import SLM25DController
-from .ROIController import ROIController
+
 from .TimingController import TimingController
 # from .ULensesController import ULensesController
 from .ViewController import ViewController
@@ -32,3 +32,4 @@ from .ZStackController import ZStackController
 from .InfoGatheringController import InfoGatheringController
 from .PSFAnalysisController import PSFAnalysisController
 from .AutofocusController import AutofocusController
+from .ROIController import ROIController

@@ -45,11 +45,6 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Timing Settings', 'Period Checkbox'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Duration Checkbox'),
                                 ('Timing Settings', 'Duration'),('Timing Settings', 'Duration Unit'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Repetitions'),
                                 
-                                
-
-
-
-
                                 ('Detector', '488 Fluor', 'Model'), 
                                 ('Detector', '488 Fluor', 'ROI'),
                                 ('Detector', '488 Fluor', 'Param', 'ExposureTime'),
@@ -68,6 +63,7 @@ class InfoGatheringController(ImConWidgetController):
                                 ('Detector', '640 Fluor', 'Param', 'Gain'),
                                 ('Detector', '640 Fluor', 'Param', 'Gamma'),
                                 ('Detector', '640 Fluor', 'Param', 'TriggerMode'),
+
                                 ('SIM Parameters', 'ReconWL1'),
                                 ('SIM Parameters', 'ReconWL2'),
                                 ('SIM Parameters', 'ReconWL3'),
@@ -84,12 +80,14 @@ class InfoGatheringController(ImConWidgetController):
                                 ('User Dir Info', 'Current Path'),
                                 ('User Dir Info', 'User Name'),
                                 ('User Dir Info', 'Experiment Name'),
+
                                 ('Z-Stack Settings', 'Step Size'),
                                 ('Z-Stack Settings', 'Total Z /um'),
                                 ('Z-Stack Settings', 'Z-Stack Checkbox'),
                                 ('Z-Stack Settings','Scan Direction'),
                                 ('Z-Stack Settings','Z-Stack Center?'),
                                 ('Z-Stack Settings','Scan Start Offset'),
+                                
                                 ('ROI List', 'List'),
                                 ('ROI List', 'Checkbox'),
                                 ('25D SLM Parameters', 'Gamma'),
