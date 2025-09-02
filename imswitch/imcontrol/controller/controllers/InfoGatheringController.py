@@ -42,14 +42,8 @@ class InfoGatheringController(ImConWidgetController):
 
                                 ('Tiling Settings', 'Tiling Checkbox'),('Tiling Settings', 'Steps - X'),('Tiling Settings', 'Steps - Y'),('Tiling Settings', 'Overlap'),('Tiling Settings', 'Tiling Preview'),
 
-                                ('Timing Settings', 'Period Checkbox'),
-                                ('Timing Settings', 'Timing Period'),
-                                ('Timing Settings', 'Timing Unit'),
-                                ('Timing Settings', 'Duration Checkbox'),
-                                ('Timing Settings', 'Duration'),
-                                ('Timing Settings', 'Duration Unit'),
-                                ('Timing Settings', 'Rep Checkbox'),
-                                ('Timing Settings', 'Repetitions'),
+                                ('Timing Settings', 'Period Checkbox'),('Timing Settings', 'Timing Period'),('Timing Settings', 'Timing Unit'),('Timing Settings', 'Duration Checkbox'),
+                                ('Timing Settings', 'Duration'),('Timing Settings', 'Duration Unit'),('Timing Settings', 'Rep Checkbox'),('Timing Settings', 'Repetitions'),
                                 
                                 
 
