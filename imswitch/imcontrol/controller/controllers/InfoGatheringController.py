@@ -38,7 +38,7 @@ class InfoGatheringController(ImConWidgetController):
         self.wantedAttributes = [('Laser', 'All', 'Ext. Control'),('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),
                                 ('Laser', '561AOTF', 'Enabled'),('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),
 
-                                ('Positioner', 'Z', 'Z', 'Position'),('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),
+                                ('Positioner', 'Z', 'Z', 'Position'),('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),('Positioner', 'Z', 'Z', 'Drift'),
 
                                 ('Tiling Settings', 'Steps - X'),
                                 ('Tiling Settings', 'Steps - Y'),

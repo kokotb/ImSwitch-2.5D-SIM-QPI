@@ -33,6 +33,7 @@ class PositionerController(ImConWidgetController):
                 self.setSharedAttr(pName, axis, _positionAttr, pManager.position[axis])
                 if speed:
                     self.setSharedAttr(pName, axis, _positionAttr, pManager.speed)
+        self.setSharedAttr('Z', 'Z', 'Drift', 0.0) #Drift is savable, but not loadable.
   
         # Connect CommunicationChannel signals
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
@@ -40,6 +41,7 @@ class PositionerController(ImConWidgetController):
         self._commChannel.sigUpdateZPositionConfirmed.connect(self.updatePositionConfirmedVal)
         self._commChannel.sigUpdateXYPosition.connect(self.updatePosition)
         self._commChannel.sigSendZDrift.connect(self.updateZDrift)
+
         
 
         # self._commChannel.sigSetSpeed.connect(lambda absPos: self.setAbsPosGUI(speed)) #commented when changing speed function to AbsPos
@@ -55,7 +57,7 @@ class PositionerController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
     def updateZDrift(self, drift):
- 
+        self.setSharedAttr('Z', 'Z', 'Drift', drift)
         self._widget.pars['DriftZ--Z'].setText(f'({drift:.2f} µm)')
 
 
@@ -69,9 +71,9 @@ class PositionerController(ImConWidgetController):
             params = self._commChannel.loadedSettings['Positioner']
             for i in range(len(self._widget.elementList)):
                 combinedName = self._widget.elementList[i]._name
-                catergory, axis = combinedName.split('--')
-                value = self._commChannel.loadedSettings['Positioner'][catergory][axis]['Position']
-                self.setPos(catergory, axis, value)
+                category, axis = combinedName.split('--')
+                value = self._commChannel.loadedSettings['Positioner'][category][axis]['Position']
+                self.setPos(category, axis, value)
 
     def closeEvent(self):
         self._master.positionersManager.execOnAll(

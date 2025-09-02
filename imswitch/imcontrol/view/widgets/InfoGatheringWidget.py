@@ -26,7 +26,9 @@ class InfoGatheringWidget(NapariHybridWidget):
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
         self.saveSettings = QPushButton("Save Settings")
+        self.saveSettings.setToolTip('Click to save all module settings. If microscope is running, a settings file will be saved in working directory without dialog. If microscope is idle, file dialog will appear.')
         self.loadSettings = QPushButton("Load Settings")
+        self.loadSettings.setToolTip('Click to reload settings from a previous session. Select JSON file and modules to retore.')
         self.layout.addWidget(self.saveSettings, 0, 0)
         self.layout.addWidget(self.loadSettings, 1, 0)
 
