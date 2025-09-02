@@ -35,15 +35,11 @@ class InfoGatheringController(ImConWidgetController):
         
         # Load experimental parameters into local object attribute
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
-        self.wantedAttributes = [('Laser', '488AOTF', 'Value'),
-                                ('Laser', '488AOTF', 'Enabled'),
-                                ('Laser', '561AOTF', 'Value'),
-                                ('Laser', '561AOTF', 'Enabled'),
-                                ('Laser', '640AOTF', 'Value'),
-                                ('Laser', '640AOTF', 'Enabled'),
-                                ('Positioner', 'Z', 'Z', 'Position'),
-                                ('Positioner', 'XY', 'X', 'Position'),
-                                ('Positioner', 'XY', 'Y', 'Position'),
+        self.wantedAttributes = [('Laser', 'All', 'Ext. Control'),('Laser', '488AOTF', 'Value'),('Laser', '488AOTF', 'Enabled'),('Laser', '561AOTF', 'Value'),
+                                ('Laser', '561AOTF', 'Enabled'),('Laser', '640AOTF', 'Value'),('Laser', '640AOTF', 'Enabled'),
+
+                                ('Positioner', 'Z', 'Z', 'Position'),('Positioner', 'XY', 'X', 'Position'),('Positioner', 'XY', 'Y', 'Position'),
+
                                 ('Tiling Settings', 'Steps - X'),
                                 ('Tiling Settings', 'Steps - Y'),
                                 ('Tiling Settings', 'Overlap'),

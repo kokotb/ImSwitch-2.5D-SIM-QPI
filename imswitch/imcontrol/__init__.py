@@ -5,7 +5,7 @@ __title__ = 'Hardware Control'
 def getMainViewAndController(moduleCommChannel, *_args,
                              overrideSetupInfo=None, overrideOptions=None, **_kwargs):
     from imswitch.imcommon.model import initLogger
-    from .controller import ImConMainController
+    from .controller import ImConMainController #CTNOTE: This import takes multiple seconds.
     from .model import configfiletools
     from .view import ViewSetupInfo, ImConMainView
 
@@ -49,7 +49,7 @@ def getMainViewAndController(moduleCommChannel, *_args,
 
     logger.debug(f'Setup used: {options.setupFileName}')
     
-    view = ImConMainView(options, setupInfo)
+    view = ImConMainView(options, setupInfo) #CTNOTE: Takes a couple seconds.
     try:
         controller = ImConMainController(options, setupInfo, view, moduleCommChannel)
     except Exception as e:

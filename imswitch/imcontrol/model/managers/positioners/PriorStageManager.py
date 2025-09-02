@@ -281,17 +281,6 @@ class PriorStageManager(PositionerManager):
             areIntegers = self.is_integer(position)
         # print(response)
         return position
-    # def get_abs(self):
-    #     cmd = 'PZ'
-    #     reply = self._rs232Manager.query(cmd)
-    #     if reply is None:
-    #         reply = self._position[self.axes[0]]
-    #     else:
-    #         # reply = float(reply.split(' ')[0])
-    #         reply = float(reply)
-    #     self._position[self.axes[0]] = reply
-    #     # print(reply)
-    #     return reply
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

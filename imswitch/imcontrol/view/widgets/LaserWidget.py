@@ -9,25 +9,15 @@ from PyQt5.QtGui import QIntValidator, QDoubleValidator
 class LaserWidget(Widget):
     """ Laser widget for setting laser powers etc. """
 
-    sigEnableChanged = QtCore.Signal(str, bool)  # (laserName, enabled)
-    sigValueChanged = QtCore.Signal(str, float)  # (laserName, value)
-    
-    # sigModEnabledChanged = QtCore.Signal(str, bool) # (laserName, modulationEnabled)
-    # sigFreqChanged = QtCore.Signal(str, int)        # (laserName, frequency)
-    # sigDutyCycleChanged = QtCore.Signal(str, int)   # (laserName, dutyCycle)
-
-    # sigPresetSelected = QtCore.Signal(str)  # (presetName)
-    # sigLoadPresetClicked = QtCore.Signal()
-    # sigSavePresetClicked = QtCore.Signal()
-    # sigSavePresetAsClicked = QtCore.Signal()
-    # sigDeletePresetClicked = QtCore.Signal()
-    # sigPresetScanDefaultToggled = QtCore.Signal()
+    sigLaserEnableChanged = QtCore.Signal(str, str, bool)  # (laserName, 'Enabled', enabled)
+    sigLaserCtrlChanged = QtCore.Signal(str, str, bool)  # ('All', 'Ext. Control', enabled)
+    sigLaserValueChanged = QtCore.Signal(str, float)  # (laserName, value)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.laserModules = {}
 
-        self.setMinimumHeight(260)
+        self.setMinimumHeight(220)
 
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
@@ -50,15 +40,12 @@ class LaserWidget(Widget):
         self.layout.addWidget(self.scrollArea, 0, 0)
         
         self.userControlCheckbox = QtWidgets.QCheckBox('User Control')
+        self.userControlCheckbox.stateChanged.connect(
+            lambda state: self.sigLaserCtrlChanged.emit('All', 'Ext. Control', not state)
+        )
         
         self.layout.addWidget(self.userControlCheckbox, 1, 0)
         
-        
-
-
-
-
-
     def addLaser(self, laserName, valueUnits, valueDecimals, wavelength, valueRange=None,
                  valueRangeStep=1, frequencyRange=(0, 0, 0)):
         """ Adds a laser module widget. valueRange is either a tuple
@@ -73,27 +60,22 @@ class LaserWidget(Widget):
             frequencyRange=frequencyRange
         )
         control.sigEnableChanged.connect(
-            lambda enabled: self.sigEnableChanged.emit(laserName, enabled)
+            lambda enabled: self.sigLaserEnableChanged.emit(laserName, 'Enabled', enabled)
         )
         control.sigValueChanged.connect(
-            lambda value: self.sigValueChanged.emit(laserName, value)
+            lambda value: self.sigLaserValueChanged.emit(laserName, value)
         )
 
-        # control.enableButton.clicked.connect(self.userEnableLaser)
-        # self.userControlCheckbox.stateChanged.connect(self.enableLaserButtons)
-
-        # self.userControl
-
-        if all(num > 0 for num in frequencyRange):
-            control.sigModEnabledChanged.connect(
-                lambda enabled: self.sigModEnabledChanged.emit(laserName, enabled)
-            )
-            control.sigFreqChanged.connect(
-                lambda frequency: self.sigFreqChanged.emit(laserName, frequency)
-            )
-            control.sigDutyCycleChanged.connect(
-                lambda dutyCycle: self.sigDutyCycleChanged.emit(laserName, dutyCycle)
-            )
+        # if all(num > 0 for num in frequencyRange):
+        #     control.sigModEnabledChanged.connect(
+        #         lambda enabled: self.sigModEnabledChanged.emit(laserName, enabled)
+        #     )
+        #     control.sigFreqChanged.connect(
+        #         lambda frequency: self.sigFreqChanged.emit(laserName, frequency)
+        #     )
+        #     control.sigDutyCycleChanged.connect(
+        #         lambda dutyCycle: self.sigDutyCycleChanged.emit(laserName, dutyCycle)
+        #     )
 
         nameLabel = QtWidgets.QLabel(laserName)
 
@@ -117,13 +99,6 @@ class LaserWidget(Widget):
 
 
         self.laserModules[laserName] = control
-
-    # def userEnableLaser(self, state):
-    #     print(self)
-    #     print(state)
-
-    # def enableLaserButtons(self):
-    #     pass
 
     def isLaserActive(self, laserName):
         """ Returns whether the specified laser is powered on. """
@@ -156,6 +131,11 @@ class LaserWidget(Widget):
         """ Sets the value of the specified laser, in the units that the laser
         uses. """
         self.laserModules[laserName].setValue(value)
+
+    def setLaserEnable(self, laserName, enabled):
+        """ Sets the value of the specified laser, in the units that the laser
+        uses. """
+        self.laserModules[laserName].setLaserEnable(enabled)
     
     def setModulationFrequency(self, laserName, value):
         """ Sets the modulation frequency of the specified laser. """
@@ -164,56 +144,6 @@ class LaserWidget(Widget):
     def setModulationDutyCycle(self, laserName, value):
         """ Sets the modulation duty cycle of the specified laser. """
         self.laserModules[laserName].setModulationDutyCycle(value)
-
-    # def getCurrentPreset(self):
-    #     """ Returns the name of the currently selected preset. """
-    #     return self.presetsList.currentData()
-
-    # def setCurrentPreset(self, name):
-    #     """ Sets the selected preset in the preset list. Pass None to unselect
-    #     all presets. """
-    #     anyPresetSelected = True if name else False
-
-    #     if anyPresetSelected:
-    #         nameIndex = self.presetsList.findData(name)
-    #         if nameIndex > -1:
-    #             self.presetsList.setCurrentIndex(nameIndex)
-    #     else:
-    #         self.presetsList.setCurrentIndex(-1)
-
-    #     self.loadPresetButton.setEnabled(anyPresetSelected)
-    #     self.savePresetButton.setEnabled(anyPresetSelected)
-    #     self.deletePresetAction.setEnabled(anyPresetSelected)
-    #     self.presetScanDefaultAction.setEnabled(anyPresetSelected)
-    #     if not anyPresetSelected:
-    #         self.presetScanDefaultAction.setChecked(False)
-
-    # def setScanDefaultPreset(self, name):
-    #     """ Sets which preset that is default for scanning. Pass None if there
-    #     is no default. """
-    #     for i in range(self.presetsList.count()):
-    #         self.presetsList.setItemText(i, self.presetsList.itemData(i))
-
-    #     nameIndex = self.presetsList.findData(name)
-    #     if nameIndex > -1:
-    #         self.presetsList.setItemText(nameIndex, f'{name} [scan default]')
-
-    # def setScanDefaultPresetActive(self, active):
-    #     """ Sets whether the preset that is default for scanning is active. """
-    #     self.presetScanDefaultAction.setText(
-    #         'Make selected default for scanning' if not active else 'Unset default for scanning'
-    #     )
-
-    # def addPreset(self, name):
-    #     """ Adds a preset to the preset list. """
-    #     self.presetsList.addItem(name, name)
-    #     self.presetsList.model().sort(0)
-
-    # def removePreset(self, name):
-    #     """ Removes a preset from the preset list. """
-    #     nameIndex = self.presetsList.findData(name)
-    #     if nameIndex > -1:
-    #         self.presetsList.removeItem(nameIndex)
 
     def eventFilter(self, source, event):
         if source is self.lasersGridContainer and event.type() == QtCore.QEvent.Resize:
@@ -234,9 +164,9 @@ class LaserModule(QtWidgets.QWidget):
     sigValueChanged = QtCore.Signal(float)  # (value)
     sigCheckValidity = QtCore.Signal()
 
-    sigModEnabledChanged = QtCore.Signal(bool) # (modulation enabled)
-    sigFreqChanged = QtCore.Signal(int)        # (frequency)
-    sigDutyCycleChanged = QtCore.Signal(int)   # (duty cycle)
+    # sigModEnabledChanged = QtCore.Signal(bool) # (modulation enabled)
+    # sigFreqChanged = QtCore.Signal(int)        # (frequency)
+    # sigDutyCycleChanged = QtCore.Signal(int)   # (duty cycle)
 
     def __init__(self, valueUnits, valueDecimals, valueRange, tickInterval, singleStep,
                  initialPower, frequencyRange, *args, **kwargs):
@@ -244,7 +174,7 @@ class LaserModule(QtWidgets.QWidget):
         self.valueDecimals = valueDecimals
 
         isBinary = valueRange is None
-        isModulated = all(num > 0 for num in frequencyRange)
+        # isModulated = all(num > 0 for num in frequencyRange)
 
         # Graphical elements
         self.setPointLabel = QtWidgets.QLabel(f'Setpoint / {valueUnits}')
@@ -296,7 +226,7 @@ class LaserModule(QtWidgets.QWidget):
         #                                 QtWidgets.QSizePolicy.Expanding)
         self.enableButton.setCheckable(True)
         self.enableButton.setEnabled(False)
-        self.enableButton.setFixedWidth(200)
+        self.enableButton.setFixedWidth(250)
 
 
         self.enableButton.clicked.connect( 
@@ -316,21 +246,13 @@ class LaserModule(QtWidgets.QWidget):
         self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
 
         # Connect signals
+        self.slider.valueChanged.connect( #Forwarded to LaserWidget signal.
+            lambda value: self.sigValueChanged.emit(value))
         
-        self.slider.valueChanged.connect( 
-            lambda value: self.sigValueChanged.emit(value)
-        )
-
-        self.setPointEdit.editingFinished.connect(
-            lambda: self.slider.setValue(self.getValue())
-        )
-
+        self.setPointEdit.editingFinished.connect( #When the QLineEdit number is changed, it will also change the slider, activating sigValueChanged.
+            lambda: self.slider.setValue(self.getValue()))
+        
         self.setPointEdit.textChanged.connect(self.checkValidity)
-
-    # def toggleLaserEnabled(self, state):
-    #     print(self)
-    #     print(state)
-
 
     def checkValidity(self):
         valid = self.setPointEdit.hasAcceptableInput()
@@ -347,6 +269,11 @@ class LaserModule(QtWidgets.QWidget):
         """ Returns the value of the laser, in the units that the laser
         uses. """
         return float(self.setPointEdit.text())
+    
+    def setLaserEnable(self, enabled):
+        """ Sets the value of the specified laser, in the units that the laser
+        uses. """
+        self.enableButton.setEnabled(enabled)
     
     def getFrequency(self):
         """ Returns the selected frequency of the laser.

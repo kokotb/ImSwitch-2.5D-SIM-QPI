@@ -8,7 +8,7 @@ from imswitch.imcommon.model import (
 )
 from imswitch.imcommon.framework import Thread
 # from .server import ImSwitchServer
-from imswitch.imcontrol.model import configfiletools
+from imswitch.imcontrol.model import configfiletools #CTNOTE: Couple seconds startup
 from imswitch.imcontrol.view import guitools
 from . import controllers
 from .CommunicationChannel import CommunicationChannel
@@ -34,7 +34,7 @@ class ImConMainController(MainController):
 
         # Init communication channel and master controller
         self.__commChannel = CommunicationChannel(self, self.__setupInfo)
-        self.__masterController = MasterController(self.__setupInfo, self.__commChannel,
+        self.__masterController = MasterController(self.__setupInfo, self.__commChannel, #CTNOTE: Controllers start to initialize here.
                                                    self._moduleCommChannel)
 
         # List of Controllers for the GUI Widgets

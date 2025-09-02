@@ -46,7 +46,7 @@ except:
     isNIP = False
 
 try:
-    from napari_sim_processor.processors.convSimProcessor import ConvSimProcessor
+    from napari_sim_processor.processors.convSimProcessor import ConvSimProcessor #CTNOTE: pytorch prints are in here.
     from napari_sim_processor.processors.hexSimProcessor import HexSimProcessor
     isSIM = True
     
