@@ -81,7 +81,9 @@ class MyInputDialog(QDialog):
         self.ROIListCheckbox = QtWidgets.QCheckBox('ROI List')
         self.userDirCheckbox = QtWidgets.QCheckBox("User Directory")
         self.okButton = QPushButton("OK")
+        self.okButton.setMaximumWidth(150)
         self.cancelButton = QPushButton("Cancel")
+        self.cancelButton.setMaximumWidth(150)
 
         self.allCheckbox._name = 'all'
         self.lasersCheckbox._name = 'lasers'

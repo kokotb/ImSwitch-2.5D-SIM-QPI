@@ -140,6 +140,7 @@ class InfoGatheringController(ImConWidgetController):
             path = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
         else: path = self._widget.loadingPopup.lastPath
         self._widget.loadingPopup.filePath.setText(path)
+        self._widget.loadingPopup.setMinimumSize(600, 600)
         self._widget.loadingPopup.exec_()
 
          
