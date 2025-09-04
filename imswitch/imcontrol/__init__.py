@@ -51,7 +51,7 @@ def getMainViewAndController(moduleCommChannel, *_args,
     
     view = ImConMainView(options, setupInfo) #CTNOTE: Takes a couple seconds.
     try:
-        controller = ImConMainController(options, setupInfo, view, moduleCommChannel)
+        controller = ImConMainController(options, setupInfo, view, moduleCommChannel) #Loads all controllers here
     except Exception as e:
         # TODO: To broad exception
         view.close()

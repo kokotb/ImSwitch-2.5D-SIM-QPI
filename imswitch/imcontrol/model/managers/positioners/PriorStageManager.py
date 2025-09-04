@@ -23,7 +23,7 @@ class PriorStageManager(PositionerManager):
         self.port = positionerInfo.managerProperties['port']
         self.rx = create_string_buffer(1000)
         
-        self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all()
+        self.SDKPrior, self.SDKPriorMock, self.api, self.sessionID = self.initialize_all() #CTNOTE: Long startup init stage
         
         self.check_axes()
         self.invertJoystickY()

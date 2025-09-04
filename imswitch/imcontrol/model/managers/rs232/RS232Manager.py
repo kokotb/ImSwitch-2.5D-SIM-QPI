@@ -48,8 +48,8 @@ class RS232Manager:
             DriverClass = generateDriverClass(settings)
             rs232port = DriverClass(port)
             rs232port.initialize()
-            import time
-            time.sleep(2)
+            # import time
+            # time.sleep(2)
 
             return rs232port
         except Exception:

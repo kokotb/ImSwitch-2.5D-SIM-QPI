@@ -48,7 +48,7 @@ def main():
         moduleName = modulePkg.__title__ if hasattr(modulePkg, '__title__') else moduleId
 
         try:
-            view, controller = modulePkg.getMainViewAndController(
+            view, controller = modulePkg.getMainViewAndController( #CTNOTE: all controller and widgets initialiyed here.
                 moduleCommChannel=moduleCommChannel,
                 multiModuleWindowController=multiModuleWindowController,
                 moduleMainControllers=moduleMainControllers
