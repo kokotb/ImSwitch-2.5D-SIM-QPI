@@ -9,11 +9,11 @@ import numpy as np
 from decimal import Decimal
 from .SIMProcessor import SIMProcessor, SIMParameters
 from concurrent.futures import ThreadPoolExecutor
-import math
 from imswitch.imcommon.model import initLogger, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal
-import statistics
+
+
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -1206,6 +1206,8 @@ class SIMController(ImConWidgetController):
         return sim_parameters
     
     def perform25DExperimentThread(self):
+
+
         #CTNOTE: Change to dynamic
         projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active

@@ -7,6 +7,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from .model import dirtools, pythontools, initLogger
 from .view.guitools import getBaseStyleSheet
+from .. import startTimer
+import time
 
 
 def prepareApp():
@@ -41,6 +43,9 @@ def launchApp(app, mainView, moduleMainControllers):
     # Show app
     mainView.showMaximized()
     mainView.show()
+    timeElapsed = startTimeElapsed()
+    print(f'Application start time: {timeElapsed:.1f} s')
+
     exitCode = app.exec_()
 
     # Clean up
@@ -53,6 +58,11 @@ def launchApp(app, mainView, moduleMainControllers):
 
     # Exit
     sys.exit(exitCode)
+
+
+def startTimeElapsed():
+    timeElapsed = time.perf_counter() - startTimer.startTime
+    return timeElapsed
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
