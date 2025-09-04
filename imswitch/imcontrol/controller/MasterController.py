@@ -29,7 +29,7 @@ class MasterController:
         lowLevelManagers = {
             'rs232sManager': self.rs232sManager
         }
-        
+
         self.tilingManager = TilingManager()
         self.roiManager = ROIManager()
         self.autofocusManager = AutofocusManager()
@@ -68,20 +68,6 @@ class MasterController:
         if self.__setupInfo.Arduino:
             self.arduinoManager = ArduinoManager(self.__setupInfo.Arduino,
                                              **lowLevelManagers)
-        # Generate scanManager type according to setupInfo
-        # if self.__setupInfo.scan:
-        #     if self.__setupInfo.scan.scanWidgetType == "PointScan":
-        #         self.scanManager = ScanManagerPointScan(self.__setupInfo)
-        #     elif self.__setupInfo.scan.scanWidgetType == "Base":
-        #         self.scanManager = ScanManagerBase(self.__setupInfo)
-        #     elif self.__setupInfo.scan.scanWidgetType == "MoNaLISA":
-        #         self.scanManager = ScanManagerMoNaLISA(self.__setupInfo)
-        #     else:
-        #         self.__logger.error(
-        #             'ScanWidgetType in SetupInfo["scan"] not recognized, choose one of the following:'
-        #             ' ["Base", "PointScan", "MoNaLISA"].'
-        #         )
-        #         return
 
         # Connect signals
         cc = self.__commChannel
@@ -91,18 +77,7 @@ class MasterController:
         self.detectorsManager.sigDetectorSwitched.connect(cc.sigDetectorSwitched)
         self.detectorsManager.sigImageUpdated.connect(cc.sigUpdateImage)
         self.detectorsManager.sigNewFrame.connect(cc.sigNewFrame)
-        # self.detectorsManager.sigRunAcquireSetStarted.connect(cc.sigRunAcquireSetStarted)
-        # self.detectorsManager.sigRunAcquireSetStopped.connect(cc.sigRunAcquireSetStopped)
-        
 
-        # self.recordingManager.sigRecordingStarted.connect(cc.sigRecordingStarted)
-        # self.recordingManager.sigRecordingEnded.connect(cc.sigRecordingEnded)
-        # self.recordingManager.sigRecordingFrameNumUpdated.connect(cc.sigUpdateRecFrameNum)
-        # self.recordingManager.sigRecordingTimeUpdated.connect(cc.sigUpdateRecTime)
-        # self.recordingManager.sigMemorySnapAvailable.connect(cc.sigMemorySnapAvailable)
-        # self.recordingManager.sigMemoryRecordingAvailable.connect(self.memoryRecordingAvailable)
-
-        # self.slmManager.sigSLMMaskUpdated.connect(cc.sigSLMMaskUpdated)
 
     def memoryRecordingAvailable(self, name, file, filePath, savedToDisk):
         self.__moduleCommChannel.memoryRecordings[name] = VFileItem(
