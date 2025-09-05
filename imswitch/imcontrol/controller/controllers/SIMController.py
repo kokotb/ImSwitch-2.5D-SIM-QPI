@@ -335,10 +335,16 @@ class SIMController(ImConWidgetController):
 
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
+
+                if timingPeriodInSec < 100:
+                    waitTime = timingPeriodInSec / 100
+                else:
+                    waitTime = 1
+
                 if timingPeriodInSec > 30: 
                     self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while (repTimer < timingPeriodInSec):
-                    time.sleep(timingPeriodInSec / 100)
+                    time.sleep(waitTime / 100)
                     repTimer = time.time() - repTimerStart
 
                     if self._widget.stop_button.isChecked(): #allows exit of the loop
@@ -1677,6 +1683,8 @@ class SIMController(ImConWidgetController):
 
         self.AFScores.append(currentRegScore)
 
+        time.sleep(0.5)
+
         if not (self.firstLoop) and (self.AFCounter % 20 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
@@ -1685,8 +1693,9 @@ class SIMController(ImConWidgetController):
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
             # print(f'Z Difference: {zDiff}')
+            print('AF 20')
 
-            if abs(zDiff) >= 0.05:
+            if abs(zDiff) >= 0.01:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
@@ -1695,6 +1704,7 @@ class SIMController(ImConWidgetController):
                 # self._commChannel.offsetFromInitZ = self.cumZDiff
                 self._commChannel.sigSendZDrift.emit(self.cumZDiff)
                 self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+                
                 
             self.AFScores = []
             
