@@ -37,8 +37,6 @@ class CommunicationChannel(SignalInterface):
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
     sigTilePreview = Signal()
-# 
-    # sigAutoFocus
 
     sigRunAutofocus = Signal()
 

@@ -134,7 +134,7 @@ class ZStackWidget(NapariHybridWidget):
 
     def initZStackInfo(self):
         self.zStepDistance_textedit.setText("1")
-        self.totalZ_textedit.setText("1")
+        self.totalZ_textedit.setText("1.0")
         self.zOffset_textedit.setText("0")
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", '0')
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", '0')

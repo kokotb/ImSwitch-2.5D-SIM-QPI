@@ -956,6 +956,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
+        self._widget.checkbox_reconstruction.setEnabled(True)
         self._widget.checkbox_record_reconstruction.setEnabled(True)
         self._widget.checkbox_record_WF.setEnabled(True)
         self.active25D = False
@@ -1009,6 +1010,7 @@ class SIMController(ImConWidgetController):
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
         self._widget.checkbox_record_reconstruction.setEnabled(False)
+        self._widget.checkbox_reconstruction.setEnabled(False)
         self._widget.checkbox_record_WF.setEnabled(False)
         self._widget.checkbox_record_reconstruction.setCheckState(False)
         self._widget.checkbox_record_WF.setCheckState(False)
