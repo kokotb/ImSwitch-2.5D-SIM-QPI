@@ -1562,6 +1562,7 @@ class SIMController(ImConWidgetController):
             endBufferTime = time.time()
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue('25D')
+            time.sleep(0.001)
 
             if waitingBuffers != 1 and totalBufferTime > 0.25: # Will wait for a quarter second for a buffer to come before resetting.
 
