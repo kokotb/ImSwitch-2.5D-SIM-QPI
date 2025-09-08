@@ -14,6 +14,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QFileDialog
 import json
 import os
+import threading
 # from PyQt5.QtWidgets import QDialog
 
 
@@ -143,7 +144,6 @@ class InfoGatheringController(ImConWidgetController):
         currentRoot = self._commChannel.sharedAttrs._data[('User Dir Info', 'Working Directory')]
         fileIndex = 1
         if not self._commChannel.simActive:
-            # name = self._commChannel.currentTimeString
             filePath = self._widget.saveFileDialog(currentRoot)
             if filePath == None:
                 return
@@ -162,11 +162,15 @@ class InfoGatheringController(ImConWidgetController):
         
 
 
-        with open(filePath, "w", encoding='utf-8') as outfile:
-            outfile.write(jsonOutput)
+        threading.Thread(target=self.saveFileThreaded, args=(filePath,jsonOutput)).start()
+
         self.lastSavePath = filePath
         self.lastSaveName = os.path.split(filePath)[-1]
         self._logger.info('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up sometimes
+
+    def saveFileThreaded(self, filePath, jsonOutput):
+        with open(filePath, "w", encoding='utf-8') as outfile:
+            outfile.write(jsonOutput)
 
 
     def updateSharedAttributes(self):
