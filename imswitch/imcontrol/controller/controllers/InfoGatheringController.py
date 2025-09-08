@@ -166,7 +166,7 @@ class InfoGatheringController(ImConWidgetController):
 
         self.lastSavePath = filePath
         self.lastSaveName = os.path.split(filePath)[-1]
-        self._logger.info('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up sometimes
+        self._logger.info('Settings JSON saved at: ' + self.lastSavePath) #CTNOTE Something here hangs up sometimes. Threading added to see if it helps.
 
     def saveFileThreaded(self, filePath, jsonOutput):
         with open(filePath, "w", encoding='utf-8') as outfile:
@@ -178,17 +178,6 @@ class InfoGatheringController(ImConWidgetController):
         self.shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
         # self._logger.warning("Shared attributes updated.")
         
-    # def saveAttributesToFile(self):
-    #     # Filter out only the important attributes?
-        
-    #     # Save attributes
-    #     dir_harcoded = 'C:/Users/SIM_admin/Documents/ImSwitchConfig'
-    #     file_name_hardcoded = "exp_metadata"
-    #     # with open(os.path.join(dir_harcoded, file_name_hardcoded), 'w') as setupFile:
-    #     #     setupFile.write(self.shared_attributes.to_json(indent=4))
-        
-    #     self._logger.warning("Attributes saved.")
-
 
     def loadJSONFromFile(self):
         jsonObject = self._widget.loadingPopup.loadJSON()

@@ -755,7 +755,7 @@ class SIMController(ImConWidgetController):
         ss = f'{int(ss):02}'
         mm = f'{int(mm):02}'
         hh = f'{int(hh):03}'
-        ms = f'{int(ms):03}'
+        ms = f'{int(ms*1000):03}'
 
         elapsedStr = f"{hh}h{mm}m{ss}s{ms}ms"
 
