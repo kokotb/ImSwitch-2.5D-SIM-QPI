@@ -173,7 +173,7 @@ class LucidCamMock:
         pass
 
     def grabFrame25D(self, buffers):
-        time.sleep(0.1)
+        # time.sleep(0.1)ddd
         img = np.random.rand(1024,1024)*3500
         img2 = np.array(img, dtype=np.uint16)
         return img2

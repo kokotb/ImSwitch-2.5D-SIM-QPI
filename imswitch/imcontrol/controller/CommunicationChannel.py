@@ -130,7 +130,7 @@ class CommunicationChannel(SignalInterface):
 
     sigSaveFocus = Signal()
 
-    sigToggleAutoZern = Signal(bool)
+    # sigToggleAutoZern = Signal(bool)
 
     sigLiveviewToggled = Signal(bool)
 

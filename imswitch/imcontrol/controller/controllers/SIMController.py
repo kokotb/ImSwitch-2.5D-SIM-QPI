@@ -1423,6 +1423,8 @@ class SIMController(ImConWidgetController):
                                 time.sleep(0.1)
                                 rawImg = self._commChannel.lastImgDict['640F']
                                 self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                                if self._commChannel.stop25DNow: #allows exit of the loop
+                                    self.stop25D()
 
                             print('autozern ended')
                         # ====================================================================================
