@@ -192,7 +192,7 @@ class SIMController(ImConWidgetController):
         
     def performSIMExperimentThread(self, sim_parameters):
         #CTNOTE: Change to dynamic
-        projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the treu obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
@@ -448,15 +448,15 @@ class SIMController(ImConWidgetController):
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                         self.firstLoop = False
 
-                        procTimeDur = round(time.time()-procTimeStart,3)
+                        procTimeDur = time.time()-procTimeStart
 
-                        endLoopTime = round(time.time()-startLoopTime,3)
+                        endLoopTime = time.time()-startLoopTime
                         startLoopTime = time.time()
 
                         self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
                         # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.debug(f'Acquisition time (s): {procTimeDur}')
-                        self._logger.debug(f'Loop time (s): {endLoopTime}')
+                        self._logger.debug(f'Acquisition time (s): {procTimeDur:.3f}')
+                        self._logger.debug(f'Loop time (s): {endLoopTime:.3f}')
                         
                         
                     # self.completeFrameSets += 1 # increment only if no errors reported from processor threads
@@ -467,7 +467,7 @@ class SIMController(ImConWidgetController):
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stopSIM() # Stops tiling reps after all tiles*repetitions is done.
 
-                    totalEndTime = round(time.time()-time_global_start,3)
+                    totalEndTime = time.time()-time_global_start
 
                     remainder = self.completeFrameSets % len(currentROI)
 
@@ -476,7 +476,7 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1
                 self.roiIter += 1
                 
-                self._logger.debug(f'Elapsed time (s): {totalEndTime}\n')
+                self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                 if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
@@ -748,11 +748,10 @@ class SIMController(ImConWidgetController):
         mm, ss = divmod(ss,60)
         hh, mm = divmod(mm,60)
         _, hh = divmod(hh,24)
-        ss = "{:02d}".format(int(ss))
-        mm = "{:02d}".format(int(mm))
-        hh = "{:03d}".format(int(hh)) 
-        # dd = "{:01d}".format(int(dd))
-        ms = str(round(Decimal(ms),3))[2:5]
+        ss = f'{int(ss):02}'
+        mm = f'{int(mm):02}'
+        hh = f'{int(hh):03}'
+        ms = str(ms)[2:5]
 
         elapsedStr = f"{hh}h{mm}m{ss}s{ms}ms"
 
@@ -870,34 +869,6 @@ class SIMController(ImConWidgetController):
         pass
         #self.imageComputationThread.quit()
         #self.imageComputationThread.wait()
-
-    # def toggleSIMDisplay(self, enabled=True):
-    #     self._widget.setSIMDisplayVisible(enabled)
-
-    # def monitorChanged(self, monitor):
-    #     self._widget.setSIMDisplayMonitor(monitor)
-
-    # def patternIDChanged(self, patternID):
-    #     wl = self.getpatternWavelength()
-    #     if wl == 'Laser 488nm':
-    #         laserTag = 0
-    #     elif wl == 'Laser 561nm':
-    #         laserTag = 1
-    #     elif wl == 'Laser 640nm':
-    #         laserTag = 2
-    #     else:
-    #         laserTag = 0
-    #         self._logger.error("The laser wavelength is not implemented")
-    #     self.simPatternByID(patternID,laserTag)
-
-    # def getpatternWavelength(self):
-    #     return self._widget.laser_dropdown.currentText()
-
-    # def displayMask(self, image):
-    #     self._widget.updateSIMDisplay(image)
-
-    # def setIlluPatternByID(self, iRot, iPhi):
-    #     self.detector.setIlluPatternByID(iRot, iPhi)
 
     def displaySIMImage(self, im, name):
         """ Displays the image in the view. """
@@ -1217,7 +1188,7 @@ class SIMController(ImConWidgetController):
 
 
         #CTNOTE: Change to dynamic
-        projCamPixelSize = round(2.74 / (200 / 9), 4) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
@@ -1489,16 +1460,16 @@ class SIMController(ImConWidgetController):
                             z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
                         self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
 
-                        procTimeDur = round(time.time()-procTimeStart,3) # Actual elapsed time for processing images.
-                        endLoopTime = round(time.time()-startLoopTime,3)
+                        procTimeDur = time.time()-procTimeStart # Actual elapsed time for processing images.
+                        endLoopTime = time.time()-startLoopTime
                         startLoopTime = time.time()
 
                         #### Print timing and frame information.
                         # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
                         self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
                         # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.debug(f'Acquisition time (s): {procTimeDur}')
-                        self._logger.debug(f'Loop time (s): {endLoopTime}')
+                        self._logger.debug(f'Acquisition time (s): {procTimeDur:.3f}')
+                        self._logger.debug(f'Loop time (s): {endLoopTime:.3f}')
                         ####
 
                     # if self.recordPSFStackFlag:
@@ -1513,14 +1484,14 @@ class SIMController(ImConWidgetController):
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
 
-                    totalEndTime = round(time.time()-time_global_start,3)
+                    totalEndTime = time.time()-time_global_start
 
                 #### Increment counters.
                 self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
                 self.tilingRep += 1 # Used in filenames of saved files.
                 self.roiIter += 1 # Increment roi index
                 ####
-                self._logger.debug(f'Elapsed time (s): {totalEndTime}\n')
+                self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
 
                 
 
@@ -1685,7 +1656,7 @@ class SIMController(ImConWidgetController):
 
         self.AFScores.append(currentRegScore)
 
-        time.sleep(0.5)
+        time.sleep(3)
 
         if not (self.firstLoop) and (self.AFCounter % 20 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
@@ -1695,7 +1666,7 @@ class SIMController(ImConWidgetController):
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
             # print(f'Z Difference: {zDiff}')
-            print('AF 20')
+            print('AF execute')
 
             if abs(zDiff) >= 0.01:
                 self.cumZDiff = self.cumZDiff + zDiff
@@ -1711,8 +1682,7 @@ class SIMController(ImConWidgetController):
             self.AFScores = []
             
         with open("AFOutput.txt", "a") as text_file:
-            line = str(round(currentRegScore, 2)) + ',' + str(round(self.cumZDiff, 2))
-            # line = str(round(currentRegScore, 2))
+            line = f'{currentRegScore:.2f},{self.cumZDiff:.2f}'
             text_file.write(f'{line}\n')
 
         self.AFCounter += 1
