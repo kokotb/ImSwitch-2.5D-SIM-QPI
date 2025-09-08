@@ -390,13 +390,12 @@ class SIMController(ImConWidgetController):
                     if self.firstLoop:
                         self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
-                    self.positionerXY.checkBusyLoop()
-
-
-                    if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI):
-                        time.sleep(.5) #TODO: Change to calibrate by distance needed to move
-                    else:
-                        time.sleep(.05) #can probablz reduct slightly
+                    if (self.isTiling or self.isScanROI):
+                        self.positionerXY.checkBusyLoop()
+                        if j == 0 and self.completeFrameSets != 0:
+                            time.sleep(.5) #TODO: Change to calibrate by distance needed to move
+                        else:
+                            time.sleep(.05) #can probablz reduct slightly
 
                     ####Autofocus
 
@@ -1377,15 +1376,16 @@ class SIMController(ImConWidgetController):
                     except IndexError:
                         self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
 
-                    if self.firstLoop:
+                    if self.firstLoop and (self.isTiling or self.isScanROI):
                         self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
 
                     #### Stage wait times for jiggle.
-                    self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
-                    if j == 0 and self.completeFrameSets != 0 and (self.isTiling or self.isScanROI): #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                        time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
-                    else:
-                        time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
+                    if (self.isTiling or self.isScanROI):
+                        self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
+                        if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
+                            time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
+                        else:
+                            time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
 
