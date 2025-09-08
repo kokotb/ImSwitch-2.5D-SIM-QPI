@@ -582,7 +582,7 @@ class SIMController(ImConWidgetController):
             with saveStackLock:
                 if processor.source == 'fluor':
                     if self.isRecordRaw:
-                        self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter)
+                        self.recordRawFunc(self.j, processor, self.isTiling,self.tilingRep, z, self.roiIter, 'SIM')
 
                 if self.isRecordWF:
                     self.recordWFFunc(self.j, imageWF, processor, self.isTiling,self.tilingRep, z, self.roiIter)
@@ -603,8 +603,6 @@ class SIMController(ImConWidgetController):
                         self.snapshotSettingsSaved = True
 
             processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
-
-
 
     def updateWFContLimits(self):
         # contLimitsList = []
@@ -671,19 +669,15 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser2.wavelength = self.sim_parameters.ReconWL2
         self.SimProcessorLaser3.wavelength = self.sim_parameters.ReconWL3
 
-    def recordOneSetRaw(self,j,processor):
-        rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
-        if not os.path.exists(rawSavePath):
-            os.makedirs(rawSavePath)
-        rawFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_raw.tif"
-        # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
-        self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
 
-    def recordRawFunc(self,j, processor, isTiling, tilingRep, z, roiIterator):
+    def recordRawFunc(self,j, processor, isTiling, tilingRep, z, roiIterator, source):
+        if source == 'SIM':
+            rawFolderName = 'RawStacks'
+        else: rawFolderName = 'RawImgs'
         if isTiling:
-            rawSavePath = os.path.join(self.exptFolderPath, "Tiling", "RawStacks")
+            rawSavePath = os.path.join(self.exptFolderPath, "Tiling", rawFolderName)
         else:
-            rawSavePath = os.path.join(self.exptFolderPath, "Timelapse", "RawStacks")
+            rawSavePath = os.path.join(self.exptFolderPath, "Timelapse", rawFolderName)
         if not os.path.exists(rawSavePath):
             os.makedirs(rawSavePath)
         if isTiling:
@@ -692,14 +686,6 @@ class SIMController(ImConWidgetController):
             rawFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{j:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
         self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
-
-    def recordOneSetWF(self,j,im, processor):
-        wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
-        if not os.path.exists(wfSavePath):
-            os.makedirs(wfSavePath)
-        wfFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_WF.tif"
-        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
-        self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
     def recordWFFunc(self,j,im, processor, isTiling, tilingRep, z, roiIterator):
         if isTiling:
@@ -715,14 +701,6 @@ class SIMController(ImConWidgetController):
         # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames, ), daemon=True).start()
         self.saveImageInBackground(im,wfSavePath, wfFilenames)
 
-    def recordOneSetSIM(self,j,im, processor):
-        simSavePath = os.path.join(self.exptFolderPath,'Snapshot')
-        if not os.path.exists(simSavePath):
-            os.makedirs(simSavePath)
-        simFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_SIM.tif"
-        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
-        self.saveImageInBackground(im,simSavePath, simFilenames)
-
     def recordSIMFunc(self,pos_num, processor, isTiling, tilingRep, z, roiIterator):
         if isTiling:
             reconSavePath = os.path.join(self.exptFolderPath,"Tiling", "Recon")
@@ -736,6 +714,32 @@ class SIMController(ImConWidgetController):
             reconFilenames = f"f{self.frameCounter:04}_roi{roiIterator:03}_pos{pos_num:04}_z{z:03}_{processor.handle}_{self.exptTimeElapsedStr}.tif"
         # threading.Thread(target=self.saveImageInBackground, args=(self.SIMReconstruction, reconSavePath,reconFilenames ,)).start()
         self.saveImageInBackground(processor.SIMReconstruction, reconSavePath,reconFilenames)
+
+    def recordOneSetRaw(self,j,processor):
+        rawSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(rawSavePath):
+            os.makedirs(rawSavePath)
+        rawFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_raw.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(self.rawStack,rawSavePath, rawFilenames,), daemon=True).start()
+        self.saveImageInBackground(processor.stack,rawSavePath, rawFilenames)
+
+    def recordOneSetWF(self,j,im, processor):
+        wfSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(wfSavePath):
+            os.makedirs(wfSavePath)
+        wfFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_WF.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        self.saveImageInBackground(im,wfSavePath, wfFilenames)
+
+
+    def recordOneSetSIM(self,j,im, processor):
+        simSavePath = os.path.join(self.exptFolderPath,'Snapshot')
+        if not os.path.exists(simSavePath):
+            os.makedirs(simSavePath)
+        simFilenames = f"f{self.frameCounter:04}_pos{j:04}_{processor.handle}_{self.exptTimeElapsedStr}_SIM.tif"
+        # threading.Thread(target=self.saveImageInBackground, args=(im,wfSavePath, wfFilenames,), daemon=True).start()
+        self.saveImageInBackground(im,simSavePath, simFilenames)
+
 
     def zScanList(self, zScanList, zOrigin):
         self.zList = zScanList
@@ -751,12 +755,11 @@ class SIMController(ImConWidgetController):
         ss = f'{int(ss):02}'
         mm = f'{int(mm):02}'
         hh = f'{int(hh):03}'
-        ms = str(ms)[2:5]
+        ms = f'{int(ms):03}'
 
         elapsedStr = f"{hh}h{mm}m{ss}s{ms}ms"
 
         return elapsedStr
-
 
     def makeExptFolderStr(self, date_in):
         userName = self._widget.getUserName()
@@ -768,9 +771,6 @@ class SIMController(ImConWidgetController):
         exptFolderName = "_".join((date_in,userName,exptName))
         exptFolderPath = os.path.join(self._widget.getRecFolder(), exptFolderName)
         return exptFolderPath      
-
-
-
 
     def populateAndSelectROList(self):
         self.roNameList = self._master.SLM4DDManager.getAllRONames()
@@ -1623,7 +1623,7 @@ class SIMController(ImConWidgetController):
 
         if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
             with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
-                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter)
+                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter, '25D')
 
         if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
             self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
