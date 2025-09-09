@@ -68,7 +68,7 @@ class SLM4DDManagerMock(SignalInterface):
     def openSLM(self, port):
         #Port input in form of COMX
         retStr = 'SLM connected? False, Mocked'
-        self._logger.error(retStr)
+        self._logger.warning(retStr)
         return retStr
 
 
