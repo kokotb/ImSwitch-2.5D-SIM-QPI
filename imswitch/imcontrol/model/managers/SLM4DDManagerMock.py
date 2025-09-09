@@ -20,7 +20,7 @@ class SLM4DDManagerMock(SignalInterface):
 # SLM returns code for ERROR in integer form. This is ERROR dictionary used to
 # decode errors in following functions.
     def __init__(self, SIMSLMInfo):
-
+        self._logger = initLogger(self)
         self.ERROR_Dictionary = {
             0 : "FDD_SUCCESS",
             1 : "FDD_MEM_INDEX_OUT_OF_BOUNDS",
@@ -68,7 +68,7 @@ class SLM4DDManagerMock(SignalInterface):
     def openSLM(self, port):
         #Port input in form of COMX
         retStr = 'SLM connected? False, Mocked'
-        print(retStr)
+        self._logger.error(retStr)
         return retStr
 
 
