@@ -220,7 +220,15 @@ class LucidCam:
              self.propNodes[property_name].value = property_value
             
         elif self.propNodes[property_name].is_writable:
-                self.propNodes[property_name].value = property_value  
+                if property_name == 'ExposureTime':
+                    maxVal = self.propNodes[property_name].max
+                    if maxVal > property_value:
+                        pass
+                    else:
+                        property_value = float(int(maxVal))
+                        self.__logger.debug(f"Property {property_name} is too large! Setting parameter to max valid value.")
+                else:
+                    self.propNodes[property_name].value = property_value  
 
         elif self.propNodes[property_name].is_readable:
                 self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")
