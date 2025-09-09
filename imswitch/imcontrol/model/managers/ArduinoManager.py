@@ -81,9 +81,20 @@ class ArduinoManager(SignalInterface):
         else:
             print('Wrong data type. Must be string of only numbers.')
 
+
+    def trigger25D(self):
+        cmd = 'T'
+        response = self._rs232manager.query(cmd)
+        return response
+
     def trigger25DWriteOnly(self):
         cmd = 'T'
         self._rs232manager.write(cmd)
+
+
+
+
+
 
     def readOnce(self):
         response = self._rs232manager.read()

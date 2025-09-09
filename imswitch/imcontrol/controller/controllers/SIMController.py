@@ -1058,7 +1058,7 @@ class SIMController(ImConWidgetController):
     def setCamForExperiment25D(self, detector):
 
 
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 30.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
@@ -1312,7 +1312,6 @@ class SIMController(ImConWidgetController):
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
 
-
         ####Autofocus
         if (self._commChannel.initRegScore != None) :
             self.autofocusThread()
@@ -1335,6 +1334,10 @@ class SIMController(ImConWidgetController):
                     if self._commChannel.stop25DNow: #allows exit of the loop
                         self.stop25D()
                         return
+                    
+            if not isTimed: # these lines are a hacky way to slow down 2.5D
+                time.sleep(0.04)
+
             repTimerStart = time.time()
             ####
 
@@ -1418,7 +1421,9 @@ class SIMController(ImConWidgetController):
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
                         ####
 
+
                         self._master.arduinoManager.trigger25DWriteOnly() # Send actual trigger to cams.
+
                              
                         procTimeStart = time.time() # For tracking processing time of images. 
 
@@ -1448,7 +1453,8 @@ class SIMController(ImConWidgetController):
 
                         if autoZern:
                             self._master.slm25DManager.calcAutoZern(self.lastImgDict) # score in the manager, put score in a list.
-                        
+
+                       
 
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
                             self._widget.stop_button.setChecked(False)
@@ -1493,6 +1499,7 @@ class SIMController(ImConWidgetController):
                 self.roiIter += 1 # Increment roi index
                 ####
                 self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
+
 
                 
 
@@ -1540,7 +1547,7 @@ class SIMController(ImConWidgetController):
 
 
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
-
+        
         k = processor.processorIndex
         if self.scatterCam:
             numFluorProcessors = len(self.activeProcessors) - 1
@@ -1565,7 +1572,7 @@ class SIMController(ImConWidgetController):
             waitingBuffers = detector._camera.getBufferValue('25D')
             time.sleep(0.002)
 
-            if waitingBuffers != 1 and totalBufferTime > 0.2: # Will wait for a quarter second for a buffer to come before resetting.
+            if (waitingBuffers != 1 and totalBufferTime > 0.1): # Will wait for 0.2 seconds for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
