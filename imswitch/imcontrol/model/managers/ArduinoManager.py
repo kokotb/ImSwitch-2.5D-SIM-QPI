@@ -85,7 +85,9 @@ class ArduinoManager(SignalInterface):
         cmd = 'T'
         self._rs232manager.write(cmd)
 
-
+    def readOnce(self):
+        response = self._rs232manager.read()
+        return response
 
     def deactivateSLMWriteOnly(self):
         """Sends a trigger to SLM to put SPO0 low, deactivating the SLM."""
