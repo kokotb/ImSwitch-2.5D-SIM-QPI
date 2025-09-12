@@ -149,9 +149,9 @@ class SLM25DController(ImConWidgetController):
         for rep in range(self.numAZAlltestPoints):
         #self.numAZTestValuesPerZernCoeff
         #while self._commChannel.autoZernChecked:
-            self._widget.blockSignals(True)
+            self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
             self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-            self._widget.blockSignals(False)
+            self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
             cajt = time.perf_counter()
             self.updateZernike()
             

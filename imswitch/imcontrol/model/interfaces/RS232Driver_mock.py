@@ -15,7 +15,7 @@ class MockRS232Driver:
         if arg.startswith('V'):
             return 'R'
         if arg.startswith('L'):
-            return 'l2F100O1'
+            return 'l2F100S1'
         pass
 
     def initialize(self):
