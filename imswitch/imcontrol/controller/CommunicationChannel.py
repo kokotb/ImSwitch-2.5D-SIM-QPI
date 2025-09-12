@@ -193,7 +193,7 @@ class CommunicationChannel(SignalInterface):
         self.sigLoadSettings.connect(self.storeLoadedSettings)
         # self.sigRecPSFStack.connect(self.storeRecPSFStack)
         self.sigRecAFStack.connect(self.storeRecAFStack)
-        self.sigStop25D.connect(self.updateStop25DCommand)
+        # self.sigStop25D.connect(self.updateStop25DCommand)
         self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
         self.roiList = []
         self.simActive = False

@@ -99,7 +99,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
-        self._widget.stop25D.clicked.connect(self._commChannel.sigStop25D.emit)
+        self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
 
 
         self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)

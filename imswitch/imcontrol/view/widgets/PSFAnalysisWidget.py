@@ -7,7 +7,7 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from imswitch.imcommon.model import initLogger
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                              QVBoxLayout, QHBoxLayout, QComboBox, QPushButton,QFileDialog,
-                             QCheckBox, QLabel, QLineEdit, QDialog, QRadioButton, QButtonGroup)
+                             QCheckBox, QLabel, QLineEdit, QDialog, QRadioButton, QButtonGroup, QFrame)
 from pyqtgraph.Qt import QtCore, QtGui
 import json
 import os
@@ -599,6 +599,15 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
         self.messageForUser = QLabel("Please select settings for Z-stack in main window, then click the 'Record Stack' button in this window.")
 
+        self.myframe = QFrame()
+        self.myframe.setFrameShape(QFrame.HLine)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(200)
+        self.ZstackLayout.addWidget(self.myframe, 7, 0, 1, 6)
+
+
+# !!! ADD everithing for load psf here
+
 
         
         self.checkboxRecordRed = QRadioButton('Red')
@@ -609,6 +618,13 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.checkboxRecordRed, 3, 3)
         self.ZstackLayout.addWidget(self.checkboxRecordGreen, 3, 4)
         self.ZstackLayout.addWidget(self.checkboxRecordBlue, 3, 5)
+
+
+
+
+
+
+
 
         self.zStackAndButtons.addLayout(self.ZstackLayout)
         self.zStackAndButtons.addWidget(self.messageForUser)
