@@ -103,12 +103,22 @@ class CommunicationChannel(SignalInterface):
     # sigSendScanFreq = Signal(float)  # (scanPeriod)
 
     #sigRequestScannersInScan = Signal()
+    sigBeginAutoZern = Signal()
+
+    sigAutoZernikeFinished = Signal()
+
+
+
+
+
+
+
+
+
 
     sigStartAutoZern = Signal()
 
-    sigStartAutoZernFinerLoop = Signal()
-
-    sigSendAutoZernListLen = Signal(int, int)
+    
 
     sigSetAutoZern = Signal(int)
 
@@ -118,9 +128,11 @@ class CommunicationChannel(SignalInterface):
 
     sigSaveFocus = Signal()
 
-    sigToggleAutoZern = Signal(bool)
+    # sigToggleAutoZern = Signal(bool)
 
     sigLiveviewToggled = Signal(bool)
+
+    # sigAutoZernChecked = Signal(bool)
 
     # sigScanFrameFinished = Signal()  # TODO: emit this signal when a scanning frame finished, maybe in scanController if possible? Otherwise in APDManager for now, even if that is not general if you want to do camera-based experiments. Could also create a signal specifically for this from the scan curve generator perhaps, specifically for the rotation experiments, would that be smarter?
     
@@ -142,7 +154,7 @@ class CommunicationChannel(SignalInterface):
 
     sigRecAFStack = Signal(np.ndarray, bool, int)
 
-    sigGetLastRawImgs = Signal(np.ndarray, int)
+    sigGetLastRawImgs = Signal(np.ndarray, str)
 
     sigSendZDrift = Signal(float)
 
@@ -163,6 +175,8 @@ class CommunicationChannel(SignalInterface):
     sigToggleAutofocus = Signal(bool)
     sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
+
+
     
 
     @property
@@ -200,6 +214,8 @@ class CommunicationChannel(SignalInterface):
         self.AFMaskRight = None
         #Scatter Cam 
         self.scatterCamActive = 0 #False
+        self.autoZernChecked = False
+
 
     # def storeROIList(self, roiList):
     #     self.roiList = roiList
@@ -211,8 +227,6 @@ class CommunicationChannel(SignalInterface):
     def saveLastRawImgs(self, rawImg, handle):
         self.lastImgDict[handle] = rawImg
 
-    # def saveLastROIClickAF(self, AFParams):
-    #     self.AFParams = AFParams
 
     def getPSFStack(self):
         self.zStackList488 = getattr(self, "zStackList488", [])

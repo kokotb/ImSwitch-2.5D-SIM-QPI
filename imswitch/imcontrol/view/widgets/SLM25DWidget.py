@@ -97,12 +97,12 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value))) #!!! ask Cody???
+        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
 
         self.maskCenterCheckbox = QCheckBox("Mask Center")
-        self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Enabled',str(value)))
+        self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Center',str(value)))
         self.maskCenterCheckbox.setEnabled(False)
         self.maskCenterCheckbox.setChecked(False)
         

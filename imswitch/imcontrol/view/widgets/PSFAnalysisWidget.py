@@ -298,11 +298,6 @@ class PSFWindow(QMainWindow):
         self.vbPSFYZ.addItem(self.overlayImgYZ)
 
 
-    # def codytestfunction(self):
-    #     print('fuck')
-        
-
-
     def updateZstackImage(self):
         self.imgZStack.setImage(self.image_stack[self.current_index])#, levels=(0, 4095))
 

@@ -28,6 +28,7 @@ class LaserController(ImConWidgetController):
                 (lManager.freqRangeMin, lManager.freqRangeMax, lManager.freqRangeInit) if lManager.isModulated else (0, 0, 0)
             )
 
+
             power = lManager._LaserManager__valueInit
             self.valueChanged(lName, power)
             laserEnableStatus = lManager.getStatus()
@@ -75,6 +76,28 @@ class LaserController(ImConWidgetController):
             self._logger.info('Laser control: User (manual).')
         else:
             self._logger.info('Laser control: External (instrument).')
+
+    # def toggleLaserEnabled(self, test, state):
+    #     print(self)
+    #     print(test, state)
+
+
+    def toggleUserControl(self, state):
+        if state == 2:
+            num = 0
+            text = 'On'
+
+        else: 
+            num = 1
+            text = 'Ext'
+
+        list(self._master.lasersManager._subManagers.values())[0].externalControl(num) #Execute on onlz one fo the lasers, as this commands controls all channels.
+
+        for lName, lManager in self._master.lasersManager:
+            ans = lManager.getStatus()
+            self._widget.laserModules[lName].enableButton.setChecked(ans)
+            self._widget.laserModules[lName].enableButton.setEnabled(state)
+            self._widget.laserModules[lName].enableButton.setText(text)
 
 
     def loadSettings(self, moduleDict):

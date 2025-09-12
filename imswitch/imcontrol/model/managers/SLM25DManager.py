@@ -48,9 +48,15 @@ class SLM25DManager(SignalInterface):
         self.arrayImgScoresAZ = []
 
     def calcAutoZern(self, imgs):
-        img = imgs[640]
-        score = self.scoreImage(img, metric="tenegrad")
+        # !!! if rawImg in beginAutoZern is only one color
+        score = self.scoreImage(imgs, metric="tenegrad")
         self.arrayImgScoresAZ.append(score)
+
+        # otherwise:
+        # img = imgs['640F']
+        # #score = self.scoreImage(img, metric="total intensity")
+        # score = self.scoreImage(img, metric="tenegrad")
+        # self.arrayImgScoresAZ.append(score)
 
     def scoreImage(self, img, metric): # scores image quality according to the chosen metric
         if metric == "total intensity":
@@ -86,6 +92,7 @@ class SLM25DManager(SignalInterface):
     def optimalCoeffValueMax(self, calibValues): # finds optimal value for zern coeff, according to image score
  
         ind = self.arrayImgScoresAZ.index(max(self.arrayImgScoresAZ))
+        print('list score image len = ' + str(len(self.arrayImgScoresAZ)))
         optimalCoeff = calibValues[ind]
         
         return optimalCoeff

@@ -98,7 +98,17 @@ class LaserWidget(Widget):
 
 
 
+
+
+
         self.laserModules[laserName] = control
+
+    # def userEnableLaser(self, state):
+    #     print(self)
+    #     print(state)
+
+    # def enableLaserButtons(self):
+    #     pass
 
     def isLaserActive(self, laserName):
         """ Returns whether the specified laser is powered on. """
@@ -196,6 +206,8 @@ class LaserModule(QtWidgets.QWidget):
 
         
 
+        
+
         if not isBinary:
             valueRangeMin, valueRangeMax = valueRange
 
@@ -245,6 +257,7 @@ class LaserModule(QtWidgets.QWidget):
             sizePolicy.setRetainSizeWhenHidden(True)
             powerFrame.setSizePolicy(sizePolicy)
             powerFrame.hide()
+        self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
         self.layout.addWidget(self.enableButton)  ##CTNOTE AOTF Uncomment to reintroduce the enable button
 
         # Connect signals

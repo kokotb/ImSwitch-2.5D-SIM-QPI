@@ -53,10 +53,9 @@ class SLM25DController(ImConWidgetController):
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
         self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
         self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
-        self._commChannel.sigStartAutoZernFinerLoop.connect(self.startAutoZernFinerLoop)
         self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
-        self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
+        # self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
 
         self.matrix25d = self._widget.matrix25d
 
@@ -85,7 +84,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepDownZernikeLeft.connect(self.updateZernike)
         self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
         self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
-        # self._widget.autoZernCheckbox.clicked.connect(self.autoZernikeThread)
+        self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -101,6 +100,11 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
         self._widget.stop25D.clicked.connect(self._commChannel.sigStop25D.emit)
+
+
+        self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
+
+
         # self._commChannel.sig25DAcqToggled.connect(self._widget.toggled25D)
         # self._widget.stop25D
 
@@ -108,16 +112,93 @@ class SLM25DController(ImConWidgetController):
         self.mask25D = np.zeros((1920, 1080))
         self.centerMask = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
+        self.sigZernMaskProjected = False # used to check if mask was projected yet
 
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
 
 
         self.fullZernList = self.createFullZernList1stLoop()
+
+        self.detectors = []
+        self.retrieveDetectors()
+
+    def retrieveDetectors(self):
+        for detector in self._master.detectorsManager: #detector object list
+            if detector[1]._DetectorManager__forAcquisition:
+                fullName = detector[0]
+                shortName = fullName[:5].replace(" ", "")
+                detector[1].handle = shortName
+                self.detectors.append(detector[1])
+
+    def beginAutoZernThread(self):
+        threading.Thread(target=self.beginAutoZern, args=(), daemon=True).start()
+
+    def beginAutoZern(self):
+
+        print('autozern started')
+
+        self._widget.projectZernike.setChecked(True)
+        self._widget.projectZernike.setEnabled(False)
+        self._widget.project25D.setChecked(False)
+        self._widget.project25D.setEnabled(False)
+        self._widget.projectCenter.setChecked(False)
+        self._widget.projectCenter.setEnabled(False)
+
+        self.startAutoZern()
+        for rep in range(self.numAZAlltestPoints):
+        #self.numAZTestValuesPerZernCoeff
+        #while self._commChannel.autoZernChecked:
+            self._widget.blockSignals(True)
+            self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+            self._widget.blockSignals(False)
+            cajt = time.perf_counter()
+            self.updateZernike()
+            
+            # while not self.sigZernMaskProjected:
+            #     time.sleep(0.02)
+            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+            self.sigZernMaskProjected = False
+
+            self._master.arduinoManager.trigger25DWriteOnly()
+            
+            rawImg = self.detectors[2]._camera.grabFrame25D(1)
+            self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+            
+            self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+
+            if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+                    # look at the list, fit parabola, get best value, set value, continue
+                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
+                    self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
+                    self._master.slm25DManager.resetList()
+            # time.sleep(0.1)
+            if self._commChannel.stop25DNow: #allows exit of the loop
+                self._commChannel.autoZernChecked = False
+                break
+
+        # self._commChannel.sigToggleAutoZern.emit(False)
+        self.toggleAutoZern(False)
+        self._commChannel.autoZernChecked = False
+
+        self._widget.projectZernike.setEnabled(True)
+        self._widget.project25D.setEnabled(True)
+        self._widget.projectCenter.setEnabled(True)
+
+        # self._widget.stop_button.setChecked(False) # probably dont need this here
+        # self.stop25D()    
+
+        #self._commChannel.sigAutoZernikeFinished.emit()
+
+
         
+
+
     def toggleAutoZern(self, state):
         self._widget.autoZernCheckbox.setChecked(state)
 
+    def autoZernChecked(self, state):
+        self._commChannel.autoZernChecked = state
 
     def init25DWidgetValues(self):
         strippedNames = []
@@ -148,6 +229,7 @@ class SLM25DController(ImConWidgetController):
         self.updateZernikePhaseMask()
         if self.slmActive:
             self.combineAndProject()
+        self.sigZernMaskProjected = True
 
     def updateAll(self):
         self.updatePhaseMask(False) # False tell this function to not combineAndProject, as that is handled 2 lines later.
@@ -820,11 +902,16 @@ class SLM25DController(ImConWidgetController):
         tempZernList = []
         self.autoZernCalibValuesDict = {}
         testValues = [-1., -0.6, -0.2, 0., 0.2, 0.6, 1.]
+        testValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        testValues = [-1., 1.] # fast for test runs
         for name in self._widget.ZernikeCoefficientNames:
             if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
             else:
-                for side in self._widget.ZernikeSides:
+                for side in self._widget.ZernikeSides:   
+                    current = self._widget.pars['AbsPosEdit' + name + side].value()
+                    #testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
+                    testValues = [-1., 1.]
                     self.autoZernCalibValuesDict[name + side] = testValues        
                     for testValue in testValues:
                         tempZernList.append(('AbsPosEdit' + name + side,testValue))
@@ -858,7 +945,7 @@ class SLM25DController(ImConWidgetController):
 
     def setAutoZern(self, rep):
         self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-        print('set '+str(rep))
+        print('set ' + str(rep))
 
 
     def setOptimalZern(self, rep, optimalValue):
@@ -866,19 +953,23 @@ class SLM25DController(ImConWidgetController):
 
     def startAutoZern(self):
         self.fullZernList = self.createFullZernList1stLoop()
-        numAZtestPoints = len(self.fullZernList)
+        numAZAlltestPoints = len(self.fullZernList)
         self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
-        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
-        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
-        time.sleep(0.1) # makes sure this last signal is executed before countiniouing
+        numAZTestValuesPerZernCoeff = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
+        self._commChannel.numAZAlltestPoints = numAZAlltestPoints
+        self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
+        self.numAZAlltestPoints = numAZAlltestPoints
+        self.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
+        # time.sleep(0.1) # makes sure this last signal is executed before countiniouing
         print("AZ signal called properly")
 
     def startAutoZernFinerLoop(self):
         self.fullZernList = self.createFullZernListFinerLoop()
-        numAZtestPoints = len(self.fullZernList)
+        numAZAlltestPoints = len(self.fullZernList)
         self._commChannel.autoZernCalibValuesDict = self.autoZernCalibValuesDict
-        numTestValues = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
-        self._commChannel.sigSendAutoZernListLen.emit(numAZtestPoints, numTestValues)
+        numAZTestValuesPerZernCoeff = len(self.autoZernCalibValuesDict["(4,0)" + "Left"]) # !!!refers to the last value (Spherical, right), assumes all parameters will have the same number of test values
+        self._commChannel.numAZAlltestPoints = numAZAlltestPoints
+        self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
         print("AZ signal called properly")
 
 
