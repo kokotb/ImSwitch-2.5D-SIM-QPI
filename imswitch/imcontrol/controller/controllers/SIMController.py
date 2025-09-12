@@ -932,6 +932,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_WF.setEnabled(True)
         self.active25D = False
         self._commChannel.updateSIMActive(self.active25D)
+        self._master.slm25DManager.resetList()
         try:
             self.thread25D.join()
         except:
