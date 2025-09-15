@@ -154,10 +154,11 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
             cajt = time.perf_counter()
             self.updateZernike()
-            time.sleep(0.2)
+            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+            time.sleep(0.015)
             # while not self.sigZernMaskProjected:
             #     time.sleep(0.02)
-            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+            
             #self.sigZernMaskProjected = False
 
             self._master.arduinoManager.trigger25DWriteOnly()
@@ -175,6 +176,7 @@ class SLM25DController(ImConWidgetController):
                     self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
                     self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
                     self.updateZernike()
+                    time.sleep(0.015)
                     self._master.slm25DManager.resetList()
             
             if self._commChannel.stop25DNow: #allows exit of the loop
@@ -909,7 +911,7 @@ class SLM25DController(ImConWidgetController):
         testValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         testValues = [-1., 1.] # fast for test runs
         for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+            if name == '(0,0)' or name == '(2,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
             else:
                 for side in self._widget.ZernikeSides:   
@@ -917,7 +919,7 @@ class SLM25DController(ImConWidgetController):
                     testValues = np.linspace(current-0.7, current+0.7, 15) #!!! Might be a probleem in future => look at startAutoZern
                     self.autoZernCalibValuesDict[name + side] = testValues
                     for testValue in testValues:
-                        tempZernList.append(('AbsPosEdit' + name + side,testValue))
+                        tempZernList.append(('AbsPosEdit' + name + side,round(testValue, 3)))
         
         return tempZernList
     
