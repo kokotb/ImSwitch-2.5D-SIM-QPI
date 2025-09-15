@@ -172,7 +172,7 @@ class SLM25DController(ImConWidgetController):
                     optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
                     self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
                     self._master.slm25DManager.resetList()
-            # time.sleep(0.1)
+            # time.sleep(0.2)
             if self._commChannel.stop25DNow: #allows exit of the loop
                 self._commChannel.autoZernChecked = False
                 break
@@ -905,25 +905,7 @@ class SLM25DController(ImConWidgetController):
         testValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         testValues = [-1., 1.] # fast for test runs
         for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
-                pass
-            else:
-                for side in self._widget.ZernikeSides:   
-                    current = self._widget.pars['AbsPosEdit' + name + side].value()
-                    #testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
-                    testValues = [-1., 1.]
-                    self.autoZernCalibValuesDict[name + side] = testValues        
-                    for testValue in testValues:
-                        tempZernList.append(('AbsPosEdit' + name + side,testValue))
-        
-        return tempZernList
-    
-    def createFullZernListFinerLoop(self):
-        # this version takes curent value
-        tempZernList = []
-        self.autoZernCalibValuesDict = {}
-        for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
                 pass
             else:
                 for side in self._widget.ZernikeSides:   
@@ -934,6 +916,23 @@ class SLM25DController(ImConWidgetController):
                         tempZernList.append(('AbsPosEdit' + name + side,testValue))
         
         return tempZernList
+    
+    # def createFullZernListFinerLoop(self):
+    #     # this version takes curent value
+    #     tempZernList = []
+    #     self.autoZernCalibValuesDict = {}
+    #     for name in self._widget.ZernikeCoefficientNames:
+    #         if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+    #             pass
+    #         else:
+    #             for side in self._widget.ZernikeSides:   
+    #                 current = self._widget.pars['AbsPosEdit' + name + side].value()
+    #                 testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
+    #                 self.autoZernCalibValuesDict[name + side] = testValues
+    #                 for testValue in testValues:
+    #                     tempZernList.append(('AbsPosEdit' + name + side,testValue))
+        
+    #     return tempZernList
     
 
     # def setAutoZern(self, rep):

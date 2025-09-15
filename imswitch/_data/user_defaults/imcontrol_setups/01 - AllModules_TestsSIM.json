@@ -12,13 +12,13 @@
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 480,
-  "LeftCenterY": 540, 
-  "RightCenterX":1440,
-  "RightCenterY": 540,
+  "LeftCenterX": 380,
+  "LeftCenterY": 600, 
+  "RightCenterX":1360,
+  "RightCenterY": 560,
   "BeamDiameter": 6.0,
 
   "LeftPiston": 0.0,
@@ -261,7 +261,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM18",
+        "port": "ASRLCOM24",
         "zeroOnStartup": false
       },
       "axes": ["Z"],
