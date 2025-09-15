@@ -171,7 +171,10 @@ class SLM25DController(ImConWidgetController):
             if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
                     optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
+                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
                     self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
+                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+                    self.updateZernike()
                     self._master.slm25DManager.resetList()
             
             if self._commChannel.stop25DNow: #allows exit of the loop
@@ -911,7 +914,7 @@ class SLM25DController(ImConWidgetController):
             else:
                 for side in self._widget.ZernikeSides:   
                     current = self._widget.pars['AbsPosEdit' + name + side].value()
-                    testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
+                    testValues = np.linspace(current-0.7, current+0.7, 15) #!!! Might be a probleem in future => look at startAutoZern
                     self.autoZernCalibValuesDict[name + side] = testValues
                     for testValue in testValues:
                         tempZernList.append(('AbsPosEdit' + name + side,testValue))
