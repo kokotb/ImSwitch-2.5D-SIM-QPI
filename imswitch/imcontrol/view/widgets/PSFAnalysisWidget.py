@@ -606,7 +606,20 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.myframe, 7, 0, 1, 6)
 
 
-# !!! ADD everithing for load psf here
+        # !!! ADD everithing for load psf here
+
+        # select folder entry box, load button (show images)
+        self.folderPathLoad = QtWidgets.QLineEdit()
+        self.folderPathLoad.setText("C:/Users/SIM/Desktop/David/testfileRecordPSF")
+        self.LoadDialog = QPushButton("Select folder")
+        self.LoadImages = QPushButton("Show stack")
+
+        self.ZstackLayout.addWidget(self.folderPathLoad, 8, 0)
+        self.ZstackLayout.addWidget(self.LoadDialog, 8, 1)
+        self.ZstackLayout.addWidget(self.LoadImages, 8, 2)
+
+        self.LoadImages.clicked.connect(self.displayStackOfImages)
+
 
 
         
@@ -638,6 +651,7 @@ class PSFWindowRecord(QMainWindow):
         self.button_group.buttonClicked.connect(self.selectChannel)
 
         self.openDialog.clicked.connect(self.loadPath)
+        self.LoadDialog.clicked.connect(self.loadPath)
         
         self.savePSFstack.clicked.connect(self.savePSFfunc)
         self.saveZstack.clicked.connect(self.saveZstackfunc)
@@ -728,6 +742,44 @@ class PSFWindowRecord(QMainWindow):
         self.overlayMatrixYZ =  np.zeros((1024, 1024))
         self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
         self.vbPSFYZ.addItem(self.overlayImgYZ)
+
+        self.PSFMeasureLayout = QtWidgets.QGridLayout()
+
+        self.measurePSF = QPushButton("Measure PSF Size")
+        self.PSFMeasureLayout.addWidget(self.measurePSF, 1, 0)
+        self.measurePSF.clicked.connect(self.measurePSFSizeFunc)
+
+        self.labelXYPixelSize = QtWidgets.QLabel('XY Pixel Size (µm)')
+        self.PSFMeasureLayout.addWidget(self.labelXYPixelSize, 2, 0)
+        self.labelZPixelSize = QtWidgets.QLabel('Z Pixel Size (µm)')
+        self.PSFMeasureLayout.addWidget(self.labelZPixelSize, 3, 0)
+
+        self.entryXYPixelSize = QtWidgets.QLineEdit("0.123")
+        self.PSFMeasureLayout.addWidget(self.entryXYPixelSize, 2, 1)
+        self.entryZPixelSize = QtWidgets.QLineEdit("0.1")
+        self.PSFMeasureLayout.addWidget(self.entryZPixelSize, 3, 1)
+
+        self.labelPSFSizeX = QtWidgets.QLabel('PSF x size')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeX, 5, 0)
+        self.labelPSFSizeY = QtWidgets.QLabel('PSF y size')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeY, 7, 0)
+        self.labelPSFSizeZ = QtWidgets.QLabel('PSF z size')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeZ, 9, 0)
+
+        self.labelPSFSizeXpixels = QtWidgets.QLabel('- pixels')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeXpixels, 5, 1)
+        self.labelPSFSizeXum = QtWidgets.QLabel('- µ')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeXum, 6, 1)
+        self.labelPSFSizeYpixels = QtWidgets.QLabel('- pixels')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeYpixels, 7, 1)
+        self.labelPSFSizeYum = QtWidgets.QLabel('- µ')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeYum, 8, 1)
+        self.labelPSFSizeZpixels = QtWidgets.QLabel('- pixels')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeZpixels, 9, 1)
+        self.labelPSFSizeZum = QtWidgets.QLabel('- µ')
+        self.PSFMeasureLayout.addWidget(self.labelPSFSizeZum, 10, 1)
+
+        self.psfLayout.addLayout(self.PSFMeasureLayout)
         
 
 
@@ -939,6 +991,82 @@ class PSFWindowRecord(QMainWindow):
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         return result == QtWidgets.QMessageBox.Yes
     
+
+    def displayStackOfImages(self):
+        liststackOfImages = []
+        for file in os.listdir(self.folderPath.text()):
+            imarray = tif.imread(os.path.join(self.folderPath.text(), file))
+            if len(imarray.shape) == 3:
+                for i in range(imarray.shape[0]):
+                    liststackOfImages.append(imarray[i])
+            elif len(imarray.shape) == 2:
+                liststackOfImages.append(imarray)
+
+        self.image_stack = np.array(liststackOfImages)
+        self.imgZStack.setImage(self.image_stack[0,:,:])#, levels=(0,4095))
+
+        # if (self.selectedX == 0) and (self.selectedY == 0) and (self.selectedZ == 0):
+        flat_index = np.argmax(self.image_stack)
+        self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
+        self.current_indexX = int(self.PSFViewSize.text())//2
+        self.current_indexY = int(self.PSFViewSize.text())//2
+        self.current_index = self.selectedZ
+        self.current_indexZ = self.selectedZ
+            
+        self.updateZstackImage()
+        self.showSelectedPSF()
+        self.updatelines()
+        self.measurePSFSizeFunc()
+
+    def measurePSFSizeFunc(self):
+        xProfile = self.PSFstack[self.current_indexZ, self.current_indexY, :]
+        yProfile = self.PSFstack[self.current_indexZ, :, self.current_indexX]
+        zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+
+        xFWHM, xHM, xLeft, xRight = peak_widths(xProfile, np.array([np.argmax(xProfile)]), rel_height=0.5)
+        yFWHM, yHM, yLeft, yRight = peak_widths(yProfile, np.array([np.argmax(yProfile)]), rel_height=0.5)
+        zFWHM, zHM, zLeft, zRight = peak_widths(zProfile, np.array([np.argmax(zProfile)]), rel_height=0.5)
+
+        self.labelPSFSizeXpixels.setText(str(round(xFWHM[0],1)) + ' pixels')
+        self.labelPSFSizeYpixels.setText(str(round(yFWHM[0],1)) + ' pixels')
+        self.labelPSFSizeZpixels.setText(str(round(zFWHM[0],1)) + ' pixels')
+
+        self.labelPSFSizeXum.setText(str(round(xFWHM[0] * XYpixelSize ,1)) + ' µm')
+        self.labelPSFSizeYum.setText(str(round(yFWHM[0] * XYpixelSize ,1)) + ' µm')
+        self.labelPSFSizeZum.setText(str(round(zFWHM[0] * ZpixelSize ,1)) + ' µm')
+
+        # plt.plot(np.arange(len(xProfile)) * XYpixelSize, xProfile)
+        # plt.plot(np.arange(len(yProfile)) * XYpixelSize, yProfile)
+        # plt.plot(np.arange(len(zProfile)) * ZpixelSize,zProfile)
+        # plt.plot([0, len(xProfile)], [xHM, xHM])
+        # plt.plot([0, len(yProfile)], [yHM, yHM])
+        # plt.plot([0, len(zProfile)], [zHM, zHM])
+        # plt.show()
+
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))  # 3 vrstice, 1 stolpec
+        axes[0].plot(np.arange(len(xProfile)) * XYpixelSize, xProfile, label='Profile')
+        axes[0].axhline(y=xHM, color='r', linestyle='--', label='Half Max')
+        axes[0].set_title('X Profile')
+        axes[0].set_xlabel('x[µm]')
+        axes[0].set_ylabel('Intensity')
+        axes[0].legend()
+        axes[1].plot(np.arange(len(yProfile)) * XYpixelSize, yProfile, label='Profile')
+        axes[1].axhline(y=yHM, color='r', linestyle='--', label='Half Max')
+        axes[1].set_title('Y Profile')
+        axes[1].set_xlabel('y[µm]')
+        axes[1].set_ylabel('Intensity')
+        axes[1].legend()
+        axes[2].plot(np.arange(len(zProfile)) * ZpixelSize, zProfile, label='Profile')
+        axes[2].axhline(y=zHM, color='r', linestyle='--', label='Half Max')
+        axes[2].set_title('Z Profile')
+        axes[2].set_xlabel('z[µm]')
+        axes[2].set_ylabel('Intensity')
+        axes[2].legend()
+        plt.tight_layout()
+        plt.show()
 
     # def toggleLoadButton(self, state):
     #     state = not state
