@@ -1615,7 +1615,8 @@ class SIMController(ImConWidgetController):
         # self.displayRawImage(rawImg, f"{processor.handle} Raw")
         processor.stack = rawImg
 
-        self._commChannel.sigGetLastRawImgs.emit(rawImg, processor.handle)
+    
+        self._commChannel.saveLastRawImgs(rawImg, processor.handle)
 
         #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
 

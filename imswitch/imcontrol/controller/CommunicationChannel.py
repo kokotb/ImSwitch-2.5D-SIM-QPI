@@ -154,7 +154,7 @@ class CommunicationChannel(SignalInterface):
 
     sigRecAFStack = Signal(np.ndarray, bool, int)
 
-    sigGetLastRawImgs = Signal(np.ndarray, str)
+    # sigGetLastRawImgs = Signal(np.ndarray, str)
 
     sigSendZDrift = Signal(float)
 
@@ -194,7 +194,7 @@ class CommunicationChannel(SignalInterface):
         # self.sigRecPSFStack.connect(self.storeRecPSFStack)
         self.sigRecAFStack.connect(self.storeRecAFStack)
         # self.sigStop25D.connect(self.updateStop25DCommand)
-        self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
+        # self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
         self.roiList = []
         self.simActive = False
         self.activeDir = None

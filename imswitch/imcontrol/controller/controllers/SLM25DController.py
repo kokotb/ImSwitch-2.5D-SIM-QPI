@@ -112,7 +112,7 @@ class SLM25DController(ImConWidgetController):
         self.mask25D = np.zeros((1920, 1080))
         self.centerMask = np.zeros((1920, 1080))
         self.zernikeParametersOld = self.getAllZernikeParams()
-        self.sigZernMaskProjected = False # used to check if mask was projected yet
+        #self.sigZernMaskProjected = False # used to check if mask was projected yet
 
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
@@ -154,16 +154,17 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
             cajt = time.perf_counter()
             self.updateZernike()
-            
+            time.sleep(0.2)
             # while not self.sigZernMaskProjected:
             #     time.sleep(0.02)
             print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
-            self.sigZernMaskProjected = False
+            #self.sigZernMaskProjected = False
 
             self._master.arduinoManager.trigger25DWriteOnly()
             
             rawImg = self.detectors[2]._camera.grabFrame25D(1)
-            self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+            self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
             
             self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
 
@@ -172,7 +173,7 @@ class SLM25DController(ImConWidgetController):
                     optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
                     self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
                     self._master.slm25DManager.resetList()
-            # time.sleep(0.2)
+            
             if self._commChannel.stop25DNow: #allows exit of the loop
                 self._commChannel.autoZernChecked = False
                 break
@@ -229,7 +230,7 @@ class SLM25DController(ImConWidgetController):
         self.updateZernikePhaseMask()
         if self.slmActive:
             self.combineAndProject()
-        self.sigZernMaskProjected = True
+        #self.sigZernMaskProjected = True
 
     def updateAll(self):
         self.updatePhaseMask(False) # False tell this function to not combineAndProject, as that is handled 2 lines later.
