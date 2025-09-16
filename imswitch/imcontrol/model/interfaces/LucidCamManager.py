@@ -223,11 +223,11 @@ class LucidCam:
                 if property_name == 'ExposureTime':
                     maxVal = self.propNodes[property_name].max
                     if maxVal > property_value:
-                        pass
+                        property_value = property_value
                     else:
                         property_value = float(int(maxVal))
-                        self.__logger.debug(f"Property {property_name} is too large! Setting parameter to max valid value.")
-                else:
+                        self.__logger.warning(f"Property {property_name} is too large! Setting parameter to max valid value.")
+
                     self.propNodes[property_name].value = property_value  
 
         elif self.propNodes[property_name].is_readable:

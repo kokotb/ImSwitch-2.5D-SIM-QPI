@@ -193,7 +193,7 @@ class SIMController(ImConWidgetController):
         
     def performSIMExperimentThread(self, sim_parameters):
         #CTNOTE: Change to dynamic
-        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the treu obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the true obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
@@ -511,7 +511,7 @@ class SIMController(ImConWidgetController):
             time.sleep(self.expTimeMax/1000000*18)
 
         waitingBuffers = detector._camera.getBufferValue("SIM")
-
+        # time.sleep(0.1) #CTNOTE: Temp sleep
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
 
@@ -525,7 +525,7 @@ class SIMController(ImConWidgetController):
                 bufferEndTime = time.time()
             bufferTotalTime = bufferEndTime-bufferStartTime
             waitingBuffersEnd = waitingBuffers
-            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/50000: #self.expTimeMax/250000 = 4x exp time in correct units
+            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/20000: #self.expTimeMax/250000 = 4x exp time in correct units
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
                 with errorLock:

@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 
@@ -90,10 +90,10 @@
         "ExposureTime": 9000.0
       },
       "ROI":{  
-        "OffsetX": 2375,
-        "OffsetY": 1195,
-        "Width": 1024,
-        "Height": 1024
+        "OffsetX": 2524,
+        "OffsetY": 1974,
+        "Width": 512,
+        "Height": 512
       } 
     },
     "forAcquisition": true
@@ -114,10 +114,10 @@
         "ExposureTime": 9000.0
       },
       "ROI":{
-        "OffsetX": 2910,
-        "OffsetY": 1240,
-        "Width": 1024,
-        "Height": 1024
+        "OffsetX": 2437,
+        "OffsetY": 2192,
+        "Width": 512,
+        "Height": 512
       }
     },
     "forAcquisition": true
@@ -139,10 +139,10 @@
           "ExposureTime": 3500.0
         },
         "ROI":{
-          "OffsetX": 2130,
-          "OffsetY": 1950,
-          "Width": 1024,
-          "Height": 1024
+          "OffsetX": 2477,
+          "OffsetY": 2404,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 10,
+      "valueInit": 50,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 10,
+    "valueInit": 50,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -248,7 +248,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 10,
+    "valueInit": 50,
 
     "maxdBmValue": 21.8
     }
