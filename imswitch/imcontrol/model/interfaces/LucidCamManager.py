@@ -228,7 +228,7 @@ class LucidCam:
                         property_value = float(int(maxVal))
                         self.__logger.warning(f"Property {property_name} is too large! Setting parameter to max valid value.")
 
-                    self.propNodes[property_name].value = property_value  
+                self.propNodes[property_name].value = property_value  
 
         elif self.propNodes[property_name].is_readable:
                 self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")

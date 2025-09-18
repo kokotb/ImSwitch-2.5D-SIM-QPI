@@ -1014,9 +1014,9 @@ class SIMController(ImConWidgetController):
     
     def setCamForExperimentSIM(self, detector, num_buffers, expTimeMax):
 
-
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
-        detector._camera.setBufferTimeout(2000)
+        # detector._camera.setBufferTimeout(2000)
 
         trigger_source = 'Line0'
         trigger_mode = 'On'
@@ -1029,7 +1029,7 @@ class SIMController(ImConWidgetController):
         # exposure_time = self.exposure # anything < 19 ms)
         pixel_format = 'Mono16'
         bit_depth = 'Bits12'
-        frame_rate_enable = True
+
         buffer_mode = "OldestFirst"
 
         # Check if exposure is low otherwise set to max value
@@ -1044,7 +1044,7 @@ class SIMController(ImConWidgetController):
 
 
         # Set cam parameters
-        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format,'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1058,13 +1058,13 @@ class SIMController(ImConWidgetController):
 
     def setCamForExperiment25D(self, detector):
 
-
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
         detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line0'
-        detector._camera.setBufferTimeout(1000)
+        detector._camera.setBufferTimeout(500)
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
