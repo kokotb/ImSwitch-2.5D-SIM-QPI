@@ -204,13 +204,6 @@ class LucidCam:
             else:
                 self.tl_stream_nodemap["StreamBufferHandlingMode"].value = property_value
 
-        elif property_name == 'ADCBitDepth': #Checking to see if ADCBitDepth needs to be changed, as setting it takes a whole second. If it doesn't need to be changed, just pass.
-            adcValueOld = self.getPropertyValue(property_name)
-            if adcValueOld == property_value:
-                pass
-            else:
-                 self.propNodes[property_name].value = property_value
-
         elif property_name == 'AcquisitionFrameRate' and self.propNodes[property_name].is_writable: #Needed as 'AcquisitionFrameRate' commonly fails to set as the acceptable values change depending on other property values.
              maxAcqFrameRate = self.propNodes[property_name].max
              if maxAcqFrameRate >= property_value:
@@ -228,7 +221,13 @@ class LucidCam:
                         property_value = float(int(maxVal))
                         self.__logger.warning(f"Property {property_name} is too large! Setting parameter to max valid value.")
 
-                self.propNodes[property_name].value = property_value  
+
+                valueOld = self.propNodes[property_name].value
+                if valueOld == property_value:
+                    pass
+                else:
+                    self.propNodes[property_name].value = property_value
+
 
         elif self.propNodes[property_name].is_readable:
                 self.__logger.debug(f"Property {property_name} is not writable! Setting parameter from cam.")

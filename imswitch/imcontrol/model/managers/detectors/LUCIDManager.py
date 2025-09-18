@@ -38,6 +38,8 @@ class LUCIDManager(DetectorManager):
         self._camera.setPropertyValue('AcquisitionFrameRateEnable', True, toPrint=False)
         self._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
         self._camera.setPropertyValue('ExposureAuto', "Off", toPrint=False)
+        self._camera.setPropertyValue('ADCBitDepth', "Bits12", toPrint=False)
+        self._camera.setPropertyValue('PixelFormat', "Mono16", toPrint=False)
 
         
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])

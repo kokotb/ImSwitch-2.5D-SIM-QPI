@@ -1026,10 +1026,6 @@ class SIMController(ImConWidgetController):
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # exposure_time = self.exposure # anything < 19 ms)
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12'
-
         buffer_mode = "OldestFirst"
 
         # Check if exposure is low otherwise set to max value
@@ -1044,16 +1040,13 @@ class SIMController(ImConWidgetController):
 
 
         # Set cam parameters
-        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format,'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
-            # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
             if parameter_name == 'ExposureTime':
                 self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
-            # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode 
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamForExperiment25D(self, detector):
@@ -1083,8 +1076,8 @@ class SIMController(ImConWidgetController):
         for parameter_name in dic_parameters:
             # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            # if parameter_name == 'ExposureTime':
-            #     self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
+            if parameter_name == 'ExposureTime':
+                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
             # print(detector._camera.getPropertyValue(parameter_name))
         # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisition25D()
