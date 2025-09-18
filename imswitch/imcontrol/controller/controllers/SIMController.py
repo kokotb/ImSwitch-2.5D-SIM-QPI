@@ -323,6 +323,14 @@ class SIMController(ImConWidgetController):
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
         self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
+        ####Autofocus
+        if (self._commChannel.initRegScore != None) :
+            self.autofocusThread()
+            self.AFMaskLeft = self._commChannel.AFMaskLeft
+            self.AFMaskRight = self._commChannel.AFMaskRight
+            self._logger.info('Autofocus active')    
+        ####
+
         while self.SIMActive:
 
             self.roiIter = 0
