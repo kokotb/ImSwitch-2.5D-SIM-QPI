@@ -90,10 +90,10 @@
         "ExposureTime": 1500.0
       },
       "ROI":{  
-        "OffsetX": 2420,
-        "OffsetY": 2110,
-        "Width": 512,
-        "Height": 512
+        "OffsetX": 1600,
+        "OffsetY": 1200,
+        "Width": 2048,
+        "Height": 2048
       } 
     },
     "forAcquisition": true
@@ -116,8 +116,8 @@
       "ROI":{
         "OffsetX": 2400,
         "OffsetY": 2140,
-        "Width": 512,
-        "Height": 512
+        "Width": 2048,
+        "Height": 2048
       }
     },
     "forAcquisition": true
@@ -126,7 +126,7 @@
       "analogChannel": null,
 
       "digitalLine": null,
-      "managerName": "LUCIDManager",
+      "managerName": "LUCIDManager", 
       "managerProperties": {
         "cameraListIndex": 65,
         "wavelength": 640,
@@ -140,9 +140,9 @@
         },
         "ROI":{
           "OffsetX": 2400,
-          "OffsetY": 2370,
-          "Width": 512,
-          "Height": 512
+          "OffsetY": 2370, 
+          "Width": 2048,
+          "Height": 2048
         }
       },
       "forAcquisition": true
@@ -167,8 +167,8 @@
         "ROI":{
           "OffsetX": 2320,
           "OffsetY": 2295,
-          "Width": 512,
-          "Height": 512
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
