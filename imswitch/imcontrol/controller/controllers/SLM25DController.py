@@ -150,14 +150,17 @@ class SLM25DController(ImConWidgetController):
         #self.numAZTestValuesPerZernCoeff
         #while self._commChannel.autoZernChecked:
             self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
+            self._widget.pars[self.fullZernList[rep][0]].setStyleSheet("border: 3px solid green;")
             self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+            print(self.fullZernList[rep][1])
             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
             cajt = time.perf_counter()
             self.updateZernike()
-            time.sleep(0.2)
+            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+            time.sleep(0.015)
             # while not self.sigZernMaskProjected:
             #     time.sleep(0.02)
-            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+            
             #self.sigZernMaskProjected = False
 
             self._master.arduinoManager.trigger25DWriteOnly()
@@ -171,9 +174,15 @@ class SLM25DController(ImConWidgetController):
             if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
                     # look at the list, fit parabola, get best value, set value, continue
                     optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
+                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
                     self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
+                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+                    self.updateZernike()
+                    time.sleep(0.015)
                     self._master.slm25DManager.resetList()
             
+            self._widget.pars[self.fullZernList[rep][0]].setStyleSheet('')
+
             if self._commChannel.stop25DNow: #allows exit of the loop
                 self._commChannel.autoZernChecked = False
                 break
@@ -905,16 +914,30 @@ class SLM25DController(ImConWidgetController):
         testValues = [-1., -0.6, -0.2, 0., 0.2, 0.6, 1.]
         testValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         testValues = [-1., 1.] # fast for test runs
+
+        for name in ['(2,-2)', '(2,2)']: # this loop makes astigmatisms the first 2 abberations in AZ loop
+            for side in self._widget.ZernikeSides:   
+                current = self._widget.pars['AbsPosEdit' + name + side].value()
+                testValues = np.linspace(current - 1.2, current + 1.2, 25) #!!! Might be a probleem in future => look at startAutoZern
+                self.autoZernCalibValuesDict[name + side] = testValues
+                for testValue in testValues:
+                    tempZernList.append(('AbsPosEdit' + name + side,testValue))
+
         for name in self._widget.ZernikeCoefficientNames:
-            if name == '(0,0)' or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+            if name == '(0,0)' or name == '(2,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
+<<<<<<< HEAD
+                pass
+            elif name == '(2,-2)' or name == '(2,2)':
+=======
+>>>>>>> 314ecd02dbfbbb439a29b65b36109511c89bd0d6
                 pass
             else:
                 for side in self._widget.ZernikeSides:   
                     current = self._widget.pars['AbsPosEdit' + name + side].value()
-                    testValues = np.linspace(current-0.5, current+0.5, 11) #!!! Might be a probleem in future => look at startAutoZern
+                    testValues = np.linspace(current-0.7, current+0.7, 15) #!!! Might be a probleem in future => look at startAutoZern
                     self.autoZernCalibValuesDict[name + side] = testValues
                     for testValue in testValues:
-                        tempZernList.append(('AbsPosEdit' + name + side,testValue))
+                        tempZernList.append(('AbsPosEdit' + name + side,round(testValue, 3)))
         
         return tempZernList
     

@@ -12,7 +12,7 @@ import shutil
  #Registers start of program to announce start up time later.
 
 #David
-#shutil.rmtree('C:/Users/SIM/Documents/ImSwitchConfig')
+# shutil.rmtree('C:/Users/SIM/Documents/ImSwitchConfig')
 
 # #Microscope Computer
 shutil.rmtree(R'C:/Users/SIM_admin/Documents/ImSwitchConfig')  
