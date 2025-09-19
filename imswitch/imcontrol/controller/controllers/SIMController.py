@@ -317,9 +317,6 @@ class SIMController(ImConWidgetController):
         # total_buffer_size_MB = 350 # in MBs
         for processor in self.activeProcessors:
             detector = processor.detObj
-            # image_size = detector.shape
-            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            # buffer_size = int(total_buffer_size_MB // image_size_MB)
             buffer_size = 20 # Slightly more than double expected. If only set at 9, may miss information when it doesn't work well.
             self.setCamForExperimentSIM(detector, buffer_size, self.expTimeMax)
         self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
@@ -339,30 +336,33 @@ class SIMController(ImConWidgetController):
             self.roiIter = 0
 
             #### For timing period. Check every 1/10s if period time is exceeded yet.
-            if self.completeFrameSets != 0:
-                repTimer = time.time() - repTimerStart
-                while repTimer < expectedLoopTime:
-                    time.sleep(expectedLoopTime / 1000)
-                    repTimer = time.time() - repTimerStart
+            # if self.completeFrameSets != 0:
+            #     repTimer = time.time() - repTimerStart
+            #     while repTimer < expectedLoopTime:
+            #         time.sleep(expectedLoopTime / 1000)
+            #         repTimer = time.time() - repTimerStart
+
+            if self.completeFrameSets == 0 and isTimed:
+                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+
 
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-
                 if timingPeriodInSec < 100:
                     waitTime = timingPeriodInSec / 100
                 else:
                     waitTime = 1
-
-                if timingPeriodInSec > 30: 
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while (repTimer < timingPeriodInSec):
-                    time.sleep(waitTime / 100)
+                    time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
 
                     if self._widget.stop_button.isChecked(): #allows exit of the loop
                         self._widget.stop_button.setChecked(False)
                         self.stopSIM()
                         return
+                    
+
+    
             repTimerStart = time.time()
             ####
 
@@ -1331,12 +1331,16 @@ class SIMController(ImConWidgetController):
         while self.active25D:
             self.roiIter = 0
             #### For timing period. Check every 1/10s if period time is exceeded yet.
+            if self.completeFrameSets == 0 and isTimed:
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-                if timingPeriodInSec > 30:
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                if timingPeriodInSec < 100:
+                    waitTime = timingPeriodInSec / 100
+                else:
+                    waitTime = 1
                 while repTimer < timingPeriodInSec:
-                    time.sleep(timingPeriodInSec / 100)
+                    time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
                     if self._commChannel.stop25DNow: #allows exit of the loop
                         self.stop25D()
