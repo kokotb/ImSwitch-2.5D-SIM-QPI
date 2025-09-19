@@ -146,46 +146,88 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectCenter.setEnabled(False)
 
         self.startAutoZern()
-        for rep in range(self.numAZAlltestPoints):
-        #self.numAZTestValuesPerZernCoeff
-        #while self._commChannel.autoZernChecked:
-            self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
-            self._widget.pars[self.fullZernList[rep][0]].setStyleSheet("border: 3px solid green;")
-            self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-            print(self.fullZernList[rep][1])
-            self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
-            cajt = time.perf_counter()
+        # for rep in range(self.numAZAlltestPoints):
+        # #self.numAZTestValuesPerZernCoeff
+        # #while self._commChannel.autoZernChecked:
+        #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
+        #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet("border: 3px solid green;")
+        #     self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+        #     print(self.fullZernList[rep][1])
+        #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+        #     cajt = time.perf_counter()
+        #     self.updateZernike()
+        #     print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+        #     time.sleep(0.015)
+        #     # while not self.sigZernMaskProjected:
+        #     #     time.sleep(0.02)
+            
+        #     #self.sigZernMaskProjected = False
+
+        #     self._master.arduinoManager.trigger25DWriteOnly()
+            
+        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+            
+        #     self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+
+        #     if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+        #             # look at the list, fit parabola, get best value, set value, continue
+        #             optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
+        #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
+        #             self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
+        #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+        #             self.updateZernike()
+        #             time.sleep(0.015)
+        #             self._master.slm25DManager.resetList()
+            
+        #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet('')
+
+        #     if self._commChannel.stop25DNow: #allows exit of the loop
+        #         self._commChannel.autoZernChecked = False
+        #         break
+
+        for key in self.autoZernCalibValuesDict:
+            testvalues = list(self.autoZernCalibValuesDict[key])
+            for testvalue in testvalues:
+
+                self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+                self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
+                self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
+                self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+
+                cajt = time.perf_counter()
+                self.updateZernike()
+                print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+                time.sleep(0.015)
+                # while not self.sigZernMaskProjected:
+                #     time.sleep(0.02)
+                
+                #self.sigZernMaskProjected = False
+
+                self._master.arduinoManager.trigger25DWriteOnly()
+                
+                rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                
+                self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                
+                if self._commChannel.stop25DNow: #allows exit of the loop
+                    self._commChannel.autoZernChecked = False
+                    break
+
+            optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(testvalues)
+            self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+            self._widget.pars["AbsPosEdit" + key].setValue(optimalCoefficientMax)
+            self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             self.updateZernike()
-            print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
             time.sleep(0.015)
-            # while not self.sigZernMaskProjected:
-            #     time.sleep(0.02)
-            
-            #self.sigZernMaskProjected = False
+            self._master.slm25DManager.resetList()
+                
+            self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
 
-            self._master.arduinoManager.trigger25DWriteOnly()
-            
-            rawImg = self.detectors[2]._camera.grabFrame25D(1)
-            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-            self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
-            
-            self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
-
-            if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
-                    # look at the list, fit parabola, get best value, set value, continue
-                    optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
-                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
-                    self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
-                    self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
-                    self.updateZernike()
-                    time.sleep(0.015)
-                    self._master.slm25DManager.resetList()
-            
-            self._widget.pars[self.fullZernList[rep][0]].setStyleSheet('')
-
-            if self._commChannel.stop25DNow: #allows exit of the loop
-                self._commChannel.autoZernChecked = False
-                break
+                
 
         # self._commChannel.sigToggleAutoZern.emit(False)
         self.toggleAutoZern(False)
@@ -611,9 +653,6 @@ class SLM25DController(ImConWidgetController):
         return shifted
 
 
-    def shiftMask(self, mask):
-        
-        shifted_mask = self.shiftMaskZeroPad(mask, xShift, yShift)
 
 
     def combineAndProject(self):
@@ -914,6 +953,7 @@ class SLM25DController(ImConWidgetController):
         testValues = [-1., -0.6, -0.2, 0., 0.2, 0.6, 1.]
         testValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         testValues = [-1., 1.] # fast for test runs
+        
 
         for name in ['(2,-2)', '(2,2)']: # this loop makes astigmatisms the first 2 abberations in AZ loop
             for side in self._widget.ZernikeSides:   
@@ -939,6 +979,7 @@ class SLM25DController(ImConWidgetController):
                         tempZernList.append(('AbsPosEdit' + name + side,round(testValue, 3)))
         
         return tempZernList
+    
     
     # def createFullZernListFinerLoop(self):
     #     # this version takes curent value
