@@ -192,6 +192,8 @@ class SIMController(ImConWidgetController):
 
         
     def performSIMExperimentThread(self, sim_parameters):
+
+        self._logger.info("SIM started")
         #CTNOTE: Change to dynamic
         projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the true obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
@@ -306,6 +308,7 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
+        self.AFCounter = 0
 
         startLoopTime = time.time()
         
@@ -1187,7 +1190,7 @@ class SIMController(ImConWidgetController):
     
     def perform25DExperimentThread(self):
 
-
+        self._logger.info("2.5D/Epi started")
         #CTNOTE: Change to dynamic
         projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
@@ -1662,7 +1665,7 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusStart(self):
-        while (self._commChannel.initRegScore != None) and (self.active25D):
+        while (self._commChannel.initRegScore != None) and (self.SIMActive): #self.active25D or 
             self.autofocusLoop()
 
     def autofocusLoop(self):
@@ -1678,7 +1681,7 @@ class SIMController(ImConWidgetController):
 
         time.sleep(3)
 
-        if not (self.firstLoop) and (self.AFCounter % 20 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 10 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')
