@@ -925,11 +925,10 @@ class SLM25DController(ImConWidgetController):
 
         for name in self._widget.ZernikeCoefficientNames:
             if name == '(0,0)' or name == '(2,0)':# or name == '(1,-1)' or name == '(1,1)': #!!! test which of those (piston, xtilt, ytilt) u mant to leave out
-<<<<<<< HEAD
+
                 pass
             elif name == '(2,-2)' or name == '(2,2)':
-=======
->>>>>>> 314ecd02dbfbbb439a29b65b36109511c89bd0d6
+
                 pass
             else:
                 for side in self._widget.ZernikeSides:   
