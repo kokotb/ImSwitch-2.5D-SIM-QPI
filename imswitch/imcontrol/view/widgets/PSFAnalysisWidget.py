@@ -651,7 +651,7 @@ class PSFWindowRecord(QMainWindow):
         self.button_group.buttonClicked.connect(self.selectChannel)
 
         self.openDialog.clicked.connect(self.loadPath)
-        self.LoadDialog.clicked.connect(self.loadPath)
+        self.LoadDialog.clicked.connect(self.loadPathLoad)
         
         self.savePSFstack.clicked.connect(self.savePSFfunc)
         self.saveZstack.clicked.connect(self.saveZstackfunc)
@@ -784,19 +784,19 @@ class PSFWindowRecord(QMainWindow):
 
 
     def updateZstackImage(self):
-        self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 4095))
+        self.imgZStack.setImage(self.image_stack[self.current_index])#, levels=(0, 4095))
 
 
     def updatePSFXYimage(self):
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 4095))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
         self.updatelines()
 
     def updatePSFXZimage(self):
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 4095))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
         self.updatelines()
 
     def updatePSFYZimage(self):
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
         self.updatelines()
 
     def selectChannel(self):
@@ -940,6 +940,10 @@ class PSFWindowRecord(QMainWindow):
         folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
         self.folderPath.setText(folderpath)
 
+    def loadPathLoad(self):
+        folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        self.folderPathLoad.setText(folderpath)
+
 
 
     def savePSFfunc(self):
@@ -949,8 +953,10 @@ class PSFWindowRecord(QMainWindow):
         zstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text())
         if not os.path.exists(zstackSavePath):
             os.makedirs(zstackSavePath)
-        saveImageName = self.saveImagesName.text() + ".tif"
-        tif.imwrite(os.path.join(zstackSavePath, saveImageName), self.image_stack)
+        #saveImageName = self.saveImagesName.text() + ".tif"
+        for i in range (self.image_stack.shape[0]):
+            saveImageName = f"f{i:04}_roi{0:03}_pos{0:04}_z{i:03}_640F_000h00m00s000ms.tif"
+            tif.imwrite(os.path.join(zstackSavePath, saveImageName), self.image_stack[i])
 
     
     def mouseReleaseEvent(self, event):
@@ -980,9 +986,9 @@ class PSFWindowRecord(QMainWindow):
 
         PSFviewsize = int(self.PSFViewSize.text())
         self.PSFstack = self.image_stack[:, self.selectedY - 12 - PSFviewsize//2: self.selectedY -12 + PSFviewsize//2, self.selectedX - PSFviewsize//2 + 12 : self.selectedX + PSFviewsize//2 + 12]
-        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :], levels=(0, 4095))
-        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]), levels=(0, 4095))
-        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]), levels=(0, 4095))
+        self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
+        self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
+        self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
         self.updatelines()
 
     def askYesNoQuestion(self):
@@ -994,8 +1000,8 @@ class PSFWindowRecord(QMainWindow):
 
     def displayStackOfImages(self):
         liststackOfImages = []
-        for file in os.listdir(self.folderPath.text()):
-            imarray = tif.imread(os.path.join(self.folderPath.text(), file))
+        for file in os.listdir(self.folderPathLoad.text()):
+            imarray = tif.imread(os.path.join(self.folderPathLoad.text(), file))
             if len(imarray.shape) == 3:
                 for i in range(imarray.shape[0]):
                     liststackOfImages.append(imarray[i])
