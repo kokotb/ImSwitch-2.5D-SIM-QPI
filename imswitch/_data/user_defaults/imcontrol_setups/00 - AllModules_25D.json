@@ -15,10 +15,10 @@
   "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 420,
-  "LeftCenterY": 440, 
+  "LeftCenterX": 440,
+  "LeftCenterY": 480, 
   "RightCenterX":1440,
-  "RightCenterY": 500,
+  "RightCenterY": 520,
   "BeamDiameter": 6.5,
 
   "LeftPiston": 0.0,
@@ -139,8 +139,8 @@
           "ExposureTime": 3500.0
         },
         "ROI":{
-          "OffsetX": 2130,
-          "OffsetY": 1950,
+          "OffsetX": 2100,
+          "OffsetY": 2270,
           "Width": 1024,
           "Height": 1024
         }
