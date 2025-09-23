@@ -28,7 +28,8 @@ class QueensgatePiezoManager(PositionerManager):
         if status == False:
             queensgateMock = True
             from . import MockQueensgateDLL
-            self.dll = MockQueensgateDLL.DllAdapter()  
+            self.dll = MockQueensgateDLL.DllAdapter()
+            self.__logger.warning('Queensgate piezo not initialized.')
             
         else:
             queensgateMock = False

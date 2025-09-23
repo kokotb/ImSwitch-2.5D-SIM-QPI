@@ -192,8 +192,10 @@ class SIMController(ImConWidgetController):
 
         
     def performSIMExperimentThread(self, sim_parameters):
+
+        self._logger.info("SIM started")
         #CTNOTE: Change to dynamic
-        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the treu obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the true obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
@@ -306,6 +308,7 @@ class SIMController(ImConWidgetController):
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
+        self.AFCounter = 0
 
         startLoopTime = time.time()
         
@@ -314,44 +317,52 @@ class SIMController(ImConWidgetController):
         # total_buffer_size_MB = 350 # in MBs
         for processor in self.activeProcessors:
             detector = processor.detObj
-            # image_size = detector.shape
-            # image_size_MB = (2*image_size[0]*image_size[1]/(1024**2))
-            # buffer_size = int(total_buffer_size_MB // image_size_MB)
             buffer_size = 20 # Slightly more than double expected. If only set at 9, may miss information when it doesn't work well.
             self.setCamForExperimentSIM(detector, buffer_size, self.expTimeMax)
         self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
         self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
+        ####Autofocus
+        if (self._commChannel.initRegScore != None) :
+            self.autofocusThread()
+            self.AFMaskLeft = self._commChannel.AFMaskLeft
+            self.AFMaskRight = self._commChannel.AFMaskRight
+            self._logger.info('Autofocus active')    
+        ####
+
         while self.SIMActive:
 
             self.roiIter = 0
 
             #### For timing period. Check every 1/10s if period time is exceeded yet.
-            if self.completeFrameSets != 0:
-                repTimer = time.time() - repTimerStart
-                while repTimer < expectedLoopTime:
-                    time.sleep(expectedLoopTime / 1000)
-                    repTimer = time.time() - repTimerStart
+            # if self.completeFrameSets != 0:
+            #     repTimer = time.time() - repTimerStart
+            #     while repTimer < expectedLoopTime:
+            #         time.sleep(expectedLoopTime / 1000)
+            #         repTimer = time.time() - repTimerStart
+
+            if self.completeFrameSets == 0 and isTimed:
+                self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+
 
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-
                 if timingPeriodInSec < 100:
                     waitTime = timingPeriodInSec / 100
                 else:
                     waitTime = 1
-
-                if timingPeriodInSec > 30: 
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
                 while (repTimer < timingPeriodInSec):
-                    time.sleep(waitTime / 100)
+                    time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
 
                     if self._widget.stop_button.isChecked(): #allows exit of the loop
                         self._widget.stop_button.setChecked(False)
                         self.stopSIM()
                         return
+                    
+
+    
             repTimerStart = time.time()
             ####
 
@@ -511,7 +522,7 @@ class SIMController(ImConWidgetController):
             time.sleep(self.expTimeMax/1000000*18)
 
         waitingBuffers = detector._camera.getBufferValue("SIM")
-
+        # time.sleep(0.1) #CTNOTE: Temp sleep
         waitingBuffersEnd = 0
         bufferStartTime = time.time()
 
@@ -525,7 +536,7 @@ class SIMController(ImConWidgetController):
                 bufferEndTime = time.time()
             bufferTotalTime = bufferEndTime-bufferStartTime
             waitingBuffersEnd = waitingBuffers
-            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/50000: #self.expTimeMax/250000 = 4x exp time in correct units
+            if waitingBuffers != 9 and bufferTotalTime > self.expTimeMax/20000: #self.expTimeMax/250000 = 4x exp time in correct units
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
                 with errorLock:
@@ -1015,9 +1026,9 @@ class SIMController(ImConWidgetController):
     
     def setCamForExperimentSIM(self, detector, num_buffers, expTimeMax):
 
-
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
-        detector._camera.setBufferTimeout(2000)
+        # detector._camera.setBufferTimeout(2000)
 
         trigger_source = 'Line0'
         trigger_mode = 'On'
@@ -1027,10 +1038,6 @@ class SIMController(ImConWidgetController):
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # exposure_time = self.exposure # anything < 19 ms)
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12'
-        frame_rate_enable = True
         buffer_mode = "OldestFirst"
 
         # Check if exposure is low otherwise set to max value
@@ -1045,27 +1052,24 @@ class SIMController(ImConWidgetController):
 
 
         # Set cam parameters
-        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format, 'AcquisitionFrameRateEnable':frame_rate_enable, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = {'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
-            # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
             if parameter_name == 'ExposureTime':
                 self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
-            # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode 
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamForExperiment25D(self, detector):
 
-
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
         detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line0'
-        detector._camera.setBufferTimeout(1000)
+        detector._camera.setBufferTimeout(500)
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1078,14 +1082,14 @@ class SIMController(ImConWidgetController):
         triggerSelector = 'FrameStart'
 
         # Set cam parameters
-        dic_parameters = { 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'PixelFormat':pixel_format, 'StreamBufferHandlingMode':buffer_mode,'ADCBitDepth':bit_depth}
+        dic_parameters = { 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
             # print(detector._camera.getPropertyValue(parameter_name))
             detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            # if parameter_name == 'ExposureTime':
-            #     self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
+            if parameter_name == 'ExposureTime':
+                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
             # print(detector._camera.getPropertyValue(parameter_name))
         # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisition25D()
@@ -1187,7 +1191,7 @@ class SIMController(ImConWidgetController):
     
     def perform25DExperimentThread(self):
 
-
+        self._logger.info("2.5D/Epi started")
         #CTNOTE: Change to dynamic
         projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
         #Check is scatter cam should be active
@@ -1328,12 +1332,16 @@ class SIMController(ImConWidgetController):
         while self.active25D:
             self.roiIter = 0
             #### For timing period. Check every 1/10s if period time is exceeded yet.
+            if self.completeFrameSets == 0 and isTimed:
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
-                if timingPeriodInSec > 30:
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+                if timingPeriodInSec < 100:
+                    waitTime = timingPeriodInSec / 100
+                else:
+                    waitTime = 1
                 while repTimer < timingPeriodInSec:
-                    time.sleep(timingPeriodInSec / 100)
+                    time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
                     if self._commChannel.stop25DNow: #allows exit of the loop
                         self.stop25D()
@@ -1665,7 +1673,7 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusStart(self):
-        while (self._commChannel.initRegScore != None) and (self.active25D):
+        while (self._commChannel.initRegScore != None) and (self.SIMActive): #self.active25D or 
             self.autofocusLoop()
 
     def autofocusLoop(self):
@@ -1681,7 +1689,7 @@ class SIMController(ImConWidgetController):
 
         time.sleep(3)
 
-        if not (self.firstLoop) and (self.AFCounter % 20 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 10 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')

@@ -81,6 +81,7 @@ llfocusimages.tif
 
 imswitch/ImSwitch/recordings*
 ./ImSwitch/recordings
+console_log.txt
+AFOutput.txt
 
 result.json
-console_log.txt
