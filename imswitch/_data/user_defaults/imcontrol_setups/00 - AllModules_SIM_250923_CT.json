@@ -90,8 +90,8 @@
         "ExposureTime": 9000.0
       },
       "ROI":{  
-        "OffsetX": 2504,
-        "OffsetY": 2104,
+        "OffsetX": 2576,
+        "OffsetY": 1796,
         "Width": 512,
         "Height": 512
 
@@ -112,12 +112,12 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 18000.0
       },
       "ROI":{
 
-        "OffsetX": 2368,
-        "OffsetY": 2200,
+        "OffsetX": 2420,
+        "OffsetY": 1990,
         "Width": 512,
         "Height": 512
       }
@@ -140,11 +140,11 @@
           "Gamma": 1.0,
 
 
-          "ExposureTime": 9000.0
+          "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 2360,
-          "OffsetY": 2488,
+          "OffsetX": 2464,
+          "OffsetY": 2176,
           "Width": 512,
           "Height": 512
         }
@@ -167,7 +167,7 @@
           "Gain": 0.0,
           "Gamma": 1.0,
 
-          "ExposureTime": 9000.0
+          "ExposureTime": 18000.0
         },
         "ROI":{
           "OffsetX": 2320,
@@ -223,7 +223,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 50,
+      "valueInit": 35,
       "maxdBmValue": 17.6
       
       },
@@ -239,7 +239,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 50,
+    "valueInit": 30,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -255,7 +255,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
 
-    "valueInit": 50,
+    "valueInit": 100,
 
     "maxdBmValue": 21.8
     }
