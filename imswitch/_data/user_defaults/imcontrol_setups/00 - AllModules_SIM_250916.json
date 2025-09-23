@@ -90,17 +90,11 @@
         "ExposureTime": 9000.0
       },
       "ROI":{  
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-        "OffsetX": 2375,
-        "OffsetY": 1195,
-        "Width": 1024,
-        "Height": 1024
-========
         "OffsetX": 2504,
         "OffsetY": 2104,
         "Width": 512,
         "Height": 512
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
+
       } 
     },
     "forAcquisition": true
@@ -121,17 +115,11 @@
         "ExposureTime": 9000.0
       },
       "ROI":{
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-        "OffsetX": 2910,
-        "OffsetY": 1240,
-        "Width": 1024,
-        "Height": 1024
-========
+
         "OffsetX": 2368,
         "OffsetY": 2200,
         "Width": 512,
         "Height": 512
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
       }
     },
     "forAcquisition": true
@@ -150,15 +138,8 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-          "ExposureTime": 3500.0
-        },
-        "ROI":{
-          "OffsetX": 2100,
-          "OffsetY": 2270,
-          "Width": 1024,
-          "Height": 1024
-========
+
+
           "ExposureTime": 9000.0
         },
         "ROI":{
@@ -166,7 +147,6 @@
           "OffsetY": 2488,
           "Width": 512,
           "Height": 512
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
         }
       },
       "forAcquisition": true
@@ -186,22 +166,15 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-          "ExposureTime": 3000.0
-========
+
           "ExposureTime": 9000.0
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
         },
         "ROI":{
           "OffsetX": 2320,
           "OffsetY": 2295,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-          "Width": 1024,
-          "Height": 1024
-========
+
           "Width": 512,
           "Height": 512
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
         }
       },
       "forAcquisition": true
@@ -250,11 +223,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-      "valueInit": 0,
-========
       "valueInit": 50,
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
       "maxdBmValue": 17.6
       
       },
@@ -285,11 +254,8 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_25D.json
-    "valueInit": 100,
-========
+
     "valueInit": 50,
->>>>>>>> Cody_250901_Backup:imswitch/_data/user_defaults/imcontrol_setups/00 - AllModules_SIM_250916.json
 
     "maxdBmValue": 21.8
     }
