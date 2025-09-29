@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -15,11 +15,11 @@
   "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 380,
-  "LeftCenterY": 600, 
-  "RightCenterX":1360,
+  "LeftCenterX": 490,
+  "LeftCenterY": 480, 
+  "RightCenterX":1370,
   "RightCenterY": 560,
-  "BeamDiameter": 6.0,
+  "BeamDiameter": 6.5,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
@@ -116,8 +116,8 @@
       "ROI":{
         "OffsetX": 2400,
         "OffsetY": 2140,
-        "Width": 2048,
-        "Height": 2048
+        "Width": 1024,
+        "Height": 1024
       }
     },
     "forAcquisition": true
@@ -136,13 +136,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 3500.0
+          "ExposureTime": 9000.0
         },
         "ROI":{
-          "OffsetX": 2400,
-          "OffsetY": 2370, 
-          "Width": 2048,
-          "Height": 2048
+          "OffsetX": 1904,
+          "OffsetY": 1870, 
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 50,
+      "valueInit": 0,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 50,
+    "valueInit": 0,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
