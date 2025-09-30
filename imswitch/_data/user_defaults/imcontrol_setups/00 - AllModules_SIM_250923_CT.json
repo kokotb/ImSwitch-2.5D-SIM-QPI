@@ -90,8 +90,8 @@
         "ExposureTime": 9000.0
       }, 
       "ROI":{  
-        "OffsetX": 2576,
-        "OffsetY": 1796,
+        "OffsetX": 2280,
+        "OffsetY": 1496,
         "Width": 512,
         "Height": 512
 
@@ -116,8 +116,8 @@
       },
       "ROI":{
 
-        "OffsetX": 2420,
-        "OffsetY": 1990,
+        "OffsetX": 2024,
+        "OffsetY": 1690,
         "Width": 512,
         "Height": 512
       }
@@ -143,8 +143,8 @@
           "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 2464,
-          "OffsetY": 2176,
+          "OffsetX": 2100,
+          "OffsetY": 1950,
           "Width": 512,
           "Height": 512
         }
