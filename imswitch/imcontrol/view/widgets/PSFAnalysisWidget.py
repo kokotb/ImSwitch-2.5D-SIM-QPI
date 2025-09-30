@@ -580,7 +580,7 @@ class PSFWindowRecord(QMainWindow):
 
         self.ZstackLayout.addWidget(self.folderPath, 3, 0)
         self.ZstackLayout.addWidget(self.openDialog, 3, 1)
-        self.ZstackLayout.addWidget(self.   ``, 3, 2)
+        self.ZstackLayout.addWidget(self.recordImages, 3, 2)
 
         self.labelsaveFolderName = QtWidgets.QLabel(f'<strong>Save Folder Name</strong>')
         self.ZstackLayout.addWidget(self.labelsaveFolderName, 4, 0)
