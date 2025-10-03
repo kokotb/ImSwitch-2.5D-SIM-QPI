@@ -692,7 +692,7 @@ class SLM25DController(ImConWidgetController):
                 widget25dMask = np.concatenate((self.shiftMaskZeroPad(self.mask25dbinaryLeft, xleftShift, yleftShift),self.shiftMaskZeroPad(self.mask25dbinaryRight, xrightShift, yrightShift)), axis=1).transpose()
                 widget25dMask = widget25dMask.astype(np.uint8)
         
-                self._widget.matrix25d = widget25dMask
+                self._widget.matrix25d = widget25dMask  
                 self._widget.img25d.setImage(self._widget.matrix25d)
                 self.mask25D = self._widget.matrix25d
             else:
@@ -702,7 +702,7 @@ class SLM25DController(ImConWidgetController):
                 widget25dMask = np.concatenate((self.mask25dbinaryLeft,self.mask25dbinaryRight), axis=1).transpose()
                 widget25dMask = widget25dMask.astype(np.uint8)
         
-                self._widget.matrix25d = widget25dMask
+                self._widget.matrix25d = widget25dMask   
                 self._widget.img25d.setImage(self._widget.matrix25d)
                 self.mask25D = self._widget.matrix25d
 
