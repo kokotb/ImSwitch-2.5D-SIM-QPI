@@ -38,6 +38,8 @@ class PSFAnalysisController(ImConWidgetController):
             self._commChannel.sigSetForPSF.emit(False)
             self._widget.loadingPopupRecord.recordImages.setEnabled(True)
             self._master.positionersManager._subManagers['Z'].setPosition(self.originZ, 'Z')
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+
             try:
                 image_stack = self._commChannel.getPSFStack()
 
