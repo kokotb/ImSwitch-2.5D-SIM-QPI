@@ -24,6 +24,7 @@ class PositionerWidget(Widget):
         self.setLayout(self.posLayout)
         self.elementList = []
 
+
     def addPositionerZ(self, positionerName, axes, speed):
 
         axis = axes[0]
