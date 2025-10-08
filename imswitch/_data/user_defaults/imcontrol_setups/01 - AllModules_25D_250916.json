@@ -17,9 +17,9 @@
   "Psi": 0.5,
   "LeftCenterX": 440,
   "LeftCenterY": 520, 
-  "RightCenterX":1380,
-  "RightCenterY": 540,
-  "BeamDiameter": 6.5,
+  "RightCenterX":1400,
+  "RightCenterY": 520,
+  "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
@@ -90,8 +90,8 @@
         "ExposureTime": 1500.0
       },
       "ROI":{  
-        "OffsetX": 1600,
-        "OffsetY": 1200,
+        "OffsetX": 2008,
+        "OffsetY": 1500,
         "Width": 1024,
         "Height": 1024
       } 
