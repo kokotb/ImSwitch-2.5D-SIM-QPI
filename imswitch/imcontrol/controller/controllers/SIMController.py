@@ -1397,10 +1397,10 @@ class SIMController(ImConWidgetController):
                     #### Stage wait times for jiggle.
                     if (self.isTiling or self.isScanROI):
                         self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
-                        if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                            time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
-                        else:
-                            time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
+                        # if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
+                        #     time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
+                        # else:
+                        #     time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
                     # ####Autofocus
@@ -1591,9 +1591,9 @@ class SIMController(ImConWidgetController):
             endBufferTime = time.time()
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue('25D')
-            time.sleep(0.002)
+            # time.sleep(0.002)
 
-            if (waitingBuffers != 1 and totalBufferTime > 0.1): # Will wait for 0.2 seconds for a buffer to come before resetting.
+            if (waitingBuffers != 1 and totalBufferTime > 0.2): # Will wait for 0.2 seconds for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True

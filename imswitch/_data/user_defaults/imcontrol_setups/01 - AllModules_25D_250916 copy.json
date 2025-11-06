@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -16,10 +16,10 @@
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 440,
-  "LeftCenterY": 480, 
-  "RightCenterX":1440,
+  "LeftCenterY": 520, 
+  "RightCenterX":1400,
   "RightCenterY": 520,
-  "BeamDiameter": 6.5,
+  "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
@@ -87,14 +87,13 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 1500.0
       },
       "ROI":{  
-        "OffsetX": 2504,
-        "OffsetY": 2104,
-        "Width": 512,
-        "Height": 512
-
+        "OffsetX": 2008,
+        "OffsetY": 1500,
+        "Width": 1024,
+        "Height": 1024
       } 
     },
     "forAcquisition": true
@@ -115,11 +114,10 @@
         "ExposureTime": 9000.0
       },
       "ROI":{
-
-        "OffsetX": 2368,
-        "OffsetY": 2200,
-        "Width": 512,
-        "Height": 512
+        "OffsetX": 1850,
+        "OffsetY": 1300,
+        "Width": 1024,
+        "Height": 1024
       }
     },
     "forAcquisition": true
@@ -128,7 +126,7 @@
       "analogChannel": null,
 
       "digitalLine": null,
-      "managerName": "LUCIDManager",
+      "managerName": "LUCIDManager", 
       "managerProperties": {
         "cameraListIndex": 65,
         "wavelength": 640,
@@ -138,15 +136,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-
-
-          "ExposureTime": 9000.0
+          "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 2360,
-          "OffsetY": 2488,
-          "Width": 512,
-          "Height": 512
+          "OffsetX": 1826,
+          "OffsetY": 1770, 
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
@@ -166,15 +162,13 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-
-          "ExposureTime": 9000.0
+          "ExposureTime": 3000.0
         },
         "ROI":{
           "OffsetX": 2320,
           "OffsetY": 2295,
-
-          "Width": 512,
-          "Height": 512
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
@@ -194,7 +188,7 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 8000.0
+          "ExposureTime": 450.0
         },
         "ROI":{
           "OffsetX": 0,
@@ -223,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 50,
+      "valueInit": 0,
       "maxdBmValue": 17.6
       
       },
@@ -239,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 50,
+    "valueInit": 0,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -254,8 +248,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-
-    "valueInit": 50,
+    "valueInit": 100,
 
     "maxdBmValue": 21.8
     }
@@ -268,7 +261,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM24",
+        "port": "ASRLCOM15",
         "zeroOnStartup": false
       },
       "axes": ["Z"],
