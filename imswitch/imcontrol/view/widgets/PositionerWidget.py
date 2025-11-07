@@ -1,8 +1,9 @@
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
-from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QCheckBox, QMainWindow, QWidget, QLineEdit, QPushButton
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
+from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 
 
 class PositionerWidget(Widget):
@@ -261,7 +262,15 @@ class PositionerWidget(Widget):
             lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
         )
 
+        self.settingsWindow = PositionerSettings(self)
 
+        # self.settingsButtonLayout = QtWidgets.QHBoxLayout()
+        self.settingsButton = QtWidgets.QPushButton('Open Settings')
+        self.settingsButton.clicked.connect(self.settingsWindow.show)
+        # self.settingsButtonLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
+        self.posLayout.addWidget(self.settingsButton)
+        
+        
     def wheelEvent(self, event: QWheelEvent):
             modifiers = QtWidgets.QApplication.keyboardModifiers()
             if modifiers == QtCore.Qt.ShiftModifier:
@@ -325,6 +334,39 @@ class PositionerWidget(Widget):
     def _getParNameSuffix(self, positionerName, axis):
         return f'{positionerName}--{axis}'
 
+
+class PositionerSettings(QMainWindow):
+    def __init__(self, parent: None):
+
+        super().__init__(parent)
+        self.setWindowTitle("Load Settings")
+        self.setMinimumSize(600, 600)
+        self.overallLayout = QtWidgets.QVBoxLayout()
+        central_widget = QWidget()
+        central_widget.setLayout(self.overallLayout)
+        self.setCentralWidget(central_widget)
+        
+        self.skewLayout = QtWidgets.QHBoxLayout()
+
+
+        self.skewLabel = QtWidgets.QLabel(f'<strong>10.2</strong>')
+        
+        self.skewEntry = QtWidgets.QLineEdit('0.0')
+        self.skewEntry.setFixedWidth(50)
+        
+        self.skewButton = QtWidgets.QPushButton('Set')
+        self.skewButton.clicked.connect(self.setSkewOnStage())
+        
+        
+        self.skewLayout.addWidget(self.skewLabel)
+        self.skewLayout.addWidget(self.skewEntry)
+        self.skewLayout.addWidget(self.skewButton)
+        self.skewLayout.addStretch() # Pushes widgets to the left
+        
+        self.overallLayout.addLayout(self.skewLayout)
+        
+    def setSkewOnStage(self):
+        pass
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.
