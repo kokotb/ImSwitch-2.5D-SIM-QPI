@@ -3,11 +3,13 @@ import os
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
+from qtpy import QtCore, QtWidgets
 
 from imswitch.imcommon.model import dirtools, initLogger
 from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 import zernpol
+from scipy.ndimage import center_of_mass
 
 from PIL import Image, ImageDraw
 import pyqtgraph as pg
@@ -85,6 +87,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
         self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
         self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
+        self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -103,6 +106,7 @@ class SLM25DController(ImConWidgetController):
 
 
         self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
+        self._commChannel.sigBeginAutoZernNew.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
 
 
         # self._commChannel.sig25DAcqToggled.connect(self._widget.toggled25D)
@@ -133,6 +137,9 @@ class SLM25DController(ImConWidgetController):
 
     def beginAutoZernThread(self):
         threading.Thread(target=self.beginAutoZern, args=(), daemon=True).start()
+
+    def beginAutoZernThreadNew(self, selected_frame):
+        threading.Thread(target=self.beginAutoZernNew(selected_frame), args=(), daemon=True).start()
 
     def beginAutoZern(self):
 
@@ -243,14 +250,137 @@ class SLM25DController(ImConWidgetController):
         #self._commChannel.sigAutoZernikeFinished.emit()
 
 
-        
+
+    def beginAutoZernNew(self, selected_frame):
+        '''Only for right half of zern mask, MUST USE LIGHT POLARIZER!!!'''
+
+        print('autozern started')
+
+        self._widget.projectZernike.setChecked(True)
+        self._widget.projectZernike.setEnabled(False)
+        self._widget.project25D.setChecked(False)
+        self._widget.project25D.setEnabled(False)
+        self._widget.projectCenter.setChecked(False)
+        self._widget.projectCenter.setEnabled(False)
+
+        ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
+        self.startAutoZern()
+
+
+        # Vertical Astigmatism ======================================================
+        key = '(2,2)Right'
+        testvalues = list(self.autoZernCalibValuesDict[key])
+        vertAstigScores = []
+        for testvalue in testvalues:
+
+            self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+            self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
+            self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
+            self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+
+            self.updateZernike()
+            time.sleep(0.015)
+
+            zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
+            sigmasXY = []
+            for offset in [-1., 1.]:
+                self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
+                # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
+                self._master.arduinoManager.trigger25DWriteOnly()
+                
+                rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                beadImgAnalysis = rawImg[xmin:xmax, ymin:ymax]
+                sigmaX, sigmaY = self.astigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                sigmasXY.append([sigmaX, sigmaY])
+                if self._commChannel.stop25DNow: #allows exit of the loop
+                    self._commChannel.autoZernCheckedNew = False
+                    break
+            self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
+
+            astigMetric = abs(sigmasXY[1][0] - sigmasXY[1][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1])
+            vertAstigScores.append(astigMetric)  
+
+        print(vertAstigScores)
+        vertAstigOptimal = testvalues[vertAstigScores.index(min(vertAstigScores))]
+
+        self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+        self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
+        self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+        self.updateZernike()
+        time.sleep(0.015)
+            
+        self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+        #self._widget.stop25D.setEnabled(False)
+        #self._widget.start25D.setEnabled(True)
+        # =================================================================================
+
+        # self._commChannel.sigToggleAutoZern.emit(False)
+        self.toggleAutoZernNew(False)
+        self._commChannel.autoZernCheckedNew = False
+
+        self._widget.projectZernike.setEnabled(True)
+        self._widget.project25D.setEnabled(True)
+        self._widget.projectCenter.setEnabled(True)
+
+        # self._widget.stop_button.setChecked(False) # probably dont need this here
+        # self.stop25D()    
+
+        self._commChannel.sigAutoZernikeFinished.emit()
+
+
+    # AZ metrics ==========================
+    def astigmatism_metric(self, XYslice, threshold):
+        '''set threshold and flat or intensity mode'''
+
+        thr = XYslice.max() * threshold   # treshold
+
+        #masked = np.where(XYslice > thr, XYslice, 0)    # Intensity mode
+        masked = np.where(XYslice > thr, 1, 0)  # Flat mode
+        area = sum(sum(masked))
+        y_com, x_com = center_of_mass(masked)
+
+        Y, X = np.indices(XYslice.shape)
+        dx = X - x_com
+        dy = Y - y_com
+        # plt.imshow(dx)
+        # plt.show()
+
+        sigma_x = np.sqrt(np.sum(masked * dx**2) / area)
+        sigma_y = np.sqrt(np.sum(masked * dy**2) / area)
+
+        return sigma_x, sigma_y
+
+
+
+
+
 
 
     def toggleAutoZern(self, state):
         self._widget.autoZernCheckbox.setChecked(state)
 
+    def toggleAutoZernNew(self, state):
+        self._widget.autoZernCheckboxNew.setChecked(state)
+
     def autoZernChecked(self, state):
         self._commChannel.autoZernChecked = state
+
+    def autoZernCheckedNew(self, state):
+        self._commChannel.autoZernCheckedNew = state
+        self._commChannel.stop25DNow = True
+        if state:
+            pointSelected = self._widget.askYesNoQuestion()
+            if pointSelected == True:
+                self._commChannel.autoZernCheckedNew = state
+                if self._commChannel.simActive:
+                    self._commChannel.sigStart25D.emit()
+            else:
+                self._widget.autoZernCheckboxNew.setChecked(False)
+                self._commChannel.autoZernCheckedNew = False
+                self._logger.warning('Please select single isolated bead before aberration correction.')
+
 
     def init25DWidgetValues(self):
         strippedNames = []
@@ -275,6 +405,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i]) #Initial value dictionary to reset to when 'Reset' is rpessed.
         
         self._widget.autoZernCheckbox.setChecked(False)
+        self._widget.autoZernCheckboxNew.setChecked(False)
             
 
     def updateZernike(self):

@@ -101,6 +101,11 @@ class SLM25DWidget(Widget):
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
 
+        self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
+        self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
+        self.autoZernCheckboxNew.setEnabled(False)
+        self.autoZernCheckboxNew.setChecked(True)
+
         self.maskCenterCheckbox = QCheckBox("Mask Center")
         self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Center',str(value)))
         self.maskCenterCheckbox.setEnabled(False)
@@ -123,6 +128,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
         self.grid.addWidget(self.autoZernCheckbox, 4, 4)
+        self.grid.addWidget(self.autoZernCheckboxNew, 4, 6)
         self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
         self.grid.addWidget(self.reset25D, 17, 5)
         
@@ -396,12 +402,21 @@ class SLM25DWidget(Widget):
             self.pars['StepEdit'+name].setStyleSheet('')
         else:
             self.pars['StepEdit'+name].setStyleSheet("border: 1px solid red;")
+
+    def askYesNoQuestion(self):
+        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis.'
+                                                ' . Go to image display window -> New shapes layer -> Add rectangles. Draw frame aproximately 20x20 pixels, '
+                                                 'with isolated bead in the middle and empty dark background. Would you like to countiniue?',
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        return result == QtWidgets.QMessageBox.Yes
          
     def disableAll(self):
         self.slmPreview.setEnabled(False)
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
+        self.autoZernCheckboxNew.setEnabled(False)
         self.maskCenterCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
@@ -436,6 +451,7 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
+        self.autoZernCheckboxNew.setEnabled(True)
         self.maskCenterCheckbox.setEnabled(True)
         self.valLabel2.setEnabled(True)
         self.slmFrame.setEnabled(True)
