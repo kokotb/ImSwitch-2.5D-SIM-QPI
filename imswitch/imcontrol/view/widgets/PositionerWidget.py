@@ -349,7 +349,7 @@ class PositionerSettings(QMainWindow):
         self.skewLayout = QtWidgets.QHBoxLayout()
 
 
-        self.skewLabel = QtWidgets.QLabel(f'<strong>10.2</strong>')
+        self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
         
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
