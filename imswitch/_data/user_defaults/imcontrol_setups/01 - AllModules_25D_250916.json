@@ -12,7 +12,7 @@
 "SLM25D":{
   "width":1080, 
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 440,
@@ -139,8 +139,8 @@
           "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 1826,
-          "OffsetY": 1770, 
+          "OffsetX": 2650,
+          "OffsetY": 2000, 
           "Width": 1024,
           "Height": 1024
         }
@@ -261,7 +261,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM24",
+        "port": "ASRLCOM15",
         "zeroOnStartup": false
       },
       "axes": ["Z"],

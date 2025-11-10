@@ -105,7 +105,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
 
 
-        self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
+        # self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
         self._commChannel.sigBeginAutoZernNew.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
 
 
@@ -135,119 +135,131 @@ class SLM25DController(ImConWidgetController):
                 detector[1].handle = shortName
                 self.detectors.append(detector[1])
 
-    def beginAutoZernThread(self):
-        threading.Thread(target=self.beginAutoZern, args=(), daemon=True).start()
+    # def beginAutoZernThread(self):
+    #     threading.Thread(target=self.beginAutoZern, args=(), daemon=True).start()
 
     def beginAutoZernThreadNew(self, selected_frame):
         threading.Thread(target=self.beginAutoZernNew(selected_frame), args=(), daemon=True).start()
 
-    def beginAutoZern(self):
+    # def beginAutoZern(self):
 
-        print('autozern started')
+    #     print('autozern started')
 
-        self._widget.projectZernike.setChecked(True)
-        self._widget.projectZernike.setEnabled(False)
-        self._widget.project25D.setChecked(False)
-        self._widget.project25D.setEnabled(False)
-        self._widget.projectCenter.setChecked(False)
-        self._widget.projectCenter.setEnabled(False)
+    #     self._widget.projectZernike.setChecked(True)
+    #     self._widget.projectZernike.setEnabled(False)
+    #     self._widget.project25D.setChecked(False)
+    #     self._widget.project25D.setEnabled(False)
+    #     self._widget.projectCenter.setChecked(False)
+    #     self._widget.projectCenter.setEnabled(False)
 
-        self.startAutoZern()
-        # for rep in range(self.numAZAlltestPoints):
-        # #self.numAZTestValuesPerZernCoeff
-        # #while self._commChannel.autoZernChecked:
-        #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
-        #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet("border: 3px solid green;")
-        #     self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
-        #     print(self.fullZernList[rep][1])
-        #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
-        #     cajt = time.perf_counter()
-        #     self.updateZernike()
-        #     print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
-        #     time.sleep(0.015)
-        #     # while not self.sigZernMaskProjected:
-        #     #     time.sleep(0.02)
+    #     self.startAutoZern()
+    #     # for rep in range(self.numAZAlltestPoints):
+    #     # #self.numAZTestValuesPerZernCoeff
+    #     # #while self._commChannel.autoZernChecked:
+    #     #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
+    #     #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet("border: 3px solid green;")
+    #     #     self._widget.pars[self.fullZernList[rep][0]].setValue(self.fullZernList[rep][1])
+    #     #     print(self.fullZernList[rep][1])
+    #     #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+    #     #     cajt = time.perf_counter()
+    #     #     self.updateZernike()
+    #     #     print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+    #     #     time.sleep(0.015)
+    #     #     # while not self.sigZernMaskProjected:
+    #     #     #     time.sleep(0.02)
             
-        #     #self.sigZernMaskProjected = False
+    #     #     #self.sigZernMaskProjected = False
 
-        #     self._master.arduinoManager.trigger25DWriteOnly()
+    #     #     self._master.arduinoManager.trigger25DWriteOnly()
             
-        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+    #     #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
+    #     #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+    #     #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
             
-        #     self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+    #     #     self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
 
-        #     if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
-        #             # look at the list, fit parabola, get best value, set value, continue
-        #             optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
-        #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
-        #             self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
-        #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
-        #             self.updateZernike()
-        #             time.sleep(0.015)
-        #             self._master.slm25DManager.resetList()
+    #     #     if ((rep + 1) % self.numAZTestValuesPerZernCoeff == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
+    #     #             # look at the list, fit parabola, get best value, set value, continue
+    #     #             optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self.autoZernCalibValuesDict.values())[((rep + 1) // self.numAZTestValuesPerZernCoeff) - 1])
+    #     #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
+    #     #             self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
+    #     #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
+    #     #             self.updateZernike()
+    #     #             time.sleep(0.015)
+    #     #             self._master.slm25DManager.resetList()
             
-        #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet('')
+    #     #     self._widget.pars[self.fullZernList[rep][0]].setStyleSheet('')
 
-        #     if self._commChannel.stop25DNow: #allows exit of the loop
-        #         self._commChannel.autoZernChecked = False
-        #         break
+    #     #     if self._commChannel.stop25DNow: #allows exit of the loop
+    #     #         self._commChannel.autoZernChecked = False
+    #     #         break
 
-        for key in self.autoZernCalibValuesDict:
-            testvalues = list(self.autoZernCalibValuesDict[key])
-            for testvalue in testvalues:
+    #     for key in self.autoZernCalibValuesDict:
+    #         testvalues = list(self.autoZernCalibValuesDict[key])
+    #         for testvalue in testvalues:
 
-                self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-                self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
-                self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
-                self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+    #             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+    #             self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
+    #             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
+    #             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-                cajt = time.perf_counter()
-                self.updateZernike()
-                print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
-                time.sleep(0.015)
-                # while not self.sigZernMaskProjected:
-                #     time.sleep(0.02)
+    #             cajt = time.perf_counter()
+    #             self.updateZernike()
+    #             print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
+    #             time.sleep(0.015)
+    #             # while not self.sigZernMaskProjected:
+    #             #     time.sleep(0.02)
                 
-                #self.sigZernMaskProjected = False
+    #             #self.sigZernMaskProjected = False
 
-                self._master.arduinoManager.trigger25DWriteOnly()
+    #             self._master.arduinoManager.trigger25DWriteOnly()
+    #             # waitingBuffers = self.detectors[2]._camera.getBufferValue('25D') # Arguement is unused by method.
+    #             # print(waitingBuffers)
+    #             # startBufferTime = time.time()
+    #             # totalBufferTime = 0
+    #             # while waitingBuffers != 1:
+    #             #     endBufferTime = time.time()
+    #             #     totalBufferTime = endBufferTime - startBufferTime
+    #             #     waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+    #             #     # time.sleep(0.002)
+
+    #             #     print(waitingBuffers)
+
+
+    #             rawImg = self.detectors[2]._camera.grabFrame25D(1)
+    #             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+    #             self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+    #             self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 
-                self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
-                
-                if self._commChannel.stop25DNow: #allows exit of the loop
-                    self._commChannel.autoZernChecked = False
-                    break
+    #             if self._commChannel.stop25DNow: #allows exit of the loop
+    #                 self._commChannel.autoZernChecked = False
+    #                 break
 
-            optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(testvalues)
-            self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-            self._widget.pars["AbsPosEdit" + key].setValue(optimalCoefficientMax)
-            self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-            self.updateZernike()
-            time.sleep(0.015)
-            self._master.slm25DManager.resetList()
+    #         optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(testvalues)
+    #         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+    #         self._widget.pars["AbsPosEdit" + key].setValue(optimalCoefficientMax)
+    #         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+    #         self.updateZernike()
+    #         time.sleep(0.015)
+    #         self._master.slm25DManager.resetList()
                 
-            self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+    #         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
 
                 
 
-        # self._commChannel.sigToggleAutoZern.emit(False)
-        self.toggleAutoZern(False)
-        self._commChannel.autoZernChecked = False
+    #     # self._commChannel.sigToggleAutoZern.emit(False)
+    #     self.toggleAutoZern(False)
+    #     self._commChannel.autoZernChecked = False
 
-        self._widget.projectZernike.setEnabled(True)
-        self._widget.project25D.setEnabled(True)
-        self._widget.projectCenter.setEnabled(True)
+    #     self._widget.projectZernike.setEnabled(True)
+    #     self._widget.project25D.setEnabled(True)
+    #     self._widget.projectCenter.setEnabled(True)
 
-        # self._widget.stop_button.setChecked(False) # probably dont need this here
-        # self.stop25D()    
+    #     # self._widget.stop_button.setChecked(False) # probably dont need this here
+    #     # self.stop25D()    
 
-        #self._commChannel.sigAutoZernikeFinished.emit()
+    #     #self._commChannel.sigAutoZernikeFinished.emit()
 
 
 
@@ -273,6 +285,7 @@ class SLM25DController(ImConWidgetController):
         vertAstigScores = []
         for testvalue in testvalues:
 
+            
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
@@ -287,14 +300,15 @@ class SLM25DController(ImConWidgetController):
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 self._master.arduinoManager.trigger25DWriteOnly()
-                
+                time.sleep(0.2)
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
-                beadImgAnalysis = rawImg[xmin:xmax, ymin:ymax]
+                beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 sigmaX, sigmaY = self.astigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
                 if self._commChannel.stop25DNow: #allows exit of the loop
+                    self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
@@ -368,17 +382,19 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.autoZernChecked = state
 
     def autoZernCheckedNew(self, state):
-        self._commChannel.autoZernCheckedNew = state
-        self._commChannel.stop25DNow = True
+        # self._commChannel.autoZernCheckedNew = state
+        # self._commChannel.stop25DNow = True
         if state:
             pointSelected = self._widget.askYesNoQuestion()
             if pointSelected == True:
                 self._commChannel.autoZernCheckedNew = state
-                if self._commChannel.simActive:
-                    self._commChannel.sigStart25D.emit()
+                self._commChannel.stop25DNow = True
+                # if not self._commChannel.simActive:
+                #     self._commChannel.sigStart25D.emit()
             else:
                 self._widget.autoZernCheckboxNew.setChecked(False)
                 self._commChannel.autoZernCheckedNew = False
+                self.toggleAutoZernNew(False)
                 self._logger.warning('Please select single isolated bead before aberration correction.')
 
 
