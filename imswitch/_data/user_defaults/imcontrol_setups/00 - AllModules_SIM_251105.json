@@ -5,14 +5,14 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
 "SLM25D":{
   "width":1080,
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 440,
@@ -62,7 +62,7 @@
     "NA": 0.8,
     "Pixelsize": 2.74,
     "Alpha": 0.4,
-    "Beta": 0.99,
+    "Beta": 0.95,
     "w": 0.15,
     "eta": 0.5,
     "n": 1.0,
@@ -88,10 +88,10 @@
         "Gain": 0.0,
         "Gamma": 1.0,
         "ExposureTime": 9000.0
-      }, 
+      },
       "ROI":{  
-        "OffsetX": 2280,
-        "OffsetY": 1496,
+        "OffsetX": 2904,
+        "OffsetY": 1840,
         "Width": 512,
         "Height": 512
 
@@ -112,12 +112,12 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 18000.0
+        "ExposureTime": 9000.0
       },
       "ROI":{
 
-        "OffsetX": 2072,
-        "OffsetY": 2000,
+        "OffsetX": 3160,
+        "OffsetY": 2076,
         "Width": 512,
         "Height": 512
       }
@@ -140,11 +140,11 @@
           "Gamma": 1.0,
 
 
-          "ExposureTime": 18000.0
+          "ExposureTime": 9000.0
         },
         "ROI":{
-          "OffsetX": 2100,
-          "OffsetY": 1950,
+          "OffsetX": 2904,
+          "OffsetY": 2258,
           "Width": 512,
           "Height": 512
         }
@@ -167,11 +167,11 @@
           "Gain": 0.0,
           "Gamma": 1.0,
 
-          "ExposureTime": 18000.0
+          "ExposureTime": 9000.0
         },
         "ROI":{
-          "OffsetX": 2320,
-          "OffsetY": 2295,
+          "OffsetX": 2125,
+          "OffsetY": 2210,
 
           "Width": 512,
           "Height": 512
@@ -223,7 +223,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 35,
+      "valueInit": 50,
       "maxdBmValue": 17.6
       
       },
@@ -239,7 +239,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 30,
+    "valueInit": 50,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -255,7 +255,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
 
-    "valueInit": 100,
+    "valueInit": 50,
 
     "maxdBmValue": 21.8
     }
@@ -268,7 +268,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM24",
+        "port": "ASRLCOM15",
         "zeroOnStartup": false
       },
       "axes": ["Z"],
