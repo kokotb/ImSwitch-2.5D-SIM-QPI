@@ -10,9 +10,8 @@ class PositionerController(ImConWidgetController):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        
         self.settingAttr = False
-
         self.__logger = initLogger(self, tryInheritParent=True)
 
         # Set up positioners
@@ -55,11 +54,55 @@ class PositionerController(ImConWidgetController):
         # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
-
+        
+        # Positioner settings signals connect
+        self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
+        self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
+        self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
+        
+        
+        # Settings window initialization
+        self.stageManager = self._master.positionersManager['XY']
+        currentSkew, _ = self.stageManager.query('controller.stage.skew.enabled.get')
+        self._widget.settingsWindow.skewLabel.setText(str(float(currentSkew)))
+             
+        
+    def setSkewOnStage(self):
+        value = float(self._widget.settingsWindow.skewEntry.text())
+        if 0 < value < 44.9:
+            r, _ = self.stageManager.query(f"controller.stage.skew.enabled.set {value}")
+            if r == '0':
+                self._widget.settingsWindow.skewLabel.setText(str(value))
+            else:
+                self.__logger.warning("Skew not set.")
+        else:
+            self.__logger.warning("Skew value out of range 0-44.9 degrees.")
+    
+    def setMaxSpeedOnStage(self):
+        value = float(self._widget.settingsWindow.maxSpeedEntry.text())
+        if value > 0:   # input the right ceiling value
+            r, _ = self.stageManager.query(f"controller.stage.speed.set  {value}")
+            if r == '0':
+                self._widget.settingsWindow.maxSpeedLabel.setText(str(value))
+            else:
+                self.__logger.warning("Max Speed not set.")
+        else:
+            self.__logger.warning("Max speed value out of range a to b.") #fill in range
+            
+    def setMaxAccOnStage(self):
+        value = float(self._widget.settingsWindow.maxAccEntry.text())
+        if value > 0:   # again
+            r, _ = self.stageManager.query(f"controller.stage.acceleration.set  {value}")
+            if r == '0':
+                self._widget.settingsWindow.maxAccLabel.setText(str(value))
+            else:
+                self.__logger.warning("Max Acceleration not set.")
+        else:
+            self.__logger.warning("Max acceleration value out of range a to b.") # same here
+            
     def updateZDrift(self, drift):
         self.setSharedAttr('Z', 'Z', 'Drift', drift)
         self._widget.pars['DriftZ--Z'].setText(f'({drift:.2f} µm)')
-
 
 
     def loadSettings(self, moduleDict):

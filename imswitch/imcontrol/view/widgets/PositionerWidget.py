@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QCheckBox, QMainWindow, QWidget, QLineEdit, QPushBut
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-
+from PyQt5.QtCore import Qt, QLocale
 
 class PositionerWidget(Widget):
     """ Widget in control of the piezo movement. """
@@ -336,8 +336,8 @@ class PositionerWidget(Widget):
 
 
 class PositionerSettings(QMainWindow):
+    sigCheckValidity = QtCore.Signal(str)
     def __init__(self, parent: None):
-
         super().__init__(parent)
         self.setWindowTitle("Load Settings")
         self.setMinimumSize(600, 600)
@@ -346,27 +346,104 @@ class PositionerSettings(QMainWindow):
         central_widget.setLayout(self.overallLayout)
         self.setCentralWidget(central_widget)
         
-        self.skewLayout = QtWidgets.QHBoxLayout()
-
-
-        self.skewLabel = QtWidgets.QLabel(f'<strong>10.2</strong>')
+        # skew title
+        self.skewTitleLayout = QtWidgets.QHBoxLayout()
+        self.skewTitleLabel = QtWidgets.QLabel('Skew Angle (°)')       
+        self.skewTitleLayout.addWidget(self.skewTitleLabel)
+        self.overallLayout.addLayout(self.skewTitleLayout)
         
+        # skew layout
+        self.skewLayout = QtWidgets.QHBoxLayout()
+        self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
-        
+        self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9°.")
+        self.validator = QDoubleValidator(0.0, 44.9, 1)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
-        self.skewButton.clicked.connect(self.setSkewOnStage())
-        
-        
         self.skewLayout.addWidget(self.skewLabel)
         self.skewLayout.addWidget(self.skewEntry)
         self.skewLayout.addWidget(self.skewButton)
-        self.skewLayout.addStretch() # Pushes widgets to the left
-        
+        self.skewLayout.addStretch()
         self.overallLayout.addLayout(self.skewLayout)
         
-    def setSkewOnStage(self):
-        pass
+        # stage max speed title
+        self.maxSpeedTitleLayout = QtWidgets.QHBoxLayout()
+        self.maxSpeedTitleLabel = QtWidgets.QLabel('Stage Speed (µm/s)')       
+        self.maxSpeedTitleLayout.addWidget(self.maxSpeedTitleLabel)
+        self.overallLayout.addLayout(self.maxSpeedTitleLayout)      
+        
+        # stage max speed layout
+        self.maxSpeedLayout = QtWidgets.QHBoxLayout()
+        self.maxSpeedLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
+        self.maxSpeedEntry = QtWidgets.QLineEdit('0.0')
+        self.maxSpeedEntry.setFixedWidth(50)
+        self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move.")
+        self.validator = QDoubleValidator(0.0, 10.0, 1) # example limits, get the right ones
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.maxSpeedEntry.setValidator(self.validator)
+        self.maxSpeedButton = QtWidgets.QPushButton('Set')
+        self.maxSpeedLayout.addWidget(self.maxSpeedLabel)
+        self.maxSpeedLayout.addWidget(self.maxSpeedEntry)
+        self.maxSpeedLayout.addWidget(self.maxSpeedButton)
+        self.maxSpeedLayout.addStretch()
+        self.overallLayout.addLayout(self.maxSpeedLayout)       
+        
+        # stage max acceleration title
+        self.maxAccTitleLayout = QtWidgets.QHBoxLayout()
+        self.maxAccTitleLabel = QtWidgets.QLabel('Stage Acceleration (µm/s²)')       
+        self.maxAccTitleLayout.addWidget(self.maxAccTitleLabel)
+        self.overallLayout.addLayout(self.maxAccTitleLayout)  
+        
+        # stage max acceleration layout 
+        self.maxAccLayout = QtWidgets.QHBoxLayout()
+        self.maxAccLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
+        self.maxAccEntry = QtWidgets.QLineEdit('0.0')
+        self.maxAccEntry.setFixedWidth(50)
+        self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move.")
+        self.validator = QDoubleValidator(0.0, 10.0, 1) # example limits, get the right ones
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.maxAccEntry.setValidator(self.validator)
+        self.maxAccButton = QtWidgets.QPushButton('Set')
+        self.maxAccLayout.addWidget(self.maxAccLabel)
+        self.maxAccLayout.addWidget(self.maxAccEntry)
+        self.maxAccLayout.addWidget(self.maxAccButton)
+        self.maxAccLayout.addStretch()
+        self.overallLayout.addLayout(self.maxAccLayout)
+            
+        
+        
+        # keep the overall layout together
+        self.overallLayout.addStretch()
+        
+        
+        self.skewEntry.textChanged.connect(lambda *args, name='skewEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.maxSpeedEntry.textChanged.connect(lambda *args, name='maxSpeedEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.maxAccEntry.textChanged.connect(lambda *args, name='maxAccEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        
+    def checkValidity(self, name):
+        if name == 'skewEntry':
+            signalOrigin = self.skewEntry
+        if name == 'maxSpeedEntry':
+            signalOrigin = self.maxSpeedEntry
+        if name == 'maxAccEntry':
+            signalOrigin = self.maxAccEntry
+        valid = signalOrigin.hasAcceptableInput()
+        if valid:
+            signalOrigin.setStyleSheet('')
+        else:
+            signalOrigin.setStyleSheet("border: 1px solid red;")
+    
+    
+
+        
+        
+
+
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.
