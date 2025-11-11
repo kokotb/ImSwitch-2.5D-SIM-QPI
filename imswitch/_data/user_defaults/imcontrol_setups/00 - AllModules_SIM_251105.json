@@ -5,7 +5,7 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 
@@ -255,7 +255,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
 
-    "valueInit": 50,
+    "valueInit": 15,
 
     "maxdBmValue": 21.8
     }
