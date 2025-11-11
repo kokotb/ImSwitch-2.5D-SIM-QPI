@@ -22,6 +22,7 @@ class ZStackController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
         self._commChannel.sigSetForPSF.connect(self.editForPSF)
+        # self._commChannel.sigCalcZStepArray.connect(self.calcZStepArray)
 
     def editForPSF(self, start):
         if start:
@@ -29,9 +30,9 @@ class ZStackController(ImConWidgetController):
             self.initEnabled = self._widget.checkbox_zStack.isChecked()
             self._widget.checkbox_zStackCenter.setChecked(True)
             self._widget.checkbox_zStack.setChecked(True)
-        if not start:
-            self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
-            self._widget.checkbox_zStack.setChecked(self.initEnabled)
+        # if not start:
+            # self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
+            # self._widget.checkbox_zStack.setChecked(self.initEnabled)
 
     def runZStackToggle(self, state):
         if state == 0:
@@ -50,7 +51,7 @@ class ZStackController(ImConWidgetController):
 
 
 
-    def calcZStepArray(self): # CTNOTE: Something not calculating perfectly when switching between center and not center.
+    def calcZStepArray(self): 
         try: 
             stepDist = float(self._widget.zStepDistance_textedit.text())
         except ValueError:

@@ -15,9 +15,14 @@ class PSFAnalysisController(ImConWidgetController):
         self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
     def startRecImagesFunc(self):
+        self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
+
+        # self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
+
         if not self._commChannel.simActive:
             self._widget.loadingPopupRecord.recordImages.setEnabled(False)
             self._commChannel.sigSetForPSF.emit(True)
+            # self._commChannel.sigCalcZStepArray.emit()
             self._commChannel.sigStart25D.emit()
             self.recordingPSF = True
         else:
@@ -31,9 +36,17 @@ class PSFAnalysisController(ImConWidgetController):
         
     def stopRecImagesFunc(self):
         if (self.recordingPSF):
-            self.recordingPSF = False
+            
             self._commChannel.sigSetForPSF.emit(False)
             self._widget.loadingPopupRecord.recordImages.setEnabled(True)
+            # self._master.positionersManager._subManagers['Z'].setPosition(self.originZ, 'Z')
+            # zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()
+            # while zValueChecked != self.originZ:
+            #     zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()
+            # self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            self.recordingPSF = False
+            
+
             try:
                 image_stack = self._commChannel.getPSFStack()
 
@@ -54,6 +67,11 @@ class PSFAnalysisController(ImConWidgetController):
                 self._widget.loadingPopupRecord.showSelectedPSF()
             except AttributeError:
                 print('Stop recording fuction for PSF failed to complete.')
+
+
+            
+
+            
 
 
 

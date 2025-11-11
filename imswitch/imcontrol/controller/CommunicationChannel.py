@@ -105,6 +105,8 @@ class CommunicationChannel(SignalInterface):
     #sigRequestScannersInScan = Signal()
     sigBeginAutoZern = Signal()
 
+    sigBeginAutoZernNew = Signal(object)
+
     sigAutoZernikeFinished = Signal()
 
 
@@ -143,6 +145,8 @@ class CommunicationChannel(SignalInterface):
     sigNewFrame = Signal()
 
     sigZScanList = Signal(list, float)
+
+    # sigCalcZStepArray = Signal()
 
     sigLoadSettings = Signal(dict)
 
@@ -215,6 +219,7 @@ class CommunicationChannel(SignalInterface):
         #Scatter Cam 
         self.scatterCamActive = 0 #False
         self.autoZernChecked = False
+        self.autoZernCheckedNew = False
 
 
     # def storeROIList(self, roiList):

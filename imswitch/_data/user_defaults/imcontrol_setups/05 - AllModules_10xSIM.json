@@ -5,21 +5,21 @@
   "height":1920,
   "pixelSize":13.62,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 
 "SLM25D":{
-  "width":1080, 
+  "width":1080,
   "height":1920,
-  "mock": false,
+  "mock": true,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 440,
-  "LeftCenterY": 520, 
-  "RightCenterX":1400,
+  "LeftCenterY": 480, 
+  "RightCenterX":1440,
   "RightCenterY": 520,
-  "BeamDiameter": 7.0,
+  "BeamDiameter": 6.5,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
@@ -59,14 +59,14 @@
     "ReconWL1": 523,
     "ReconWL2": 573,
     "ReconWL3": 678,
-    "NA": 0.8,
+    "NA": 0.4,
     "Pixelsize": 2.74,
     "Alpha": 0.4,
     "Beta": 0.99,
     "w": 0.15,
     "eta": 0.5,
     "n": 1.0,
-    "Magnification": 22.2222222,
+    "Magnification": 11.11111,
     "saveDir": "D:\\SIM_Data\\",
     "nRotations": 3,
     "nPhases": 3,
@@ -87,13 +87,14 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 1500.0
-      },
+        "ExposureTime": 9000.0
+      }, 
       "ROI":{  
-        "OffsetX": 2008,
-        "OffsetY": 1500,
-        "Width": 1024,
-        "Height": 1024
+        "OffsetX": 2380,
+        "OffsetY": 1680,
+        "Width": 512,
+        "Height": 512
+
       } 
     },
     "forAcquisition": true
@@ -111,13 +112,14 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 18000.0
       },
       "ROI":{
-        "OffsetX": 1850,
-        "OffsetY": 1300,
-        "Width": 1024,
-        "Height": 1024
+
+        "OffsetX": 2025,
+        "OffsetY": 1975,
+        "Width": 512,
+        "Height": 512
       }
     },
     "forAcquisition": true
@@ -126,7 +128,7 @@
       "analogChannel": null,
 
       "digitalLine": null,
-      "managerName": "LUCIDManager", 
+      "managerName": "LUCIDManager",
       "managerProperties": {
         "cameraListIndex": 65,
         "wavelength": 640,
@@ -136,13 +138,15 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
+
+
           "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 2650,
-          "OffsetY": 2000, 
-          "Width": 1024,
-          "Height": 1024
+          "OffsetX": 2050,
+          "OffsetY": 1850,
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -162,13 +166,15 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 3000.0
+
+          "ExposureTime": 18000.0
         },
         "ROI":{
           "OffsetX": 2320,
           "OffsetY": 2295,
-          "Width": 1024,
-          "Height": 1024
+
+          "Width": 512,
+          "Height": 512
         }
       },
       "forAcquisition": true
@@ -188,7 +194,7 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 450.0
+          "ExposureTime": 8000.0
         },
         "ROI":{
           "OffsetX": 0,
@@ -217,7 +223,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 0,
+      "valueInit": 35,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +239,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 0,
+    "valueInit": 30,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -248,6 +254,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
+
     "valueInit": 100,
 
     "maxdBmValue": 21.8
@@ -261,7 +268,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM15",
+        "port": "ASRLCOM24",
         "zeroOnStartup": false
       },
       "axes": ["Z"],

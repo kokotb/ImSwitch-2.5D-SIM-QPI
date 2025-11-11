@@ -56,6 +56,12 @@ class PositionerController(ImConWidgetController):
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
+        #Settings window initialization
+        self.stageManager = self._master.positionersManager['XY']
+        currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+        self._widget.settingsWindow.skewLabel.setText(currentSkew)
+
+
     def updateZDrift(self, drift):
         self.setSharedAttr('Z', 'Z', 'Drift', drift)
         self._widget.pars['DriftZ--Z'].setText(f'({drift:.2f} µm)')

@@ -92,8 +92,13 @@ class QueensgatePiezoManager(PositionerManager):
     
     def moveRelative(self, dist, axis):
         """Moves the piezo relative to current position. """
-
-        old_pos = self.get_abs()
+        try:
+            old_pos = self.get_abs()
+        except TypeError:
+            self.__logger.warning('Cannot communicate with piezo.')
+            return
+            
+        
 
         if old_pos + dist < self.moveLimitsRegHolder[0] or old_pos + dist > self.moveLimitsRegHolder[1]:
             self.__logger.error(f'Out of bounds request on {axis} axis. Range is between {self.moveLimitsRegHolder}.')
@@ -178,11 +183,15 @@ class QueensgatePiezoManager(PositionerManager):
         _ = self.get_abs
         return self._position
 
+
     def get_abs(self):
+
         _, val = self.query("stage.position.command.get 0")
         position = self.picoToMicro(float(val))
         return position
 
+        
+        
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

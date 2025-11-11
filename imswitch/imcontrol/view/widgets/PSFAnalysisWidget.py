@@ -162,7 +162,7 @@ class PSFWindow(QMainWindow):
         self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
 
         self.folderPath = QtWidgets.QLineEdit()
-        self.folderPath.setText("C:/Users/SIM/Desktop/David/250624_centertesting/250624_144927_dk_centertesting/Timelapse/RawStacks")
+        self.folderPath.setText(r"C:\Users\SIM\Desktop\David\25d_PSF_Scanning_Images\gammapsiscan_250709\250709_113057_dk_gammaPsiScan\Timelapse\RawStacks")
         self.openDialog = QPushButton("Select folder")
         self.displayImages = QPushButton("Show images")
 
@@ -475,6 +475,7 @@ class PSFWindow(QMainWindow):
         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
+
         self.updatelines()
     
     def measurePSFSizeFunc(self):
@@ -559,7 +560,7 @@ class PSFWindowRecord(QMainWindow):
         self.imgZStack = pg.ImageItem()
         self.vbZStack.addItem(self.imgZStack)
 
-        self.image_stack = np.zeros((20, 1024, 1024))
+        self.image_stack = np.zeros((40, 1024, 1024))
         self.current_index = 0     # scroll through whole Zstack
         # self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
         self.vbZStack.addItem(self.imgZStack)
@@ -610,7 +611,7 @@ class PSFWindowRecord(QMainWindow):
 
         # select folder entry box, load button (show images)
         self.folderPathLoad = QtWidgets.QLineEdit()
-        self.folderPathLoad.setText("C:/Users/SIM/Desktop/David/testfileRecordPSF")
+        self.folderPathLoad.setText(r"C:\Users\SIM\Desktop\David\25d_PSF_Scanning_Images\gammapsiscan_250709\250709_113057_dk_gammaPsiScan\Timelapse\RawStacks")
         self.LoadDialog = QPushButton("Select folder")
         self.LoadImages = QPushButton("Show stack")
 
@@ -793,10 +794,24 @@ class PSFWindowRecord(QMainWindow):
 
     def updatePSFXZimage(self):
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
+        
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+        tr = pg.QtGui.QTransform()
+        tr.scale(1, ZpixelSize/XYpixelSize)
+        self.imgPSFXZ.setTransform(tr)
+        
         self.updatelines()
 
     def updatePSFYZimage(self):
         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
+        
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+        tr = pg.QtGui.QTransform()
+        tr.scale(1, ZpixelSize/XYpixelSize)
+        self.imgPSFYZ.setTransform(tr)
+        
         self.updatelines()
 
     def selectChannel(self):
@@ -804,8 +819,8 @@ class PSFWindowRecord(QMainWindow):
 
     def updatelines(self):
         shape = np.shape(self.PSFstack)
-        linescale = 9
-        linewidth = 2
+        linescale = 1
+        linewidth = 1
         shapeX, shapeY, shapeZ = (linescale*shape[2], linescale*shape[1], linescale*shape[0])
 
         currX = linescale*self.current_indexX + linescale // 2
@@ -823,27 +838,40 @@ class PSFWindowRecord(QMainWindow):
 
         imXY = Image.new('RGBA', (shapeX, shapeY), (0, 0, 0, 0))
         drawXY = ImageDraw.Draw(imXY)
-        drawXY.line([(currX,0), (currX, shapeY)], fill=(255, 255, 0), width=linewidth)
-        drawXY.line([(0, currY), (shapeX, currY)], fill=(255, 0, 255), width=linewidth)
+        drawXY.line([(currX,0), (currX, shapeY)], fill=(255, 255, 0, 100), width=linewidth)
+        drawXY.line([(0, currY), (shapeX, currY)], fill=(255, 0, 255, 100), width=linewidth)
         centerArrayXY = np.array(imXY)
         self.overlayImgXY.setImage(centerArrayXY)
         self.overlayImgXY.setRect(0, 0, shape[2], shape[1])
 
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+
         imXZ = Image.new('RGBA', (shapeZ, shapeX), (0, 0, 0, 0))
         drawXZ = ImageDraw.Draw(imXZ)
-        drawXZ.line([(0, shapeX - currX), (shapeZ, shapeX - currX)], fill=(255, 255, 0), width=linewidth)
-        drawXZ.line([(currZ, 0), (currZ, shapeX)], fill=(0, 255, 255), width=linewidth)
+        drawXZ.line([(0, shapeX - currX), (shapeZ, shapeX - currX)], fill=(255, 255, 0, 100), width=linewidth)
+        drawXZ.line([(currZ, 0), (currZ, shapeX)], fill=(0, 255, 255, 100), width=linewidth)
         centerArrayXZ = np.array(imXZ)
         self.overlayImgXZ.setImage(centerArrayXZ)
-        self.overlayImgXZ.setRect(0, 0, shape[2], shape[0])
+        #self.overlayImgXZ.setRect(0, 0, shape[2], shape[0])
+
+        tr = QtGui.QTransform()
+        tr.scale(1, ZpixelSize/XYpixelSize)
+        self.overlayImgXZ.setTransform(tr)
 
         imYZ = Image.new('RGBA', (shapeZ, shapeY), (0, 0, 0, 0))
         drawYZ = ImageDraw.Draw(imYZ)
-        drawYZ.line([(0, shapeY - currY), (shapeZ, shapeY - currY)], fill=(255, 0, 255), width=linewidth)
-        drawYZ.line([(currZ, 0), (currZ, shapeY)], fill=(0, 255, 255), width=linewidth)
+        drawYZ.line([(0, shapeY - currY), (shapeZ, shapeY - currY)], fill=(255, 0, 255, 100), width=linewidth)
+        drawYZ.line([(currZ, 0), (currZ, shapeY)], fill=(0, 255, 255, 100), width=linewidth)
         centerArrayYZ = np.array(imYZ)
         self.overlayImgYZ.setImage(centerArrayYZ)
-        self.overlayImgYZ.setRect(0, 0, shape[1], shape[0])
+        #self.overlayImgYZ.setRect(0, 0, shape[1], shape[0])
+
+        tr = QtGui.QTransform()
+        tr.scale(1, ZpixelSize/XYpixelSize)
+        self.overlayImgYZ.setTransform(tr)
+
+        self.autoMeasurePSFSizeFunc()
 
     def updateYline(self):
         pass
@@ -947,7 +975,13 @@ class PSFWindowRecord(QMainWindow):
 
 
     def savePSFfunc(self):
-        pass
+        PSFstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text() + 'PSF')
+        if not os.path.exists(PSFstackSavePath):
+            os.makedirs(PSFstackSavePath)
+        #saveImageName = self.saveImagesName.text() + ".tif"
+        for i in range (self.PSFstack.shape[0]):
+            saveImageName = f"f{i:04}_roi{0:03}_pos{0:04}_z{i:03}_640F_000h00m00s000ms.tif"
+            tif.imwrite(os.path.join(PSFstackSavePath, saveImageName), self.PSFstack[i])
 
     def saveZstackfunc(self):
         zstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text())
@@ -989,6 +1023,14 @@ class PSFWindowRecord(QMainWindow):
         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
+
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+        tr = pg.QtGui.QTransform()
+        tr.scale(1, ZpixelSize/XYpixelSize)
+        self.imgPSFYZ.setTransform(tr)
+        self.imgPSFXZ.setTransform(tr)
+
         self.updatelines()
 
     def askYesNoQuestion(self):
@@ -1013,21 +1055,52 @@ class PSFWindowRecord(QMainWindow):
 
         # if (self.selectedX == 0) and (self.selectedY == 0) and (self.selectedZ == 0):
         flat_index = np.argmax(self.image_stack)
-        self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
-        self.current_indexX = int(self.PSFViewSize.text())//2
-        self.current_indexY = int(self.PSFViewSize.text())//2
-        self.current_index = self.selectedZ
-        self.current_indexZ = self.selectedZ
+        #self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
+        self.selectedZ= np.unravel_index(flat_index, self.image_stack.shape)[0]
+        #self.current_indexX = int(self.PSFViewSize.text())//2
+        #self.current_indexY = int(self.PSFViewSize.text())//2
+        #self.current_index = self.selectedZ
+        #self.current_indexZ = self.selectedZ
             
         self.updateZstackImage()
         self.showSelectedPSF()
         self.updatelines()
-        self.measurePSFSizeFunc()
+        self.autoMeasurePSFSizeFunc()
 
-    def measurePSFSizeFunc(self):
+
+    def autoMeasurePSFSizeFunc(self):
+        """This function is to be called when user scrolls through the stack (called through updateLines function).
+        It ONLY measures PSF dimensions, NO PLOTS."""
         xProfile = self.PSFstack[self.current_indexZ, self.current_indexY, :]
         yProfile = self.PSFstack[self.current_indexZ, :, self.current_indexX]
         zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+
+        zProfile = self.smoothenPSFProfile(zProfile)
+
+        XYpixelSize = float(self.entryXYPixelSize.text())
+        ZpixelSize = float(self.entryZPixelSize.text())
+
+        xFWHM, xHM, xLeft, xRight = peak_widths(xProfile, np.array([np.argmax(xProfile)]), rel_height=0.5)
+        yFWHM, yHM, yLeft, yRight = peak_widths(yProfile, np.array([np.argmax(yProfile)]), rel_height=0.5)
+        zFWHM, zHM, zLeft, zRight = peak_widths(zProfile, np.array([np.argmax(zProfile)]), rel_height=0.5)
+
+        self.labelPSFSizeXpixels.setText(str(round(xFWHM[0],1)) + ' pixels')
+        self.labelPSFSizeYpixels.setText(str(round(yFWHM[0],1)) + ' pixels')
+        self.labelPSFSizeZpixels.setText(str(round(zFWHM[0],1)) + ' pixels')
+
+        self.labelPSFSizeXum.setText(str(round(xFWHM[0] * XYpixelSize ,1)) + ' µm')
+        self.labelPSFSizeYum.setText(str(round(yFWHM[0] * XYpixelSize ,1)) + ' µm')
+        self.labelPSFSizeZum.setText(str(round(zFWHM[0] * ZpixelSize ,1)) + ' µm')
+
+
+    def measurePSFSizeFunc(self):
+        """This function is to be called when Measure PSF button is pressed.
+        It measures PSF dimensions AND PLOTS CROSS-SECTION PROFILES"""
+        xProfile = self.PSFstack[self.current_indexZ, self.current_indexY, :]
+        yProfile = self.PSFstack[self.current_indexZ, :, self.current_indexX]
+        zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+
+        zProfile = self.smoothenPSFProfile(zProfile)
 
         XYpixelSize = float(self.entryXYPixelSize.text())
         ZpixelSize = float(self.entryZPixelSize.text())
@@ -1065,7 +1138,8 @@ class PSFWindowRecord(QMainWindow):
         axes[1].set_xlabel('y[µm]')
         axes[1].set_ylabel('Intensity')
         axes[1].legend()
-        axes[2].plot(np.arange(len(zProfile)) * ZpixelSize, zProfile, label='Profile')
+        axes[2].plot(np.arange(len(zProfile)) * ZpixelSize, zProfile, label='Profile Smoothed out')
+        #axes[2].plot(np.arange(len(zProfile)) * ZpixelSize, self.smoothenPSFProfile(zProfile), label='Profile Smoothed out')
         axes[2].axhline(y=zHM, color='r', linestyle='--', label='Half Max')
         axes[2].set_title('Z Profile')
         axes[2].set_xlabel('z[µm]')
@@ -1074,6 +1148,21 @@ class PSFWindowRecord(QMainWindow):
         plt.tight_layout()
         plt.show()
 
+
+
+    def smoothenPSFProfile(self, profileRaw):
+        """Takes profile and returns average of 5 points (2 before, itself and 2 after) for each point in the profile."""
+        profileRaw = np.asarray(profileRaw, dtype=float)
+        n = len(profileRaw)
+        rezultat = np.zeros(n)
+
+        for i in range(n):
+            start = max(0, i - 2)
+            end = min(n, i + 3)
+            rezultat[i] = np.mean(profileRaw[start:end])
+
+        return rezultat
+
     # def toggleLoadButton(self, state):
     #     state = not state
     #     self.loadSettings.setEnabled(state)
@@ -1081,6 +1170,422 @@ class PSFWindowRecord(QMainWindow):
 
 
         # ====================================================================================================================
+
+
+
+# class PSFWindow(QMainWindow):
+#     def __init__(self, parent = None): 
+#         super().__init__(parent) 
+#         self.init_gui() 
+  
+#     def init_gui(self): 
+#         self.psfLayout = QtWidgets.QHBoxLayout()
+#         central_widget = QWidget()
+#         central_widget.setLayout(self.psfLayout) # self.psfLayout is main layout
+#         self.setCentralWidget(central_widget)
+#         self.setWindowTitle("PSF analysis window - load")
+
+
+#         # Z Stack Layout - displays whole stack of images at full size (512x512 usually) =====================================
+#         self.ZstackLayout = QtWidgets.QGridLayout()
+  
+#         self.zStackFrame = pg.GraphicsLayoutWidget()
+#         # self.zStackFrame.sigMouseReleased.connect(self.codytestfunction)
+#         self.zStackFrame.setEnabled(False)
+#         self.zStackFrame.addLabel('Z-Stack of images', angle=-90, row=0, col=0)
+#         self.zStackFrame.setMinimumSize(500, 500)
+#         self.vbZStack = self.zStackFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+#         self.vbZStack.setMouseMode(pg.ViewBox.PanMode)
+
+#         self.imgZStack = pg.ImageItem()
+#         self.vbZStack.addItem(self.imgZStack)
+
+#         self.image_stack = np.zeros((20, 1024, 1024))
+#         self.current_index = 0     # scroll through whole Zstack
+#         # self.imgZStack.setImage(self.image_stack[self.current_index], levels=(0, 255))
+#         self.vbZStack.addItem(self.imgZStack)
+        
+#         self.labelPSFviewSize = QtWidgets.QLabel(f'<strong>PSF view image size</strong>')
+#         self.ZstackLayout.addWidget(self.labelPSFviewSize, 4, 0)
+#         self.PSFViewSize = QtWidgets.QLineEdit("40")
+#         self.ZstackLayout.addWidget(self.PSFViewSize, 4, 1)
+
+#         self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
+
+#         self.folderPath = QtWidgets.QLineEdit()
+#         self.folderPath.setText("C:/Users/SIM/Desktop/David/250624_centertesting/250624_144927_dk_centertesting/Timelapse/RawStacks")
+#         self.openDialog = QPushButton("Select folder")
+#         self.displayImages = QPushButton("Show images")
+
+#         self.ZstackLayout.addWidget(self.folderPath, 3, 0)
+#         self.ZstackLayout.addWidget(self.openDialog, 3, 1)
+#         self.ZstackLayout.addWidget(self.displayImages, 3, 2)
+
+#         self.openDialog.clicked.connect(self.loadPath)
+#         self.displayImages.clicked.connect(self.displayStackOfImages)
+
+#         self.psfLayout.addLayout(self.ZstackLayout)
+#         # ====================================================================================================================
+
+
+
+
+
+#         # PSF view - displays wchosen area of images at custom size (20x20 usually), xy, xz and yz ===========================
+#         self.PSFViewLayout = QtWidgets.QHBoxLayout()
+
+#         # XY PSF projection view
+#         self.PSFXYFrame = pg.GraphicsLayoutWidget()
+#         self.PSFXYFrame.setEnabled(False)
+#         self.PSFXYFrame.addLabel('XY - PSF View', angle=-90, row=0, col=0)
+#         self.PSFXYFrame.setMinimumSize(400, 400)
+#         self.vbPSFXY = self.PSFXYFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+
+#         self.imgPSFXY = pg.ImageItem()
+#         self.imgPSFXY.setImage(np.zeros((1024, 1024)))
+#         self.vbPSFXY.addItem(self.imgPSFXY)
+
+#         # XZ PSF projection view
+#         self.PSFXZFrame = pg.GraphicsLayoutWidget()
+#         self.PSFXZFrame.setEnabled(False)
+#         self.PSFXZFrame.addLabel('XZ - PSF View', angle=-90, row=0, col=0)
+#         self.PSFXZFrame.setMinimumSize(400, 200)
+#         self.vbPSFXZ = self.PSFXZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+
+#         self.imgPSFXZ = pg.ImageItem()
+#         self.imgPSFXZ.setImage(np.zeros((1024, 1024)))
+#         self.vbPSFXZ.addItem(self.imgPSFXZ)
+
+#         # YZ PSF projection view
+#         self.PSFYZFrame = pg.GraphicsLayoutWidget()
+#         self.PSFYZFrame.setEnabled(False)
+#         self.PSFYZFrame.addLabel('YZ - PSF View', angle=-90, row=0, col=0)
+#         self.PSFYZFrame.setMinimumSize(400, 200)
+#         self.vbPSFYZ = self.PSFYZFrame.addViewBox(row=0, col=1, enableMouse=False, border='w', lockAspect=True)
+
+#         self.imgPSFYZ = pg.ImageItem()
+#         self.imgPSFYZ.setImage(np.zeros((1024, 1024)))
+#         self.vbPSFYZ.addItem(self.imgPSFYZ)
+
+#         self.PSFViewLayout.addWidget(self.PSFXYFrame)
+#         self.PSFViewLayout.addWidget(self.PSFXZFrame)
+#         self.PSFViewLayout.addWidget(self.PSFYZFrame)
+#         self.psfLayout.addLayout(self.PSFViewLayout)
+
+
+#         self.PSFMeasureLayout = QtWidgets.QGridLayout()
+
+#         self.measurePSF = QPushButton("Measure PSF Size")
+#         self.PSFMeasureLayout.addWidget(self.measurePSF, 1, 0)
+#         self.measurePSF.clicked.connect(self.measurePSFSizeFunc)
+
+#         self.labelXYPixelSize = QtWidgets.QLabel('XY Pixel Size (µm)')
+#         self.PSFMeasureLayout.addWidget(self.labelXYPixelSize, 2, 0)
+#         self.labelZPixelSize = QtWidgets.QLabel('Z Pixel Size (µm)')
+#         self.PSFMeasureLayout.addWidget(self.labelZPixelSize, 3, 0)
+
+#         self.entryXYPixelSize = QtWidgets.QLineEdit("0.123")
+#         self.PSFMeasureLayout.addWidget(self.entryXYPixelSize, 2, 1)
+#         self.entryZPixelSize = QtWidgets.QLineEdit("0.1")
+#         self.PSFMeasureLayout.addWidget(self.entryZPixelSize, 3, 1)
+
+#         self.labelPSFSizeX = QtWidgets.QLabel('PSF x size')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeX, 5, 0)
+#         self.labelPSFSizeY = QtWidgets.QLabel('PSF y size')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeY, 7, 0)
+#         self.labelPSFSizeZ = QtWidgets.QLabel('PSF z size')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeZ, 9, 0)
+
+#         self.labelPSFSizeXpixels = QtWidgets.QLabel('- pixels')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeXpixels, 5, 1)
+#         self.labelPSFSizeXum = QtWidgets.QLabel('- µ')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeXum, 6, 1)
+#         self.labelPSFSizeYpixels = QtWidgets.QLabel('- pixels')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeYpixels, 7, 1)
+#         self.labelPSFSizeYum = QtWidgets.QLabel('- µ')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeYum, 8, 1)
+#         self.labelPSFSizeZpixels = QtWidgets.QLabel('- pixels')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeZpixels, 9, 1)
+#         self.labelPSFSizeZum = QtWidgets.QLabel('- µ')
+#         self.PSFMeasureLayout.addWidget(self.labelPSFSizeZum, 10, 1)
+
+#         self.psfLayout.addLayout(self.PSFMeasureLayout)
+#         # ====================================================================================================================
+
+#         # 3D array for PSF view (cropped zstack)
+#         self.PSFstack = np.zeros((20,20,10))
+
+#         # Center of PSF, selected by clicking on zstack image pixel
+#         self.selectedX = 0
+#         self.selectedY = 0
+#         self.selectedZ = 0
+
+#         # Current projection coordinates in PSF view
+#         self.current_indexX = 0
+#         self.current_indexY = 0
+#         self.current_indexZ = 0
+
+
+#         # Lines in psf view to locate position while scrolling thgough a stack ============================
+#         self.overlayMatrixZstack =  np.zeros((1024, 1024))
+#         self.overlayImgZstack = pg.ImageItem(self.overlayMatrixZstack)
+#         self.vbZStack.addItem(self.overlayImgZstack)
+
+#         imZstack = Image.new('RGBA', (np.shape(self.image_stack)[2], np.shape(self.image_stack)[1]), (0, 0, 0, 0))
+#         centerArrayZstack = np.array(imZstack)
+#         self.overlayImgZstack.setImage(centerArrayZstack)
+#         self.overlayImgZstack.setRect(0, 0, np.shape(self.image_stack)[2], np.shape(self.image_stack)[1])
+
+#         self.overlayMatrixXY =  np.zeros((1024, 1024))
+#         self.overlayImgXY = pg.ImageItem(self.overlayMatrixXY)
+#         self.vbPSFXY.addItem(self.overlayImgXY)
+
+#         self.overlayMatrixXZ =  np.zeros((1024, 1024))
+#         self.overlayImgXZ = pg.ImageItem(self.overlayMatrixXZ)
+#         self.vbPSFXZ.addItem(self.overlayImgXZ)
+
+#         self.overlayMatrixYZ =  np.zeros((1024, 1024))
+#         self.overlayImgYZ = pg.ImageItem(self.overlayMatrixYZ)
+#         self.vbPSFYZ.addItem(self.overlayImgYZ)
+
+
+#     def updateZstackImage(self):
+#         self.imgZStack.setImage(self.image_stack[self.current_index])#, levels=(0, 4095))
+
+#     def updatePSFXYimage(self):
+#         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
+#         self.updatelines()
+
+#     def updatePSFXZimage(self):
+#         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
+#         self.updatelines()
+
+#     def updatePSFYZimage(self):
+#         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
+#         self.updatelines()
+
+
+
+#     def updatelines(self):
+#         shape = np.shape(self.PSFstack)
+#         linescale = 9
+#         linewidth = 2
+#         shapeX, shapeY, shapeZ = (linescale*shape[2], linescale*shape[1], linescale*shape[0])
+
+#         currX = linescale*self.current_indexX + linescale // 2
+#         currY = linescale*self.current_indexY + linescale // 2
+#         currZ = linescale*self.current_indexZ + linescale // 2
+
+#         imZstack = Image.new('RGBA', (np.shape(self.image_stack)[2], np.shape(self.image_stack)[1]), (0, 0, 0, 0))
+#         drawZstack = ImageDraw.Draw(imZstack)
+#         drawZstack.rectangle([(self.selectedX - int(self.PSFViewSize.text())//2, self.selectedY  - int(self.PSFViewSize.text())//2), 
+#                               (self.selectedX  + int(self.PSFViewSize.text())//2, self.selectedY  + int(self.PSFViewSize.text())//2)],
+#                                 outline=(255, 255, 0), width=2)
+#         centerArrayZstack = np.array(imZstack)
+#         self.overlayImgZstack.setImage(centerArrayZstack)
+#         self.overlayImgZstack.setRect(0, 0, np.shape(self.image_stack)[2], np.shape(self.image_stack)[1])
+
+#         imXY = Image.new('RGBA', (shapeX, shapeY), (0, 0, 0, 0))
+#         drawXY = ImageDraw.Draw(imXY)
+#         drawXY.line([(currX,0), (currX, shapeY)], fill=(255, 255, 0), width=linewidth)
+#         drawXY.line([(0, currY), (shapeX, currY)], fill=(255, 0, 255), width=linewidth)
+#         centerArrayXY = np.array(imXY)
+#         self.overlayImgXY.setImage(centerArrayXY)
+#         self.overlayImgXY.setRect(0, 0, shape[2], shape[1])
+
+#         imXZ = Image.new('RGBA', (shapeZ, shapeX), (0, 0, 0, 0))
+#         drawXZ = ImageDraw.Draw(imXZ)
+#         drawXZ.line([(0, shapeX - currX), (shapeZ, shapeX - currX)], fill=(255, 255, 0), width=linewidth)
+#         drawXZ.line([(currZ, 0), (currZ, shapeX)], fill=(0, 255, 255), width=linewidth)
+#         centerArrayXZ = np.array(imXZ)
+#         self.overlayImgXZ.setImage(centerArrayXZ)
+#         self.overlayImgXZ.setRect(0, 0, shape[2], shape[0])
+
+#         imYZ = Image.new('RGBA', (shapeZ, shapeY), (0, 0, 0, 0))
+#         drawYZ = ImageDraw.Draw(imYZ)
+#         drawYZ.line([(0, shapeY - currY), (shapeZ, shapeY - currY)], fill=(255, 0, 255), width=linewidth)
+#         drawYZ.line([(currZ, 0), (currZ, shapeY)], fill=(0, 255, 255), width=linewidth)
+#         centerArrayYZ = np.array(imYZ)
+#         self.overlayImgYZ.setImage(centerArrayYZ)
+#         self.overlayImgYZ.setRect(0, 0, shape[1], shape[0])
+
+#     def updateYline(self):
+#         pass
+
+#     def updateXline(self):
+#         pass
+
+    
+#     def wheelEvent(self, event):
+
+#         global_pos = event.globalPosition()  
+
+#         viewbox_global_pos_Zstack = self.vbZStack.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+#         viewbox_global_pos_PSFXY = self.vbPSFXY.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+#         viewbox_global_pos_PSFXZ = self.vbPSFXZ.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+#         viewbox_global_pos_PSFYZ = self.vbPSFYZ.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+
+#         local_pos_Zstack = global_pos - viewbox_global_pos_Zstack
+#         local_pos_PSFXY = global_pos - viewbox_global_pos_PSFXY
+#         local_pos_PSFXZ = global_pos - viewbox_global_pos_PSFXZ
+#         local_pos_PSFYZ = global_pos - viewbox_global_pos_PSFYZ
+
+#         if self.vbZStack.boundingRect().contains(local_pos_Zstack):
+#             modifiers = QtWidgets.QApplication.keyboardModifiers()
+#             if modifiers == QtCore.Qt.ControlModifier:    # if ctrl pressed ==> ZOOM
+#                 mouse_pos = event.pos()
+#                 mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+#                 # super().wheelEvent(event)
+#                 factor = 0.9 if event.angleDelta().y() / 120 > 0 else 1.1
+#                 self.vbZStack.scaleBy((factor, factor))
+#                 new_mouse_point = self.vbZStack.mapSceneToView(mouse_pos)
+#                 delta = new_mouse_point - mouse_point
+#                 self.vbZStack.translateBy(-delta)
+#             else:    # if ctrl not pressed ==> zstack scroll
+#                 num_degrees = event.angleDelta().y() / 120  
+#                 new_index = self.current_index - int(num_degrees)
+#                 self.current_index = max(0, min(len(self.image_stack) - 1, new_index))
+#                 self.updateZstackImage()
+#         elif self.vbPSFXY.boundingRect().contains(local_pos_PSFXY):
+#             num_degrees = event.angleDelta().y() / 120  
+#             new_index = self.current_indexZ - int(num_degrees)
+#             self.current_indexZ = max(0, min(self.PSFstack.shape[0] - 1, new_index))
+#             self.updatePSFXYimage()
+#         elif self.vbPSFXZ.boundingRect().contains(local_pos_PSFXZ):
+#             num_degrees = event.angleDelta().y() / 120  
+#             new_index = self.current_indexY - int(num_degrees)
+#             self.current_indexY = max(0, min(self.PSFstack.shape[1] - 1, new_index))
+#             self.updatePSFXZimage()
+#         elif self.vbPSFYZ.boundingRect().contains(local_pos_PSFYZ):
+#             num_degrees = event.angleDelta().y() / 120  
+#             new_index = self.current_indexX - int(num_degrees)
+#             self.current_indexX = max(0, min(self.PSFstack.shape[2] - 1, new_index))
+#             self.updatePSFYZimage()
+#         else:
+#             pass
+
+#     def loadPath(self):
+#         folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+#         self.folderPath.setText(folderpath)
+
+#     def displayStackOfImages(self):
+#         liststackOfImages = []
+#         for file in os.listdir(self.folderPath.text()):
+#             imarray = tif.imread(os.path.join(self.folderPath.text(), file))
+#             if len(imarray.shape) == 3:
+#                 for i in range(imarray.shape[0]):
+#                     liststackOfImages.append(imarray[i])
+#             elif len(imarray.shape) == 2:
+#                 liststackOfImages.append(imarray)
+
+#         self.image_stack = np.array(liststackOfImages)
+#         self.imgZStack.setImage(self.image_stack[0,:,:])#, levels=(0,4095))
+
+#         # if (self.selectedX == 0) and (self.selectedY == 0) and (self.selectedZ == 0):
+#         flat_index = np.argmax(self.image_stack)
+#         self.selectedZ, self.selectedY, self.selectedX = np.unravel_index(flat_index, self.image_stack.shape)
+#         self.current_indexX = int(self.PSFViewSize.text())//2
+#         self.current_indexY = int(self.PSFViewSize.text())//2
+#         self.current_index = self.selectedZ
+#         self.current_indexZ = self.selectedZ
+            
+#         self.updateZstackImage()
+#         self.showSelectedPSF()
+#         self.updatelines()
+#         self.measurePSFSizeFunc()
+
+#     def mouseReleaseEvent(self, event):
+#         if self.imgZStack.image is None:
+#             return
+        
+#         global_pos = event.globalPosition() 
+#         viewbox_global_pos_Zstack = self.imgZStack.scene().views()[0].mapToGlobal(QtCore.QPoint(0, 0))
+#         local_pos_Zstack = global_pos - viewbox_global_pos_Zstack
+
+#         if  (not self.imgZStack.boundingRect().contains(local_pos_Zstack)):
+#             return
+        
+#         else:
+#             pos = event.pos()
+#             mapped_pos = self.imgZStack.mapFromScene(pos)
+
+#             self.selectedX = int(mapped_pos.y())
+#             self.selectedY = int(mapped_pos.x())
+
+#             if 0 <= self.selectedX < self.image_stack.shape[2] and 0 <= self.selectedY < self.image_stack.shape[1]:
+#             # print(f"Clicked on coordinates: ({self.selectedX}, {self.selectedY})")
+#                 self.showSelectedPSF()
+
+#     def showSelectedPSF(self):
+#         self.current_indexZ = self.current_index
+#         # range for PSFstack is shifted manually, does not work if window size is changed
+
+#         PSFviewsize = int(self.PSFViewSize.text())
+#         self.PSFstack = self.image_stack[:, self.selectedY - PSFviewsize//2: self.selectedY + PSFviewsize//2, self.selectedX - PSFviewsize//2 : self.selectedX + PSFviewsize//2] #!!! dumb hardcoded shift (12) under 
+#         # self.PSFstack = self.image_stack[:, self.selectedY - 12 - PSFviewsize//2: self.selectedY -12 + PSFviewsize//2, self.selectedX - PSFviewsize//2 + 12 : self.selectedX + PSFviewsize//2 + 12]
+#         self.imgPSFXY.setImage(self.PSFstack[self.current_indexZ, :, :])#, levels=(0, 4095))
+#         self.imgPSFXZ.setImage(np.rot90(self.PSFstack[:, self.current_indexY, :]))#, levels=(0, 4095))
+#         self.imgPSFYZ.setImage(np.rot90(self.PSFstack[:, :, self.current_indexX]))#, levels=(0, 4095))
+#         self.updatelines()
+    
+#     def measurePSFSizeFunc(self):
+#         xProfile = self.PSFstack[self.current_indexZ, self.current_indexY, :]
+#         yProfile = self.PSFstack[self.current_indexZ, :, self.current_indexX]
+#         zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+
+#         XYpixelSize = float(self.entryXYPixelSize.text())
+#         ZpixelSize = float(self.entryZPixelSize.text())
+
+#         xFWHM, xHM, xLeft, xRight = peak_widths(xProfile, np.array([np.argmax(xProfile)]), rel_height=0.5)
+#         yFWHM, yHM, yLeft, yRight = peak_widths(yProfile, np.array([np.argmax(yProfile)]), rel_height=0.5)
+#         zFWHM, zHM, zLeft, zRight = peak_widths(zProfile, np.array([np.argmax(zProfile)]), rel_height=0.5)
+
+#         self.labelPSFSizeXpixels.setText(str(round(xFWHM[0],1)) + ' pixels')
+#         self.labelPSFSizeYpixels.setText(str(round(yFWHM[0],1)) + ' pixels')
+#         self.labelPSFSizeZpixels.setText(str(round(zFWHM[0],1)) + ' pixels')
+
+#         self.labelPSFSizeXum.setText(str(round(xFWHM[0] * XYpixelSize ,1)) + ' µm')
+#         self.labelPSFSizeYum.setText(str(round(yFWHM[0] * XYpixelSize ,1)) + ' µm')
+#         self.labelPSFSizeZum.setText(str(round(zFWHM[0] * ZpixelSize ,1)) + ' µm')
+
+#         # plt.plot(np.arange(len(xProfile)) * XYpixelSize, xProfile)
+#         # plt.plot(np.arange(len(yProfile)) * XYpixelSize, yProfile)
+#         # plt.plot(np.arange(len(zProfile)) * ZpixelSize,zProfile)
+#         # plt.plot([0, len(xProfile)], [xHM, xHM])
+#         # plt.plot([0, len(yProfile)], [yHM, yHM])
+#         # plt.plot([0, len(zProfile)], [zHM, zHM])
+#         # plt.show()
+
+#         fig, axes = plt.subplots(1, 3, figsize=(12, 4))  # 3 vrstice, 1 stolpec
+#         axes[0].plot(np.arange(len(xProfile)) * XYpixelSize, xProfile, label='Profile')
+#         axes[0].axhline(y=xHM, color='r', linestyle='--', label='Half Max')
+#         axes[0].set_title('X Profile')
+#         axes[0].set_xlabel('x[µm]')
+#         axes[0].set_ylabel('Intensity')
+#         axes[0].legend()
+#         axes[1].plot(np.arange(len(yProfile)) * XYpixelSize, yProfile, label='Profile')
+#         axes[1].axhline(y=yHM, color='r', linestyle='--', label='Half Max')
+#         axes[1].set_title('Y Profile')
+#         axes[1].set_xlabel('y[µm]')
+#         axes[1].set_ylabel('Intensity')
+#         axes[1].legend()
+#         axes[2].plot(np.arange(len(zProfile)) * ZpixelSize, zProfile, label='Profile')
+#         axes[2].axhline(y=zHM, color='r', linestyle='--', label='Half Max')
+#         axes[2].set_title('Z Profile')
+#         axes[2].set_xlabel('z[µm]')
+#         axes[2].set_ylabel('Intensity')
+#         axes[2].legend()
+#         plt.tight_layout()
+#         plt.show()
+
+#     # def toggleLoadButton(self, state):
+#     #     state = not state
+#     #     self.loadSettings.setEnabled(state)
+
+
+
+
+
 
 # Copyright (C) 2020-2023 ImSwitch developers
 # This file is part of ImSwitch.

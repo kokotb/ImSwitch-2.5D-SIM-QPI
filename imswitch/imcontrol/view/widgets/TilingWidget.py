@@ -83,7 +83,7 @@ class TilingWidget(NapariHybridWidget):
         self.elementList.append(self.numGridY_textedit)
         self.elementList.append(self.overlap_textedit)
         self.elementList.append(self.checkbox_tiling)
-        # self.elementList.append(self.checkbox_tilepreview) #CTNOTE: Not working very well, removing for now 27/8/25
+        self.elementList.append(self.checkbox_tilepreview) #CTNOTE: Not working very well, removing for now 27/8/25
 
 
 
@@ -102,7 +102,7 @@ class TilingWidget(NapariHybridWidget):
         overallLayout.addWidget(self.overlap_textedit, 2, 2)
 
         overallLayout.addWidget(self.checkbox_tiling, 3, 0)
-        # overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
+        overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
 
 
         self.numGridY_textedit.textChanged.connect(lambda *args, name='numGridY': self.sigCheckValidity.emit(name))
