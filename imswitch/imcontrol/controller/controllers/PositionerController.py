@@ -57,9 +57,14 @@ class PositionerController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
 
         #Settings window initialization
-        self.stageManager = self._master.positionersManager['XY']
-        currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
-        self._widget.settingsWindow.skewLabel.setText(currentSkew)
+        try: #this is put in a try because was throwing errors on piezo only. 
+            self.stageManager = self._master.positionersManager['XY']
+            currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+            self._widget.settingsWindow.skewLabel.setText(currentSkew)
+        except KeyError:
+            pass
+        
+        
 
 
     def updateZDrift(self, drift):
