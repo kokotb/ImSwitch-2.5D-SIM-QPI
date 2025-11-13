@@ -404,8 +404,7 @@ class PositionerSettings(QMainWindow):
         self.maxAccEntry = QtWidgets.QLineEdit('0.0')
         self.maxAccEntry.setFixedWidth(50)
         self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move.")
-        self.validator = QDoubleValidator(0.0, 10.0, 1) # example limits, get the right ones
-        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.validator = QIntValidator(1000,100000)
         self.maxAccEntry.setValidator(self.validator)
         self.maxAccButton = QtWidgets.QPushButton('Set')
         self.maxAccLayout.addWidget(self.maxAccLabel)
