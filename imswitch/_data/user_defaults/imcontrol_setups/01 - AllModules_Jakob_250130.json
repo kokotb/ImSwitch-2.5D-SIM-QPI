@@ -248,7 +248,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 100,
+    "valueInit": 4,
 
     "maxdBmValue": 21.8
     }
