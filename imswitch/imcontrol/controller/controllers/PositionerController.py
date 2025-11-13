@@ -57,9 +57,6 @@ class PositionerController(ImConWidgetController):
 
 
         
-        
-
-        
 
         
         #Settings window initialization
@@ -68,9 +65,20 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
             self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
             self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
+            self._widget.settingsWindow.jerkButton.clicked.connect(self.setJerkOnStage)
+            self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.showBacklashOptions)
+            self._widget.settingsWindow.backlashButton.clicked.connect(self.setBacklashOnStage)           
             self.stageManager = self._master.positionersManager['XY']
             currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
-            self._widget.settingsWindow.skewLabel.setText(currentSkew)
+            currentMaxSpeed = self.stageManager.query("controller.stage.speed.get")[1]
+            currentMaxAcc = self.stageManager.query("controller.stage.acc.get")[1]
+            currentJerk = self.stageManager.query("controller.stage.jerk.get")[1]
+            currentBacklash = self.stageManager.query("controller.stage.backlash.get")[1]
+            self._widget.settingsWindow.skewEntry.setText(currentSkew)
+            self._widget.settingsWindow.maxSpeedLabel.setText(currentMaxSpeed)
+            self._widget.settingsWindow.maxAccLabel.setText(currentMaxAcc)
+            self._widget.settingsWindow.jerkLabel.setText(currentJerk)
+            self._widget.settingsWindow.backlashLabel.setText(currentBacklash)
         except:
             pass
         
@@ -87,27 +95,58 @@ class PositionerController(ImConWidgetController):
             self.__logger.warning("Skew value out of range 0-44.9 degrees.")
     
     def setMaxSpeedOnStage(self):
-        value = float(self._widget.settingsWindow.maxSpeedEntry.text())
-        if value > 0:   # input the right ceiling value
+        value = int(self._widget.settingsWindow.maxSpeedEntry.text())
+        if 1000 <= value <= 10000:   # input the right ceiling value
             r, _ = self.stageManager.query(f"controller.stage.speed.set {value}")
             if r == 0:
                 self._widget.settingsWindow.maxSpeedLabel.setText(str(value))
             else:
                 self.__logger.warning("Max Speed not set.")
         else:
-            self.__logger.warning("Max speed value out of range a to b.") #fill in range
+            self.__logger.warning("Max speed value out of range 1000 to 10000.") #fill in range
             
     def setMaxAccOnStage(self):
-        value = float(self._widget.settingsWindow.maxAccEntry.text())
-        if value > 0:   # again
+        value = int(self._widget.settingsWindow.maxAccEntry.text())
+        if 1000 <= value < 100000:   # again
             r, _ = self.stageManager.query(f"controller.stage.acc.set {value}")
             if r == 0:
                 self._widget.settingsWindow.maxAccLabel.setText(str(value))
             else:
                 self.__logger.warning("Max Acceleration not set.")
         else:
-            self.__logger.warning("Max acceleration value out of range a to b.") # same here
+            self.__logger.warning("Max acceleration value out of range 1000 to 100000.") # same here
             
+    def setJerkOnStage(self):
+        value = int(self._widget.settingsWindow.jerkEntry.text())
+        if 0 <= value < 1000:   # again
+            r, _ = self.stageManager.query(f"controller.stage.jerk.set {value}")
+            if r == 0:
+                self._widget.settingsWindow.jerkLabel.setText(str(value))
+            else:
+                self.__logger.warning("Jerk not set.")
+        else:
+            self.__logger.warning("Jerk value out of range 0 to 1000.") # same here
+           
+    def showBacklashOptions(self):
+        isChecked = self._widget.settingsWindow.backlashCheck.isChecked()
+        if isChecked:    
+            for widget in self._widget.settingsWindow.backlashWidgets:
+                widget.setEnabled(True)
+        else:
+            for widget in self._widget.settingsWindow.backlashWidgets:
+                widget.setEnabled(False)
+        
+    def setBacklashOnStage(self):
+        value = int(self._widget.settingsWindow.backlashEntry.text())
+        if 0 <= value <= 100:
+            r, _ = self.stageManager.query(f"controller.stage.backlash.set 1 {value}")
+            if r == 0:
+                self._widget.settingsWindow.backlashLabel.setText(str(value))
+            else:
+                self.__logger.warning("Backlash not set.")
+        else:
+            self.__logger.warning("Backlash value out of range 0-100 µm.")
+          
     def updateZDrift(self, drift):
         self.setSharedAttr('Z', 'Z', 'Drift', drift)
         self._widget.pars['DriftZ--Z'].setText(f'({drift:.2f} µm)')

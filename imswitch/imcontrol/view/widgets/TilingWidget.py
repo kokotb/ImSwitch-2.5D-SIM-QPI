@@ -129,7 +129,8 @@ class TilingWidget(NapariHybridWidget):
         self.runTilingActiveBool = not self.runTilingActiveBool
         if self.runTilingActiveBool == False:
              self.checkbox_tilepreview.setEnabled(False)
-        else: self.checkbox_tilepreview.setEnabled(True)
+        else: 
+            self.checkbox_tilepreview.setEnabled(True)
 
     def toggleEnabled(self, state):
         state = not state

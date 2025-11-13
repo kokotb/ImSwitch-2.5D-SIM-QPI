@@ -362,25 +362,22 @@ class PositionerSettings(QMainWindow):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
-        #self.skewButton.clicked.connect(self.setSkewOnStage)
-        
-        
         self.skewLayout.addWidget(self.skewLabel)
         self.skewLayout.addWidget(self.skewEntry)
         self.skewLayout.addWidget(self.skewButton)
         self.skewLayout.addStretch()
-        self.overallLayout.addLayout(self.skewLayout)
+        self.overallLayout.addLayout(self.skewLayout)    
         
         # stage max speed title
         self.maxSpeedTitleLayout = QtWidgets.QHBoxLayout()
-        self.maxSpeedTitleLabel = QtWidgets.QLabel('Stage Speed (µm/s)')       
+        self.maxSpeedTitleLabel = QtWidgets.QLabel('Max Speed (µm/s)')       
         self.maxSpeedTitleLayout.addWidget(self.maxSpeedTitleLabel)
         self.overallLayout.addLayout(self.maxSpeedTitleLayout)      
         
         # stage max speed layout
         self.maxSpeedLayout = QtWidgets.QHBoxLayout()
-        self.maxSpeedLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
-        self.maxSpeedEntry = QtWidgets.QLineEdit('0.0')
+        self.maxSpeedLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.maxSpeedEntry = QtWidgets.QLineEdit('0')
         self.maxSpeedEntry.setFixedWidth(50)
         self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move.")
         self.validator = QIntValidator(1000,10000)
@@ -391,10 +388,10 @@ class PositionerSettings(QMainWindow):
         self.maxSpeedLayout.addWidget(self.maxSpeedButton)
         self.maxSpeedLayout.addStretch()
         self.overallLayout.addLayout(self.maxSpeedLayout)       
-        
+         
         # stage max acceleration title
         self.maxAccTitleLayout = QtWidgets.QHBoxLayout()
-        self.maxAccTitleLabel = QtWidgets.QLabel('Stage Acceleration (µm/s²)')       
+        self.maxAccTitleLabel = QtWidgets.QLabel('Max Acceleration (µm/s²)')       
         self.maxAccTitleLayout.addWidget(self.maxAccTitleLabel)
         self.overallLayout.addLayout(self.maxAccTitleLayout)  
         
@@ -413,10 +410,59 @@ class PositionerSettings(QMainWindow):
         self.maxAccLayout.addStretch()
         self.overallLayout.addLayout(self.maxAccLayout)
             
+        # stage jerk title
+        self.jerkTitleLayout = QtWidgets.QHBoxLayout()
+        self.jerkTitleLabel = QtWidgets.QLabel('Jerk (ms)')       
+        self.jerkTitleLayout.addWidget(self.jerkTitleLabel)
+        self.overallLayout.addLayout(self.jerkTitleLayout)  
         
+        # stage jerk layout 
+        self.jerkLayout = QtWidgets.QHBoxLayout()
+        self.jerkLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.jerkEntry = QtWidgets.QLineEdit('0')
+        self.jerkEntry.setFixedWidth(50)
+        self.jerkEntry.setToolTip("Enter the jerk time in miliseconds.")
+        self.validator = QIntValidator(0,1000) # find the correct values
+        self.jerkEntry.setValidator(self.validator)
+        self.jerkButton = QtWidgets.QPushButton('Set')
+        self.jerkLayout.addWidget(self.jerkLabel)
+        self.jerkLayout.addWidget(self.jerkEntry)
+        self.jerkLayout.addWidget(self.jerkButton)
+        self.jerkLayout.addStretch()
+        self.overallLayout.addLayout(self.jerkLayout)     
         
+        # stage backlash title
+        self.backlashTitleLayout = QtWidgets.QHBoxLayout()
+        self.backlashCheck = QtWidgets.QCheckBox()
+        self.backlashCheck.setChecked(False)
+        self.backlashCheck.setToolTip('Check here to enable backlash.')
+        self.backlashTitleLayout.addWidget(self.backlashCheck)
+        self.backlashTitleLabel = QtWidgets.QLabel('Backlash (µm)')
+        self.backlashTitleLayout.addWidget(self.backlashTitleLabel)
+        self.backlashTitleLayout.addStretch()
+        self.overallLayout.addLayout(self.backlashTitleLayout)
+
+        # stage backlash layout 
+        self.backlashLayout = QtWidgets.QHBoxLayout()
+        self.backlashLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.backlashEntry = QtWidgets.QLineEdit('0')
+        self.backlashEntry.setFixedWidth(50)
+        self.backlashEntry.setToolTip("Enter the backlash in µm.")
+        self.validator = QIntValidator(0,100) # find the correct values
+        self.backlashEntry.setValidator(self.validator)
+        self.backlashButton = QtWidgets.QPushButton('Set')
+        self.backlashLayout.addWidget(self.backlashLabel)
+        self.backlashLayout.addWidget(self.backlashEntry)
+        self.backlashLayout.addWidget(self.backlashButton)
+        self.backlashLayout.addStretch()
+        self.overallLayout.addLayout(self.backlashLayout)
+        self.backlashWidgets = [self.backlashLabel, self.backlashEntry, self.backlashButton]
+        for widget in self.backlashWidgets:
+            widget.setEnabled(False)
+
         # keep the overall layout together
         self.overallLayout.addStretch()
+        
         
         
         self.skewEntry.textChanged.connect(lambda *args, name='skewEntry': self.sigCheckValidity.emit(name))
@@ -424,6 +470,10 @@ class PositionerSettings(QMainWindow):
         self.maxSpeedEntry.textChanged.connect(lambda *args, name='maxSpeedEntry': self.sigCheckValidity.emit(name))
         self.sigCheckValidity.connect(self.checkValidity)
         self.maxAccEntry.textChanged.connect(lambda *args, name='maxAccEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.jerkEntry.textChanged.connect(lambda *args, name='jerkEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.backlashEntry.textChanged.connect(lambda *args, name='backlashEntry': self.sigCheckValidity.emit(name))
         self.sigCheckValidity.connect(self.checkValidity)
         
     def checkValidity(self, name):
@@ -433,6 +483,10 @@ class PositionerSettings(QMainWindow):
             signalOrigin = self.maxSpeedEntry
         if name == 'maxAccEntry':
             signalOrigin = self.maxAccEntry
+        if name == 'jerkEntry':
+            signalOrigin = self.jerkEntry
+        if name == 'backlashEntry':
+            signalOrigin = self.backlashEntry
         valid = signalOrigin.hasAcceptableInput()
         if valid:
             signalOrigin.setStyleSheet('')
