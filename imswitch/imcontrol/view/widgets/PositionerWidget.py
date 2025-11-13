@@ -362,7 +362,7 @@ class PositionerSettings(QMainWindow):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
-        self.skewButton.clicked.connect(self.setSkewOnStage)
+        #self.skewButton.clicked.connect(self.setSkewOnStage)
         
         
         self.skewLayout.addWidget(self.skewLabel)
@@ -383,8 +383,7 @@ class PositionerSettings(QMainWindow):
         self.maxSpeedEntry = QtWidgets.QLineEdit('0.0')
         self.maxSpeedEntry.setFixedWidth(50)
         self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move.")
-        self.validator = QDoubleValidator(0.0, 10.0, 1) # example limits, get the right ones
-        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.validator = QIntValidator(1000,10000)
         self.maxSpeedEntry.setValidator(self.validator)
         self.maxSpeedButton = QtWidgets.QPushButton('Set')
         self.maxSpeedLayout.addWidget(self.maxSpeedLabel)

@@ -214,7 +214,7 @@ class PriorStageManager(PositionerManager):
             # print(busy)
             busy = self.query("controller.stage.busy.get")[1]
 
-    def checkIfMoving(self): #CTNOTE This function hangs the GUI for long operations
+    def checkIfMoving(self):
         busyQuery = self.query("controller.stage.busy.get")[1]
         if busyQuery != '0':
             busy = True

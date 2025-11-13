@@ -78,7 +78,7 @@ class PositionerController(ImConWidgetController):
         value = float(self._widget.settingsWindow.skewEntry.text())
         if 0 < value < 44.9:
             r, _ = self.stageManager.query(f"controller.stage.skew.enabled.set {value}")
-            if r == '0':
+            if r == 0:
                 self._widget.settingsWindow.skewLabel.setText(str(value))
             else:
                 self.__logger.warning("Skew not set.")
@@ -88,8 +88,8 @@ class PositionerController(ImConWidgetController):
     def setMaxSpeedOnStage(self):
         value = float(self._widget.settingsWindow.maxSpeedEntry.text())
         if value > 0:   # input the right ceiling value
-            r, _ = self.stageManager.query(f"controller.stage.speed.set  {value}")
-            if r == '0':
+            r, _ = self.stageManager.query(f"controller.stage.speed.set {value}")
+            if r == 0:
                 self._widget.settingsWindow.maxSpeedLabel.setText(str(value))
             else:
                 self.__logger.warning("Max Speed not set.")
@@ -99,8 +99,8 @@ class PositionerController(ImConWidgetController):
     def setMaxAccOnStage(self):
         value = float(self._widget.settingsWindow.maxAccEntry.text())
         if value > 0:   # again
-            r, _ = self.stageManager.query(f"controller.stage.acceleration.set  {value}")
-            if r == '0':
+            r, _ = self.stageManager.query(f"controller.stage.acc.set {value}")
+            if r == 0:
                 self._widget.settingsWindow.maxAccLabel.setText(str(value))
             else:
                 self.__logger.warning("Max Acceleration not set.")
