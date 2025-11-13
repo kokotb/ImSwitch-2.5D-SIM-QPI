@@ -54,18 +54,25 @@ class PositionerController(ImConWidgetController):
         # self._widget.sigsetPositionerSpeedClicked.connect(self.setSpeed)
         self._widget.sigWheelEvent.connect(self.focusWheelDelta)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
+
+
+        
+        
+
         
         # Positioner settings signals connect
         self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
         self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
         self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
         
+        #Settings window initialization
+        try: #this is put in a try because was throwing errors on piezo only. 
+            self.stageManager = self._master.positionersManager['XY']
+            currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+            self._widget.settingsWindow.skewLabel.setText(currentSkew)
+        except KeyError:
+            pass
         
-        # Settings window initialization
-        self.stageManager = self._master.positionersManager['XY']
-        currentSkew, _ = self.stageManager.query('controller.stage.skew.enabled.get')
-        self._widget.settingsWindow.skewLabel.setText(str(float(currentSkew)))
-             
         
     def setSkewOnStage(self):
         value = float(self._widget.settingsWindow.skewEntry.text())

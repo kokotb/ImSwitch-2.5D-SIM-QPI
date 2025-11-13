@@ -13,6 +13,7 @@ from imswitch.imcommon.model import initLogger, ostools
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal
 import statistics
+from qtpy import QtWidgets
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -1069,7 +1070,7 @@ class SIMController(ImConWidgetController):
         exposure_auto = 'Off'
         gamma = 1.0
         trigger_source = 'Line0'
-        detector._camera.setBufferTimeout(500)
+        # detector._camera.setBufferTimeout(500)
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1398,9 +1399,9 @@ class SIMController(ImConWidgetController):
                     if (self.isTiling or self.isScanROI):
                         self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
                         if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                            time.sleep(.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
+                            time.sleep(2) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
                         else:
-                            time.sleep(.05) #Wait time for jiggle if only moving to adjacent ROI.
+                            time.sleep(0.5) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
                     # ####Autofocus
@@ -1421,16 +1422,36 @@ class SIMController(ImConWidgetController):
                     z = 0
                     while z < len(zList):
 
-                        # Auto Zernike loop ==================================================================
-                        if self._commChannel.autoZernChecked:
-                            self._commChannel.sigBeginAutoZern.emit()
-                            time.sleep(1)
-                            while self._commChannel.autoZernChecked:
+                        # # Auto Zernike loop ==================================================================
+                        # if self._commChannel.autoZernChecked:
+                        #     self._commChannel.sigBeginAutoZern.emit()
+                        #     time.sleep(1)
+                        #     while self._commChannel.autoZernChecked:
+                        #         time.sleep(0.1) # probably just remove
+
+                        #         rawImg = self._commChannel.lastImgDict['640F']
+
+                        #         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                        #         if self._commChannel.stop25DNow: #allows exit of the loop
+                        #             self.stop25D()
+
+                        #     print('autozern ended')
+                        # # ====================================================================================
+
+
+
+                        # Auto Zernike Testing New loop ==================================================================
+                        if self._commChannel.autoZernCheckedNew:
+                            
+                            selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+                            self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
+                            # time.sleep(1)
+                            while self._commChannel.autoZernCheckedNew:
                                 time.sleep(0.1) # probably just remove
 
-                                rawImg = self._commChannel.lastImgDict['640F']
+                                # rawImg = self._commChannel.lastImgDict['640F']
 
-                                self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                                # self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
                                 if self._commChannel.stop25DNow: #allows exit of the loop
                                     self.stop25D()
 
@@ -1591,9 +1612,9 @@ class SIMController(ImConWidgetController):
             endBufferTime = time.time()
             totalBufferTime = endBufferTime - startBufferTime
             waitingBuffers = detector._camera.getBufferValue('25D')
-            time.sleep(0.002)
+            # time.sleep(0.002)
 
-            if (waitingBuffers != 1 and totalBufferTime > 0.1): # Will wait for 0.2 seconds for a buffer to come before resetting.
+            if (waitingBuffers != 1 and totalBufferTime > 0.2): # Will wait for 0.2 seconds for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True

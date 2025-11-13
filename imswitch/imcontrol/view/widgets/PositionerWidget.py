@@ -362,6 +362,9 @@ class PositionerSettings(QMainWindow):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
+        self.skewButton.clicked.connect(self.setSkewOnStage)
+        
+        
         self.skewLayout.addWidget(self.skewLabel)
         self.skewLayout.addWidget(self.skewEntry)
         self.skewLayout.addWidget(self.skewButton)

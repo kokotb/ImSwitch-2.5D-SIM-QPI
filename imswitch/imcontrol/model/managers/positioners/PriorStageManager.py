@@ -145,8 +145,14 @@ class PriorStageManager(PositionerManager):
     def setPositionXY(self, position_x, position_y):
 
         if abs(float(position_x)) > self.moveLimitsRegHolder[0] or abs(float(position_y)) > self.moveLimitsRegHolder[1]:
-
-            self.__logger.error(f'Out of bounds request for XY stage. Limits are ±{self.moveLimitsRegHolder}')
+            xError = abs(float(position_x)) > self.moveLimitsRegHolder[0]
+            yError = abs(float(position_y)) > self.moveLimitsRegHolder[1]
+            if xError:
+                self.__logger.error(f'Out of bounds request for X axis. Limits are ±{self.moveLimitsRegHolder[0]}. Requested: {float(position_x)}')
+            if yError:
+                self.__logger.error(f'Out of bounds request for Y axis. Limits are ±{self.moveLimitsRegHolder[1]}. Requested: {float(position_y)}')
+            
+            #self.__logger.error(f'Out of bounds request for XY stage. Limits are ±{self.moveLimitsRegHolder}')
             old_pos = self.get_abs()
             self._position['X'] = float(old_pos[0])
             self._position['Y'] = float(old_pos[1])

@@ -15,9 +15,10 @@ class PSFAnalysisController(ImConWidgetController):
         self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
     def startRecImagesFunc(self):
+        self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
+
         # self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        
         if not self._commChannel.simActive:
             self._widget.loadingPopupRecord.recordImages.setEnabled(False)
             self._commChannel.sigSetForPSF.emit(True)

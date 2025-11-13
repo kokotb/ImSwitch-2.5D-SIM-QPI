@@ -8,6 +8,7 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtCore import QLocale
 import cv2
+import time
 
 import napari
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
@@ -105,6 +106,11 @@ class SIMWidget(NapariHybridWidget):
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
             
+    def askYesNoQuestion(self):
+        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis. Would you like to countiniue?',
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        return result == QtWidgets.QMessageBox.Yes
 
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
