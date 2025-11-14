@@ -130,6 +130,8 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigAutoZernikeFinished.connect(self.AZFinished)
 
+        self._commChannel.sigGetAZFrameCoords.connect(self.sendAZFrameCoordsTo25DController)
+
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
 
@@ -1763,6 +1765,9 @@ class SIMController(ImConWidgetController):
         print('AZ finished') 
         # signal activates this function. Use it to break AZ loop if neccessary
 
+    def sendAZFrameCoordsTo25DController(self):
+        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
     # def setParameter(self, parameterName, value):
     #     # FIXME: Just a place holder
     #     self._logger.error(f"{parameterName} with {value} not set! Setting of SIM parameters using attrChanged in widget is not set up yet.")

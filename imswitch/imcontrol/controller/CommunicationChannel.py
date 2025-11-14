@@ -109,6 +109,10 @@ class CommunicationChannel(SignalInterface):
 
     sigAutoZernikeFinished = Signal()
 
+    sigGetAZFrameCoords = Signal()
+
+    sigSendAZFrameCooords = Signal(object)
+
 
 
 

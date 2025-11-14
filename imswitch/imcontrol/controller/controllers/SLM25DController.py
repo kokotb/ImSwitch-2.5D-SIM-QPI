@@ -103,7 +103,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
         self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
-        self._widget.beginAZbutton.clicked.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
+        self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
 
 
         # self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
@@ -262,6 +262,8 @@ class SLM25DController(ImConWidgetController):
 
     #     #self._commChannel.sigAutoZernikeFinished.emit()
 
+    def initiateAZWithButton(self):
+        self._commChannel.sigGetAZFrameCoords.emit()
 
 
     def AutoZernLoopNew(self, selected_frame):
@@ -307,7 +309,7 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                if self._commChannel.stop25DNow: #allows exit of the loop
+                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
@@ -360,7 +362,7 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                if self._commChannel.stop25DNow: #allows exit of the loop
+                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
@@ -413,7 +415,7 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                if self._commChannel.stop25DNow: #allows exit of the loop
+                if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
@@ -466,7 +468,7 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmas12.append([sigma1, sigma2])
-                if self._commChannel.stop25DNow: #allows exit of the loop
+                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
