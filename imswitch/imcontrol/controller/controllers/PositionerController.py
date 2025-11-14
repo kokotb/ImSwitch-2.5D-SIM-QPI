@@ -127,7 +127,7 @@ class PositionerController(ImConWidgetController):
             
     def setJerkOnStage(self):
         value = int(self._widget.settingsWindow.jerkEntry.text())
-        if 0 <= value < 1000:   # again
+        if 0 <= value <= 1000:   # again
             r, _ = self.stageManager.query(f"controller.stage.jerk.set {value}")
             if r == 0:
                 self._widget.settingsWindow.jerkLabel.setText(str(value))
