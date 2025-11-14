@@ -66,8 +66,8 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
             self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
             self._widget.settingsWindow.jerkButton.clicked.connect(self.setJerkOnStage)
-            self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.showBacklashOptions)
-            self._widget.settingsWindow.backlashButton.clicked.connect(self.setBacklashOnStage)           
+            self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.handleBacklash)
+            self._widget.settingsWindow.backlashButton.clicked.connect(self.handleBacklash)      
             self.stageManager = self._master.positionersManager['XY']
             currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
             currentMaxSpeed = self.stageManager.query("controller.stage.speed.get")[1]
@@ -127,16 +127,12 @@ class PositionerController(ImConWidgetController):
         else:
             self.__logger.warning("Jerk value out of range 0 to 1000.") # same here
            
-    def showBacklashOptions(self):
+    def handleBacklash(self):
         isChecked = self._widget.settingsWindow.backlashCheck.isChecked()
-        if isChecked:    
-            for widget in self._widget.settingsWindow.backlashWidgets:
-                widget.setEnabled(True)
-        else:
-            for widget in self._widget.settingsWindow.backlashWidgets:
-                widget.setEnabled(False)
-        
-    def setBacklashOnStage(self):
+        for widget in self._widget.settingsWindow.backlashWidgets:
+            widget.setEnabled(isChecked)       
+        if not isChecked:
+            self.stageManager.query("controller.stage.backlash.set 0 {}")
         value = int(self._widget.settingsWindow.backlashEntry.text())
         if 0 <= value <= 100:
             r, _ = self.stageManager.query(f"controller.stage.backlash.set 1 {value}")
@@ -145,7 +141,8 @@ class PositionerController(ImConWidgetController):
             else:
                 self.__logger.warning("Backlash not set.")
         else:
-            self.__logger.warning("Backlash value out of range 0-100 µm.")
+            self.__logger.warning("Backlash value must be 0–100 μm.")
+
           
     def updateZDrift(self, drift):
         self.setSharedAttr('Z', 'Z', 'Drift', drift)
