@@ -140,7 +140,7 @@ class SLM25DController(ImConWidgetController):
     #     threading.Thread(target=self.AutoZernLoop, args=(), daemon=True).start()
 
     def beginAutoZernThreadNew(self, selected_frame):
-        threading.Thread(target=self.AutoZernLoopNew(selected_frame), args=(), daemon=True).start()
+        threading.Thread(target=self.AutoZernLoopNew, args=(selected_frame, ), daemon=True).start()
 
     # def AutoZernLoop(self):
 
