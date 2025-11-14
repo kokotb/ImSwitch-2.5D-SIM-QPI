@@ -1443,21 +1443,21 @@ class SIMController(ImConWidgetController):
 
 
                         # Auto Zernike Testing New loop ==================================================================
-                        if self._commChannel.autoZernCheckedNew:
+                        # if self._commChannel.autoZernCheckedNew:
                             
-                            selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
-                            self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
-                            # time.sleep(1)
-                            while self._commChannel.autoZernCheckedNew:
-                                time.sleep(0.1) # probably just remove
+                        #     selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+                        #     self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
+                        #     # time.sleep(1)
+                        #     while self._commChannel.autoZernCheckedNew:
+                        #         time.sleep(0.1) # probably just remove
 
-                                # rawImg = self._commChannel.lastImgDict['640F']
+                        #         # rawImg = self._commChannel.lastImgDict['640F']
 
-                                # self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
-                                if self._commChannel.stop25DNow: #allows exit of the loop
-                                    self.stop25D()
+                        #         # self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                        #         if self._commChannel.stop25DNow: #allows exit of the loop
+                        #             self.stop25D()
 
-                            print('autozern ended')
+                        #     print('autozern ended')
                         # ====================================================================================
 
 
