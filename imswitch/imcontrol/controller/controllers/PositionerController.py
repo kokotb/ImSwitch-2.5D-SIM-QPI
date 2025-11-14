@@ -62,12 +62,14 @@ class PositionerController(ImConWidgetController):
         #Settings window initialization
         try: #this is put in a try because was throwing errors on piezo only. Please think of better way.
                     # Positioner settings signals connect
+            self._widget.settingsWindow.skewButtonA.clicked.connect(lambda: self.stageManager.query("controller.stage.skew.about.a"))
+            self._widget.settingsWindow.skewButtonB.clicked.connect(self.setSkewCalculated)
             self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
             self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
             self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
             self._widget.settingsWindow.jerkButton.clicked.connect(self.setJerkOnStage)
             self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.handleBacklash)
-            self._widget.settingsWindow.backlashButton.clicked.connect(self.handleBacklash)      
+            self._widget.settingsWindow.backlashButton.clicked.connect(self.handleBacklash)
             self.stageManager = self._master.positionersManager['XY']
             currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
             currentMaxSpeed = self.stageManager.query("controller.stage.speed.get")[1]
@@ -82,7 +84,14 @@ class PositionerController(ImConWidgetController):
         except:
             pass
         
-        
+    
+    def setSkewCalculated(self):
+        r, _ = self.stageManager.query("controller.stage.skew.about.b")
+        if r == 0:
+            self._widget.settingsWindow.skewLabel.setText(self.stageManager.query("controller.stage.skew.enabled.get")[1])
+        else:
+            self.__logger.warning("Skew about not set corectly.")    
+       
     def setSkewOnStage(self):
         value = float(self._widget.settingsWindow.skewEntry.text())
         if 0 <= value <= 44.9:

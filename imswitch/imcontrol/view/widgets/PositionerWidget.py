@@ -345,6 +345,31 @@ class PositionerSettings(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(self.overallLayout)
         self.setCentralWidget(central_widget)
+
+        # calculate skew title
+        self.calcSkewTitleLayout = QtWidgets.QHBoxLayout()
+        self.calcSkewTitleLabel = QtWidgets.QLabel('Calculate skew')       
+        self.calcSkewTitleLayout.addWidget(self.calcSkewTitleLabel)
+        self.overallLayout.addLayout(self.calcSkewTitleLayout)
+        
+        # calculate skew
+        self.skewLayoutA = QtWidgets.QHBoxLayout()
+        self.skewLabelA = QtWidgets.QLabel('Pos a')
+        self.skewLabelA.setToolTip("Position the stage on 1st point of a non-aligned sample edge and set the 1st skew point.")
+        self.skewButtonA = QtWidgets.QPushButton('Set')
+        self.skewLayoutA.addWidget(self.skewLabelA)
+        self.skewLayoutA.addWidget(self.skewButtonA)
+        self.skewLayoutA.addStretch()
+        self.overallLayout.addLayout(self.skewLayoutA)
+        
+        self.skewLayoutB = QtWidgets.QHBoxLayout()
+        self.skewLabelB = QtWidgets.QLabel('Pos b')
+        self.skewLabelB.setToolTip("Position the stage on 2nd point of a non-aligned sample edge and set the 2nd skew point.")
+        self.skewButtonB = QtWidgets.QPushButton('Set')
+        self.skewLayoutB.addWidget(self.skewLabelB)
+        self.skewLayoutB.addWidget(self.skewButtonB)
+        self.skewLayoutB.addStretch()
+        self.overallLayout.addLayout(self.skewLayoutB)
         
         # skew title
         self.skewTitleLayout = QtWidgets.QHBoxLayout()
