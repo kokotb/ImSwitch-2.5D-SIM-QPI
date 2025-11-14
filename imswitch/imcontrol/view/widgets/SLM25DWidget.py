@@ -89,6 +89,9 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(False)
         self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
         self.slmPreview.setFixedWidth(250)
+        self.beginAZbutton = QPushButton("AutoZernike New")
+        self.beginAZbutton.setEnabled(False)
+        self.beginAZbutton.setFixedWidth(250)
         self.resetZern = QPushButton("Reset")
         self.resetZern.setEnabled(False)
         self.resetZern.clicked.connect(self.sigResetZern.emit)
@@ -124,6 +127,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.project25D,0,4)
         self.grid.addWidget(self.projectCenter,0,5)
         self.grid.addWidget(self.slmPreview, 0, 6)
+        self.grid.addWidget(self.beginAZbutton, 2, 6)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
@@ -413,6 +417,7 @@ class SLM25DWidget(Widget):
          
     def disableAll(self):
         self.slmPreview.setEnabled(False)
+        self.beginAZbutton.setEnabled(False)
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
@@ -449,6 +454,7 @@ class SLM25DWidget(Widget):
 
     def enableAll(self):
         self.slmPreview.setEnabled(True)
+        self.beginAZbutton.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
         self.autoZernCheckboxNew.setEnabled(True)
