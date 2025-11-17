@@ -348,7 +348,7 @@ class PositionerSettings(QMainWindow):
 
         # calculate skew title
         self.calcSkewTitleLayout = QtWidgets.QHBoxLayout()
-        self.calcSkewTitleLabel = QtWidgets.QLabel('Calculate skew')       
+        self.calcSkewTitleLabel = QtWidgets.QLabel(f'<strong>2 Point Skew</strong>')       
         self.calcSkewTitleLayout.addWidget(self.calcSkewTitleLabel)
         self.overallLayout.addLayout(self.calcSkewTitleLayout)
         
@@ -362,18 +362,9 @@ class PositionerSettings(QMainWindow):
         self.skewLayoutA.addStretch()
         self.overallLayout.addLayout(self.skewLayoutA)
         
-        self.skewLayoutB = QtWidgets.QHBoxLayout()
-        self.skewLabelB = QtWidgets.QLabel('Point B')
-        self.skewLabelB.setToolTip("Position the stage on 2nd point of a non-aligned sample edge and set the 2nd skew point.")
-        self.skewButtonB = QtWidgets.QPushButton('Set')
-        self.skewLayoutB.addWidget(self.skewLabelB)
-        self.skewLayoutB.addWidget(self.skewButtonB)
-        self.skewLayoutB.addStretch()
-        self.overallLayout.addLayout(self.skewLayoutB)
-        
         # skew title
         self.skewTitleLayout = QtWidgets.QHBoxLayout()
-        self.skewTitleLabel = QtWidgets.QLabel('Skew Angle (°)')       
+        self.skewTitleLabel = QtWidgets.QLabel(f'<strong>Manual Skew (°)</strong>')       
         self.skewTitleLayout.addWidget(self.skewTitleLabel)
         self.overallLayout.addLayout(self.skewTitleLayout)
         
@@ -395,7 +386,7 @@ class PositionerSettings(QMainWindow):
         
         # stage max speed title
         self.maxSpeedTitleLayout = QtWidgets.QHBoxLayout()
-        self.maxSpeedTitleLabel = QtWidgets.QLabel('Max Speed (µm/s)')       
+        self.maxSpeedTitleLabel = QtWidgets.QLabel(f'<strong>Max Speed (µm/s)</strong>')       
         self.maxSpeedTitleLayout.addWidget(self.maxSpeedTitleLabel)
         self.overallLayout.addLayout(self.maxSpeedTitleLayout)      
         
@@ -416,14 +407,14 @@ class PositionerSettings(QMainWindow):
          
         # stage max acceleration title
         self.maxAccTitleLayout = QtWidgets.QHBoxLayout()
-        self.maxAccTitleLabel = QtWidgets.QLabel('Max Acceleration (µm/s²)')       
+        self.maxAccTitleLabel = QtWidgets.QLabel(f'<strong>Max Acceleration (µm/s²)</strong>') 
         self.maxAccTitleLayout.addWidget(self.maxAccTitleLabel)
         self.overallLayout.addLayout(self.maxAccTitleLayout)  
         
         # stage max acceleration layout 
         self.maxAccLayout = QtWidgets.QHBoxLayout()
-        self.maxAccLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
-        self.maxAccEntry = QtWidgets.QLineEdit('0.0')
+        self.maxAccLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.maxAccEntry = QtWidgets.QLineEdit('0')
         self.maxAccEntry.setFixedWidth(50)
         self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move.")
         self.validator = QIntValidator(1000,100000)
@@ -437,7 +428,7 @@ class PositionerSettings(QMainWindow):
             
         # stage jerk title
         self.jerkTitleLayout = QtWidgets.QHBoxLayout()
-        self.jerkTitleLabel = QtWidgets.QLabel('Jerk (ms)')       
+        self.jerkTitleLabel = QtWidgets.QLabel(f'<strong>Jerk (ms)</strong>')       
         self.jerkTitleLayout.addWidget(self.jerkTitleLabel)
         self.overallLayout.addLayout(self.jerkTitleLayout)  
         
@@ -462,7 +453,7 @@ class PositionerSettings(QMainWindow):
         self.backlashCheck.setChecked(False)
         self.backlashCheck.setToolTip('Check here to enable backlash.')
         self.backlashTitleLayout.addWidget(self.backlashCheck)
-        self.backlashTitleLabel = QtWidgets.QLabel('Backlash (µm)')
+        self.backlashTitleLabel = QtWidgets.QLabel(f'<strong>Backlash (µm)</strong>')
         self.backlashTitleLayout.addWidget(self.backlashTitleLabel)
         self.backlashTitleLayout.addStretch()
         self.overallLayout.addLayout(self.backlashTitleLayout)

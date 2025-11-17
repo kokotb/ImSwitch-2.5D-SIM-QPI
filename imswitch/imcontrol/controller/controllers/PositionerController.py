@@ -61,7 +61,7 @@ class PositionerController(ImConWidgetController):
         
         #Settings window initialization
         try: #this is put in a try because was throwing errors on piezo only. Please think of better way.
-                    # Positioner settings signals connect
+            # Positioner settings signals connect
             self._widget.settingsWindow.skewButtonA.clicked.connect(lambda: self.stageManager.query("controller.stage.skew.about.a"))
             self._widget.settingsWindow.skewButtonB.clicked.connect(self.setSkewCalculated)
             self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
@@ -70,17 +70,28 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.jerkButton.clicked.connect(self.setJerkOnStage)
             self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.handleBacklash)
             self._widget.settingsWindow.backlashButton.clicked.connect(self.handleBacklash)
+            
             self.stageManager = self._master.positionersManager['XY']
+            
             currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
             currentMaxSpeed = self.stageManager.query("controller.stage.speed.get")[1]
             currentMaxAcc = self.stageManager.query("controller.stage.acc.get")[1]
             currentJerk = self.stageManager.query("controller.stage.jerk.get")[1]
             currentBacklash = self.stageManager.query("controller.stage.backlash.get")[1]
+            
+            self._widget.settingsWindow.skewEntry.setText((f"<strong>{currentSkew}</strong>"))
+            self._widget.settingsWindow.maxSpeedLabel.setText((f"<strong>{currentMaxSpeed}</strong>"))
+            self._widget.settingsWindow.maxAccLabel.setText((f"<strong>{currentMaxAcc}</strong>"))
+            self._widget.settingsWindow.jerkLabel.setText((f"<strong>{currentJerk}</strong>"))
+            self._widget.settingsWindow.backlashLabel.setText((f"<strong>{currentBacklash}</strong>"))
+            
+            # set the values to the entry box at the start
             self._widget.settingsWindow.skewEntry.setText(currentSkew)
-            self._widget.settingsWindow.maxSpeedLabel.setText(currentMaxSpeed)
-            self._widget.settingsWindow.maxAccLabel.setText(currentMaxAcc)
-            self._widget.settingsWindow.jerkLabel.setText(currentJerk)
-            self._widget.settingsWindow.backlashLabel.setText(currentBacklash)
+            self._widget.settingsWindow.maxSpeedEntry.setText(currentMaxSpeed)
+            self._widget.settingsWindow.maxAccEntry.setText(currentMaxAcc)
+            self._widget.settingsWindow.jerkEntry.setText(currentJerk)
+            self._widget.settingsWindow.backlashEntry.setText(currentBacklash)
+
         except:
             pass
         
@@ -88,7 +99,9 @@ class PositionerController(ImConWidgetController):
     def setSkewCalculated(self):
         r, _ = self.stageManager.query("controller.stage.skew.about.b")
         if r == 0:
-            self._widget.settingsWindow.skewLabel.setText(self.stageManager.query("controller.stage.skew.enabled.get")[1])
+            value = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+            self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
+            self._widget.settingsWindow.skewEntry.setText(str(value))
         else:
             self.__logger.warning("Skew about not set corectly.")    
        
@@ -97,7 +110,8 @@ class PositionerController(ImConWidgetController):
         if 0 <= value <= 44.9:
             r, _ = self.stageManager.query(f"controller.stage.skew.enabled.set {value}")
             if r == 0:
-                self._widget.settingsWindow.skewLabel.setText(str(value))
+                self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
+                #self._widget.settingsWindow.skewEntry.setText(str(value))
             else:
                 self.__logger.warning("Skew not set.")
         else:
@@ -108,7 +122,8 @@ class PositionerController(ImConWidgetController):
         if 1000 <= value <= 10000:   # input the right ceiling value
             r, _ = self.stageManager.query(f"controller.stage.speed.set {value}")
             if r == 0:
-                self._widget.settingsWindow.maxSpeedLabel.setText(str(value))
+                self._widget.settingsWindow.maxSpeedLabel.setText(f"<strong>{value}</strong>")
+                self._widget.settingsWindow.maxSpeedEntry.setText(str(value))
             else:
                 self.__logger.warning("Max Speed not set.")
         else:
@@ -119,7 +134,8 @@ class PositionerController(ImConWidgetController):
         if 1000 <= value < 100000:   # again
             r, _ = self.stageManager.query(f"controller.stage.acc.set {value}")
             if r == 0:
-                self._widget.settingsWindow.maxAccLabel.setText(str(value))
+                self._widget.settingsWindow.maxAccLabel.setText(f"<strong>{value}</strong>")
+                self._widget.settingsWindow.maxAccEntry.setText(str(value))
             else:
                 self.__logger.warning("Max Acceleration not set.")
         else:
@@ -130,7 +146,8 @@ class PositionerController(ImConWidgetController):
         if 0 <= value <= 1000:   # again
             r, _ = self.stageManager.query(f"controller.stage.jerk.set {value}")
             if r == 0:
-                self._widget.settingsWindow.jerkLabel.setText(str(value))
+                self._widget.settingsWindow.jerkLabel.setText(f"<strong>{value}</strong>")
+                self._widget.settingsWindow.jerkEntry.setText(str(value))
             else:
                 self.__logger.warning("Jerk not set.")
         else:
@@ -139,14 +156,15 @@ class PositionerController(ImConWidgetController):
     def handleBacklash(self):
         isChecked = self._widget.settingsWindow.backlashCheck.isChecked()
         for widget in self._widget.settingsWindow.backlashWidgets:
-            widget.setEnabled(isChecked)       
+            widget.setEnabled(isChecked)
         if not isChecked:
             self.stageManager.query("controller.stage.backlash.set 0 {}")
         value = int(self._widget.settingsWindow.backlashEntry.text())
         if 0 <= value <= 100:
             r, _ = self.stageManager.query(f"controller.stage.backlash.set 1 {value}")
             if r == 0:
-                self._widget.settingsWindow.backlashLabel.setText(str(value))
+                self._widget.settingsWindow.backlashLabel.setText(f"<strong>{value}</strong>")
+                self._widget.settingsWindow.backlashEntry.setText(str(value))
             else:
                 self.__logger.warning("Backlash not set.")
         else:
