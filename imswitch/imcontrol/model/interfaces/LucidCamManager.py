@@ -54,7 +54,7 @@ class LucidCam:
 
 ##Create list with all possible user-wanted node names
         self.propNodeNames = ['ExposureTime','ExposureAuto', 'Gain','Gamma','AcquisitionFrameRateEnable','AcquisitionFrameRate',
-                           'ADCBitDepth', 'WidthMax', 'HeightMax','TriggerSource','TriggerMode', 'TriggerSelector', 'PixelFormat','DeviceStreamChannelPacketSize']
+                           'ADCBitDepth', 'WidthMax', 'HeightMax','TriggerSource','TriggerMode', 'TriggerOverlap', 'TriggerSelector', 'PixelFormat','DeviceStreamChannelPacketSize']
         self.roiNodeNames = ['OffsetX', 'OffsetY', 'Width', 'Height']
 
 # Get user-wanted nodes from camera. These are the lists called to change actual cam values
