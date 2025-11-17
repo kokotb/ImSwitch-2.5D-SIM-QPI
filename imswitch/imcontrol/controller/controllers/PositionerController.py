@@ -13,7 +13,7 @@ class PositionerController(ImConWidgetController):
         
         self.settingAttr = False
         self.__logger = initLogger(self, tryInheritParent=True)
-
+        self.skewState = 1
         # Set up positioners
         for pName, pManager in self._master.positionersManager:
             if not pManager.forPositioning:
@@ -62,7 +62,7 @@ class PositionerController(ImConWidgetController):
         #Settings window initialization
         try: #this is put in a try because was throwing errors on piezo only. Please think of better way.
             # Positioner settings signals connect
-            self._widget.settingsWindow.skew2ptButton.clicked.connect(self.setSkewOnStage)
+            self._widget.settingsWindow.skew2ptButton.clicked.connect(self.handle2ptSkew)
             self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
             self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
             self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
@@ -95,6 +95,27 @@ class PositionerController(ImConWidgetController):
             pass
         
     
+    def handle2ptSkew(self):
+        if self.skewState == 1:
+            self._widget.settingsWindow.skew2ptButton.setText('Set Point B')
+            self.stageManager.query("controller.stage.skrew.about.a")
+            self.skewState *= -1
+        else:
+            self._widget.settingsWindow.skew2ptButton.setText('Set Point A')
+            self.stageManager.query("controller.stage.skrew.about.b")
+            self.skewState *= -1
+            value = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+            self._widget.settingsWindow.skewEntry.setText(str(value))
+            self._widget.settingsWindow.skewLabel.setText(str(value))
+            
+        
+            
+        
+        
+        
+        #self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
+             
+       
     def setSkewOnStage(self):
         value = float(self._widget.settingsWindow.skewEntry.text())
         if 0 <= value <= 44.9:

@@ -262,13 +262,20 @@ class PositionerWidget(Widget):
             lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
         )
 
+        # initializing 'Open Settings' button and window
         self.settingsWindow = PositionerSettings(self)
-
-        # self.settingsButtonLayout = QtWidgets.QHBoxLayout()
         self.settingsButton = QtWidgets.QPushButton('Open Settings')
-        self.settingsButton.clicked.connect(self.settingsWindow.show)
-        # self.settingsButtonLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
+        self.settingsButton.clicked.connect(self.openSettingsProtected)
         self.posLayout.addWidget(self.settingsButton)
+        
+    def openSettingsProtected(self):
+        text, ok = QtWidgets.QInputDialog.getText(self, "Settings Locked", "Enter password:", QtWidgets.QLineEdit.Password)
+        if ok and text == "SIM":
+            self.settingsWindow.show()
+        elif not ok and text == "":
+            pass
+        else:
+            QtWidgets.QMessageBox.warning(self, "Incorrect Password", "The password you entered is incorrect.")
         
         
     def wheelEvent(self, event: QWheelEvent):
@@ -339,8 +346,8 @@ class PositionerSettings(QMainWindow):
     sigCheckValidity = QtCore.Signal(str)
     def __init__(self, parent: None):
         super().__init__(parent)
-        self.setWindowTitle("Load Settings")
-        self.setMinimumSize(600, 600)
+        self.setWindowTitle("Tiling Settings")
+        self.setFixedSize(300, 600)
         self.overallLayout = QtWidgets.QVBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(self.overallLayout)
@@ -348,15 +355,28 @@ class PositionerSettings(QMainWindow):
 
         # 2 point skew title
         self.skew2ptTitleLayout = QtWidgets.QHBoxLayout()
-        self.skew2ptTitleLabel = QtWidgets.QLabel(f'<strong>2 Point Skew (°)</strong>')       
+        self.skew2ptTitleLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptTitleLabel = QtWidgets.QLabel('<strong>Two-Point Skew (°)</strong>')
         self.skew2ptTitleLayout.addWidget(self.skew2ptTitleLabel)
+        self.skew2ptTitleLayout.addStretch()
+        self.overallLayout.addLayout(self.skew2ptTitleLayout)
         self.overallLayout.addLayout(self.skew2ptTitleLayout)
         
         # 2 point skew layout
         self.skew2ptLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptLayout.addSpacing(6)
         self.skew2ptButton = QtWidgets.QPushButton('Set Point A')
+        self.skew2ptInfo = QtWidgets.QLabel("🛈")
+        self.skew2ptInfo.setStyleSheet("QLabel {font-size: 16px}")
+        self.skew2ptInfo.setToolTip(
+            "Two-Point Skew:\n"
+            "1. Move to the first point on the tilted sample edge and press the button.\n"
+            "2. Move to the second point along the same horizontal edge of your sample and press again.\n"
+            "The skew will be calculated automatically and displayed on the right."
+        )
         self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
         self.skew2ptLayout.addWidget(self.skew2ptButton)
+        self.skew2ptLayout.addWidget(self.skew2ptInfo)
         self.skew2ptLayout.addWidget(self.skewLabel)
         self.skew2ptLayout.addStretch()
         self.overallLayout.addLayout(self.skew2ptLayout)
@@ -369,9 +389,10 @@ class PositionerSettings(QMainWindow):
         
         # skew layout
         self.skewLayout = QtWidgets.QHBoxLayout()
+        self.skewLayout.addSpacing(6)
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
-        self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9°.")
+        self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9.")
         self.validator = QDoubleValidator(0.0, 44.9, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
@@ -392,7 +413,7 @@ class PositionerSettings(QMainWindow):
         self.maxSpeedLabel = QtWidgets.QLabel(f'<strong>0</strong>')
         self.maxSpeedEntry = QtWidgets.QLineEdit('0')
         self.maxSpeedEntry.setFixedWidth(50)
-        self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move.")
+        self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move (1000-10000).")
         self.validator = QIntValidator(1000,10000)
         self.maxSpeedEntry.setValidator(self.validator)
         self.maxSpeedButton = QtWidgets.QPushButton('Set')
@@ -404,7 +425,7 @@ class PositionerSettings(QMainWindow):
          
         # stage max acceleration title
         self.maxAccTitleLayout = QtWidgets.QHBoxLayout()
-        self.maxAccTitleLabel = QtWidgets.QLabel(f'<strong>Max Acceleration (µm/s²)</strong>') 
+        self.maxAccTitleLabel = QtWidgets.QLabel(f'<strong>Max Acc (µm/s²)</strong>') 
         self.maxAccTitleLayout.addWidget(self.maxAccTitleLabel)
         self.overallLayout.addLayout(self.maxAccTitleLayout)  
         
@@ -413,7 +434,7 @@ class PositionerSettings(QMainWindow):
         self.maxAccLabel = QtWidgets.QLabel(f'<strong>0</strong>')
         self.maxAccEntry = QtWidgets.QLineEdit('0')
         self.maxAccEntry.setFixedWidth(50)
-        self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move.")
+        self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move (1000-100000).")
         self.validator = QIntValidator(1000,100000)
         self.maxAccEntry.setValidator(self.validator)
         self.maxAccButton = QtWidgets.QPushButton('Set')
@@ -434,7 +455,7 @@ class PositionerSettings(QMainWindow):
         self.jerkLabel = QtWidgets.QLabel(f'<strong>0</strong>')
         self.jerkEntry = QtWidgets.QLineEdit('0')
         self.jerkEntry.setFixedWidth(50)
-        self.jerkEntry.setToolTip("Enter the jerk time in miliseconds.")
+        self.jerkEntry.setToolTip("Enter the jerk time (0-1000).")
         self.validator = QIntValidator(0,1000) # find the correct values
         self.jerkEntry.setValidator(self.validator)
         self.jerkButton = QtWidgets.QPushButton('Set')
@@ -460,7 +481,7 @@ class PositionerSettings(QMainWindow):
         self.backlashLabel = QtWidgets.QLabel(f'<strong>0</strong>')
         self.backlashEntry = QtWidgets.QLineEdit('0')
         self.backlashEntry.setFixedWidth(50)
-        self.backlashEntry.setToolTip("Enter the backlash in µm.")
+        self.backlashEntry.setToolTip("Enter the backlash (0-100).")
         self.validator = QIntValidator(0,100) # find the correct values
         self.backlashEntry.setValidator(self.validator)
         self.backlashButton = QtWidgets.QPushButton('Set')
