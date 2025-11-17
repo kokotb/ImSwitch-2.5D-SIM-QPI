@@ -1029,7 +1029,6 @@ class SIMController(ImConWidgetController):
 
         detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)
         detector._camera.setPropertyValue('AcquisitionFrameRate', 5.0, False)
-        # detector._camera.setBufferTimeout(2000)
 
         trigger_source = 'Line0'
         trigger_mode = 'On'
@@ -1049,9 +1048,8 @@ class SIMController(ImConWidgetController):
             self.exposure = exposure_time
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure tme to {exposure_limit/1000:.2f} ms on {detector.name}")
         
-        #Calc Acq Frame Rate
-        frame_rate = 1000000/exposure_limit*1.1
-
+        #Calc Acq. Frame Rate
+        frame_rate = 1000000/exposure_limit
 
         # Set cam parameters
         dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
