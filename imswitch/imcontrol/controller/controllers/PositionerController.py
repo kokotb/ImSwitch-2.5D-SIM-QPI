@@ -69,7 +69,7 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.jerkButton.clicked.connect(self.setJerkOnStage)
             self._widget.settingsWindow.backlashCheck.stateChanged.connect(self.handleBacklash)
             self._widget.settingsWindow.backlashButton.clicked.connect(self.handleBacklash)
-            
+
             self.stageManager = self._master.positionersManager['XY']
             
             currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
@@ -78,11 +78,11 @@ class PositionerController(ImConWidgetController):
             currentJerk = self.stageManager.query("controller.stage.jerk.get")[1]
             currentBacklash = self.stageManager.query("controller.stage.backlash.get")[1]
             
-            self._widget.settingsWindow.skewEntry.setText((f"<strong>{currentSkew}</strong>"))
-            self._widget.settingsWindow.maxSpeedLabel.setText((f"<strong>{currentMaxSpeed}</strong>"))
-            self._widget.settingsWindow.maxAccLabel.setText((f"<strong>{currentMaxAcc}</strong>"))
-            self._widget.settingsWindow.jerkLabel.setText((f"<strong>{currentJerk}</strong>"))
-            self._widget.settingsWindow.backlashLabel.setText((f"<strong>{currentBacklash}</strong>"))
+            self._widget.settingsWindow.skewLabel.setText(f"<strong>{currentSkew}</strong>")
+            self._widget.settingsWindow.maxSpeedLabel.setText(f"<strong>{currentMaxSpeed}</strong>")
+            self._widget.settingsWindow.maxAccLabel.setText(f"<strong>{currentMaxAcc}</strong>")
+            self._widget.settingsWindow.jerkLabel.setText(f"<strong>{currentJerk}</strong>")
+            self._widget.settingsWindow.backlashLabel.setText(f"<strong>{currentBacklash}</strong>")
 
             # set the values to the entry box at the start
             self._widget.settingsWindow.skewEntry.setText(currentSkew)
@@ -90,6 +90,7 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.maxAccEntry.setText(currentMaxAcc)
             self._widget.settingsWindow.jerkEntry.setText(currentJerk)
             self._widget.settingsWindow.backlashEntry.setText(currentBacklash)  
+            
 
         except:
             pass
@@ -98,15 +99,15 @@ class PositionerController(ImConWidgetController):
     def handle2ptSkew(self):
         if self.skewState == 1:
             self._widget.settingsWindow.skew2ptButton.setText('Set Point B')
-            self.stageManager.query("controller.stage.skrew.about.a")
+            self.stageManager.query("controller.stage.skew.about.a")
             self.skewState *= -1
         else:
             self._widget.settingsWindow.skew2ptButton.setText('Set Point A')
-            self.stageManager.query("controller.stage.skrew.about.b")
+            self.stageManager.query("controller.stage.skew.about.b")
             self.skewState *= -1
             value = self.stageManager.query("controller.stage.skew.enabled.get")[1]
             self._widget.settingsWindow.skewEntry.setText(str(value))
-            self._widget.settingsWindow.skewLabel.setText(str(value))
+            self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
             
         
             
