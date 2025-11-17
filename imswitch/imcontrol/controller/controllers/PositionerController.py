@@ -62,8 +62,7 @@ class PositionerController(ImConWidgetController):
         #Settings window initialization
         try: #this is put in a try because was throwing errors on piezo only. Please think of better way.
             # Positioner settings signals connect
-            self._widget.settingsWindow.skewButtonA.clicked.connect(lambda: self.stageManager.query("controller.stage.skew.about.a"))
-            self._widget.settingsWindow.skewButtonB.clicked.connect(self.setSkewCalculated)
+            self._widget.settingsWindow.skew2ptButton.clicked.connect(self.setSkewOnStage)
             self._widget.settingsWindow.skewButton.clicked.connect(self.setSkewOnStage)
             self._widget.settingsWindow.maxSpeedButton.clicked.connect(self.setMaxSpeedOnStage)
             self._widget.settingsWindow.maxAccButton.clicked.connect(self.setMaxAccOnStage)
@@ -84,34 +83,25 @@ class PositionerController(ImConWidgetController):
             self._widget.settingsWindow.maxAccLabel.setText((f"<strong>{currentMaxAcc}</strong>"))
             self._widget.settingsWindow.jerkLabel.setText((f"<strong>{currentJerk}</strong>"))
             self._widget.settingsWindow.backlashLabel.setText((f"<strong>{currentBacklash}</strong>"))
-            
+
             # set the values to the entry box at the start
             self._widget.settingsWindow.skewEntry.setText(currentSkew)
             self._widget.settingsWindow.maxSpeedEntry.setText(currentMaxSpeed)
             self._widget.settingsWindow.maxAccEntry.setText(currentMaxAcc)
             self._widget.settingsWindow.jerkEntry.setText(currentJerk)
-            self._widget.settingsWindow.backlashEntry.setText(currentBacklash)
+            self._widget.settingsWindow.backlashEntry.setText(currentBacklash)  
 
         except:
             pass
         
     
-    def setSkewCalculated(self):
-        r, _ = self.stageManager.query("controller.stage.skew.about.b")
-        if r == 0:
-            value = self.stageManager.query("controller.stage.skew.enabled.get")[1]
-            self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
-            self._widget.settingsWindow.skewEntry.setText(str(value))
-        else:
-            self.__logger.warning("Skew about not set corectly.")    
-       
     def setSkewOnStage(self):
         value = float(self._widget.settingsWindow.skewEntry.text())
         if 0 <= value <= 44.9:
             r, _ = self.stageManager.query(f"controller.stage.skew.enabled.set {value}")
             if r == 0:
                 self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
-                #self._widget.settingsWindow.skewEntry.setText(str(value))
+                self._widget.settingsWindow.skewEntry.setText(str(value))
             else:
                 self.__logger.warning("Skew not set.")
         else:

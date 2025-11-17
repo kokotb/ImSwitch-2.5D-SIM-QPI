@@ -346,21 +346,20 @@ class PositionerSettings(QMainWindow):
         central_widget.setLayout(self.overallLayout)
         self.setCentralWidget(central_widget)
 
-        # calculate skew title
-        self.calcSkewTitleLayout = QtWidgets.QHBoxLayout()
-        self.calcSkewTitleLabel = QtWidgets.QLabel(f'<strong>2 Point Skew</strong>')       
-        self.calcSkewTitleLayout.addWidget(self.calcSkewTitleLabel)
-        self.overallLayout.addLayout(self.calcSkewTitleLayout)
+        # 2 point skew title
+        self.skew2ptTitleLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptTitleLabel = QtWidgets.QLabel(f'<strong>2 Point Skew (°)</strong>')       
+        self.skew2ptTitleLayout.addWidget(self.skew2ptTitleLabel)
+        self.overallLayout.addLayout(self.skew2ptTitleLayout)
         
-        # calculate skew
-        self.skewLayoutA = QtWidgets.QHBoxLayout()
-        self.skewLabelA = QtWidgets.QLabel('Point A')
-        self.skewLabelA.setToolTip("Position the stage on 1st point of a non-aligned sample edge and set the 1st skew point.")
-        self.skewButtonA = QtWidgets.QPushButton('Set')
-        self.skewLayoutA.addWidget(self.skewLabelA)
-        self.skewLayoutA.addWidget(self.skewButtonA)
-        self.skewLayoutA.addStretch()
-        self.overallLayout.addLayout(self.skewLayoutA)
+        # 2 point skew layout
+        self.skew2ptLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptButton = QtWidgets.QPushButton('Set Point A')
+        self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
+        self.skew2ptLayout.addWidget(self.skew2ptButton)
+        self.skew2ptLayout.addWidget(self.skewLabel)
+        self.skew2ptLayout.addStretch()
+        self.overallLayout.addLayout(self.skew2ptLayout)
         
         # skew title
         self.skewTitleLayout = QtWidgets.QHBoxLayout()
@@ -370,7 +369,6 @@ class PositionerSettings(QMainWindow):
         
         # skew layout
         self.skewLayout = QtWidgets.QHBoxLayout()
-        self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
         self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9°.")
@@ -378,7 +376,6 @@ class PositionerSettings(QMainWindow):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
-        self.skewLayout.addWidget(self.skewLabel)
         self.skewLayout.addWidget(self.skewEntry)
         self.skewLayout.addWidget(self.skewButton)
         self.skewLayout.addStretch()
