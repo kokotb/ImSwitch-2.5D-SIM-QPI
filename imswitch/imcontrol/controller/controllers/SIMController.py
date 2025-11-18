@@ -240,7 +240,7 @@ class SIMController(ImConWidgetController):
         self._master.SLM4DDManager.setRunningOrder(roID)
         # Get max exposure time from the selected RO on SLM. This is done with naming structure. Name must start with numerical digits, then 'ms'. *1000 to make us.
         self.expTimeMax, self.numSLMChannels, chansSLM = self.parseROParamsFromSLM(roID)
-        expectedLoopTime = ((self.expTimeMax*18*self.numSLMChannels)+(20*3))/1000000*1.15
+        # expectedLoopTime = ((self.expTimeMax*18*self.numSLMChannels)+(20*3))/1000000*1.15
         self.setActiveSLMChannels(self.numSLMChannels, chansSLM)
 
         #### Set attributes to processors and select only active processors (processors with powered lasers).
@@ -518,9 +518,9 @@ class SIMController(ImConWidgetController):
         detector = processor.detObj # Set current detector object associated with proecssor.
 
         if self.numSLMChannels == 3: #seems like I am missing something here. How does 2 channels behanve?
-            time.sleep(self.expTimeMax/1000000*(roOrder)*18) #approximately how long it will start for detector to start receiving images in buffer.
+            time.sleep(self.expTimeMax/1000000*(roOrder)*9) #approximately how long it will start for detector to start receiving images in buffer.
         else:
-            time.sleep(self.expTimeMax/1000000*18)
+            time.sleep(self.expTimeMax/1000000*9)
 
         waitingBuffers = detector._camera.getBufferValue("SIM")
         # time.sleep(0.1) #CTNOTE: Temp sleep
