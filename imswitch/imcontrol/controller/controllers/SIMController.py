@@ -1035,6 +1035,7 @@ class SIMController(ImConWidgetController):
         trigger_overlap = 'PreviousFrame'
         exposure_auto = 'Off'
         gamma = 1.0
+        gain = 0.0
 
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1046,13 +1047,13 @@ class SIMController(ImConWidgetController):
         if exposure_time > exposure_limit:
             exposure_time = float(exposure_limit)
             self.exposure = exposure_time
-            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure tme to {exposure_limit/1000:.2f} ms on {detector.name}")
+            self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure time to {exposure_limit/1000:.2f} ms on {detector.name}")
         
         #Calc Acq. Frame Rate
         frame_rate = 1000000/exposure_limit
 
         # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'Gain': gain, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1068,8 +1069,9 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
+        gain = 0.0
         trigger_source = 'Line0'
-        trigger_overlap = 'PreviousFrame'
+        trigger_overlap = 'Off'
         # detector._camera.setBufferTimeout(500)
 
         # # Pull the exposure time from settings widget
@@ -1083,7 +1085,7 @@ class SIMController(ImConWidgetController):
         triggerSelector = 'FrameStart'
 
         # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gain': gain,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
