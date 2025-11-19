@@ -113,6 +113,11 @@ class SLM25DWidget(Widget):
         self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Center',str(value)))
         self.maskCenterCheckbox.setEnabled(False)
         self.maskCenterCheckbox.setChecked(False)
+
+        self.loadImgToSLMbutton = QPushButton("Load Image")
+        self.loadImgToSLMbutton.setEnabled(False)
+        self.loadImgToSLMbutton.setFixedWidth(250)
+        
         
         
 
@@ -127,6 +132,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.project25D,0,4)
         self.grid.addWidget(self.projectCenter,0,5)
         self.grid.addWidget(self.slmPreview, 0, 6)
+        self.grid.addWidget(self.loadImgToSLMbutton, 1, 6)
         self.grid.addWidget(self.beginAZbutton, 2, 6)
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
@@ -376,8 +382,6 @@ class SLM25DWidget(Widget):
         self.connect25DSharedAttrSigs()
 
 
-
-
     def reset25DToDefault(self):
         
         for name in self.paramNames:
@@ -432,6 +436,7 @@ class SLM25DWidget(Widget):
         self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
+        self.loadImgToSLMbutton.setEnabled(False)
         # self.slmFrameCenter.setEnabled(False)
         # self.slmFrame25d.setEnabled(False)
         for i in range(len(self.ZernikeCoefficientNames)):
@@ -469,6 +474,7 @@ class SLM25DWidget(Widget):
         self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)
+        self.loadImgToSLMbutton.setEnabled(True)
         # self.slmFrameCenter.setEnabled(True)
         # self.slmFrame25d.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):
