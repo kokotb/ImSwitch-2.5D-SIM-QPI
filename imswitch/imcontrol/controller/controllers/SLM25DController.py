@@ -140,10 +140,9 @@ class SLM25DController(ImConWidgetController):
             filename = dialog.selectedFiles()
             img = Image.open(filename[0])
             arr = np.array(img)
-            try:
+            arr = np.ascontiguousarray(arr)
+            if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(np.rot90(arr)))
-            except:
-                pass
         else:
            filename = None
         return filename
@@ -483,7 +482,7 @@ class SLM25DController(ImConWidgetController):
             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
             self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
-            sigma = self.general_area_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+            sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
             scores.append(sigma)
             if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                 self.toggleAutoZernNew(False)
@@ -564,6 +563,11 @@ class SLM25DController(ImConWidgetController):
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 1.2, current + 1.2, 25)
         scores = []
+        scores35 = []
+        scores60 = []
+        scores70 = []
+        scores80 = []
+
         for testvalue in testvalues:
             
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
@@ -580,14 +584,22 @@ class SLM25DController(ImConWidgetController):
             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
             self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
-            sigma = self.general_area_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+            sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
             scores.append(sigma)
+            scores35.append(self.general_area_metric(beadImgAnalysis, threshold=0.35))
+            scores60.append(self.general_area_metric(beadImgAnalysis, threshold=0.6))
+            scores70.append(self.general_area_metric(beadImgAnalysis, threshold=0.7))
+            scores80.append(self.general_area_metric(beadImgAnalysis, threshold=0.8))
             if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                 self.toggleAutoZernNew(False)
                 self._commChannel.autoZernCheckedNew = False
                 break
 
         print(scores)
+        print(scores35)
+        print(scores60)
+        print(scores70)
+        print(scores80)
         vertCommaOptimal = testvalues[scores.index(min(scores))]
 
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
