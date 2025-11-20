@@ -393,7 +393,11 @@ class PositionerSettings(QMainWindow):
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
         self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9.")
+<<<<<<< HEAD
         self.validator = QDoubleValidator(0.0, 44.9, 2)
+=======
+        self.validator = QDoubleValidator(0.00, 44.90, 2)
+>>>>>>> 8b73440ab48171fa01994617e1c8fd0a3a76768c
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
