@@ -78,7 +78,6 @@ class PositionerController(ImConWidgetController):
             currentJerkRaw = self.stageManager.query("controller.stage.jerk.get")[1]
             currentBacklashRaw = self.stageManager.query("controller.stage.backlash.get")[1]
             
-<<<<<<< HEAD
             
             # displaying values in the correct format
             currentSkew = float(currentSkewRaw)
@@ -93,9 +92,6 @@ class PositionerController(ImConWidgetController):
 
                       
             self._widget.settingsWindow.skewEntry.setText(f"<strong>{currentSkew:.2f}</strong>")
-=======
-            self._widget.settingsWindow.skewLabel.setText(f"<strong>{currentSkew}</strong>")
->>>>>>> 8b73440ab48171fa01994617e1c8fd0a3a76768c
             self._widget.settingsWindow.maxSpeedLabel.setText(f"<strong>{currentMaxSpeed}</strong>")
             self._widget.settingsWindow.maxAccLabel.setText(f"<strong>{currentMaxAcc}</strong>")
             self._widget.settingsWindow.jerkLabel.setText(f"<strong>{currentJerk}</strong>")
