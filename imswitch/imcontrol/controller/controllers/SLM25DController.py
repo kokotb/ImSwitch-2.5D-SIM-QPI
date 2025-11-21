@@ -329,7 +329,7 @@ class SLM25DController(ImConWidgetController):
 
         #self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
-        #self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         #self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
@@ -361,6 +361,7 @@ class SLM25DController(ImConWidgetController):
         testvalues = np.linspace(current - 0.7, current + 0.7, 29)
         scores = []
         profiles = []
+        images = []
         for testvalue in testvalues:
             
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
@@ -372,7 +373,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             Zmaxprofile = []
-            zPositions = np.linspace(-5., 5., 11)
+            zPositions = np.linspace(-8., 8., 17)
             for offset in zPositions:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
@@ -382,6 +383,7 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                images.append(beadImgAnalysis)
                 Zmaxprofile.append(np.max(beadImgAnalysis))
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
@@ -423,6 +425,7 @@ class SLM25DController(ImConWidgetController):
         key = '(2,-2)Right'
         testvalues = list(self.autoZernCalibValuesDict[key])
         oblAstigScores = []
+        images = []
         for testvalue in testvalues:
 
             
@@ -435,7 +438,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmas12 = []
-            for offset in [-2.5, 2.5]:
+            for offset in [-2., 2.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 self._master.arduinoManager.trigger25DWriteOnly()
@@ -444,7 +447,8 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
-                sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                images.append(beadImgAnalysis)
+                sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmas12.append([sigma1, sigma2])
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
@@ -489,7 +493,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmasXY = []
-            for offset in [-2.5, 2.5]:
+            for offset in [-2.0, 2.0]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 self._master.arduinoManager.trigger25DWriteOnly()
@@ -499,7 +503,7 @@ class SLM25DController(ImConWidgetController):
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
-                sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
                 if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
                     self.toggleAutoZernNew(False)
@@ -521,7 +525,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
         time.sleep(0.015)
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
@@ -574,7 +578,7 @@ class SLM25DController(ImConWidgetController):
 
     
 
-    def show_images_grid(self, images, cols=5, titles=None, thresholds=[0.2,0.3,0.4,0.5,0.6,0.7,0.8], cmap='gray'):
+    def show_images_grid(self, images, cols=6, titles=None, thresholds=[0.2,0.3,0.4,0.5,0.6,0.7,0.8], cmap='gray'):
         n = len(images)
         rows = int(np.ceil(n / cols))
         h, w = images[0].shape  # predpostavimo, da so vse slike iste velikosti
@@ -606,45 +610,46 @@ class SLM25DController(ImConWidgetController):
         testvalues = list(self.autoZernCalibValuesDict[key])
         horCommaScores = []
         horCommaScores2 = []
+        images = []
 
-        current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 1.2, current + 1.2, 25)
-        scores = []
-        for testvalue in testvalues:
+        # current = self._widget.pars['AbsPosEdit' + key].value()
+        # testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        # scores = []
+        # for testvalue in testvalues:
             
-            self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-            self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
-            self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
-            self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+        #     self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+        #     self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
+        #     self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
+        #     self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.015)
+        #     self.updateZernike()
+        #     time.sleep(0.015)
 
-            self._master.arduinoManager.trigger25DWriteOnly()
-            self.waitingForBuffers()
-            rawImg = self.detectors[2]._camera.grabFrame25D(1)
-            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-            self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
-            beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
-            sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
-            scores.append(sigma)
-            if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                self.toggleAutoZernNew(False)
-                self._commChannel.autoZernCheckedNew = False
-                break
+        #     self._master.arduinoManager.trigger25DWriteOnly()
+        #     self.waitingForBuffers()
+        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+        #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+        #     sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+        #     scores.append(sigma)
+        #     if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+        #         self.toggleAutoZernNew(False)
+        #         self._commChannel.autoZernCheckedNew = False
+        #         break
 
-        print(scores)
-        horCommaOptimal = testvalues[scores.index(min(scores))]
+        # print(scores)
+        # horCommaOptimal = testvalues[scores.index(min(scores))]
 
-        self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
-        self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.015)
+        # self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+        # self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
+        # self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+        # self.updateZernike()
+        # time.sleep(0.015)
             
-        self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
-        #self._widget.stop25D.setEnabled(False)
-        #self._widget.start25D.setEnabled(True)
+        # self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+        # #self._widget.stop25D.setEnabled(False)
+        # #self._widget.start25D.setEnabled(True)
 
 
         current = self._widget.pars['AbsPosEdit' + key].value()
@@ -668,6 +673,7 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
@@ -691,6 +697,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
         time.sleep(0.015)
+        self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
@@ -702,6 +709,7 @@ class SLM25DController(ImConWidgetController):
         key = '(3,-1)Right'
         testvalues = list(self.autoZernCalibValuesDict[key])
         vertCommaScores = []
+        images = []
         
 
         # current = self._widget.pars['AbsPosEdit' + key].value()
@@ -780,6 +788,7 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
@@ -809,11 +818,12 @@ class SLM25DController(ImConWidgetController):
 
     def trefoilLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Vertical Comma 
-        #for key in ['(3,-3)Right', '(3,3)Right']:
-        for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
+        for key in ['(3,-3)Right', '(3,3)Right']:
+        #for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
             current = self._widget.pars['AbsPosEdit' + key].value()
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
             scores = []
+            images = []
             # self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + 1. , 'Z')
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
             for testvalue in testvalues:
@@ -832,6 +842,7 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                images.append(beadImgAnalysis)
                 #sigma = self.general_area_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigma = self.universal_r2_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 scores.append(sigma)
