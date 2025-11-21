@@ -1425,19 +1425,19 @@ class SIMController(ImConWidgetController):
                     while z < len(zList):
 
                         # # Auto Zernike loop ==================================================================
-                        # if self._commChannel.autoZernChecked:
-                        #     self._commChannel.sigBeginAutoZern.emit()
-                        #     time.sleep(1)
-                        #     while self._commChannel.autoZernChecked:
-                        #         time.sleep(0.1) # probably just remove
+                        if self._commChannel.autoZernChecked:
+                            self._commChannel.sigBeginAutoZern.emit()
+                            time.sleep(1)
+                            while self._commChannel.autoZernChecked:
+                                time.sleep(0.1) # probably just remove
 
-                        #         rawImg = self._commChannel.lastImgDict['640F']
+                                rawImg = self._commChannel.lastImgDict['640F']
 
-                        #         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
-                        #         if self._commChannel.stop25DNow: #allows exit of the loop
-                        #             self.stop25D()
+                                self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                                if self._commChannel.stop25DNow: #allows exit of the loop
+                                    self.stop25D()
 
-                        #     print('autozern ended')
+                            print('autozern ended')
                         # # ====================================================================================
 
 
@@ -1766,8 +1766,12 @@ class SIMController(ImConWidgetController):
         # signal activates this function. Use it to break AZ loop if neccessary
 
     def sendAZFrameCoordsTo25DController(self):
+        self.stop25D()
         selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
+
+
+
     # def setParameter(self, parameterName, value):
     #     # FIXME: Just a place holder
     #     self._logger.error(f"{parameterName} with {value} not set! Setting of SIM parameters using attrChanged in widget is not set up yet.")

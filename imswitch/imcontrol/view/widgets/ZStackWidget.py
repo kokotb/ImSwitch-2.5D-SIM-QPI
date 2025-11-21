@@ -133,8 +133,8 @@ class ZStackWidget(NapariHybridWidget):
             self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
 
     def initZStackInfo(self):
-        self.zStepDistance_textedit.setText("1")
-        self.totalZ_textedit.setText("1.0")
+        self.zStepDistance_textedit.setText("0.123")
+        self.totalZ_textedit.setText("10.0")
         self.zOffset_textedit.setText("0")
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", '0')
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", '0')
