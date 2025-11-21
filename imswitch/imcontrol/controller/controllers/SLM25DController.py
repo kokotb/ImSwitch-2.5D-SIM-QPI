@@ -10,11 +10,15 @@ from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
 from ..basecontrollers import ImConWidgetController
 import zernpol
 from scipy.ndimage import center_of_mass
+from scipy.signal import peak_widths
 
 from PIL import Image, ImageDraw
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QFileDialog
 
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
+from PIL import Image
 import time
 import re
 
@@ -321,6 +325,8 @@ class SLM25DController(ImConWidgetController):
 
         self.detectors[2]._camera.setBufferTimeout(2000)
 
+        #zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
+
         #self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         #self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
@@ -329,7 +335,7 @@ class SLM25DController(ImConWidgetController):
 
         #self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
-        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
 
         # self._commChannel.sigToggleAutoZern.emit(False)
@@ -348,6 +354,69 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigAutoZernikeFinished.emit()
 
     
+    def sphericalAberrationLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+        # Oblique Astigmatism 
+        key = '(4,0)Right'
+        current = self._widget.pars['AbsPosEdit' + key].value()
+        testvalues = np.linspace(current - 0.7, current + 0.7, 29)
+        scores = []
+        profiles = []
+        for testvalue in testvalues:
+            
+            self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+            self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
+            self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
+            self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+
+            self.updateZernike()
+            time.sleep(0.015)
+
+            Zmaxprofile = []
+            zPositions = np.linspace(-5., 5., 11)
+            for offset in zPositions:
+                self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
+                # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
+                self._master.arduinoManager.trigger25DWriteOnly()
+                self.waitingForBuffers()
+                rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                Zmaxprofile.append(np.max(beadImgAnalysis))
+                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                    self.toggleAutoZernNew(False)
+                    self._commChannel.autoZernCheckedNew = False
+                    break
+            
+
+            ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
+            scores.append(ZFWHM[0])  
+            profiles.append(Zmaxprofile)  
+        
+        self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
+
+        print(scores)
+        SAOptimal = testvalues[scores.index(min(scores))]
+
+        self._widget.pars["AbsPosEdit" + key].blockSignals(True)
+        self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
+        self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+        self.updateZernike()
+        time.sleep(0.015)
+            
+        self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+        #self._widget.stop25D.setEnabled(False)
+        #self._widget.start25D.setEnabled(True)
+
+        ZProfileOptimal = profiles[scores.index(min(scores))]
+        ZFWHM, ZHM, ZLeft, ZRight = peak_widths(ZProfileOptimal, np.array([np.argmax(ZProfileOptimal)]), rel_height=0.5)
+        zcenter = (ZLeft[0] + ZRight[0])/2.
+        z_offset = np.interp(zcenter, np.arange(len(zPositions)), zPositions)
+        NewFocus = zPosFocus + z_offset
+        self._master.positionersManager._subManagers['Z'].setPosition(NewFocus, 'Z')
+        return NewFocus
+
+
     # Loops =======================================================================
     def obliqueAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Oblique Astigmatism 
@@ -407,6 +476,7 @@ class SLM25DController(ImConWidgetController):
         key = '(2,2)Right'
         testvalues = list(self.autoZernCalibValuesDict[key])
         vertAstigScores = []
+        images = []
         for testvalue in testvalues:
 
             
@@ -428,6 +498,7 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
                 if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
@@ -450,11 +521,84 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
         time.sleep(0.015)
+        self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
+    # def show_images_grid(self, images, cols=5, cmap='gray', titles=None, figsize=(15, 8)):
+    #     n = len(images)
+    #     rows = int(np.ceil(n / cols))
+
+    #     fig, axes = plt.subplots(rows, cols, figsize=figsize)
+    #     axes = np.array(axes).reshape(-1)   # splošno flatten, tudi za rows=1 ali cols=1
+
+    #     fig2, axes2 = plt.subplots(rows, cols, figsize=figsize)
+    #     axes2 = np.array(axes2).reshape(-1)   # splošno flatten, tudi za rows=1 ali cols=1
+
+    #     for i, img in enumerate(images):
+    #         axes[i].imshow(img, cmap=cmap)
+    #         if titles is not None and i < len(titles):
+    #             axes[i].set_title(titles[i])
+    #         axes[i].axis('off')
+
+    #     for j in range(i+1, rows * cols):
+    #         axes[j].axis('off')
+
+    #     plt.tight_layout()
+    #     plt.savefig("images.png")
+    #     plt.close() 
+
+    #     for threshold in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+    #         for i, img in enumerate(images):
+
+    #             thr = img.max() * threshold   # treshold
+    #             #masked = np.where(img > thr, XYslice, 0)    # Intensity mode
+    #             masked = np.where(img > thr, 1, 0)  # Flat mode
+
+    #             axes2[i].imshow(masked, cmap=cmap)
+    #             if titles is not None and i < len(titles):
+    #                 axes2[i].set_title(titles[i])
+    #             axes2[i].axis('off')
+
+    #         for j in range(i+1, rows * cols):
+    #             axes2[j].axis('off')
+
+    #         plt.tight_layout()
+    #         plt.savefig("images" + str(threshold) + ".png")
+    #         plt.close() 
+
+    #     # skrij odvečne subplote (če mreža večja od #slik)
+
+
+    
+
+    def show_images_grid(self, images, cols=5, titles=None, thresholds=[0.2,0.3,0.4,0.5,0.6,0.7,0.8], cmap='gray'):
+        n = len(images)
+        rows = int(np.ceil(n / cols))
+        h, w = images[0].shape  # predpostavimo, da so vse slike iste velikosti
+
+        def make_grid(img_list):
+            grid_img = Image.new('L', (cols * w, rows * h), color=0)  # 'L' = grayscale
+            for idx, img in enumerate(img_list):
+                r = idx // cols
+                c = idx % cols
+                im = Image.fromarray((img*255).astype(np.uint8))
+                grid_img.paste(im, (c*w, r*h))
+            return grid_img
+
+        # Originalne slike
+        grid = make_grid(images)
+        grid.save("images.png")
+
+        # Različni threshold-i
+        for thr in thresholds:
+            masked_images = [(img > img.max()*thr).astype(np.uint8) for img in images]
+            grid_masked = make_grid(masked_images)
+            grid_masked.save(f"images_{thr:.1f}.png")
+
+        
 
     def horizontalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Horizontal Comma
