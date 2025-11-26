@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QCheckBox, QMainWindow, QWidget, QLineEdit, QPushBut
 from imswitch.imcontrol.view import guitools as guitools
 from .basewidgets import Widget
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-
+from PyQt5.QtCore import Qt, QLocale
 
 class PositionerWidget(Widget):
     """ Widget in control of the piezo movement. """
@@ -262,13 +262,20 @@ class PositionerWidget(Widget):
             lambda *args, axis=axis: self.sigsetAbsPosClicked.emit(positionerName, axis)
         )
 
+        # initializing 'Open Settings' button and window
         self.settingsWindow = PositionerSettings(self)
-
-        # self.settingsButtonLayout = QtWidgets.QHBoxLayout()
         self.settingsButton = QtWidgets.QPushButton('Open Settings')
-        self.settingsButton.clicked.connect(self.settingsWindow.show)
-        # self.settingsButtonLayout.addWidget(self.pars['AbsPosUnit' + parNameSuffix])
+        self.settingsButton.clicked.connect(self.openSettingsProtected)
         self.posLayout.addWidget(self.settingsButton)
+        
+    def openSettingsProtected(self):
+        text, ok = QtWidgets.QInputDialog.getText(self, "Settings Locked", "Enter password:", QtWidgets.QLineEdit.Password)
+        if ok and text == "SIM":
+            self.settingsWindow.show()
+        elif not ok and text == "":
+            pass
+        else:
+            QtWidgets.QMessageBox.warning(self, "Incorrect Password", "The password you entered is incorrect.")
         
         
     def wheelEvent(self, event: QWheelEvent):
@@ -336,37 +343,196 @@ class PositionerWidget(Widget):
 
 
 class PositionerSettings(QMainWindow):
+    sigCheckValidity = QtCore.Signal(str)
     def __init__(self, parent: None):
-
         super().__init__(parent)
-        self.setWindowTitle("Load Settings")
-        self.setMinimumSize(600, 600)
+        self.setWindowTitle("Tiling Settings")
+        self.setFixedSize(300, 600)
         self.overallLayout = QtWidgets.QVBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(self.overallLayout)
         self.setCentralWidget(central_widget)
+
+        # 2 point skew title
+        self.skew2ptTitleLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptTitleLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptTitleLabel = QtWidgets.QLabel('<strong>Two-Point Skew (°)</strong>')
+        self.skew2ptTitleLayout.addWidget(self.skew2ptTitleLabel)
+        self.skew2ptTitleLayout.addStretch()
+        self.overallLayout.addLayout(self.skew2ptTitleLayout)
+        self.overallLayout.addLayout(self.skew2ptTitleLayout)
         
-        self.skewLayout = QtWidgets.QHBoxLayout()
-
-
+        # 2 point skew layout
+        self.skew2ptLayout = QtWidgets.QHBoxLayout()
+        self.skew2ptLayout.addSpacing(6)
+        self.skew2ptButton = QtWidgets.QPushButton('Set Point A')
+        self.skew2ptInfo = QtWidgets.QLabel("🛈")
+        self.skew2ptInfo.setStyleSheet("QLabel {font-size: 16px}")
+        self.skew2ptInfo.setToolTip(
+            "Two-Point Skew:\n"
+            "1. Move to the first point on the tilted sample edge and press the button.\n"
+            "2. Move to the second point along the same horizontal edge of your sample and press again.\n"
+            "The skew will be calculated automatically and displayed on the right."
+        )
         self.skewLabel = QtWidgets.QLabel(f'<strong>0.0</strong>')
+        self.skew2ptLayout.addWidget(self.skew2ptButton)
+        self.skew2ptLayout.addWidget(self.skew2ptInfo)
+        self.skew2ptLayout.addWidget(self.skewLabel)
+        self.skew2ptLayout.addStretch()
+        self.overallLayout.addLayout(self.skew2ptLayout)
         
+        # skew title
+        self.skewTitleLayout = QtWidgets.QHBoxLayout()
+        self.skewTitleLabel = QtWidgets.QLabel(f'<strong>Manual Skew (°)</strong>')       
+        self.skewTitleLayout.addWidget(self.skewTitleLabel)
+        self.overallLayout.addLayout(self.skewTitleLayout)
+        
+        # skew layout
+        self.skewLayout = QtWidgets.QHBoxLayout()
+        self.skewLayout.addSpacing(6)
         self.skewEntry = QtWidgets.QLineEdit('0.0')
         self.skewEntry.setFixedWidth(50)
-        
+        self.skewEntry.setToolTip("Enter a skew angle between 0 and 44.9.")
+        self.validator = QDoubleValidator(0.00, 44.90, 2)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.skewEntry.setValidator(self.validator)
         self.skewButton = QtWidgets.QPushButton('Set')
-        self.skewButton.clicked.connect(self.setSkewOnStage)
-        
-        
-        self.skewLayout.addWidget(self.skewLabel)
         self.skewLayout.addWidget(self.skewEntry)
         self.skewLayout.addWidget(self.skewButton)
-        self.skewLayout.addStretch() # Pushes widgets to the left
+        self.skewLayout.addStretch()
+        self.overallLayout.addLayout(self.skewLayout)    
         
-        self.overallLayout.addLayout(self.skewLayout)
+        # stage max speed title
+        self.maxSpeedTitleLayout = QtWidgets.QHBoxLayout()
+        self.maxSpeedTitleLabel = QtWidgets.QLabel(f'<strong>Max Speed (µm/s)</strong>')       
+        self.maxSpeedTitleLayout.addWidget(self.maxSpeedTitleLabel)
+        self.overallLayout.addLayout(self.maxSpeedTitleLayout)      
         
-    def setSkewOnStage(self):
-        pass
+        # stage max speed layout
+        self.maxSpeedLayout = QtWidgets.QHBoxLayout()
+        self.maxSpeedLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.maxSpeedEntry = QtWidgets.QLineEdit('0')
+        self.maxSpeedEntry.setFixedWidth(50)
+        self.maxSpeedEntry.setToolTip("Enter the maximum speed during a point to point move (1000-10000).")
+        self.validator = QIntValidator(1000,10000)
+        self.maxSpeedEntry.setValidator(self.validator)
+        self.maxSpeedButton = QtWidgets.QPushButton('Set')
+        self.maxSpeedLayout.addWidget(self.maxSpeedLabel)
+        self.maxSpeedLayout.addWidget(self.maxSpeedEntry)
+        self.maxSpeedLayout.addWidget(self.maxSpeedButton)
+        self.maxSpeedLayout.addStretch()
+        self.overallLayout.addLayout(self.maxSpeedLayout)       
+         
+        # stage max acceleration title
+        self.maxAccTitleLayout = QtWidgets.QHBoxLayout()
+        self.maxAccTitleLabel = QtWidgets.QLabel(f'<strong>Max Acc (µm/s²)</strong>') 
+        self.maxAccTitleLayout.addWidget(self.maxAccTitleLabel)
+        self.overallLayout.addLayout(self.maxAccTitleLayout)  
+        
+        # stage max acceleration layout 
+        self.maxAccLayout = QtWidgets.QHBoxLayout()
+        self.maxAccLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.maxAccEntry = QtWidgets.QLineEdit('0')
+        self.maxAccEntry.setFixedWidth(50)
+        self.maxAccEntry.setToolTip("Enter the maximum acceleration during a point to point move (1000-100000).")
+        self.validator = QIntValidator(1000,100000)
+        self.maxAccEntry.setValidator(self.validator)
+        self.maxAccButton = QtWidgets.QPushButton('Set')
+        self.maxAccLayout.addWidget(self.maxAccLabel)
+        self.maxAccLayout.addWidget(self.maxAccEntry)
+        self.maxAccLayout.addWidget(self.maxAccButton)
+        self.maxAccLayout.addStretch()
+        self.overallLayout.addLayout(self.maxAccLayout)
+            
+        # stage jerk title
+        self.jerkTitleLayout = QtWidgets.QHBoxLayout()
+        self.jerkTitleLabel = QtWidgets.QLabel(f'<strong>Jerk (ms)</strong>')       
+        self.jerkTitleLayout.addWidget(self.jerkTitleLabel)
+        self.overallLayout.addLayout(self.jerkTitleLayout)  
+        
+        # stage jerk layout 
+        self.jerkLayout = QtWidgets.QHBoxLayout()
+        self.jerkLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.jerkEntry = QtWidgets.QLineEdit('0')
+        self.jerkEntry.setFixedWidth(50)
+        self.jerkEntry.setToolTip("Enter the jerk time (0-1000).")
+        self.validator = QIntValidator(0,1000) # find the correct values
+        self.jerkEntry.setValidator(self.validator)
+        self.jerkButton = QtWidgets.QPushButton('Set')
+        self.jerkLayout.addWidget(self.jerkLabel)
+        self.jerkLayout.addWidget(self.jerkEntry)
+        self.jerkLayout.addWidget(self.jerkButton)
+        self.jerkLayout.addStretch()
+        self.overallLayout.addLayout(self.jerkLayout)     
+        
+        # stage backlash title
+        self.backlashTitleLayout = QtWidgets.QHBoxLayout()
+        self.backlashCheck = QtWidgets.QCheckBox()
+        self.backlashCheck.setChecked(False)
+        self.backlashCheck.setToolTip('Check here to enable backlash.')
+        self.backlashTitleLayout.addWidget(self.backlashCheck)
+        self.backlashTitleLabel = QtWidgets.QLabel(f'<strong>Backlash (µm)</strong>')
+        self.backlashTitleLayout.addWidget(self.backlashTitleLabel)
+        self.backlashTitleLayout.addStretch()
+        self.overallLayout.addLayout(self.backlashTitleLayout)
+
+        # stage backlash layout 
+        self.backlashLayout = QtWidgets.QHBoxLayout()
+        self.backlashLabel = QtWidgets.QLabel(f'<strong>0</strong>')
+        self.backlashEntry = QtWidgets.QLineEdit('0')
+        self.backlashEntry.setFixedWidth(50)
+        self.backlashEntry.setToolTip("Enter the backlash (0-100).")
+        self.validator = QIntValidator(0,100) # find the correct values
+        self.backlashEntry.setValidator(self.validator)
+        self.backlashButton = QtWidgets.QPushButton('Set')
+        self.backlashLayout.addWidget(self.backlashLabel)
+        self.backlashLayout.addWidget(self.backlashEntry)
+        self.backlashLayout.addWidget(self.backlashButton)
+        self.backlashLayout.addStretch()
+        self.overallLayout.addLayout(self.backlashLayout)
+        self.backlashWidgets = [self.backlashLabel, self.backlashEntry, self.backlashButton]
+        for widget in self.backlashWidgets:
+            widget.setEnabled(False)
+
+        # keep the overall layout together
+        self.overallLayout.addStretch()
+        
+        
+        
+        self.skewEntry.textChanged.connect(lambda *args, name='skewEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.maxSpeedEntry.textChanged.connect(lambda *args, name='maxSpeedEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.maxAccEntry.textChanged.connect(lambda *args, name='maxAccEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.jerkEntry.textChanged.connect(lambda *args, name='jerkEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        self.backlashEntry.textChanged.connect(lambda *args, name='backlashEntry': self.sigCheckValidity.emit(name))
+        self.sigCheckValidity.connect(self.checkValidity)
+        
+    def checkValidity(self, name):
+        if name == 'skewEntry':
+            signalOrigin = self.skewEntry
+        if name == 'maxSpeedEntry':
+            signalOrigin = self.maxSpeedEntry
+        if name == 'maxAccEntry':
+            signalOrigin = self.maxAccEntry
+        if name == 'jerkEntry':
+            signalOrigin = self.jerkEntry
+        if name == 'backlashEntry':
+            signalOrigin = self.backlashEntry
+        valid = signalOrigin.hasAcceptableInput()
+        if valid:
+            signalOrigin.setStyleSheet('')
+        else:
+            signalOrigin.setStyleSheet("border: 1px solid red;")
+    
+    
+
+        
+        
+
+
 
 # Copyright (C) 2020-2021 ImSwitch developers
 # This file is part of ImSwitch.

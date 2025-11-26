@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
 # import detect_heds_module_path
-from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
+# from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
 
 
 

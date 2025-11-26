@@ -1270,7 +1270,7 @@ class SIMController(ImConWidgetController):
 
         #### Create XY position array given ROI and tiling settings.
         self.tileOrigins = []
-        positions= self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        positions = self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
         for i in range(len(positions)):
             self.tileOrigins.append(positions[i][0])
         self.tileOrigin = positions[0][0]
