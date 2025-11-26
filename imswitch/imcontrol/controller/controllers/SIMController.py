@@ -1710,9 +1710,9 @@ class SIMController(ImConWidgetController):
 
         self.AFScores.append(currentRegScore)
 
-        time.sleep(3)
+        # time.sleep(0.05)
 
-        if not (self.firstLoop) and (self.AFCounter % 10 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 30 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')
@@ -1722,15 +1722,15 @@ class SIMController(ImConWidgetController):
             # print(f'Z Difference: {zDiff}')
             print('AF execute')
 
-            if abs(zDiff) >= 0.01:
-                self.cumZDiff = self.cumZDiff + zDiff
-                currentZ = self.positioner._position['Z']
-                wantedZ = currentZ - zDiff
-                self.positioner.setPosition(wantedZ, 'Z')
-                self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                # self._commChannel.offsetFromInitZ = self.cumZDiff
-                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+            # if abs(zDiff) >= 0.01:
+            self.cumZDiff = self.cumZDiff + zDiff
+            currentZ = self.positioner._position['Z']
+            wantedZ = currentZ - zDiff
+            self.positioner.setPosition(wantedZ, 'Z')
+            self._commChannel.sigUpdateZPosition.emit('Z','Z')
+            # self._commChannel.offsetFromInitZ = self.cumZDiff
+            self._commChannel.sigSendZDrift.emit(self.cumZDiff)
+            self._logger.warning(f'Total Z drift: {self.cumZDiff}')
                 
                 
             self.AFScores = []
