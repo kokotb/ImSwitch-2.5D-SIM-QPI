@@ -4,6 +4,7 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 from qtpy import QtCore, QtWidgets
+import cv2
 
 from imswitch.imcommon.model import dirtools, initLogger
 from imswitch.imcontrol.model.managers.SLM25DManager import MaskMode, Direction
@@ -314,7 +315,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
-        self._widget.project25D.setChecked(False)
+        # self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
         self._widget.projectCenter.setChecked(False)
         self._widget.projectCenter.setEnabled(False)
@@ -327,15 +328,15 @@ class SLM25DController(ImConWidgetController):
 
         #zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
 
-        #self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
-        #self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
-        #self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
-        #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
 
         # self._commChannel.sigToggleAutoZern.emit(False)
@@ -525,7 +526,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
         time.sleep(0.015)
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
@@ -578,7 +579,7 @@ class SLM25DController(ImConWidgetController):
 
     
 
-    def show_images_grid(self, images, cols=6, titles=None, thresholds=[0.2,0.3,0.4,0.5,0.6,0.7,0.8], cmap='gray'):
+    def show_images_grid(self, images, cols=6, titles=None, thresholds=[0.1, 0.2,0.3,0.4,0.5,0.6,0.7,0.8, 0.9], cmap='gray'):
         n = len(images)
         rows = int(np.ceil(n / cols))
         h, w = images[0].shape  # predpostavimo, da so vse slike iste velikosti
@@ -654,6 +655,7 @@ class SLM25DController(ImConWidgetController):
 
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+        scores = []
         for testvalue in testvalues:
             
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
@@ -665,7 +667,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmasXY = []
-            for offset in [-1., 0., 1.]:
+            for offset in [-2., 0., 2.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -674,8 +676,11 @@ class SLM25DController(ImConWidgetController):
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
-                sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
+                score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                if (offset == 0.):
+                    scores.append(score)
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
@@ -683,14 +688,17 @@ class SLM25DController(ImConWidgetController):
             
 
             commaMetric = abs((sigmasXY[2][0] - sigmasXY[1][0]) + (sigmasXY[0][0] - sigmasXY[1][0]))
+            #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) # for astig metric
             commaMetric2 = abs((sigmasXY[2][1] - sigmasXY[1][1]) + (sigmasXY[0][1] - sigmasXY[1][1]))
             horCommaScores.append(commaMetric)  
             horCommaScores2.append(commaMetric2)
         
         self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
-        print(horCommaScores)
-        horCommaOptimal = testvalues[horCommaScores.index(min(horCommaScores))]
+        # print(horCommaScores)
+        # horCommaOptimal = testvalues[horCommaScores.index(min(horCommaScores))]
+        print(scores)
+        horCommaOptimal = testvalues[scores.index(min(scores))]
 
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
@@ -766,6 +774,7 @@ class SLM25DController(ImConWidgetController):
 
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+        scores = []
         for testvalue in testvalues:
 
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
@@ -777,7 +786,8 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmasXY = []
-            for offset in [-1., 0., 1.]:
+            
+            for offset in [-2., 0., 2.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 
@@ -789,8 +799,11 @@ class SLM25DController(ImConWidgetController):
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
-                sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.65) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
+                score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                if (offset == 0.):
+                    scores.append(score)
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
@@ -798,12 +811,15 @@ class SLM25DController(ImConWidgetController):
             
 
             commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
+            #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) #for astig metric
             vertCommaScores.append(commaMetric)  
         
         self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
-        print(vertCommaScores)
-        vertCommaOptimal = testvalues[vertCommaScores.index(min(vertCommaScores))]
+        # print(vertCommaScores)
+        # vertCommaOptimal = testvalues[vertCommaScores.index(min(vertCommaScores))]
+        print(scores)
+        vertCommaOptimal = testvalues[scores.index(min(scores))]
 
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
@@ -811,6 +827,7 @@ class SLM25DController(ImConWidgetController):
         self.updateZernike()
         time.sleep(0.015)
             
+        self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -818,8 +835,8 @@ class SLM25DController(ImConWidgetController):
 
     def trefoilLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Vertical Comma 
-        for key in ['(3,-3)Right', '(3,3)Right']:
-        #for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
+        #for key in ['(3,-3)Right', '(3,3)Right']:
+        for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
             current = self._widget.pars['AbsPosEdit' + key].value()
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
             scores = []
@@ -842,17 +859,27 @@ class SLM25DController(ImConWidgetController):
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+
+                # tenegradm metric =================
+                sobel_x = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 1, 0, ksize=3)  # Sobel filter in X direction
+                sobel_y = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 0, 1, ksize=3)  # Sobel filter in Y direction
+                tenengrad = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
+                score = np.mean(tenengrad)
+
+
                 images.append(beadImgAnalysis)
                 #sigma = self.general_area_metric(beadImgAnalysis, threshold=0.5) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
-                sigma = self.universal_r2_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
-                scores.append(sigma)
+                #sigma = self.universal_r2_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                #scores.append(sigma)
+                scores.append(score)
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
                     self.toggleAutoZernNew(False)
                     self._commChannel.autoZernCheckedNew = False
                     break
 
             print(scores)
-            trefoilOptimal = testvalues[scores.index(min(scores))]
+            # trefoilOptimal = testvalues[scores.index(min(scores))]
+            trefoilOptimal = testvalues[scores.index(max(scores))]
 
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
