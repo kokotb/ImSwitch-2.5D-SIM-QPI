@@ -338,7 +338,7 @@ class SLM25DController(ImConWidgetController):
 
         self.detectors[2]._camera.setBufferTimeout(2000)
 
-        #zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
+        zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
 
         self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
@@ -371,7 +371,7 @@ class SLM25DController(ImConWidgetController):
         # Oblique Astigmatism 
         key = '(4,0)Right'
         current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 0.7, current + 0.7, 29)
+        testvalues = np.linspace(current - 0.5, current + 0.5, 21)
         scores = []
         profiles = []
         images = []
@@ -386,7 +386,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             Zmaxprofile = []
-            zPositions = np.linspace(-8., 8., 17)
+            zPositions = np.linspace(-6., 6., 25)
             for offset in zPositions:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
