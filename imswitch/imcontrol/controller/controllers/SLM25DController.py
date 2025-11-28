@@ -294,6 +294,18 @@ class SLM25DController(ImConWidgetController):
 
         #self._commChannel.sigAutoZernikeFinished.emit()
 
+
+
+
+
+
+
+
+
+
+
+
+
     def initiateAZWithButton(self):
         self._commChannel.sigGetAZFrameCoords.emit()
 
@@ -328,13 +340,13 @@ class SLM25DController(ImConWidgetController):
 
         #zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
 
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+
         self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax)
-
-        # self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
-
-        # self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
@@ -422,6 +434,18 @@ class SLM25DController(ImConWidgetController):
 
     # Loops =======================================================================
     def obliqueAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+
+        # set 25d mask and project it stronger aberration effects
+        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+        self._widget.pars["AbsPosEditGamma"].setText("2.0")
+        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
+        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+        self._widget.pars["AbsPosEditPsi"].setText("0.0")
+        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
+        self.updatePhaseMask()
+        self._widget.project25D.setChecked(True)
+        time.sleep(0.015)
+
         # Oblique Astigmatism 
         key = '(2,-2)Right'
         testvalues = list(self.autoZernCalibValuesDict[key])
@@ -472,11 +496,24 @@ class SLM25DController(ImConWidgetController):
         time.sleep(0.015)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+        self._widget.project25D.setChecked(False)
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
 
     def verticalAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+
+        # set 25d mask and project it stronger aberration effects
+        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+        self._widget.pars["AbsPosEditGamma"].setText("2.0")
+        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
+        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+        self._widget.pars["AbsPosEditPsi"].setText("0.0")
+        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
+        self.updatePhaseMask()
+        self._widget.project25D.setChecked(True)
+        time.sleep(0.015)
+
         # Vertical Astigmatism 
         key = '(2,2)Right'
         testvalues = list(self.autoZernCalibValuesDict[key])
@@ -529,6 +566,7 @@ class SLM25DController(ImConWidgetController):
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
+        self._widget.project25D.setChecked(False)
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
@@ -972,6 +1010,14 @@ class SLM25DController(ImConWidgetController):
 
 
     # ===============================================================================================================
+
+
+
+
+
+
+
+
 
 
 
