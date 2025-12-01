@@ -340,11 +340,11 @@ class SLM25DController(ImConWidgetController):
 
         self.detectors[2]._camera.setBufferTimeout(2000)
 
-        ##zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
+        zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("Astigmatism 1 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
         print("refocus ====================================================")
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("Coma 1 ====================================================")
@@ -352,15 +352,28 @@ class SLM25DController(ImConWidgetController):
         self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
         print("refocus ====================================================")
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("trefoil ====================================================")
-        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Coma 2 banana ====================================================")
-        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=True)
-        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=True)
+        # print("trefoil ====================================================")
+        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
         print("Astigmatism 2 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        print("refocus ====================================================")
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        print("trefoil ====================================================")
+        #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        print("Astigmatism 3 ====================================================")
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        print("refocus ====================================================")
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        print("Coma 2 banana ====================================================")
+        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
 
         
 
@@ -381,7 +394,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigAutoZernikeFinished.emit()
 
     def correct_focus(self, zPosFocus, ymin, ymax, xmin, xmax):
-        zPositions = np.linspace(-4., 4., 41)
+        zPositions = np.linspace(-4., 4., 17)
         images = []
         Zmaxprofile = []
         scores = []
@@ -432,7 +445,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             Zmaxprofile = []
-            zPositions = np.linspace(-6., 6., 25)
+            zPositions = np.linspace(-2., 2., 9)
             for offset in zPositions:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
@@ -451,13 +464,15 @@ class SLM25DController(ImConWidgetController):
             
 
             ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
-            scores.append(ZFWHM[0])  
+            # scores.append(ZFWHM[0])  
+            scores.append(max(Zmaxprofile))  
             profiles.append(Zmaxprofile)  
         
         self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
         print(scores)
-        SAOptimal = testvalues[scores.index(min(scores))]
+        # SAOptimal = testvalues[scores.index(min(scores))]
+        SAOptimal = testvalues[scores.index(max(scores))]
 
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
@@ -479,18 +494,19 @@ class SLM25DController(ImConWidgetController):
 
 
     # Loops =======================================================================
-    def obliqueAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+    def obliqueAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax, flag25dOn):
 
         # set 25d mask and project it stronger aberration effects
-        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-        self._widget.pars["AbsPosEditGamma"].setText("2.0")
-        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
-        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-        self._widget.pars["AbsPosEditPsi"].setText("0.0")
-        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
-        self.updatePhaseMask()
-        self._widget.project25D.setChecked(True)
-        time.sleep(0.015)
+        if flag25dOn:
+            self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].blockSignals(False)
+            self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].blockSignals(False)
+            self.updatePhaseMask()
+            self._widget.project25D.setChecked(True)
+            time.sleep(0.015)
 
         # Oblique Astigmatism 
         key = '(2,-2)Right'
@@ -547,18 +563,20 @@ class SLM25DController(ImConWidgetController):
         #self._widget.start25D.setEnabled(True)
 
 
-    def verticalAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+    def verticalAstigmatismLoop(self, zPosFocus, ymin, ymax, xmin, xmax, flag25dOn):
 
-        # set 25d mask and project it stronger aberration effects
-        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-        self._widget.pars["AbsPosEditGamma"].setText("2.0")
-        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
-        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-        self._widget.pars["AbsPosEditPsi"].setText("0.0")
-        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
-        self.updatePhaseMask()
-        self._widget.project25D.setChecked(True)
-        time.sleep(0.015)
+        # set 25d mask and project it stronger aberration effects =============================================
+        if flag25dOn:
+            self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].blockSignals(False)
+            self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].blockSignals(False)
+            self.updatePhaseMask()
+            self._widget.project25D.setChecked(True)
+            time.sleep(0.015)
+        # =======================================================================================================
 
         # Vertical Astigmatism 
         key = '(2,2)Right'
@@ -567,7 +585,6 @@ class SLM25DController(ImConWidgetController):
         images = []
         for testvalue in testvalues:
 
-            
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
@@ -738,7 +755,7 @@ class SLM25DController(ImConWidgetController):
 
 
         current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+        testvalues = np.linspace(current - 1.2, current + 1.2, 25)
         scores = []
         for testvalue in testvalues:
             
@@ -762,7 +779,8 @@ class SLM25DController(ImConWidgetController):
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                #score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[0]
                 if (offset == 0.):
                     scores.append(score)
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
@@ -859,7 +877,7 @@ class SLM25DController(ImConWidgetController):
         # #self._widget.start25D.setEnabled(True)
 
         current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+        testvalues = np.linspace(current - 1.2, current + 1.2, 25)
         scores = []
         for testvalue in testvalues:
 
@@ -873,7 +891,7 @@ class SLM25DController(ImConWidgetController):
 
             sigmasXY = []
             
-            for offset in [-2., 0., 2.]:
+            for offset in [-3., 0., 3.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 
@@ -887,7 +905,8 @@ class SLM25DController(ImConWidgetController):
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                # score = self.general_area_metric(beadImgAnalysis, threshold=0.1)
+                score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[1]
                 if (offset == 0.):
                     scores.append(score)
                 if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
@@ -926,7 +945,7 @@ class SLM25DController(ImConWidgetController):
         for key in ['(3,-3)Right', '(3,3)Right']:
         #for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
             current = self._widget.pars['AbsPosEdit' + key].value()
-            testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+            testvalues = np.linspace(current - 0.7, current + 0.7, 15)
             scores = []
             images = []
             # self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + 1. , 'Z')
@@ -949,14 +968,15 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
 
                 # tenegradm metric =================
+                #beadImgAnalysis = np.where(beadImgAnalysis > 0.1 * beadImgAnalysis.max(), beadImgAnalysis, 0)
                 sobel_x = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 1, 0, ksize=3)  # Sobel filter in X direction
                 sobel_y = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 0, 1, ksize=3)  # Sobel filter in Y direction
                 tenengrad = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
-                #score = np.mean(tenengrad)
+                score = np.mean(tenengrad)
 
 
                 images.append(beadImgAnalysis)
-                score = self.general_area_metric(beadImgAnalysis, threshold=0.1)# !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
+                #score = self.general_area_metric(beadImgAnalysis, threshold=0.1)# !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 #sigma = self.universal_r2_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 #scores.append(sigma)
                 scores.append(score)
@@ -966,8 +986,8 @@ class SLM25DController(ImConWidgetController):
                     break
 
             print(scores)
-            trefoilOptimal = testvalues[scores.index(min(scores))]
-            #trefoilOptimal = testvalues[scores.index(max(scores))]
+            #trefoilOptimal = testvalues[scores.index(min(scores))]
+            trefoilOptimal = testvalues[scores.index(max(scores))]
 
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
@@ -1033,6 +1053,15 @@ class SLM25DController(ImConWidgetController):
         #masked = np.where(XYslice > thr, 1, 0)  # Flat mode
         y_com, x_com = center_of_mass(masked)
         return x_com, y_com
+    
+    def coma_metric2(self, XYslice, threshold=0.1):
+        #masked10 = np.where(XYslice > thr, XYslice, 0)    # Intensity mode
+        masked10 = np.where(XYslice > XYslice.max() * 0.1, 1, 0)  # Flat mode
+        masked90 = np.where(XYslice > XYslice.max() * 0.8, 1, 0)  # Flat mode
+        y_com10, x_com10 = center_of_mass(masked10)
+        y_com90, x_com90 = center_of_mass(masked90)
+        return abs(x_com90 - x_com10), abs(y_com90 - y_com10)
+        #return np.sum(masked90), np.sum(masked90)
     
     def general_area_metric(self, XYslice, threshold):
         thr = XYslice.max() * threshold   # treshold
