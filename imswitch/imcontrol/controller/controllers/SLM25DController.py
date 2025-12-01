@@ -145,7 +145,9 @@ class SLM25DController(ImConWidgetController):
             filename = dialog.selectedFiles()
             img = Image.open(filename[0])
             arr = np.array(img)
-            arr = np.ascontiguousarray(arr)
+            if arr.shape[2] != 1:
+                arr = arr[:,:,0]
+            #arr = np.ascontiguousarray(arr)
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(np.rot90(arr)))
         else:
