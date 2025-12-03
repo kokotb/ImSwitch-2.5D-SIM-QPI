@@ -350,11 +350,10 @@ class SLM25DController(ImConWidgetController):
         print("Coma 1 ====================================================")
         self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
         self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
         print("refocus ====================================================")
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        # print("trefoil ====================================================")
-        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
         print("Astigmatism 2 ====================================================")
         self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
         self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
@@ -363,17 +362,24 @@ class SLM25DController(ImConWidgetController):
         print("trefoil ====================================================")
         #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
         self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Astigmatism 3 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
         print("refocus ====================================================")
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("Coma 2 banana ====================================================")
         self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
         self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-
+        print("refocus ====================================================")
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        print("trefoil ====================================================")
+        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        print("refocus ====================================================")
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        print("Astigmatism 3 ====================================================")
         self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
         self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        print("refocus ====================================================")
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        print("trefoil ====================================================")
+        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         
 
@@ -480,6 +486,7 @@ class SLM25DController(ImConWidgetController):
         self.updateZernike()
         time.sleep(0.015)
             
+        self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -510,7 +517,11 @@ class SLM25DController(ImConWidgetController):
 
         # Oblique Astigmatism 
         key = '(2,-2)Right'
-        testvalues = list(self.autoZernCalibValuesDict[key])
+        current = self._widget.pars['AbsPosEdit' + key].value()
+        if flag25dOn:
+            testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        else:
+            testvalues = np.linspace(current - 0.7, current + 0.7, 15)
         oblAstigScores = []
         images = []
         for testvalue in testvalues:
@@ -559,6 +570,7 @@ class SLM25DController(ImConWidgetController):
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
+        self.show_images_grid(images)
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
@@ -580,7 +592,11 @@ class SLM25DController(ImConWidgetController):
 
         # Vertical Astigmatism 
         key = '(2,2)Right'
-        testvalues = list(self.autoZernCalibValuesDict[key])
+        current = self._widget.pars['AbsPosEdit' + key].value()
+        if flag25dOn:
+            testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        else:
+            testvalues = np.linspace(current - 0.7, current + 0.7, 15)
         vertAstigScores = []
         images = []
         for testvalue in testvalues:
@@ -633,52 +649,6 @@ class SLM25DController(ImConWidgetController):
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
-    # def show_images_grid(self, images, cols=5, cmap='gray', titles=None, figsize=(15, 8)):
-    #     n = len(images)
-    #     rows = int(np.ceil(n / cols))
-
-    #     fig, axes = plt.subplots(rows, cols, figsize=figsize)
-    #     axes = np.array(axes).reshape(-1)   # splošno flatten, tudi za rows=1 ali cols=1
-
-    #     fig2, axes2 = plt.subplots(rows, cols, figsize=figsize)
-    #     axes2 = np.array(axes2).reshape(-1)   # splošno flatten, tudi za rows=1 ali cols=1
-
-    #     for i, img in enumerate(images):
-    #         axes[i].imshow(img, cmap=cmap)
-    #         if titles is not None and i < len(titles):
-    #             axes[i].set_title(titles[i])
-    #         axes[i].axis('off')
-
-    #     for j in range(i+1, rows * cols):
-    #         axes[j].axis('off')
-
-    #     plt.tight_layout()
-    #     plt.savefig("images.png")
-    #     plt.close() 
-
-    #     for threshold in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
-    #         for i, img in enumerate(images):
-
-    #             thr = img.max() * threshold   # treshold
-    #             #masked = np.where(img > thr, XYslice, 0)    # Intensity mode
-    #             masked = np.where(img > thr, 1, 0)  # Flat mode
-
-    #             axes2[i].imshow(masked, cmap=cmap)
-    #             if titles is not None and i < len(titles):
-    #                 axes2[i].set_title(titles[i])
-    #             axes2[i].axis('off')
-
-    #         for j in range(i+1, rows * cols):
-    #             axes2[j].axis('off')
-
-    #         plt.tight_layout()
-    #         plt.savefig("images" + str(threshold) + ".png")
-    #         plt.close() 
-
-    #     # skrij odvečne subplote (če mreža večja od #slik)
-
-
-    
 
     def show_images_grid(self, images, cols=6, titles=None, thresholds=[0.1, 0.2,0.3,0.4,0.5,0.6,0.7,0.8, 0.9], cmap='gray'):
         n = len(images)
@@ -755,7 +725,11 @@ class SLM25DController(ImConWidgetController):
 
 
         current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        if bananaMetric:
+            testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+        else:
+            testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        scores = []
         scores = []
         for testvalue in testvalues:
             
@@ -768,7 +742,11 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmasXY = []
-            for offset in [-2., 0., 2.]:
+            if bananaMetric:
+                offsets = [-3., 0., 3.]
+            else:
+                offsets = [0.]
+            for offset in offsets:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -877,7 +855,10 @@ class SLM25DController(ImConWidgetController):
         # #self._widget.start25D.setEnabled(True)
 
         current = self._widget.pars['AbsPosEdit' + key].value()
-        testvalues = np.linspace(current - 1.2, current + 1.2, 25)
+        if bananaMetric:
+            testvalues = np.linspace(current - 0.5, current + 0.5, 11)
+        else:
+            testvalues = np.linspace(current - 1.2, current + 1.2, 25)
         scores = []
         for testvalue in testvalues:
 
@@ -890,8 +871,12 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.015)
 
             sigmasXY = []
+            if bananaMetric:
+                offsets = [-3., 0., 3.]
+            else:
+                offsets = [0.]
             
-            for offset in [-3., 0., 3.]:
+            for offset in offsets:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 
@@ -914,10 +899,12 @@ class SLM25DController(ImConWidgetController):
                     self._commChannel.autoZernCheckedNew = False
                     break
             
-
-            commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
-            #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) #for astig metric
-            vertCommaScores.append(commaMetric)  
+            try:
+                commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
+                #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) #for astig metric
+                vertCommaScores.append(commaMetric)  
+            except:
+                pass
         
         self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
