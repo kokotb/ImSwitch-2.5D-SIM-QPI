@@ -767,11 +767,12 @@ class SLM25DController(ImConWidgetController):
                     break
             
 
-            commaMetric = abs((sigmasXY[2][0] - sigmasXY[1][0]) + (sigmasXY[0][0] - sigmasXY[1][0]))
-            #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) # for astig metric
-            commaMetric2 = abs((sigmasXY[2][1] - sigmasXY[1][1]) + (sigmasXY[0][1] - sigmasXY[1][1]))
-            horCommaScores.append(commaMetric)  
-            horCommaScores2.append(commaMetric2)
+            try:
+                commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
+                #commaMetric = abs(sigmasXY[2][0] - sigmasXY[2][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1]) #for astig metric
+                horCommaScores.append(commaMetric)  
+            except:
+                pass
         
         self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
