@@ -72,13 +72,26 @@ class PositionerController(ImConWidgetController):
 
             self.stageManager = self._master.positionersManager['XY']
             
-            currentSkew = self.stageManager.query("controller.stage.skew.enabled.get")[1]
-            currentMaxSpeed = self.stageManager.query("controller.stage.speed.get")[1]
-            currentMaxAcc = self.stageManager.query("controller.stage.acc.get")[1]
-            currentJerk = self.stageManager.query("controller.stage.jerk.get")[1]
-            currentBacklash = self.stageManager.query("controller.stage.backlash.get")[1]
+            currentSkewRaw = self.stageManager.query("controller.stage.skew.enabled.get")[1]
+            currentMaxSpeedRaw = self.stageManager.query("controller.stage.speed.get")[1]
+            currentMaxAccRaw = self.stageManager.query("controller.stage.acc.get")[1]
+            currentJerkRaw = self.stageManager.query("controller.stage.jerk.get")[1]
+            currentBacklashRaw = self.stageManager.query("controller.stage.backlash.get")[1]
             
-            self._widget.settingsWindow.skewLabel.setText(f"<strong>{currentSkew}</strong>")
+            
+            # displaying values in the correct format
+            currentSkew = float(currentSkewRaw)
+            
+            def convertToInt(i):
+                if isinstance(i, str) and i.isdigit():
+                    return int(i)
+                else:
+                    return int(float(i))
+            getFromStage = [convertToInt(i) for i in [currentMaxSpeedRaw, currentMaxAccRaw, currentJerkRaw, currentBacklashRaw]]
+            currentMaxSpeed, currentMaxAcc, currentJerk, currentBacklash = getFromStage
+
+                      
+            self._widget.settingsWindow.skewEntry.setText(f"<strong>{currentSkew:.2f}</strong>")
             self._widget.settingsWindow.maxSpeedLabel.setText(f"<strong>{currentMaxSpeed}</strong>")
             self._widget.settingsWindow.maxAccLabel.setText(f"<strong>{currentMaxAcc}</strong>")
             self._widget.settingsWindow.jerkLabel.setText(f"<strong>{currentJerk}</strong>")
@@ -127,7 +140,7 @@ class PositionerController(ImConWidgetController):
             else:
                 self.__logger.warning("Skew not set.")
         else:
-            self.__logger.warning("Skew value out of range 0-44.9 degrees.")
+            self.__logger.warning("Skew value out of range 0-44.90 degrees.")
     
     def setMaxSpeedOnStage(self):
         value = int(self._widget.settingsWindow.maxSpeedEntry.text())
