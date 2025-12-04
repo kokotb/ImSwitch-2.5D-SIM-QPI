@@ -347,7 +347,7 @@ class PositionerSettings(QMainWindow):
     def __init__(self, parent: None):
         super().__init__(parent)
         self.setWindowTitle("Tiling Settings")
-        self.setFixedSize(300, 600)
+        self.setFixedSize(500, 600)
         self.overallLayout = QtWidgets.QVBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(self.overallLayout)
