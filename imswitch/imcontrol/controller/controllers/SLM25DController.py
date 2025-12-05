@@ -533,7 +533,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(0.3)
 
             sigmas12 = []
             for offset in [-2., 2.]:
@@ -566,7 +566,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.015)
+        time.sleep(0.3)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -587,7 +587,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
-            time.sleep(0.015)
+            time.sleep(0.3)
         # =======================================================================================================
 
         # Vertical Astigmatism 
@@ -607,7 +607,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(0.3)
 
             sigmasXY = []
             for offset in [-2.0, 2.0]:
@@ -641,7 +641,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.015)
+        time.sleep(0.3)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -739,7 +739,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(0.3)
 
             sigmasXY = []
             if bananaMetric:
@@ -787,7 +787,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.015)
+        time.sleep(0.3)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -869,7 +869,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(0.3)
 
             sigmasXY = []
             if bananaMetric:
@@ -920,7 +920,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.015)
+        time.sleep(0.3)
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -946,7 +946,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
                 self.updateZernike()
-                time.sleep(0.015)
+                time.sleep(0.5)
 
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -960,7 +960,9 @@ class SLM25DController(ImConWidgetController):
                 sobel_x = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 1, 0, ksize=3)  # Sobel filter in X direction
                 sobel_y = cv2.Sobel(beadImgAnalysis, cv2.CV_64F, 0, 1, ksize=3)  # Sobel filter in Y direction
                 tenengrad = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
-                score = np.mean(tenengrad)
+                laplacian = cv2.Laplacian(beadImgAnalysis, cv2.CV_64F)  # Apply Laplacian filter
+                score = np.var(laplacian)
+                #score = np.mean(tenengrad)
 
 
                 images.append(beadImgAnalysis)
@@ -981,7 +983,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(0.3)
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
