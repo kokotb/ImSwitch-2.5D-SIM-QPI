@@ -270,7 +270,6 @@ class fovCorrection(QtWidgets.QLabel):
         self.setFixedSize(300, 300)
 
         self.click_points = []
-
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
@@ -293,6 +292,13 @@ class fovCorrection(QtWidgets.QLabel):
             painter.drawPoint(x, y)
 
         painter.end()
+        
+    def get_points(self):
+        return list(self.click_points)
+    
+    def format_points(points):
+        return ", ".join([f"({x},{y})" for x, y in points])
+
 
 
 
@@ -318,6 +324,7 @@ class FOVCorrectionWindow(QMainWindow):
         dummy = np.zeros((100, 100), dtype=np.uint8)
         self.blueImage = fovCorrection(dummy, parent=self)
         self.col1.addWidget(self.blueImage)
+
 
         self.col1.addStretch()
 
