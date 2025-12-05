@@ -1,6 +1,10 @@
+import numpy as np
+from qtpy import QtGui
 from pyqtgraph.parametertree import ParameterTree, Parameter
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QCheckBox, QMainWindow, QWidget, QLineEdit, QPushButton, QLabel
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush, QPainter, QFont
 from imswitch.imcommon.model import shortcut
 from imswitch.imcommon.view.guitools import naparitools
 from imswitch.imcontrol.view import guitools
@@ -168,6 +172,13 @@ class SettingsWidget(Widget):
 
         self.scatterCamActive = QCheckBox('Activate Scatter Cam')
         self.scatterCamActive.setEnabled(False)
+        
+        self.correctionButton = QtWidgets.QPushButton('FOV Correction')
+        self.detectorListBox.addWidget(self.correctionButton)
+        
+        self.fovWindow = FOVCorrectionWindow(self)
+        self.correctionButton.clicked.connect(self.fovWindow.show)
+
 
         # Add elements to GridLayout
         self.layout = QtWidgets.QVBoxLayout()
@@ -244,6 +255,120 @@ class SettingsWidget(Widget):
     @shortcut("Ctrl+N", "Next detector")
     def toggleNextButton(self):
         self.nextDetectorButton.click()
+
+class fovCorrection(QtWidgets.QLabel):
+    def __init__(self, image_np, parent=None):
+        super().__init__(parent)
+
+        # Convert numpy to pixmap
+        h, w = image_np.shape
+        qimg = QtGui.QImage(image_np.data, w, h, w, QtGui.QImage.Format_Grayscale8)
+        self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
+
+        self.setPixmap(self.pixmap_original)
+        self.setScaledContents(True)
+        self.setFixedSize(300, 300)
+
+        self.click_points = []
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.click_points.append((pos.x(), pos.y()))
+            self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        # Dot style
+        pen = QtGui.QPen(QtGui.QColor("red"))
+        pen.setWidth(6)
+        painter.setPen(pen)
+
+        # Draw each point
+        for x, y in self.click_points:
+            painter.drawPoint(x, y)
+
+        painter.end()
+
+
+
+class FOVCorrectionWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEnabled(True)
+        self.setWindowTitle("FOV Correction")
+        self.setMinimumSize(1000, 650)
+
+        # main layout
+        self.mainLayout = QtWidgets.QVBoxLayout()
+
+        # container for the three columns
+        self.columnsLayout = QtWidgets.QHBoxLayout()
+
+        # c1
+        self.col1 = QtWidgets.QVBoxLayout()
+        # label
+        self.blueLabel = QtWidgets.QLabel("<strong>488</strong>")
+        self.col1.addWidget(self.blueLabel)
+        # image
+        dummy = np.zeros((100, 100), dtype=np.uint8)
+        self.blueImage = fovCorrection(dummy, parent=self)
+        self.col1.addWidget(self.blueImage)
+
+        self.col1.addStretch()
+
+        # c2
+        self.col2 = QtWidgets.QVBoxLayout()
+        # label
+        self.greenLabel = QtWidgets.QLabel("<strong>561</strong>")
+        self.col2.addWidget(self.greenLabel)
+        # image
+        dummy = np.zeros((100, 100), dtype=np.uint8)
+        self.greenImage = fovCorrection(dummy, parent=self)
+        self.col2.addWidget(self.greenImage)
+        
+        self.col2.addStretch()
+
+        # c3
+        self.col3 = QtWidgets.QVBoxLayout()
+        # label
+        self.redLabel = QtWidgets.QLabel("<strong>640</strong>")
+        self.col3.addWidget(self.redLabel)
+        # image
+        dummy = np.zeros((100, 100), dtype=np.uint8)
+        self.redImage = fovCorrection(dummy, parent=self)
+        self.col3.addWidget(self.redImage)
+        
+        # composite label
+        self.compositeLabel = QtWidgets.QLabel("<strong>Composite</strong>")
+        self.col3.addWidget(self.compositeLabel)
+        # composite image
+        dummy = np.zeros((100, 100), dtype=np.uint8)
+        self.compositeImage = fovCorrection(dummy, parent=self) # all 3 channels
+        self.col3.addWidget(self.compositeImage)
+        
+        self.col3.addStretch()
+
+        # Add columns to the horizontal layout
+        self.columnsLayout.addLayout(self.col1)
+        self.columnsLayout.addLayout(self.col2)
+        self.columnsLayout.addLayout(self.col3)
+
+        # Add the columns layout to the main vertical layout
+        self.mainLayout.addLayout(self.columnsLayout)
+
+        self.mainLayout.addStretch()
+
+        # Set central widget
+        central_widget = QWidget()
+        central_widget.setLayout(self.mainLayout)
+        self.setCentralWidget(central_widget)
+
+
 
 
 # Copyright (C) 2020-2021 ImSwitch developers
