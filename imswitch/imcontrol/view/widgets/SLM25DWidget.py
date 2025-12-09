@@ -92,6 +92,9 @@ class SLM25DWidget(Widget):
         self.beginAZbutton = QPushButton("AutoZernike New")
         self.beginAZbutton.setEnabled(False)
         self.beginAZbutton.setFixedWidth(250)
+        self.centerMaskbutton = QPushButton("Center Mask")
+        self.centerMaskbutton.setEnabled(False)
+        self.centerMaskbutton.setFixedWidth(250)
         self.resetZern = QPushButton("Reset")
         self.resetZern.setEnabled(False)
         self.resetZern.clicked.connect(self.sigResetZern.emit)
@@ -134,6 +137,8 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.slmPreview, 0, 6)
         self.grid.addWidget(self.loadImgToSLMbutton, 1, 6)
         self.grid.addWidget(self.beginAZbutton, 2, 6)
+        self.grid.addWidget(self.centerMaskbutton, 3, 6)
+        
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
         self.grid.addWidget(self.resetZern, 4, 2)
@@ -422,6 +427,7 @@ class SLM25DWidget(Widget):
     def disableAll(self):
         self.slmPreview.setEnabled(False)
         self.beginAZbutton.setEnabled(False)
+        self.centerMaskbutton.setEnabled(False)
         self.valLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
@@ -460,6 +466,7 @@ class SLM25DWidget(Widget):
     def enableAll(self):
         self.slmPreview.setEnabled(True)
         self.beginAZbutton.setEnabled(True)
+        self.centerMaskbutton.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
         self.autoZernCheckboxNew.setEnabled(True)

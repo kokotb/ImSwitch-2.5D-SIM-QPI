@@ -107,9 +107,13 @@ class CommunicationChannel(SignalInterface):
 
     sigBeginAutoZernNew = Signal(object)
 
+    sigBeginAlignMaskCenter = Signal(object)
+
     sigAutoZernikeFinished = Signal()
 
     sigGetAZFrameCoords = Signal()
+
+    sigGetAZFrameCoordsMaskCenter = Signal()
 
     sigSendAZFrameCooords = Signal(object)
 

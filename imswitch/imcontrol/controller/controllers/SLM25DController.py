@@ -110,11 +110,14 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
         self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
         self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
+        self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
 
 
         self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
         self._commChannel.sigBeginAutoZernNew.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
+        self._commChannel.sigBeginAlignMaskCenter.connect(lambda selected_frame: self.beginAlignMaskCenterThreadNew(selected_frame))
+        
 
 
         # self._commChannel.sig25DAcqToggled.connect(self._widget.toggled25D)
@@ -175,6 +178,9 @@ class SLM25DController(ImConWidgetController):
 
     def beginAutoZernThreadNew(self, selected_frame):
         threading.Thread(target=self.AutoZernLoopNew, args=(selected_frame, ), daemon=True).start()
+
+    def beginAlignMaskCenterThreadNew(self, selected_frame):
+        threading.Thread(target=self.alignMaskCenter, args=(selected_frame, ), daemon=True).start()
 
     def AutoZernLoop(self):
 
@@ -298,14 +304,98 @@ class SLM25DController(ImConWidgetController):
 
 
 
+    def initiateAlignMaskCenter(self):
+        self._commChannel.sigGetAZFrameCoordsMaskCenter.emit()
 
+    def alignMaskCenter(self, selected_frame):
+        '''Only for right half of zern mask, MUST USE LIGHT POLARIZER!!!'''
 
+        print('Aligning mask center process started')
+        self._master.arduinoManager.activate25DWriteOnly()
+        self._master.detectorsManager._subManagers["640 Fluor"].startAcquisition25D()
 
+        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+        self._widget.pars["AbsPosEditGamma"].setStyleSheet("border: 3px solid green;")
+        self._widget.pars["AbsPosEditGamma"].setText("1.5")
+        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
 
+        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+        self._widget.pars["AbsPosEditPsi"].setStyleSheet("border: 3px solid green;")
+        self._widget.pars["AbsPosEditPsi"].setText("0.5")
+        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
+        self.updatePhaseMask()
 
+        # projects zern and 25d
+        self._widget.projectZernike.setChecked(True)
+        self._widget.projectZernike.setEnabled(False)
+        self._widget.project25D.setChecked(True)
+        self._widget.project25D.setEnabled(False)
+        self._widget.projectCenter.setChecked(False)
+        self._widget.projectCenter.setEnabled(False)
 
+        ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
+        zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
 
+        self.detectors[2]._camera.setBufferTimeout(2000)
+
+        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        self.alignCenterLoop(zPosFocus, ymin, ymax, xmin, xmax)
+
+        self._widget.projectZernike.setEnabled(True)
+        self._widget.project25D.setEnabled(True)
+        self._widget.projectCenter.setEnabled(True)
+    
+        self._master.arduinoManager.deactivateSLMWriteOnly()
+        self._master.detectorsManager._subManagers["640 Fluor"].stopAcquisition()
+
+        print('Aligning mask center process finished')
+
+    def alignCenterLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
+        for key in ["Right Center-Y", "Right Center-X"]:
+            current = int(self._widget.pars['AbsPosEdit' + key].text())
+            testvalues = np.linspace(current - 140, current + 140, 15, dtype=int)
+            scores = []
+            images = []
+            for testvalue in testvalues:
+                
+                self._widget.pars['AbsPosEdit' + key].blockSignals(True)
+                self._widget.pars['AbsPosEdit' + key].setStyleSheet("border: 3px solid green;")
+                self._widget.pars['AbsPosEdit' + key].setText(str(testvalue))
+                self._widget.pars['AbsPosEdit' + key].blockSignals(False)
+
+                self.updatePhaseMask()
+
+                Com_frames = []
+                zPositions = np.linspace(-4., 4., 9)
+                for offset in zPositions:
+                    self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self.waitingForBuffers()
+                    rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                    self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                    beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                    images.append(beadImgAnalysis)
+                    if (key == "Right Center-Y"):
+                        Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.3)[1])
+                    elif (key == "Right Center-X"):
+                        Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.3)[0])
+
+                score = np.diff(Com_frames).sum()
+                scores.append(score)  
+            
+            self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
+
+            print(scores)
+            posOptimal = testvalues[scores.index(min(scores))]
+
+            self._widget.pars['AbsPosEdit' + key].blockSignals(True)
+            self._widget.pars['AbsPosEdit' + key].setText(str(posOptimal))
+            self._widget.pars['AbsPosEdit' + key].blockSignals(False)
+            self.updatePhaseMask()
+                
+            #self.show_images_grid(images)
+            self._widget.pars['AbsPosEdit' + key].setStyleSheet('')
 
 
     def initiateAZWithButton(self):
@@ -433,7 +523,6 @@ class SLM25DController(ImConWidgetController):
 
     
     def sphericalAberrationLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        # Oblique Astigmatism 
         key = '(4,0)Right'
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.5, current + 0.5, 21)
@@ -1039,6 +1128,13 @@ class SLM25DController(ImConWidgetController):
 
         masked = np.where(XYslice > thr, XYslice, 0)    # Intensity mode
         #masked = np.where(XYslice > thr, 1, 0)  # Flat mode
+        y_com, x_com = center_of_mass(masked)
+        return x_com, y_com
+    
+    def center_metric(self, XYslice, threshold=0.3):
+        '''set threshold and flat or intensity mode'''
+        thr = XYslice.max() * threshold   # treshold
+        masked = np.where(XYslice > thr, XYslice, 0)    # Intensity mode
         y_com, x_com = center_of_mass(masked)
         return x_com, y_com
     

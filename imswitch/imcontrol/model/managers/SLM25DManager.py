@@ -15,6 +15,7 @@ from imswitch.imcommon.model import initLogger
 # import detect_heds_module_path
 from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
 
+import ctypes
 
 
 class SLM25DManager(SignalInterface):
@@ -102,9 +103,38 @@ class SLM25DManager(SignalInterface):
         self.arrayImgScoresAZ = []
 
 
+    # def projectMask(self, mask):
+    #     error = self.slm.showData(mask)
+    #     assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+
+
+
+    # !!! chat made this, careful !!! ===========================================
     def projectMask(self, mask):
-        error = self.slm.showData(mask)
-        assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+        handle = slmdisplaysdk.Datahandle(self.slm)
+
+        h, w = mask.shape
+
+        # Load uint8 grayscale data
+        err = self.slm._library.heds_load_data_grayscale_uchar(
+            ctypes.pointer(handle),
+            w,
+            h,
+            mask.ctypes.data_as(ctypes.POINTER(ctypes.c_ubyte)),
+            0,
+            0  # loadFlags
+        )
+
+        # Show the datahandle
+        self.slm.showDatahandle(handle, 0)
+
+        # Wait until mask becomes visible
+        handle.waitFor(slmdisplaysdk.State.Visible, 5000)
+
+        print("projected")
+    # ===============================================================================
+
+
 
     def openPreviewWindow(self):
         if self.slmActive == False:

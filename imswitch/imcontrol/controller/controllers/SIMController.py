@@ -132,6 +132,8 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigGetAZFrameCoords.connect(self.sendAZFrameCoordsTo25DController)
 
+        self._commChannel.sigGetAZFrameCoordsMaskCenter.connect(self.sendAZFrameCoordsTo25DControllerMaskCenter)
+
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
 
@@ -1769,6 +1771,13 @@ class SIMController(ImConWidgetController):
         self.stop25D()
         selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
+
+
+    def sendAZFrameCoordsTo25DControllerMaskCenter(self):
+        self.stop25D()
+        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
+
 
 
 
