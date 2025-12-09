@@ -321,10 +321,11 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.pars["AbsPosEditPsi"].blockSignals(True)
         self._widget.pars["AbsPosEditPsi"].setStyleSheet("border: 3px solid green;")
-        self._widget.pars["AbsPosEditPsi"].setText("0.5")
+        self._widget.pars["AbsPosEditPsi"].setText("0.3")
         self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
         self.updatePhaseMask()
+        time.sleep(1.)
 
         # projects zern and 25d
         self._widget.projectZernike.setChecked(True)
@@ -339,7 +340,9 @@ class SLM25DController(ImConWidgetController):
 
         self.detectors[2]._camera.setBufferTimeout(2000)
 
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # self._widget.project25D.setChecked(False)
+        # zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self._widget.project25D.setChecked(True)
         self.alignCenterLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
         self._widget.projectZernike.setEnabled(True)
@@ -365,9 +368,10 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + key].blockSignals(False)
 
                 self.updatePhaseMask()
+                time.sleep(10.)
 
                 Com_frames = []
-                zPositions = np.linspace(-3., 3., 3)
+                zPositions = np.linspace(-2., 2., 2)
                 for offset in zPositions:
                     self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                     self._master.arduinoManager.trigger25DWriteOnly()
@@ -541,7 +545,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.015)
+            time.sleep(1.)
 
             Zmaxprofile = []
             zPositions = np.linspace(-2., 2., 9)
@@ -577,7 +581,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.015)
+        time.sleep(1.)
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -626,7 +630,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.3)
+            time.sleep(1.)
 
             sigmas12 = []
             for offset in [-2., 2.]:
@@ -659,7 +663,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.3)
+        time.sleep(1.)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -680,7 +684,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
-            time.sleep(0.3)
+            time.sleep(1.)
         # =======================================================================================================
 
         # Vertical Astigmatism 
@@ -700,7 +704,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.3)
+            time.sleep(1.)
 
             sigmasXY = []
             for offset in [-2.0, 2.0]:
@@ -734,7 +738,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.3)
+        time.sleep(1.)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -832,7 +836,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.3)
+            time.sleep(1.)
 
             sigmasXY = []
             if bananaMetric:
@@ -880,7 +884,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.3)
+        time.sleep(1.)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -962,7 +966,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(0.3)
+            time.sleep(1.)
 
             sigmasXY = []
             if bananaMetric:
@@ -1013,7 +1017,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(0.3)
+        time.sleep(1.)
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -1039,7 +1043,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
                 self.updateZernike()
-                time.sleep(0.5)
+                time.sleep(1.)
 
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -1076,7 +1080,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             self.updateZernike()
-            time.sleep(0.3)
+            time.sleep(1.)
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
