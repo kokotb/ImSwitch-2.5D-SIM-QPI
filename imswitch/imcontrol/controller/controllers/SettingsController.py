@@ -7,6 +7,7 @@ from imswitch.imcommon.model import APIExport
 from imswitch.imcontrol.model import configfiletools
 from imswitch.imcontrol.view import guitools as guitools
 from ..basecontrollers import ImConWidgetController
+import time 
 
 
 @dataclass
@@ -121,6 +122,41 @@ class SettingsController(ImConWidgetController):
         self._widget.scatterCamActive.stateChanged.connect(self.toggleScatterCam)
         if self._master.detectorsManager._subManagers['488 Scatter']._DetectorManager__model != 'mock':
             self._widget.scatterCamActive.setEnabled(True)
+            
+        self._widget.correctionButton.clicked.connect(self.open_fov_window)
+        
+    def retrieveDetectors(self):
+        for detector in self._master.detectorsManager: #detector object list
+            if detector[1]._DetectorManager__forAcquisition:
+                fullName = detector[0]
+                shortName = fullName[:5].replace(" ", "")
+                detector[1].handle = shortName
+                self.detectors.append(detector[1])
+
+    def open_fov_window(self):
+        
+        # self._master.arduinoManager.trigger25DWriteOnly()
+        # time.sleep(0.2)
+        # rawImg = self.detectors[2]._camera.grabFrame25D(1)
+        self.detectors = []
+        self.retrieveDetectors()
+        self._master.arduinoManager.trigger25DWriteOnly()
+        time.sleep(0.2)
+        imgList = []
+        for i in range(3):
+            detector = self.detectors[i]
+            imgList.append(detector._camera.grabFrame25D(1))
+        
+        # blue_img  = np.zeros((4600, 4600), dtype=np.uint8)
+        # green_img = np.zeros((4600, 4600), dtype=np.uint8)
+        # red_img   = np.zeros((4600, 4600), dtype=np.uint8)
+        blue_img  = imgList[0]
+        green_img = imgList[1]
+        red_img   = imgList[2]
+
+        self._widget.openFOVWindow(blue_img, green_img, red_img)
+        
+
 
 
     def toggleScatterCam(self, state):

@@ -178,7 +178,7 @@ class SettingsWidget(Widget):
         self.correctionButton = QtWidgets.QPushButton('FOV Correction')
         self.detectorListBox.addWidget(self.correctionButton)
         
-        self.correctionButton.clicked.connect(self.open_fov_window)
+        
 
 
         # Add elements to GridLayout
@@ -195,24 +195,11 @@ class SettingsWidget(Widget):
             lambda index: self.sigDetectorChanged.emit(self.detectorList.itemData(index))
         )
         self.nextDetectorButton.clicked.connect(self.sigNextDetectorClicked)
+        # FOVCorrectionWindow = FOVCorrectionWindow(QMainWindow)
         
-    def open_fov_window(self):
-        parent = self.parent()
-        print("PARENT:", parent)
-
-        if parent is not None:
-            print("DIR PARENT:", dir(parent))
-            print("Has controller:", hasattr(parent, "_controller"))
-            print("Has model:", hasattr(parent, "_model"))
-            print("Has detectorsManager:", hasattr(parent, "detectorsManager"))
-            print("Has detectors:", hasattr(parent, "detectors"))
-
-        blue_img  = np.zeros((100, 100), dtype=np.uint8)
-        green_img = np.zeros((100, 100), dtype=np.uint8)
-        red_img   = np.zeros((100, 100), dtype=np.uint8)
-
-        self.fovWindow = FOVCorrectionWindow(blue_img, green_img, red_img, parent = self)
-        self.fovWindow.show()
+    def openFOVWindow(self, blue, green, red):
+        self.openCorrectionWindow = FOVCorrectionWindow(blue, green, red, parent=self)
+        self.openCorrectionWindow.show()
 
     def toggleCheckboxes(self, state):
         self.scatterCamActive.setEnabled(not state)
@@ -286,7 +273,7 @@ class fovCorrection(QtWidgets.QLabel):
 
         self.setPixmap(self.pixmap_original)
         self.setScaledContents(True)
-        self.setFixedSize(300, 300)
+        # self.setFixedSize(300, 300)
         self.click_points = []
 
     def paintEvent(self, event):
@@ -334,6 +321,11 @@ class FOVCorrectionWindow(QMainWindow):
 
         self.blueImage = fovCorrection(blue_img, parent=self)
         self.col1.addWidget(self.blueImage)
+        
+        self.alignButton = QtWidgets.QPushButton("Align cameras")
+        self.col1.addWidget(self.alignButton)
+        self.alignButton.clicked.connect(self.alignCameras)
+
 
         self.col1.addStretch()
 
@@ -392,6 +384,9 @@ class FOVCorrectionWindow(QMainWindow):
 
 
 
+    def alignCameras():
+        pass
+    
     def handle_blue_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
