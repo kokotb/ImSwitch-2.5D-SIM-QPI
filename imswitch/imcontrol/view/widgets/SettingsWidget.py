@@ -304,78 +304,69 @@ class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blue_img, green_img, red_img, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FOV Correction")
-        self.setMinimumSize(1000, 650)
+        self.setMinimumSize(1500, 650)
 
-        # main layout
+        dummy = np.zeros((4600, 4600), dtype=np.uint8)
+
         self.mainLayout = QtWidgets.QVBoxLayout()
-
-        # container for the three columns
         self.columnsLayout = QtWidgets.QHBoxLayout()
 
-        dummy = np.zeros((100, 100), dtype=np.uint8)
-
-        # blue
         self.col1 = QtWidgets.QVBoxLayout()
         self.blueLabel = QtWidgets.QLabel("488")
         self.col1.addWidget(self.blueLabel)
-
         self.blueImage = fovCorrection(blue_img, parent=self)
         self.col1.addWidget(self.blueImage)
-        
-        self.alignButton = QtWidgets.QPushButton("Align cameras")
-        self.col1.addWidget(self.alignButton)
-        self.alignButton.clicked.connect(self.alignCameras)
-
-
         self.col1.addStretch()
 
-        # green
         self.col2 = QtWidgets.QVBoxLayout()
         self.greenLabel = QtWidgets.QLabel("561")
         self.col2.addWidget(self.greenLabel)
-
         self.greenImage = fovCorrection(green_img, parent=self)
         self.col2.addWidget(self.greenImage)
-
         self.col2.addStretch()
 
-        # red + composite
         self.col3 = QtWidgets.QVBoxLayout()
         self.redLabel = QtWidgets.QLabel("640")
         self.col3.addWidget(self.redLabel)
-
         self.redImage = fovCorrection(red_img, parent=self)
         self.col3.addWidget(self.redImage)
-
-        # composite label
-        self.compositeLabel = QtWidgets.QLabel("Composite")
-        self.col3.addWidget(self.compositeLabel)
-
-        self.compositeImage = fovCorrection(dummy, parent=self)
-        self.col3.addWidget(self.compositeImage)
-
-        # disable clicking on composite
-        self.compositeImage.mousePressEvent = self.ignore_click
-
         self.col3.addStretch()
 
-        # add all columns
+        self.col4 = QtWidgets.QVBoxLayout()
+        self.compositeLabel = QtWidgets.QLabel("Composite")
+        self.col4.addWidget(self.compositeLabel)
+        self.compositeImage = fovCorrection(dummy, parent=self)
+        self.col4.addWidget(self.compositeImage)
+        self.compositeImage.mousePressEvent = self.ignore_click
+        self.col4.addStretch()
+
         self.columnsLayout.addLayout(self.col1)
         self.columnsLayout.addLayout(self.col2)
         self.columnsLayout.addLayout(self.col3)
+        self.columnsLayout.addLayout(self.col4)
         self.mainLayout.addLayout(self.columnsLayout)
 
-        # display clicked points
+        bottomLayout = QtWidgets.QHBoxLayout()
+
         self.pointsDisplay = QtWidgets.QTextEdit()
         self.pointsDisplay.setReadOnly(True)
         self.pointsDisplay.setFixedHeight(54)
         self.pointsDisplay.setFixedWidth(150)
-        self.mainLayout.addWidget(self.pointsDisplay)
+        bottomLayout.addWidget(self.pointsDisplay)
 
-        # central widget
+        self.alignButton = QtWidgets.QPushButton("Align cameras")
+        self.alignButton.setFixedHeight(54)
+        self.alignButton.setMinimumWidth(150)
+        self.alignButton.clicked.connect(self.alignCameras)
+        bottomLayout.addWidget(self.alignButton)
+
+        bottomLayout.addStretch()
+        self.mainLayout.addLayout(bottomLayout)
+
         central_widget = QWidget()
         central_widget.setLayout(self.mainLayout)
         self.setCentralWidget(central_widget)
+
 
         # clicking events
         self.blueImage.mousePressEvent = self.handle_blue_click
