@@ -260,7 +260,7 @@ class fovCorrection(QtWidgets.QLabel):
     def __init__(self, image_np, parent=None):
         super().__init__(parent)
 
-        # Convert numpy to pixmap
+        # convert numpy to pixmap
         h, w = image_np.shape
         qimg = QtGui.QImage(image_np.data, w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
@@ -268,14 +268,7 @@ class fovCorrection(QtWidgets.QLabel):
         self.setPixmap(self.pixmap_original)
         self.setScaledContents(True)
         self.setFixedSize(300, 300)
-
         self.click_points = []
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            pos = event.pos()
-            self.click_points.append((pos.x(), pos.y()))
-            self.update()
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -283,14 +276,26 @@ class fovCorrection(QtWidgets.QLabel):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
+        # dot style
         pen = QtGui.QPen(QtGui.QColor("red"))
         pen.setWidth(6)
         painter.setPen(pen)
 
-        for x, y in self.click_points:
+        # draw only the latest point
+        if self.click_points:
+            x, y = self.click_points[0]
             painter.drawPoint(x, y)
 
         painter.end()
+
+    def set_point(self, x, y):
+        # overwrite previous point
+        self.click_points = [(x, y)]
+        self.update()
+
+    def clear_point(self):
+        self.click_points = []
+        self.update()
 
     def get_points(self):
         return list(self.click_points)
@@ -305,6 +310,8 @@ class FOVCorrectionWindow(QMainWindow):
 
         # main layout
         self.mainLayout = QtWidgets.QVBoxLayout()
+
+        # container for the three columns
         self.columnsLayout = QtWidgets.QHBoxLayout()
 
         dummy = np.zeros((100, 100), dtype=np.uint8)
@@ -313,64 +320,88 @@ class FOVCorrectionWindow(QMainWindow):
         self.col1 = QtWidgets.QVBoxLayout()
         self.blueLabel = QtWidgets.QLabel("488")
         self.col1.addWidget(self.blueLabel)
+
         self.blueImage = fovCorrection(dummy, parent=self)
         self.col1.addWidget(self.blueImage)
+
         self.col1.addStretch()
 
         # green
         self.col2 = QtWidgets.QVBoxLayout()
         self.greenLabel = QtWidgets.QLabel("561")
         self.col2.addWidget(self.greenLabel)
+
         self.greenImage = fovCorrection(dummy, parent=self)
         self.col2.addWidget(self.greenImage)
+
         self.col2.addStretch()
 
-        # red, composite
+        # red + composite
         self.col3 = QtWidgets.QVBoxLayout()
         self.redLabel = QtWidgets.QLabel("640")
         self.col3.addWidget(self.redLabel)
+
         self.redImage = fovCorrection(dummy, parent=self)
         self.col3.addWidget(self.redImage)
 
+        # composite label
         self.compositeLabel = QtWidgets.QLabel("Composite")
         self.col3.addWidget(self.compositeLabel)
+
         self.compositeImage = fovCorrection(dummy, parent=self)
-
-        # disabled clicking on composite
-        self.compositeImage.mousePressEvent = lambda event: None
-
         self.col3.addWidget(self.compositeImage)
+
+        # disable clicking on composite
+        self.compositeImage.mousePressEvent = self.ignore_click
+
         self.col3.addStretch()
 
-
+        # add all columns
         self.columnsLayout.addLayout(self.col1)
         self.columnsLayout.addLayout(self.col2)
         self.columnsLayout.addLayout(self.col3)
         self.mainLayout.addLayout(self.columnsLayout)
 
-        # points text box
+        # display clicked points
         self.pointsDisplay = QtWidgets.QTextEdit()
         self.pointsDisplay.setReadOnly(True)
-        self.pointsDisplay.setFixedHeight(150)
+        self.pointsDisplay.setFixedHeight(60)
         self.mainLayout.addWidget(self.pointsDisplay)
 
-        # set central widget
+        # central widget
         central_widget = QWidget()
         central_widget.setLayout(self.mainLayout)
         self.setCentralWidget(central_widget)
 
         # clicking events
-        self.blueImage.mousePressEvent = lambda e: self.handle_click(self.blueImage, e)
-        self.greenImage.mousePressEvent = lambda e: self.handle_click(self.greenImage, e)
-        self.redImage.mousePressEvent = lambda e: self.handle_click(self.redImage, e)
+        self.blueImage.mousePressEvent = self.handle_blue_click
+        self.greenImage.mousePressEvent = self.handle_green_click
+        self.redImage.mousePressEvent = self.handle_red_click
 
 
-    def handle_click(self, widget, event):
+
+    def handle_blue_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
-            widget.click_points.append((pos.x(), pos.y()))
-            widget.update()
+            self.blueImage.set_point(pos.x(), pos.y())
             self.update_points_display()
+
+    def handle_green_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.greenImage.set_point(pos.x(), pos.y())
+            self.update_points_display()
+
+    def handle_red_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.redImage.set_point(pos.x(), pos.y())
+            self.update_points_display()
+
+    def ignore_click(self, event):
+        # composite is unclickable
+        pass
+
 
 
     def update_points_display(self):
@@ -378,26 +409,27 @@ class FOVCorrectionWindow(QMainWindow):
 
         # blue
         if self.blueImage.click_points:
-            pts = ", ".join([f"({x},{y})" for x, y in self.blueImage.click_points])
-            lines.append(f"488 nm: {pts}")
+            x, y = self.blueImage.click_points[0]
+            lines.append(f"488 nm: ({x},{y})")
         else:
             lines.append("488 nm:")
 
         # green
         if self.greenImage.click_points:
-            pts = ", ".join([f"({x},{y})" for x, y in self.greenImage.click_points])
-            lines.append(f"561 nm: {pts}")
+            x, y = self.greenImage.click_points[0]
+            lines.append(f"561 nm: ({x},{y})")
         else:
             lines.append("561 nm:")
 
         # red
         if self.redImage.click_points:
-            pts = ", ".join([f"({x},{y})" for x, y in self.redImage.click_points])
-            lines.append(f"640 nm: {pts}")
+            x, y = self.redImage.click_points[0]
+            lines.append(f"640 nm: ({x},{y})")
         else:
             lines.append("640 nm:")
 
         self.pointsDisplay.setPlainText("\n".join(lines))
+
 
 
 
