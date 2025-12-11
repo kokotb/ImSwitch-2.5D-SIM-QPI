@@ -9,7 +9,7 @@ from imswitch.imcommon.model import shortcut
 from imswitch.imcommon.view.guitools import naparitools
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
-
+import cv2
 
 class CamParamTree(ParameterTree):
     """ Making the ParameterTree for configuration of the detector during imaging
@@ -267,13 +267,16 @@ class fovCorrection(QtWidgets.QLabel):
         super().__init__(parent)
 
         # convert numpy to pixmap
+        #image_np = cv2.imread("pic.jpeg", cv2.IMREAD_GRAYSCALE)
         h, w = image_np.shape
         qimg = QtGui.QImage(image_np.data, w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
 
-        self.setPixmap(self.pixmap_original)
-        self.setScaledContents(True)
-        # self.setFixedSize(300, 300)
+        scaled = self.pixmap_original.scaled(300, 300, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.setPixmap(scaled)
+        self.setFixedSize(300, 300)
+        self.setScaledContents(False)
+
         self.click_points = []
 
     def paintEvent(self, event):
@@ -304,7 +307,7 @@ class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blue_img, green_img, red_img, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FOV Correction")
-        self.setMinimumSize(1500, 650)
+        self.setMinimumSize(300, 300)
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
 
@@ -312,21 +315,21 @@ class FOVCorrectionWindow(QMainWindow):
         self.columnsLayout = QtWidgets.QHBoxLayout()
 
         self.col1 = QtWidgets.QVBoxLayout()
-        self.blueLabel = QtWidgets.QLabel("488")
+        self.blueLabel = QtWidgets.QLabel(f"<strong>488<strong>")
         self.col1.addWidget(self.blueLabel)
         self.blueImage = fovCorrection(blue_img, parent=self)
         self.col1.addWidget(self.blueImage)
         self.col1.addStretch()
 
         self.col2 = QtWidgets.QVBoxLayout()
-        self.greenLabel = QtWidgets.QLabel("561")
+        self.greenLabel = QtWidgets.QLabel(f"<strong>561<strong>")
         self.col2.addWidget(self.greenLabel)
         self.greenImage = fovCorrection(green_img, parent=self)
         self.col2.addWidget(self.greenImage)
         self.col2.addStretch()
 
         self.col3 = QtWidgets.QVBoxLayout()
-        self.redLabel = QtWidgets.QLabel("640")
+        self.redLabel = QtWidgets.QLabel(f"<strong>640<strong>")
         self.col3.addWidget(self.redLabel)
         self.redImage = fovCorrection(red_img, parent=self)
         self.col3.addWidget(self.redImage)
@@ -351,12 +354,12 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay = QtWidgets.QTextEdit()
         self.pointsDisplay.setReadOnly(True)
         self.pointsDisplay.setFixedHeight(54)
-        self.pointsDisplay.setFixedWidth(150)
+        self.pointsDisplay.setFixedWidth(110)
         bottomLayout.addWidget(self.pointsDisplay)
 
         self.alignButton = QtWidgets.QPushButton("Align cameras")
         self.alignButton.setFixedHeight(54)
-        self.alignButton.setMinimumWidth(150)
+        self.alignButton.setFixedWidth(150)
         self.alignButton.clicked.connect(self.alignCameras)
         bottomLayout.addWidget(self.alignButton)
 

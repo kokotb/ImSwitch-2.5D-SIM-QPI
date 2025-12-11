@@ -153,7 +153,7 @@ class SettingsController(ImConWidgetController):
         blue_img  = imgList[0]
         green_img = imgList[1]
         red_img   = imgList[2]
-
+        
         self._widget.openFOVWindow(blue_img, green_img, red_img)
         
 
