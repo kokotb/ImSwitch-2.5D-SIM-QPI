@@ -325,7 +325,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
         self.updatePhaseMask()
-        time.sleep(1.)
+        time.sleep(0.15)
 
         # projects zern and 25d
         self._widget.projectZernike.setChecked(True)
@@ -368,7 +368,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + key].blockSignals(False)
 
                 self.updatePhaseMask()
-                time.sleep(10.)
+                time.sleep(0.15)
 
                 Com_frames = []
                 zPositions = np.linspace(-2., 2., 2)
@@ -385,7 +385,7 @@ class SLM25DController(ImConWidgetController):
                     elif (key == "Right Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
-                score = np.diff(Com_frames).sum()
+                score = abs(np.diff(Com_frames).sum())
                 scores.append(score)  
             
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
@@ -412,7 +412,7 @@ class SLM25DController(ImConWidgetController):
     def waitingForBuffers(self):
         waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
         while waitingBuffers != 1:
-            time.sleep(0.01)
+            time.sleep(0.015)
             waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
             self._master.arduinoManager.trigger25DWriteOnly()
             waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
@@ -438,44 +438,44 @@ class SLM25DController(ImConWidgetController):
 
         self.detectors[2]._camera.setBufferTimeout(2000)
 
-        zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Astigmatism 1 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Coma 1 ====================================================")
-        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Astigmatism 2 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("trefoil ====================================================")
-        #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Coma 2 banana ====================================================")
-        self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("trefoil ====================================================")
-        self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
-        print("Astigmatism 3 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
-        print("refocus ====================================================")
-        zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("Astigmatism 1 ====================================================")
+        # self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
+        # self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("Coma 1 ====================================================")
+        # self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("Astigmatism 2 ====================================================")
+        # self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        # self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("trefoil ====================================================")
+        # #self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("Coma 2 banana ====================================================")
+        # self.verticalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # self.horizontalComaLoop(zPosFocus, ymin, ymax, xmin, xmax, bananaMetric=False)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("trefoil ====================================================")
+        # self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
+        # print("Astigmatism 3 ====================================================")
+        # self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        # self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        # print("refocus ====================================================")
+        # zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("trefoil ====================================================")
         self.trefoilLoop(zPosFocus, ymin, ymax, xmin, xmax)
 
@@ -545,7 +545,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
 
             Zmaxprofile = []
             zPositions = np.linspace(-2., 2., 9)
@@ -581,7 +581,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(1.)
+        time.sleep(0.15)
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -610,7 +610,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
-            time.sleep(0.015)
+            time.sleep(0.15)
 
         # Oblique Astigmatism 
         key = '(2,-2)Right'
@@ -630,7 +630,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
 
             sigmas12 = []
             for offset in [-2., 2.]:
@@ -663,7 +663,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(1.)
+        time.sleep(0.15)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -684,7 +684,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
-            time.sleep(1.)
+            time.sleep(0.15)
         # =======================================================================================================
 
         # Vertical Astigmatism 
@@ -704,7 +704,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
 
             sigmasXY = []
             for offset in [-2.0, 2.0]:
@@ -738,7 +738,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(1.)
+        time.sleep(0.15)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -792,7 +792,7 @@ class SLM25DController(ImConWidgetController):
         #     self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
         #     self.updateZernike()
-        #     time.sleep(0.015)
+        #     time.sleep(0.15)
 
         #     self._master.arduinoManager.trigger25DWriteOnly()
         #     self.waitingForBuffers()
@@ -814,7 +814,7 @@ class SLM25DController(ImConWidgetController):
         # self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         # self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         # self.updateZernike()
-        # time.sleep(0.015)
+        # time.sleep(0.15)
             
         # self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         # #self._widget.stop25D.setEnabled(False)
@@ -836,7 +836,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
 
             sigmasXY = []
             if bananaMetric:
@@ -884,7 +884,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(1.)
+        time.sleep(0.15)
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -916,7 +916,7 @@ class SLM25DController(ImConWidgetController):
         #     self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
         #     self.updateZernike()
-        #     time.sleep(0.015)
+        #     time.sleep(0.15)
 
         #     self._master.arduinoManager.trigger25DWriteOnly()
         #     self.waitingForBuffers()
@@ -946,7 +946,7 @@ class SLM25DController(ImConWidgetController):
         # self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         # self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         # self.updateZernike()
-        # time.sleep(0.015)
+        # time.sleep(0.15)
             
         # self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         # #self._widget.stop25D.setEnabled(False)
@@ -966,7 +966,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
 
             sigmasXY = []
             if bananaMetric:
@@ -1017,7 +1017,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernike()
-        time.sleep(1.)
+        time.sleep(0.15)
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -1043,7 +1043,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
                 self.updateZernike()
-                time.sleep(1.)
+                time.sleep(0.15)
 
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -1080,7 +1080,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             self.updateZernike()
-            time.sleep(1.)
+            time.sleep(0.15)
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
