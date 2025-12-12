@@ -135,7 +135,7 @@ class SLM25DManager(SignalInterface):
         )
 
         # Show the datahandle
-        self.slm.showDatahandle(handle, 0)
+        self.slm.showDatahandle(handle, 0) #changes mask on SLM
 
         # Wait until mask becomes visible
         handle.waitFor(slmdisplaysdk.State.Visible, 5000)
