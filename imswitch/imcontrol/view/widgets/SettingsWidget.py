@@ -269,6 +269,8 @@ class fovCorrection(QtWidgets.QLabel):
 
         # convert numpy to pixmap
         self.npImage = npImage
+        #self.npImage = self.npImage[:, (self.npImage.shape[1]-4600)//2 : (self.npImage.shape[1]+4600)//2]
+
         h, w = npImage.shape
         self.displayW = 300
         self.displayH = 300
@@ -288,12 +290,15 @@ class fovCorrection(QtWidgets.QLabel):
 
         # dot style
         pen = QtGui.QPen(QtGui.QColor("red"))
-        pen.setWidth(6)
+        pen.setWidth(2)
         painter.setPen(pen)
 
         if self.clickPoints:
             x, y = self.clickPoints[0]
-            painter.drawPoint(x, y)
+            size = 5
+            # draw cross
+            painter.drawLine(x - size, y - size, x + size, y + size)
+            painter.drawLine(x - size, y + size, x + size, y - size)
         painter.end()
 
     def setPoint(self, x, y):
