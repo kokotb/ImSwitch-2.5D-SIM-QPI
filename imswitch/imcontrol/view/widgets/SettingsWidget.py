@@ -266,14 +266,13 @@ class SettingsWidget(Widget):
 class fovCorrection(QtWidgets.QLabel):
     def __init__(self, image_np, parent=None):
         super().__init__(parent)
-        
 
         # convert numpy to pixmap
-        image_np = cv2.imread("pic.jpeg", cv2.IMREAD_GRAYSCALE)
+        self.image_np = image_np
         h, w = image_np.shape
         self.display_w = 300
         self.display_h = 300
-        qimg = QtGui.QImage(image_np.data, w, h, w, QtGui.QImage.Format_Grayscale8)
+        qimg = QtGui.QImage(image_np.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
 
         scaled = self.pixmap_original.scaled(self.display_w, self.display_h, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
@@ -285,7 +284,6 @@ class fovCorrection(QtWidgets.QLabel):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
@@ -299,42 +297,22 @@ class fovCorrection(QtWidgets.QLabel):
             painter.drawPoint(x, y)
         painter.end()
 
-    def setPoint(self, x, y):    
+    def setPoint(self, x, y):
         self.click_points = [(x, y)]
         self.update()
-        
-    def zoomAroundOriginalPoint(self, ox, oy, halfSize=100):
-        img = self.image_np
-        h, w = img.shape
-        x0 = max(0, ox - halfSize)
-        x1 = min(w, ox + halfSize)
-        y0 = max(0, oy - halfSize)
-        y1 = min(h, oy + halfSize)
 
-        crop = img[y0:y1, x0:x1]
-
-        ch, cw = crop.shape
-        qimg = QtGui.QImage(crop.data, cw, ch, cw, QtGui.QImage.Format_Grayscale8)
+    def setImage(self, image_np):
+        self.image_np = image_np
+        h, w = image_np.shape
+        qimg = QtGui.QImage(image_np.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
         pix = QtGui.QPixmap.fromImage(qimg)
 
-        scaled = pix.scaled(
-            self.display_w,
-            self.display_h,
-            QtCore.Qt.IgnoreAspectRatio,
-            QtCore.Qt.SmoothTransformation,
-        )
+        scaled = pix.scaled(self.display_w, self.display_h, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
 
         self.setPixmap(scaled)
-
-        self.factor = (cw / self.display_w, ch / self.display_h)
-
-        self.offset_x = x0
-        self.offset_y = y0
-
+        self.factor = (w / self.display_w, h / self.display_h)
         self.click_points = []
         self.update()
-
-
 
 
 class FOVCorrectionWindow(QMainWindow):
@@ -344,6 +322,10 @@ class FOVCorrectionWindow(QMainWindow):
         self.setMinimumSize(1230, 400)
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
+
+        self.fullImages = {"488": blue_img, "561": green_img, "640": red_img,}
+
+        self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0),}
 
         self.mainLayout = QtWidgets.QVBoxLayout()
         self.columnsLayout = QtWidgets.QHBoxLayout()
@@ -404,17 +386,45 @@ class FOVCorrectionWindow(QMainWindow):
         central_widget.setLayout(self.mainLayout)
         self.setCentralWidget(central_widget)
 
-
         # clicking events
         self.blueImage.mousePressEvent = self.handleBlueClick
         self.greenImage.mousePressEvent = self.handleGreenClick
         self.redImage.mousePressEvent = self.handleRedClick
 
+    def alignCameras(self):
+
+        if not self.blueImage.click_points:
+            return
+        if not self.greenImage.click_points:
+            return
+        if not self.redImage.click_points:
+            return
+
+        self.alignSingle("488", self.blueImage)
+        self.alignSingle("561", self.greenImage)
+        self.alignSingle("640", self.redImage)
+
+        self.updatePointsDisplay()
+        
+    def alignSingle(self, label, img):
+        x, y = img.click_points[0]
+        fx, fy = img.factor
+        offx, offy = self.offsets[label]
+        ox = floor(offx + x * fx)
+        oy = floor(offy + y * fy)
+        full = self.fullImages[label]
+        h, w = full.shape
+        half = 100
+        x0 = max(0, ox - half)
+        x1 = min(w, ox + half)
+        y0 = max(0, oy - half)
+        y1 = min(h, oy + half)
+        crop = full[y0:y1, x0:x1]
+        img.setImage(crop)
+        self.offsets[label] = (x0, y0)
 
 
-    def alignCameras():
-        pass
-    
+
     def handleBlueClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
@@ -436,34 +446,34 @@ class FOVCorrectionWindow(QMainWindow):
     def ignoreClick(self, event):
         pass
 
-
     def updatePointsDisplay(self):
         lines = []
-        # blue
+
         if self.blueImage.click_points:
-            x, y = self.blueImage.click_points[0]
-            fx, fy = self.blueImage.factor
-            ox = floor(x * fx)
-            oy = floor(y * fy)
-            lines.append(f"488: ({ox}, {oy})")
+            lines.append(self.formatPoint("488", self.blueImage))
 
-        # green
         if self.greenImage.click_points:
-            x, y = self.greenImage.click_points[0]
-            fx, fy = self.greenImage.factor
-            ox = floor(x * fx)
-            oy = floor(y * fy)
-            lines.append(f"561: ({ox}, {oy})")
+            lines.append(self.formatPoint("561", self.greenImage))
 
-        # red
         if self.redImage.click_points:
-            x, y = self.redImage.click_points[0]
-            fx, fy = self.redImage.factor
-            oy = floor(x * fx)
-            ox = floor(y * fy)
-            lines.append(f"640: ({ox}, {oy})")
+            lines.append(self.formatPoint("640", self.redImage))
 
         self.pointsDisplay.setPlainText("\n".join(lines))
+
+    def formatPoint(self, label, img):
+
+        x, y = img.click_points[0]
+
+        fx, fy = img.factor
+        offx, offy = self.offsets[label]
+
+        ox = floor(offx + x * fx)
+        oy = floor(offy + y * fy)
+
+        return f"{label}: ({ox}, {oy})"
+
+
+
 
 
 
