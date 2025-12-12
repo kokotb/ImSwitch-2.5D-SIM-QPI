@@ -1029,8 +1029,12 @@ class SLM25DController(ImConWidgetController):
         # Vertical Comma 
         for key in ['(3,-3)Right', '(3,3)Right']:
         #for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
-            current = self._widget.pars['AbsPosEdit' + key].value()
-            testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+            current = round(self._widget.pars['AbsPosEdit' + key].value(),2)
+            testvalues = np.round(np.linspace(current - 0.7, current + 0.7, 15), 2)
+
+            # current = self._widget.pars['AbsPosEdit' + key].value()
+            # testvalues = np.linspace(current - 0.7, current + 0.7, 15)
+
             scores = []
             images = []
             # self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + 1. , 'Z')
