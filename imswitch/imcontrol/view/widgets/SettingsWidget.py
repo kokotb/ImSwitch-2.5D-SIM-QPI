@@ -264,68 +264,65 @@ class SettingsWidget(Widget):
         self.nextDetectorButton.click()
 
 class fovCorrection(QtWidgets.QLabel):
-    def __init__(self, image_np, parent=None):
+    def __init__(self, npImage, parent=None):
         super().__init__(parent)
 
         # convert numpy to pixmap
-        self.image_np = image_np
-        h, w = image_np.shape
-        self.display_w = 300
-        self.display_h = 300
-        qimg = QtGui.QImage(image_np.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
-        self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
+        self.npImage = npImage
+        h, w = npImage.shape
+        self.displayW = 300
+        self.displayH = 300
+        qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
+        self.pixmapOriginal = QtGui.QPixmap.fromImage(qimg)
 
-        scaled = self.pixmap_original.scaled(self.display_w, self.display_h, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        scaled = self.pixmapOriginal.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
         self.setPixmap(scaled)
-        self.setFixedSize(self.display_w, self.display_h)
+        self.setFixedSize(self.displayW, self.displayH)
         self.setScaledContents(False)
-        self.click_points = []
-        self.factor = (w / self.display_w, h / self.display_h)
+        self.clickPoints = []
+        self.factor = (w / self.displayW, h / self.displayH)
 
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QtGui.QPainter(self)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
         # dot style
         pen = QtGui.QPen(QtGui.QColor("red"))
         pen.setWidth(6)
         painter.setPen(pen)
 
-        if self.click_points:
-            x, y = self.click_points[0]
+        if self.clickPoints:
+            x, y = self.clickPoints[0]
             painter.drawPoint(x, y)
         painter.end()
 
     def setPoint(self, x, y):
-        self.click_points = [(x, y)]
+        self.clickPoints = [(x, y)]
         self.update()
 
-    def setImage(self, image_np):
-        self.image_np = image_np
-        h, w = image_np.shape
-        qimg = QtGui.QImage(image_np.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
+    def setImage(self, npImage):
+        self.npImage = npImage
+        h, w = npImage.shape
+        qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
         pix = QtGui.QPixmap.fromImage(qimg)
 
-        scaled = pix.scaled(self.display_w, self.display_h, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        scaled = pix.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
 
         self.setPixmap(scaled)
-        self.factor = (w / self.display_w, h / self.display_h)
-        self.click_points = []
+        self.factor = (w / self.displayW, h / self.displayH)
+        self.clickPoints = []
         self.update()
 
 
 class FOVCorrectionWindow(QMainWindow):
-    def __init__(self, blue_img, green_img, red_img, parent=None):
+    def __init__(self, blueImg, greenImg, redImg, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1230, 400)
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
-
-        self.fullImages = {"488": blue_img, "561": green_img, "640": red_img,}
-
-        self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0),}
+        self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
+        self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
         self.mainLayout = QtWidgets.QVBoxLayout()
         self.columnsLayout = QtWidgets.QHBoxLayout()
@@ -333,21 +330,21 @@ class FOVCorrectionWindow(QMainWindow):
         self.col1 = QtWidgets.QVBoxLayout()
         self.blueLabel = QtWidgets.QLabel(f"<strong>488<strong>")
         self.col1.addWidget(self.blueLabel)
-        self.blueImage = fovCorrection(blue_img, parent=self)
+        self.blueImage = fovCorrection(blueImg, parent=self)
         self.col1.addWidget(self.blueImage)
         self.col1.addStretch()
 
         self.col2 = QtWidgets.QVBoxLayout()
         self.greenLabel = QtWidgets.QLabel(f"<strong>561<strong>")
         self.col2.addWidget(self.greenLabel)
-        self.greenImage = fovCorrection(green_img, parent=self)
+        self.greenImage = fovCorrection(greenImg, parent=self)
         self.col2.addWidget(self.greenImage)
         self.col2.addStretch()
 
         self.col3 = QtWidgets.QVBoxLayout()
         self.redLabel = QtWidgets.QLabel(f"<strong>640<strong>")
         self.col3.addWidget(self.redLabel)
-        self.redImage = fovCorrection(red_img, parent=self)
+        self.redImage = fovCorrection(redImg, parent=self)
         self.col3.addWidget(self.redImage)
         self.col3.addStretch()
 
@@ -393,11 +390,11 @@ class FOVCorrectionWindow(QMainWindow):
 
     def alignCameras(self):
 
-        if not self.blueImage.click_points:
+        if not self.blueImage.clickPoints:
             return
-        if not self.greenImage.click_points:
+        if not self.greenImage.clickPoints:
             return
-        if not self.redImage.click_points:
+        if not self.redImage.clickPoints:
             return
 
         self.alignSingle("488", self.blueImage)
@@ -407,18 +404,22 @@ class FOVCorrectionWindow(QMainWindow):
         self.updatePointsDisplay()
         
     def alignSingle(self, label, img):
-        x, y = img.click_points[0]
+        x, y = img.clickPoints[0]
         fx, fy = img.factor
         offx, offy = self.offsets[label]
+        
         ox = floor(offx + x * fx)
         oy = floor(offy + y * fy)
+        
         full = self.fullImages[label]
         h, w = full.shape
         half = 100
+        
         x0 = max(0, ox - half)
         x1 = min(w, ox + half)
         y0 = max(0, oy - half)
         y1 = min(h, oy + half)
+        
         crop = full[y0:y1, x0:x1]
         img.setImage(crop)
         self.offsets[label] = (x0, y0)
@@ -431,11 +432,13 @@ class FOVCorrectionWindow(QMainWindow):
             self.blueImage.setPoint(pos.x(), pos.y())
             self.updatePointsDisplay()
 
+
     def handleGreenClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.greenImage.setPoint(pos.x(), pos.y())
             self.updatePointsDisplay()
+
 
     def handleRedClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -443,26 +446,28 @@ class FOVCorrectionWindow(QMainWindow):
             self.redImage.setPoint(pos.x(), pos.y())
             self.updatePointsDisplay()
 
+
     def ignoreClick(self, event):
         pass
+
 
     def updatePointsDisplay(self):
         lines = []
 
-        if self.blueImage.click_points:
+        if self.blueImage.clickPoints:
             lines.append(self.formatPoint("488", self.blueImage))
 
-        if self.greenImage.click_points:
+        if self.greenImage.clickPoints:
             lines.append(self.formatPoint("561", self.greenImage))
 
-        if self.redImage.click_points:
+        if self.redImage.clickPoints:
             lines.append(self.formatPoint("640", self.redImage))
 
         self.pointsDisplay.setPlainText("\n".join(lines))
 
-    def formatPoint(self, label, img):
 
-        x, y = img.click_points[0]
+    def formatPoint(self, label, img):
+        x, y = img.clickPoints[0]
 
         fx, fy = img.factor
         offx, offy = self.offsets[label]
