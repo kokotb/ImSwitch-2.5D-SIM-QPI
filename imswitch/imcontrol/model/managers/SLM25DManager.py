@@ -47,6 +47,7 @@ class SLM25DManager(SignalInterface):
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
         self.arrayImgScoresAZ = []
+        
 
     def calcAutoZern(self, imgs):
         # !!! if rawImg in AutoZernLoop is only one color
@@ -103,6 +104,13 @@ class SLM25DManager(SignalInterface):
         self.arrayImgScoresAZ = []
 
 
+
+
+
+
+
+
+
     # def projectMask(self, mask):
     #     error = self.slm.showData(mask)
     #     assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
@@ -115,6 +123,7 @@ class SLM25DManager(SignalInterface):
 
         h, w = mask.shape
 
+        print("1 projection - Time Visible - " + str(handle.visibleTimeMs))
         # Load uint8 grayscale data
         err = self.slm._library.heds_load_data_grayscale_uchar(
             ctypes.pointer(handle),
@@ -130,9 +139,37 @@ class SLM25DManager(SignalInterface):
 
         # Wait until mask becomes visible
         handle.waitFor(slmdisplaysdk.State.Visible, 5000)
-
+        while (handle.visibleTimeMs < 1 and handle.visibleTimeMs != 65535):
+            handle.update()
+            print(handle.visibleTimeMs)
+        print("4 projection - Time Visible - " + str(handle.visibleTimeMs))
         print("projected")
     # ===============================================================================
+
+    """def projectMask(self, mask):
+        # create data handle
+        handle = self.slm.dataHandle()
+
+        # ensure shape matches SLM resolution
+        h, w = mask.shape
+        assert w == self.slm.width and h == self.slm.height
+        
+        # load 8-bit grayscale image
+        handle.loadDataGrayscaleUchar(mask)
+
+        # show on SLM
+        self.slm.showDataHandle(handle)
+
+        # wait until rendering is finished
+        handle.waitFor()
+
+        print("Mask projected" )"""
+
+
+
+
+
+
 
 
 
