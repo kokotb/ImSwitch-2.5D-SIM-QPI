@@ -129,9 +129,10 @@ class SettingsController(ImConWidgetController):
         for detector in self._master.detectorsManager: #detector object list
             if detector[1]._DetectorManager__forAcquisition:
                 fullName = detector[0]
-                shortName = fullName[:5].replace(" ", "")
-                detector[1].handle = shortName
-                self.detectors.append(detector[1])
+                if fullName[-5:] == 'Fluor':
+                    shortName = fullName[:5].replace(" ", "")
+                    detector[1].handle = shortName
+                    self.detectors.append(detector[1])
 
     def open_fov_window(self):
         
@@ -140,23 +141,84 @@ class SettingsController(ImConWidgetController):
         # rawImg = self.detectors[2]._camera.grabFrame25D(1)
         self.detectors = []
         self.retrieveDetectors()
-        self._master.arduinoManager.trigger25DWriteOnly()
-        time.sleep(0.2)
         imgList = []
-        for i in range(3):
-            detector = self.detectors[i]
-            imgList.append(detector._camera.grabFrame25D(1))
+        # for i in range(3):
+        #     detector = self.detectors[i]
+        #     imgList.append(detector._camera.grabFrame25D(1))
         
         # blue_img  = np.zeros((4600, 4600), dtype=np.uint8)
         # green_img = np.zeros((4600, 4600), dtype=np.uint8)
         # red_img   = np.zeros((4600, 4600), dtype=np.uint8)
-        blue_img  = imgList[0]
-        green_img = imgList[1]
-        red_img   = imgList[2]
+        lastImgs = self.getOneSetImgs()
+        blue_img  = lastImgs[0]
+        green_img = lastImgs[1]
+        red_img   = lastImgs[2]
         
         self._widget.openFOVWindow(blue_img, green_img, red_img)
-        
 
+    def getParameterValue(self, detector, parameter_name):
+        detector_name = detector._DetectorManager__name
+        shared_attributes = self._master._MasterController__commChannel._CommunicationChannel__sharedAttrs._data
+        if parameter_name == 'ExposureTime':
+            value = float(shared_attributes[('Detector', detector_name, 'Param', parameter_name)])
+        else:
+            self._logger.warning("Debugging needed.")
+            self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
+        return value
+        
+    def getOneSetImgs(self):
+        self._master.arduinoManager.activate25DWriteOnly()
+        for detector in self.detectors:
+            self.setCamForFOVWindow(detector)
+        self._master.arduinoManager.trigger25DWriteOnly()
+        time.sleep(0.1)
+        lastImgs = []
+        for detector in self.detectors:
+               lastImgs.append(detector._camera.grabFrame25D(1))
+
+        self._master.arduinoManager.deactivateSLMWriteOnly()
+
+        for detector in self.detectors:
+            if detector.forAcquisition:
+                detector.stopAcquisitionSIM()
+
+        return lastImgs
+
+    def setCamForFOVWindow(self, detector):
+
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
+        detector._camera.setPropertyValue('AcquisitionFrameRate', 10.0)
+        detector.crop(0,0,5320,4600)
+        trigger_mode = 'On'
+        exposure_auto = 'Off'
+        gamma = 1.0
+        gain = 0.0
+        trigger_source = 'Line0'
+        trigger_overlap = 'Off'
+        # detector._camera.setBufferTimeout(500)
+
+        # # Pull the exposure time from settings widget
+        exposure_time = self.getParameterValue(detector, 'ExposureTime')
+
+        # # exposure_time = self.exposure # anything < 19 ms
+        pixel_format = 'Mono16'
+        bit_depth = 'Bits12'
+        frame_rate_enable = True
+        buffer_mode = "NewestOnly"
+        triggerSelector = 'FrameStart'
+
+        # Set cam parameters
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gain': gain,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
+
+        # for detector in detectors:
+        for parameter_name in dic_parameters:
+            # print(detector._camera.getPropertyValue(parameter_name))
+            detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+            if parameter_name == 'ExposureTime':
+                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
+            # print(detector._camera.getPropertyValue(parameter_name))
+        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+        detector.startAcquisition25D()
 
 
     def toggleScatterCam(self, state):

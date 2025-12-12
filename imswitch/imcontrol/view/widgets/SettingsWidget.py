@@ -269,15 +269,16 @@ class fovCorrection(QtWidgets.QLabel):
 
         # convert numpy to pixmap
         self.npImage = npImage
-        #self.npImage = self.npImage[:, (self.npImage.shape[1]-4600)//2 : (self.npImage.shape[1]+4600)//2]
-
-        h, w = npImage.shape
+        
+        self.npImage = self.npImage[:, (self.npImage.shape[1]-4600)//2 : (self.npImage.shape[1]+4600)//2]
+        h, w = self.npImage.shape
+        
         self.displayW = 300
         self.displayH = 300
         qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmapOriginal = QtGui.QPixmap.fromImage(qimg)
 
-        scaled = self.pixmapOriginal.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        scaled = self.pixmapOriginal.scaled(self.displayW, self.displayH, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         self.setPixmap(scaled)
         self.setFixedSize(self.displayW, self.displayH)
         self.setScaledContents(False)
