@@ -14,7 +14,7 @@ import shutil
 #David
 # shutil.rmtree('C:/Users/SIM/Documents/ImSwitchConfig')
 
-#Jakob
+#Jakob  
 # shutil.rmtree(R'C:\Users\JakobC\Documents\ImSwitchConfig')
 
 # #Microscope Computer

@@ -258,11 +258,11 @@ class AutofocusController(ImConWidgetController):
             self.guess_x.clear()
             self.guess_x.append(popt)
             # Do y fit
-            popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000)
+            popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000) 
             y0 = popt[1]
             sy = popt[2]
             
-            # Replaces initial guess with final guess
+            # Replaces initial guess with final guessW
             self.guess_y.clear()
             self.guess_y.append(popt)
         
