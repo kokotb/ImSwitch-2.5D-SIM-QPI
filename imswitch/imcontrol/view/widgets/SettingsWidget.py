@@ -1,4 +1,5 @@
 import numpy as np
+from math import floor
 from qtpy import QtGui
 from pyqtgraph.parametertree import ParameterTree, Parameter
 from qtpy import QtCore, QtWidgets
@@ -265,19 +266,22 @@ class SettingsWidget(Widget):
 class fovCorrection(QtWidgets.QLabel):
     def __init__(self, image_np, parent=None):
         super().__init__(parent)
+        
 
         # convert numpy to pixmap
-        #image_np = cv2.imread("pic.jpeg", cv2.IMREAD_GRAYSCALE)
+        image_np = cv2.imread("pic.jpeg", cv2.IMREAD_GRAYSCALE)
         h, w = image_np.shape
+        self.display_w = 300
+        self.display_h = 300
         qimg = QtGui.QImage(image_np.data, w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmap_original = QtGui.QPixmap.fromImage(qimg)
 
-        scaled = self.pixmap_original.scaled(300, 300, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        scaled = self.pixmap_original.scaled(self.display_w, self.display_h, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
         self.setPixmap(scaled)
-        self.setFixedSize(300, 300)
+        self.setFixedSize(self.display_w, self.display_h)
         self.setScaledContents(False)
-
         self.click_points = []
+        self.factor = (w / self.display_w, h / self.display_h)
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -290,16 +294,46 @@ class fovCorrection(QtWidgets.QLabel):
         pen.setWidth(6)
         painter.setPen(pen)
 
-        # draw only the latest point
         if self.click_points:
             x, y = self.click_points[0]
             painter.drawPoint(x, y)
-
         painter.end()
 
-    def set_point(self, x, y):
+    def setPoint(self, x, y):    
         self.click_points = [(x, y)]
         self.update()
+        
+    def zoomAroundOriginalPoint(self, ox, oy, halfSize=100):
+        img = self.image_np
+        h, w = img.shape
+        x0 = max(0, ox - halfSize)
+        x1 = min(w, ox + halfSize)
+        y0 = max(0, oy - halfSize)
+        y1 = min(h, oy + halfSize)
+
+        crop = img[y0:y1, x0:x1]
+
+        ch, cw = crop.shape
+        qimg = QtGui.QImage(crop.data, cw, ch, cw, QtGui.QImage.Format_Grayscale8)
+        pix = QtGui.QPixmap.fromImage(qimg)
+
+        scaled = pix.scaled(
+            self.display_w,
+            self.display_h,
+            QtCore.Qt.IgnoreAspectRatio,
+            QtCore.Qt.SmoothTransformation,
+        )
+
+        self.setPixmap(scaled)
+
+        self.factor = (cw / self.display_w, ch / self.display_h)
+
+        self.offset_x = x0
+        self.offset_y = y0
+
+        self.click_points = []
+        self.update()
+
 
 
 
@@ -307,7 +341,7 @@ class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blue_img, green_img, red_img, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FOV Correction")
-        self.setMinimumSize(300, 300)
+        self.setMinimumSize(1230, 400)
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
 
@@ -340,7 +374,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.col4.addWidget(self.compositeLabel)
         self.compositeImage = fovCorrection(dummy, parent=self)
         self.col4.addWidget(self.compositeImage)
-        self.compositeImage.mousePressEvent = self.ignore_click
+        self.compositeImage.mousePressEvent = self.ignoreClick
         self.col4.addStretch()
 
         self.columnsLayout.addLayout(self.col1)
@@ -372,55 +406,65 @@ class FOVCorrectionWindow(QMainWindow):
 
 
         # clicking events
-        self.blueImage.mousePressEvent = self.handle_blue_click
-        self.greenImage.mousePressEvent = self.handle_green_click
-        self.redImage.mousePressEvent = self.handle_red_click
+        self.blueImage.mousePressEvent = self.handleBlueClick
+        self.greenImage.mousePressEvent = self.handleGreenClick
+        self.redImage.mousePressEvent = self.handleRedClick
 
 
 
     def alignCameras():
         pass
     
-    def handle_blue_click(self, event):
+    def handleBlueClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
-            self.blueImage.set_point(pos.x(), pos.y())
-            self.update_points_display()
+            self.blueImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
 
-    def handle_green_click(self, event):
+    def handleGreenClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
-            self.greenImage.set_point(pos.x(), pos.y())
-            self.update_points_display()
+            self.greenImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
 
-    def handle_red_click(self, event):
+    def handleRedClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
-            self.redImage.set_point(pos.x(), pos.y())
-            self.update_points_display()
+            self.redImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
 
-    def ignore_click(self, event):
+    def ignoreClick(self, event):
         pass
-    
-    def update_points_display(self):
-        lines = []
 
+
+    def updatePointsDisplay(self):
+        lines = []
         # blue
         if self.blueImage.click_points:
             x, y = self.blueImage.click_points[0]
-            lines.append(f"488: ({x},{y})")
+            fx, fy = self.blueImage.factor
+            ox = floor(x * fx)
+            oy = floor(y * fy)
+            lines.append(f"488: ({ox}, {oy})")
 
         # green
         if self.greenImage.click_points:
             x, y = self.greenImage.click_points[0]
-            lines.append(f"561: ({x},{y})")
+            fx, fy = self.greenImage.factor
+            ox = floor(x * fx)
+            oy = floor(y * fy)
+            lines.append(f"561: ({ox}, {oy})")
 
         # red
         if self.redImage.click_points:
             x, y = self.redImage.click_points[0]
-            lines.append(f"640: ({x},{y})")
+            fx, fy = self.redImage.factor
+            oy = floor(x * fx)
+            ox = floor(y * fy)
+            lines.append(f"640: ({ox}, {oy})")
 
         self.pointsDisplay.setPlainText("\n".join(lines))
+
 
 
 
