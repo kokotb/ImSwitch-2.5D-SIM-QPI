@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import floor
 from typing import Any, List, Tuple
 
 import numpy as np
@@ -36,14 +37,17 @@ class SettingsController(ImConWidgetController):
         self.settingAttr = False
         self.allParams = {}
 
+        self.detectors = []
+
+        self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
+        self.fullImages = {"488": None, "561": None, "640": None}
+
         if not self._master.detectorsManager.hasDevices():
             return
 
-        # Set up detectors
         for dName, dManager in self._master.detectorsManager:
             if not dManager.forAcquisition:
                 continue
-
             self._widget.addDetector(
                 dName, dManager.model, dManager.parameters, dManager.actions,
                 dManager.supportedBinnings, self._setupInfo.rois
@@ -52,69 +56,28 @@ class SettingsController(ImConWidgetController):
         self.roiAdded = False
         self.initParameters()
 
-        # Should be set in config file so all cams have the same
-        # Global moves realitvely to frameStart - meant for tiny adjustments
-
-        for detector in self._master.detectorsManager: 
+        for detector in self._master.detectorsManager:
             frameStart_change = tuple(map(lambda i, j: i + j, detector[1].frameStart, detector[1].frameStartGlobal))
             detector[1].setOffsetRelative(frameStart_change)
-
-
-
-        # ------------------Old implementation------------------
-        # # Calculate and set relative positions of the detectors, position of the detector does not accept negative values
-        # detector_names = self._master.detectorsManager.getAllDeviceNames()
-        # tuple2 = self._master.detectorsManager[detector_names[0]].frameStart
-
-        # camOffsetX = []
-        # camOffsetY = []
-
-        # globalOffsetX = []
-        # globalOffsetY = []
-        # for detector in self._master.detectorsManager: 
-        #     size = detector[1].frameStart
-        #     camOffsetX.append(size[0])
-        #     camOffsetY.append(size[1])
-        #     size = detector[1].frameStartGlobal
-        #     globalOffsetX.append(size[0])
-        #     globalOffsetY.append(size[1])
-
-        # # Set to max if different offsets in the config file (should not be...)
-        # tuple2 = (max(camOffsetX)+max(globalOffsetX), max(camOffsetY)+max(globalOffsetY))
-
-        # for k,detector in enumerate(self._master.detectorsManager): 
-        #     tuple1 = detector[1].frameStartGlobal
-        #     tuple_set = tuple(map(lambda i, j: i - j, tuple2, tuple1))
-        #     print(self._master.detectorsManager[detector_names[k]].offsetRelative)
-        #     self._master.detectorsManager[detector_names[k]].setOffsetRelative(tuple_set)
-        #     print(self._master.detectorsManager[detector_names[k]].offsetRelative)
-        # ------------------Old implementation------------------
 
         execOnAll = self._master.detectorsManager.execOnAll
         execOnAll(lambda c: (self.updateParamsFromDetector(detector=c)),
                   condition=lambda c: c.forAcquisition)
-        # No loggers in controllers
-        # self.logger.debug("Initialize: running adjustFrame - no global offset.")
         execOnAll(lambda c: (self.adjustFrame(detector=c)),
                   condition=lambda c: c.forAcquisition)
-        # self.logger.debug("Initialize: running updateFrame - with global offset.")
-        # No loggers in controllers
         execOnAll(lambda c: (self.updateFrame(detector=c)),
                   condition=lambda c: c.forAcquisition)
         execOnAll(lambda c: (self.updateFrameActionButtons(detector=c)),
                   condition=lambda c: c.forAcquisition)
 
         self.detectorSwitched(self._master.detectorsManager.getCurrentDetectorName())
-
         self.updateSharedAttrs()
 
-        # Connect CommunicationChannel signals
         self._commChannel.sigDetectorSwitched.connect(self.detectorSwitched)
         self._commChannel.sharedAttrs.sigAttributeSet.connect(self.attrChanged)
         self._commChannel.sigWriteParamsFromCam.connect(self.writeParamsFromCamFunc)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleCheckboxes)
 
-        # Connect SettingsWidget signals
         self._widget.sigROIChanged.connect(self.ROIchanged)
         self._widget.sigDetectorChanged.connect(self.detectorSwitchClicked)
         self._widget.sigNextDetectorClicked.connect(self.detectorNextClicked)
@@ -122,12 +85,12 @@ class SettingsController(ImConWidgetController):
         self._widget.scatterCamActive.stateChanged.connect(self.toggleScatterCam)
         if self._master.detectorsManager._subManagers['488 Scatter']._DetectorManager__model != 'mock':
             self._widget.scatterCamActive.setEnabled(True)
-            
+
         self._widget.correctionButton.clicked.connect(self.open_fov_window)
-        
-        
+
     def retrieveDetectors(self):
-        for detector in self._master.detectorsManager: #detector object list
+        self.detectors = []
+        for detector in self._master.detectorsManager:
             if detector[1]._DetectorManager__forAcquisition:
                 fullName = detector[0]
                 if fullName[-5:] == 'Fluor':
@@ -136,32 +99,114 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
-        
-        # self._master.arduinoManager.trigger25DWriteOnly()
-        # time.sleep(0.2)
-        # rawImg = self.detectors[2]._camera.grabFrame25D(1)
-        self.detectors = []
         self.retrieveDetectors()
-        imgList = []
-        # for i in range(3):
-        #     detector = self.detectors[i]
-        #     imgList.append(detector._camera.grabFrame25D(1))
-        
-        # blue_img  = np.zeros((4600, 4600), dtype=np.uint8)
-        # green_img = np.zeros((4600, 4600), dtype=np.uint8)
-        # red_img   = np.zeros((4600, 4600), dtype=np.uint8)
+
         lastImgs = self.getOneSetImgs()
-        blue_img  = lastImgs[0]
+        blue_img = lastImgs[0]
         green_img = lastImgs[1]
-        red_img   = lastImgs[2]
-        
-        
+        red_img = lastImgs[2]
+
+        self.fullImages["488"] = blue_img
+        self.fullImages["561"] = green_img
+        self.fullImages["640"] = red_img
+
+        self.fovOffsets["488"] = (0, 0)
+        self.fovOffsets["561"] = (0, 0)
+        self.fovOffsets["640"] = (0, 0)
+
         self._widget.openFOVWindow(blue_img, green_img, red_img)
-        self._widget.openCorrectionWindow.cropButton.clicked.connect(self.cropDetectors)
-        
-        
-    def cropDetectors(self, detectors, x0, y0, width, height):
-        print("Cropping detectors...")
+
+        win = self._widget.openCorrectionWindow
+
+        win.alignButton.clicked.connect(self.alignDetectors)
+        win.cropButton.clicked.connect(self.cropDetectors)
+
+    def alignDetectors(self):
+        win = self._widget.openCorrectionWindow
+
+        if not win.blueImage.clickPoints:
+            return
+        if not win.greenImage.clickPoints:
+            return
+        if not win.redImage.clickPoints:
+            return
+
+        crop = self.alignSingle("488", win.blueImage)
+        win.blueImage.setImage(crop)
+
+        crop = self.alignSingle("561", win.greenImage)
+        win.greenImage.setImage(crop)
+
+        crop = self.alignSingle("640", win.redImage)
+        win.redImage.setImage(crop)
+
+        win.updatePointsDisplay()
+
+    def alignSingle(self, label, img):
+        x, y = img.clickPoints[0]
+        fx, fy = img.factor
+
+        offx, offy = self.fovOffsets[label]
+
+        ox = floor(offx + x * fx)
+        oy = floor(offy + y * fy)
+
+        full = self.fullImages[label]
+        h, w = full.shape
+        half = 100
+
+        x0 = max(0, ox - half)
+        y0 = max(0, oy - half)
+        x1 = min(w, ox + half)
+        y1 = min(h, oy + half)
+
+        self.fovOffsets[label] = (x0, y0)
+
+        return full[y0:y1, x0:x1]
+
+    def cropDetectors(self):
+        win = self._widget.openCorrectionWindow
+
+        if not win.blueImage.clickPoints:
+            return
+        if not win.greenImage.clickPoints:
+            return
+        if not win.redImage.clickPoints:
+            return
+
+        roiSize = 512
+        half = roiSize // 2
+
+        def toSensor(label, img):
+            x, y = img.clickPoints[0]
+            fx, fy = img.factor
+            offx, offy = self.fovOffsets[label]
+            ox = floor(offx + x * fx)
+            oy = floor(offy + y * fy)
+            return ox, oy
+
+        gx, gy = toSensor("561", win.greenImage)
+        bx, by = toSensor("488", win.blueImage)
+        rx, ry = toSensor("640", win.redImage)
+
+        # shifts relative to green
+        dx_b = gx - bx
+        dy_b = gy - by
+        dx_r = gx - rx
+        dy_r = gy - ry
+
+        rois = {
+            "561": (gx - half, gy - half),
+            "488": (gx - half + dx_b, gy - half + dy_b),
+            "640": (gx - half + dx_r, gy - half + dy_r),
+        }
+
+        for detector in self.detectors:
+            label = detector.handle      # this should het "488", "561", "640"???
+            x0, y0 = rois[label]
+            detector.crop(int(x0), int(y0), roiSize, roiSize)
+
+
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name

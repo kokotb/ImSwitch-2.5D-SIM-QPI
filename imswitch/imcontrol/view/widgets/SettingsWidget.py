@@ -380,13 +380,11 @@ class FOVCorrectionWindow(QMainWindow):
         self.alignButton = QtWidgets.QPushButton("Align detectors")
         self.alignButton.setFixedHeight(54)
         self.alignButton.setFixedWidth(150)
-        self.alignButton.clicked.connect(self.alignCameras)
         bottomLayout.addWidget(self.alignButton)
 
         self.cropButton = QtWidgets.QPushButton("Crop detectors")
         self.cropButton.setFixedHeight(54)
         self.cropButton.setFixedWidth(150)
-        #self.cropButton.clicked.connect(self.alignCameras)
         bottomLayout.addWidget(self.cropButton)
 
         bottomLayout.addStretch()
@@ -400,43 +398,6 @@ class FOVCorrectionWindow(QMainWindow):
         self.blueImage.mousePressEvent = self.handleBlueClick
         self.greenImage.mousePressEvent = self.handleGreenClick
         self.redImage.mousePressEvent = self.handleRedClick
-
-    def alignCameras(self):
-
-        if not self.blueImage.clickPoints:
-            return
-        if not self.greenImage.clickPoints:
-            return
-        if not self.redImage.clickPoints:
-            return
-
-        self.alignSingle("488", self.blueImage)
-        self.alignSingle("561", self.greenImage)
-        self.alignSingle("640", self.redImage)
-
-        self.updatePointsDisplay()
-        
-    def alignSingle(self, label, img):
-        x, y = img.clickPoints[0]
-        fx, fy = img.factor
-        offx, offy = self.offsets[label]
-        
-        ox = floor(offx + x * fx)
-        oy = floor(offy + y * fy)
-        
-        full = self.fullImages[label]
-        h, w = full.shape
-        half = 100
-        
-        x0 = max(0, ox - half)
-        x1 = min(w, ox + half)
-        y0 = max(0, oy - half)
-        y1 = min(h, oy + half)
-        
-        crop = full[y0:y1, x0:x1]
-        img.setImage(crop)
-        self.offsets[label] = (x0, y0)
-
 
 
     def handleBlueClick(self, event):
@@ -463,7 +424,7 @@ class FOVCorrectionWindow(QMainWindow):
     def ignoreClick(self, event):
         pass
 
-
+    
     def updatePointsDisplay(self):
         lines = []
 
@@ -477,7 +438,6 @@ class FOVCorrectionWindow(QMainWindow):
             lines.append(self.formatPoint("640", self.redImage))
 
         self.pointsDisplay.setPlainText("\n".join(lines))
-
 
     def formatPoint(self, label, img):
         x, y = img.clickPoints[0]
