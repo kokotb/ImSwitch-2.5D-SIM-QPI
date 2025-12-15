@@ -125,6 +125,7 @@ class SettingsController(ImConWidgetController):
             
         self._widget.correctionButton.clicked.connect(self.open_fov_window)
         
+        
     def retrieveDetectors(self):
         for detector in self._master.detectorsManager: #detector object list
             if detector[1]._DetectorManager__forAcquisition:
@@ -154,7 +155,13 @@ class SettingsController(ImConWidgetController):
         green_img = lastImgs[1]
         red_img   = lastImgs[2]
         
+        
         self._widget.openFOVWindow(blue_img, green_img, red_img)
+        self._widget.openCorrectionWindow.cropButton.clicked.connect(self.cropDetectors)
+        
+        
+    def cropDetectors(self, detectors, x0, y0, width, height):
+        print("Cropping detectors...")
 
     def getParameterValue(self, detector, parameter_name):
         detector_name = detector._DetectorManager__name
@@ -184,8 +191,6 @@ class SettingsController(ImConWidgetController):
 
         return lastImgs
 
-    def detectorCrop(self, detector, x0, y0, width, height):
-        pass
 
     def setCamForFOVWindow(self, detector):
 

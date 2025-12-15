@@ -198,6 +198,7 @@ class SettingsWidget(Widget):
         self.nextDetectorButton.clicked.connect(self.sigNextDetectorClicked)
         # FOVCorrectionWindow = FOVCorrectionWindow(QMainWindow)
         
+        
     def openFOVWindow(self, blue, green, red):
         self.openCorrectionWindow = FOVCorrectionWindow(blue, green, red, parent=self)
         self.openCorrectionWindow.show()
@@ -321,7 +322,7 @@ class fovCorrection(QtWidgets.QLabel):
 
 
 class FOVCorrectionWindow(QMainWindow):
-    def __init__(self, blueImg, greenImg, redImg, parent=None):
+    def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
         super().__init__(parent)
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1230, 400)
@@ -385,7 +386,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.cropButton = QtWidgets.QPushButton("Crop detectors")
         self.cropButton.setFixedHeight(54)
         self.cropButton.setFixedWidth(150)
-        self.cropButton.clicked.connect(self.alignCameras)
+        #self.cropButton.clicked.connect(self.alignCameras)
         bottomLayout.addWidget(self.cropButton)
 
         bottomLayout.addStretch()
