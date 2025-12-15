@@ -184,6 +184,9 @@ class SettingsController(ImConWidgetController):
 
         return lastImgs
 
+    def detectorCrop(self, detector, x0, y0, width, height):
+        pass
+
     def setCamForFOVWindow(self, detector):
 
         detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        

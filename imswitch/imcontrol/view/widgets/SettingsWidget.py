@@ -376,11 +376,17 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay.setFixedWidth(110)
         bottomLayout.addWidget(self.pointsDisplay)
 
-        self.alignButton = QtWidgets.QPushButton("Align cameras")
+        self.alignButton = QtWidgets.QPushButton("Align detectors")
         self.alignButton.setFixedHeight(54)
         self.alignButton.setFixedWidth(150)
         self.alignButton.clicked.connect(self.alignCameras)
         bottomLayout.addWidget(self.alignButton)
+
+        self.cropButton = QtWidgets.QPushButton("Crop detectors")
+        self.cropButton.setFixedHeight(54)
+        self.cropButton.setFixedWidth(150)
+        self.cropButton.clicked.connect(self.alignCameras)
+        bottomLayout.addWidget(self.cropButton)
 
         bottomLayout.addStretch()
         self.mainLayout.addLayout(bottomLayout)
