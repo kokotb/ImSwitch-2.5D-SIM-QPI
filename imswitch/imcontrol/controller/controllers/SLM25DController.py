@@ -757,7 +757,7 @@ class SLM25DController(ImConWidgetController):
             for idx, img in enumerate(img_list):
                 r = idx // cols
                 c = idx % cols
-                im = Image.fromarray((img*255).astype(np.uint8))
+                im = Image.fromarray((img/16).astype(np.uint8))
                 grid_img.paste(im, (c*w, r*h))
             return grid_img
 
