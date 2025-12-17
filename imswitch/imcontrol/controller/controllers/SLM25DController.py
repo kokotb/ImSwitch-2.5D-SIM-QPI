@@ -1048,6 +1048,11 @@ class SLM25DController(ImConWidgetController):
 
                 self.updateZernike()
                 time.sleep(0.15)
+                # timeinit = time.time()
+                # timeelap = 0
+                # while timeelap < 0.1:
+                #     time.sleep(0.001)
+                #     timeelap = time.time()-timeinit
 
                 self._master.arduinoManager.trigger25DWriteOnly()
                 self.waitingForBuffers()
@@ -1085,6 +1090,11 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             self.updateZernike()
             time.sleep(0.15)
+            # timeinit = time.time()
+            # timeelap = 0
+            # while timeelap < 0.1:
+            #     time.sleep(0.001)
+            #     timeelap = time.time()-timeinit
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)

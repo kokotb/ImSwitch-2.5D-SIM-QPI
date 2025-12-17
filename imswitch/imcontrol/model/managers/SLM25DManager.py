@@ -119,7 +119,10 @@ class SLM25DManager(SignalInterface):
 
     # !!! chat made this, careful !!! ===========================================
     def projectMask(self, mask):
+        import time
         handle = slmdisplaysdk.Datahandle(self.slm)
+        handle.durationInFrames = 255
+        slmdisplaysdk.ApplyDataHandleValue.DurationInFrames
 
         h, w = mask.shape
 
@@ -138,10 +141,13 @@ class SLM25DManager(SignalInterface):
         self.slm.showDatahandle(handle, 0) #changes mask on SLM
 
         # Wait until mask becomes visible
-        handle.waitFor(slmdisplaysdk.State.Visible, 5000)
-        while (handle.visibleTimeMs < 1 and handle.visibleTimeMs != 65535):
+        _ = handle.waitFor(slmdisplaysdk.State.VisibleDurationFinished, 5000)
+        print('visTime ' + str(handle.visibleTimeMs))
+        while (handle.visibleTimeMs < 100):
             handle.update()
-            print(handle.visibleTimeMs)
+            print('state ' + str(handle.state))
+            time.sleep(0.001)
+            print('visTime ' + str(handle.visibleTimeMs))
         print("4 projection - Time Visible - " + str(handle.visibleTimeMs))
         print("projected")
     # ===============================================================================
