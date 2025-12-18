@@ -144,31 +144,27 @@ class SettingsController(ImConWidgetController):
 
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
-        self._widget.openFOVWindow(
-            self.fullImages["488"],
-            self.fullImages["561"],
-            self.fullImages["640"],
-        )
+        self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
 
-        win = self._widget.openCorrectionWindow
-        win.alignButton.clicked.connect(self.alignDetectors)
-        win.cropButton.clicked.connect(self.cropDetectors)
+        self._widget.openCorrectionWindow = self._widget.openCorrectionWindow
+        self._widget.openCorrectionWindow.alignButton.clicked.connect(self.alignDetectors)
+        self._widget.openCorrectionWindow.cropButton.clicked.connect(self.cropDetectors)
 
     def alignDetectors(self):
-        win = self._widget.openCorrectionWindow
+        self._widget.openCorrectionWindow = self._widget.openCorrectionWindow
 
-        if not win.blueImage.clickPoints:
+        if not self._widget.openCorrectionWindow.blueImage.clickPoints:
             return
-        if not win.greenImage.clickPoints:
+        if not self._widget.openCorrectionWindow.greenImage.clickPoints:
             return
-        if not win.redImage.clickPoints:
+        if not self._widget.openCorrectionWindow.redImage.clickPoints:
             return
 
-        win.blueImage.setImage(self.alignSingle("488", win.blueImage))
-        win.greenImage.setImage(self.alignSingle("561", win.greenImage))
-        win.redImage.setImage(self.alignSingle("640", win.redImage))
+        self._widget.openCorrectionWindow.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
+        self._widget.openCorrectionWindow.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
+        self._widget.openCorrectionWindow.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
 
-        win.updatePointsDisplay()
+        self._widget.openCorrectionWindow.updatePointsDisplay()
 
     def alignSingle(self, label, img):
         x, y = img.clickPoints[0]
@@ -191,42 +187,74 @@ class SettingsController(ImConWidgetController):
         self.fovOffsets[label] = (x0, y0)
         return full[y0:y1, x0:x1]
 
+
     def cropDetectors(self):
-        win = self._widget.openCorrectionWindow
 
-        if not win.blueImage.clickPoints:
+        w = self._widget.openCorrectionWindow
+
+        if not w.blueImage.clickPoints:
             return
-        if not win.greenImage.clickPoints:
+        if not w.greenImage.clickPoints:
             return
-        if not win.redImage.clickPoints:
+        if not w.redImage.clickPoints:
             return
 
-        for label, img in [
-            ("488", win.blueImage),
-            ("561", win.greenImage),
-            ("640", win.redImage),
-        ]:
-            x, y = img.clickPoints[0]
-            fx, fy = img.factor
+        roiSize = 512
+        half = roiSize // 2
 
-            offx, offy = win.offsets[label]
+        # green used for reference
+        gx, gy = w.greenImage.clickPoints[0]
+        gfx, gfy = w.greenImage.factor
+        gOffsetX, gOffsetY = w.offsets["561"]
+        gOx = floor(gOffsetX + gx * gfx)    # actual clicked coordinate on full image
+        gOy = floor(gOffsetY + gy * gfy)
 
-            ox = floor(offx + x * fx)
-            oy = floor(offy + y * fy)
+        # blue
+        bx, by = w.blueImage.clickPoints[0]
+        bfx, bfy = w.blueImage.factor
+        bOffsetX, bOffsetY = w.offsets["488"]
+        bOx = floor(bOffsetX + bx * bfx)
+        bOy = floor(bOffsetY + by * bfy)
 
-            full = self.fullImages[label]
-            h, w = full.shape
-            half = 100
+        # red
+        rx, ry = w.redImage.clickPoints[0]
+        rfx, rfy = w.redImage.factor
+        rOffsetX, rOffsetY = w.offsets["640"]
+        rOx = floor(rOffsetX + rx * rfx)
+        rOy = floor(rOffsetY + ry * rfy)
 
-            x0 = max(0, ox - half)
-            y0 = max(0, oy - half)
-            x1 = min(w, ox + half)
-            y1 = min(h, oy + half)
+        # relative shifts
+        dBx = bOx - gOx
+        dBy = bOy - gOy
+        dRx = rOx - gOx
+        dRy = rOy - gOy
 
-            win.offsets[label] = (x0, y0)
-            img.setImage(full[y0:y1, x0:x1])
+        # final alignment
+        gX0 = max(0, gOx - half)
+        gY0 = max(0, gOy - half)
+        bX0 = max(0, gX0 + dBx)
+        bY0 = max(0, gY0 + dBy)
+        rX0 = max(0, gX0 + dRx)
+        rY0 = max(0, gY0 + dRy)
 
-        win.updatePointsDisplay()
+
+        for detector in self.detectors:
+            if detector.handle == "561":
+                detector.crop(gX0, gY0, roiSize, roiSize)
+
+            if detector.handle == "488":
+                detector.crop(bX0, bY0, roiSize, roiSize)
+
+            if detector.handle == "640":
+                detector.crop(rX0, rY0, roiSize, roiSize)
+
+        currentParams = self.getCurrentParams()
+        currentParams.x0.setValue(gX0)
+        currentParams.y0.setValue(gY0)
+        currentParams.width.setValue(roiSize)
+        currentParams.height.setValue(roiSize)
+        self.updateSharedAttrs()
+
 
 
     def getParameterValue(self, detector, parameter_name):
