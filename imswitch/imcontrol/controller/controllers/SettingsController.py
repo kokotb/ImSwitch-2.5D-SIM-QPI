@@ -189,8 +189,11 @@ class SettingsController(ImConWidgetController):
 
 
     def cropDetectors(self):
-
         w = self._widget.openCorrectionWindow
+        
+        w.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
+        w.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
+        w.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
 
         if not w.blueImage.clickPoints:
             return
