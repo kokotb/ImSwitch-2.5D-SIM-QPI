@@ -178,7 +178,6 @@ class SettingsController(ImConWidgetController):
         w.updatePointsDisplay()
 
 
-
     def alignSingle(self, label, img):
         x, y = img.clickPoints[0]
         fx, fy = img.factor
@@ -200,7 +199,6 @@ class SettingsController(ImConWidgetController):
         return full[y0:y1, x0:x1], (ox, oy)
 
 
-
     def getFullPoint(self, label, img):
         x, y = img.clickPoints[0]
         fx, fy = img.factor
@@ -209,9 +207,7 @@ class SettingsController(ImConWidgetController):
         oy = floor(offy + y * fy)
         img.fullPoint = (ox, oy)
         return img.fullPoint
-
-
-    
+ 
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
@@ -232,14 +228,12 @@ class SettingsController(ImConWidgetController):
         w.redImage.setImage(rCrop, keepFullPoint=rFull)
         w.updatePointsDisplay()
 
-        # CROP REAL DETECTORS (aligned to green)
         roiSize = 512
         half = roiSize // 2
 
         bOx, bOy = bFull
         gOx, gOy = gFull
         rOx, rOy = rFull
-
         dBx = bOx - gOx
         dBy = bOy - gOy
         dRx = rOx - gOx
@@ -257,6 +251,7 @@ class SettingsController(ImConWidgetController):
                 detector.crop(gX0, gY0, roiSize, roiSize)
             if detector.handle == "488":
                 detector.crop(bX0, bY0, roiSize, roiSize)
+                print(bX0, bY0)
             if detector.handle == "640":
                 detector.crop(rX0, rY0, roiSize, roiSize)
 
