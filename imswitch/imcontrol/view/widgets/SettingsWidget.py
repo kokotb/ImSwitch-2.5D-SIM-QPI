@@ -327,7 +327,7 @@ class fovCorrection(QtWidgets.QLabel):
 
 
 
-    def setImage(self, npImage):
+    def setImage(self, npImage, keepFullPoint=None):
         self.npImage = npImage
         h, w = npImage.shape
         qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
@@ -338,11 +338,10 @@ class fovCorrection(QtWidgets.QLabel):
 
         self.factor = (w / self.displayW, h / self.displayH)
 
-        # keep the same full point after changing image, by projecting it back to display coords
-        if self.fullPoint is not None and self.parentLabel is not None and hasattr(self.parent(), "offsets"):
+        if keepFullPoint is not None and self.parentLabel is not None and hasattr(self.parent(), "offsets"):
+            ox, oy = keepFullPoint
             offx, offy = self.parent().offsets[self.parentLabel]
             fx, fy = self.factor
-            ox, oy = self.fullPoint
 
             dx = int(round((ox - offx) / fx))
             dy = int(round((oy - offy) / fy))
@@ -351,13 +350,13 @@ class fovCorrection(QtWidgets.QLabel):
             dy = max(0, min(self.displayH - 1, dy))
 
             self.clickPoints = [(dx, dy)]
-
-
-            self.clickPoints = [(dx, dy)]
+            self.fullPoint = (ox, oy)
         else:
             self.clickPoints = []
+            self.fullPoint = None
 
         self.update()
+
 
 
 
@@ -510,16 +509,16 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay.setPlainText("\n".join(lines))
 
     def formatPoint(self, label, img):
-        if img.fullPoint is not None:
-            ox, oy = img.fullPoint
-            return f"{label}: ({ox}, {oy})"
-
         x, y = img.clickPoints[0]
         fx, fy = img.factor
         offx, offy = self.offsets[label]
+
         ox = floor(offx + x * fx)
         oy = floor(offy + y * fy)
+
+        img.fullPoint = (ox, oy)
         return f"{label}: ({ox}, {oy})"
+
 
 
 
