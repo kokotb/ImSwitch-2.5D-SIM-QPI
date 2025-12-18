@@ -148,8 +148,9 @@ class SLM25DController(ImConWidgetController):
             filename = dialog.selectedFiles()
             img = Image.open(filename[0])
             arr = np.array(img)
-            if arr.shape[2] != 1:
-                arr = arr[:,:,0]
+            # if arr.shape != (1080, 1920):
+            #     self.__logger.warning("Wrong array shape - EXITING")
+            #     return
             #arr = np.ascontiguousarray(arr)
             if self.slmActive:
                 self.slm25DManager.projectMask(self.reshapeMask(np.rot90(arr)))
@@ -203,7 +204,7 @@ class SLM25DController(ImConWidgetController):
         #     print(self.fullZernList[rep][1])
         #     self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
         #     cajt = time.perf_counter()
-        #     self.updateZernike()
+        #     self.updateZernikeWithSleep()
         #     print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
         #     time.sleep(0.015)
         #     # while not self.sigZernMaskProjected:
@@ -225,7 +226,7 @@ class SLM25DController(ImConWidgetController):
         #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(True)
         #             self._widget.pars[self.fullZernList[rep][0]].setValue(optimalCoefficientMax)
         #             self._widget.pars[self.fullZernList[rep][0]].blockSignals(False)
-        #             self.updateZernike()
+        #             self.updateZernikeWithSleep()
         #             time.sleep(0.015)
         #             self._master.slm25DManager.resetList()
             
@@ -245,9 +246,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
                 cajt = time.perf_counter()
-                self.updateZernike()
-                print('took ' + str(round(time.perf_counter() - cajt,3)) + ' seconds to project a mask')
-                time.sleep(0.015)
+                self.updateZernikeWithSleep()
                 # while not self.sigZernMaskProjected:
                 #     time.sleep(0.02)
                 
@@ -281,8 +280,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setValue(optimalCoefficientMax)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-            self.updateZernike()
-            time.sleep(0.015)
+            self.updateZernikeWithSleep()
             self._master.slm25DManager.resetList()
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -368,14 +366,46 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + key].blockSignals(False)
 
                 self.updatePhaseMask()
-                time.sleep(0.15)
+                timeinit = time.time()
+                timeelap = 0
+                while timeelap < 0.2:
+                    time.sleep(0.004)
+                    timeelap = time.time()-timeinit
 
+
+                # TOTAL SHIFT METRIC ===============================================
+                # Com_frames = []
+                # zPositions = np.linspace(-2., 2., 2)
+                # for offset in zPositions:
+                #     self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
+                #     success = False
+                #     while not success:
+                #         self._master.arduinoManager.trigger25DWriteOnly()
+                #         success = self.waitingForBuffers()
+                #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+                #     images.append(beadImgAnalysis)
+                #     if (key == "Right Center-Y"):
+                #         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[1])
+                #     elif (key == "Right Center-X"):
+                #         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
+
+                # score = abs(np.diff(Com_frames).sum())
+                # scores.append(score)  
+
+
+
+
+                # LEAST SQUARE METRIC ===============================================
                 Com_frames = []
-                zPositions = np.linspace(-2., 2., 2)
+                zPositions = np.linspace(-4., 4., 9)
                 for offset in zPositions:
                     self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
-                    self._master.arduinoManager.trigger25DWriteOnly()
-                    self.waitingForBuffers()
+                    success = False
+                    while not success:
+                        self._master.arduinoManager.trigger25DWriteOnly()
+                        success = self.waitingForBuffers()
                     rawImg = self.detectors[2]._camera.grabFrame25D(1)
                     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -385,8 +415,10 @@ class SLM25DController(ImConWidgetController):
                     elif (key == "Right Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
-                score = abs(np.diff(Com_frames).sum())
+                avg = sum(Com_frames) / len(Com_frames)
+                score = sum((Com_frames - avg)**2)
                 scores.append(score)  
+
             
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
@@ -410,13 +442,20 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigGetAZFrameCoords.emit()
 
     def waitingForBuffers(self):
+        success = False
         waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
-        while waitingBuffers != 1:
-            time.sleep(0.015)
+        i = 0
+        while (waitingBuffers != 1) and i < 10:
+            time.sleep(0.01)
+            # print(f'try {i}: {waitingBuffers}')
             waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
-            self._master.arduinoManager.trigger25DWriteOnly()
-            waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
-        return
+            
+            # self._master.arduinoManager.trigger25DWriteOnly()
+            # waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+            i+=1
+        if waitingBuffers == 1:
+            success = True
+        return success
 
     def AutoZernLoopNew(self, selected_frame):
         '''Only for right half of zern mask, MUST USE LIGHT POLARIZER!!!'''
@@ -505,8 +544,10 @@ class SLM25DController(ImConWidgetController):
         for offset in zPositions:
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
             # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
-            self._master.arduinoManager.trigger25DWriteOnly()
-            self.waitingForBuffers()
+            success = False
+            while not success:
+                self._master.arduinoManager.trigger25DWriteOnly()
+                success = self.waitingForBuffers()
             rawImg = self.detectors[2]._camera.grabFrame25D(1)
             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
             self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -544,16 +585,17 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.15)
+            self.updateZernikeWithSleep()
 
             Zmaxprofile = []
             zPositions = np.linspace(-2., 2., 9)
             for offset in zPositions:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -580,8 +622,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.15)
+        self.updateZernikeWithSleep()
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -629,15 +670,16 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.15)
+            self.updateZernikeWithSleep()
 
             sigmas12 = []
             for offset in [-2., 2.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -662,8 +704,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.15)
+        self.updateZernikeWithSleep()
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -703,15 +744,16 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.15)
+            self.updateZernikeWithSleep()
 
             sigmasXY = []
             for offset in [-2.0, 2.0]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -737,8 +779,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.15)
+        self.updateZernikeWithSleep()
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -791,11 +832,12 @@ class SLM25DController(ImConWidgetController):
         #     self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
         #     self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-        #     self.updateZernike()
-        #     time.sleep(0.15)
+        #     self.updateZernikeWithSleep()
 
-        #     self._master.arduinoManager.trigger25DWriteOnly()
-        #     self.waitingForBuffers()
+        #     success = False
+            # while not success:
+            #     self._master.arduinoManager.trigger25DWriteOnly()
+            #     success = self.waitingForBuffers()
         #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
         #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
         #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -813,9 +855,7 @@ class SLM25DController(ImConWidgetController):
         # self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         # self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         # self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        # self.updateZernike()
-        # time.sleep(0.15)
-            
+        # self.updateZernikeWithSleep()            
         # self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         # #self._widget.stop25D.setEnabled(False)
         # #self._widget.start25D.setEnabled(True)
@@ -835,8 +875,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.15)
+            self.updateZernikeWithSleep()
 
             sigmasXY = []
             if bananaMetric:
@@ -845,8 +884,10 @@ class SLM25DController(ImConWidgetController):
                 offsets = [0.]
             for offset in offsets:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -883,8 +924,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.15)
+        self.updateZernikeWithSleep()
         self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -915,11 +955,12 @@ class SLM25DController(ImConWidgetController):
         #     self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
         #     self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-        #     self.updateZernike()
-        #     time.sleep(0.15)
+        #     self.updateZernikeWithSleep()
 
-        #     self._master.arduinoManager.trigger25DWriteOnly()
-        #     self.waitingForBuffers()
+        #     success = False
+            # while not success:
+            #     self._master.arduinoManager.trigger25DWriteOnly()
+            #     success = self.waitingForBuffers()
         #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
         #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
         #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
@@ -945,8 +986,7 @@ class SLM25DController(ImConWidgetController):
         # self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         # self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         # self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        # self.updateZernike()
-        # time.sleep(0.15)
+        # self.updateZernikeWithSleep()
             
         # self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         # #self._widget.stop25D.setEnabled(False)
@@ -965,8 +1005,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
 
-            self.updateZernike()
-            time.sleep(0.15)
+            self.updateZernikeWithSleep()
 
             sigmasXY = []
             if bananaMetric:
@@ -978,8 +1017,10 @@ class SLM25DController(ImConWidgetController):
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
 
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
@@ -1016,8 +1057,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
         self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-        self.updateZernike()
-        time.sleep(0.15)
+        self.updateZernikeWithSleep()
             
         self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -1040,26 +1080,33 @@ class SLM25DController(ImConWidgetController):
             # self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + 1. , 'Z')
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
             for testvalue in testvalues:
-                
+                # zernikeParametersNew = self.getAllZernikeParams()
+                # print("1: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
                 self._widget.pars["AbsPosEdit" + key].blockSignals(True)
                 self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
                 self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
+                # zernikeParametersNew = self.getAllZernikeParams()
+                # print("2: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
+                self.updateZernikeWithSleep()
+                #time.sleep(0.1)
+                
 
-                self.updateZernike()
-                time.sleep(0.15)
-                # timeinit = time.time()
-                # timeelap = 0
-                # while timeelap < 0.1:
-                #     time.sleep(0.001)
-                #     timeelap = time.time()-timeinit
 
-                self._master.arduinoManager.trigger25DWriteOnly()
-                self.waitingForBuffers()
+                success = False
+                while not success:
+                    self._master.arduinoManager.trigger25DWriteOnly()
+                    success = self.waitingForBuffers()
+                # print(self.detectors[2]._camera.getBufferValue('25D'))
+                
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                # self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
+
+
+                # Image.fromarray((beadImgAnalysis/16).astype(np.uint8)).show()
+
 
                 # tenegradm metric =================
                 #beadImgAnalysis = np.where(beadImgAnalysis > 0.1 * beadImgAnalysis.max(), beadImgAnalysis, 0)
@@ -1068,7 +1115,6 @@ class SLM25DController(ImConWidgetController):
                 tenengrad = np.sqrt(sobel_x**2 + sobel_y**2)  # Compute gradient magnitude
                 laplacian = cv2.Laplacian(beadImgAnalysis, cv2.CV_64F)  # Apply Laplacian filter
                 score = np.var(laplacian)
-                #score = np.mean(tenengrad)
 
 
                 images.append(beadImgAnalysis)
@@ -1076,25 +1122,22 @@ class SLM25DController(ImConWidgetController):
                 #sigma = self.universal_r2_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 #scores.append(sigma)
                 scores.append(score)
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
 
-            print(scores)
+
+            print(f'L: {scores}')
+
             #trefoilOptimal = testvalues[scores.index(min(scores))]
+            # trefoilOptimal = testvalues[1:][scores.index(max(scores[1:]))] # until we figure it out (SLM sleep)
             trefoilOptimal = testvalues[scores.index(max(scores))]
+
+            zernikeParametersNew = self.getAllZernikeParams()
 
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-            self.updateZernike()
-            time.sleep(0.15)
-            # timeinit = time.time()
-            # timeelap = 0
-            # while timeelap < 0.1:
-            #     time.sleep(0.001)
-            #     timeelap = time.time()-timeinit
+            zernikeParametersNew = self.getAllZernikeParams()
+            print("Opt Best: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
+            self.updateZernikeWithSleep()
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
@@ -1263,11 +1306,22 @@ class SLM25DController(ImConWidgetController):
         self._widget.autoZernCheckboxNew.setChecked(False)
             
 
+    def updateZernikeWithSleep(self):
+        self.updateZernikePhaseMask()
+        if self.slmActive:
+            self.combineAndProject()
+        timeinit = time.time()
+        timeelap = 0
+        while timeelap < 0.2:
+            time.sleep(0.004)
+            timeelap = time.time()-timeinit
+        #self.sigZernMaskProjected = True
+
     def updateZernike(self):
         self.updateZernikePhaseMask()
         if self.slmActive:
             self.combineAndProject()
-        #self.sigZernMaskProjected = True
+        
 
     def updateAll(self):
         self.updatePhaseMask(False) # False tell this function to not combineAndProject, as that is handled 2 lines later.
@@ -1736,6 +1790,8 @@ class SLM25DController(ImConWidgetController):
         else:
             pass
             print('No masks projected')
+
+
         
         
 

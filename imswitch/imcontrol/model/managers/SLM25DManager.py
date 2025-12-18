@@ -121,12 +121,12 @@ class SLM25DManager(SignalInterface):
     def projectMask(self, mask):
         import time
         handle = slmdisplaysdk.Datahandle(self.slm)
-        handle.durationInFrames = 255
-        slmdisplaysdk.ApplyDataHandleValue.DurationInFrames
+        # handle.durationInFrames = 255
+        # slmdisplaysdk.ApplyDataHandleValue.DurationInFrames
 
         h, w = mask.shape
 
-        print("1 projection - Time Visible - " + str(handle.visibleTimeMs))
+        # print("1 projection - Time Visible - " + str(handle.visibleTimeMs))
         # Load uint8 grayscale data
         err = self.slm._library.heds_load_data_grayscale_uchar(
             ctypes.pointer(handle),
@@ -140,16 +140,24 @@ class SLM25DManager(SignalInterface):
         # Show the datahandle
         self.slm.showDatahandle(handle, 0) #changes mask on SLM
 
+        # i = 0
+        # while i < 300:
+        #     handle.update()
+        #     print(str(handle.state))
+        #     i += 1
+
+
+
         # Wait until mask becomes visible
-        _ = handle.waitFor(slmdisplaysdk.State.VisibleDurationFinished, 5000)
-        print('visTime ' + str(handle.visibleTimeMs))
-        while (handle.visibleTimeMs < 100):
-            handle.update()
-            print('state ' + str(handle.state))
-            time.sleep(0.001)
-            print('visTime ' + str(handle.visibleTimeMs))
-        print("4 projection - Time Visible - " + str(handle.visibleTimeMs))
-        print("projected")
+        # _ = handle.waitFor(slmdisplaysdk.State.VisibleDurationFinished, 5000)
+        # print('visTime ' + str(handle.visibleTimeMs))
+        # while (handle.visibleTimeMs < 100):
+        #     handle.update()
+        #     print('state ' + str(handle.state))
+        #     time.sleep(0.001)
+        #     print('visTime ' + str(handle.visibleTimeMs))
+        #print("4 projection - Time Visible - " + str(handle.visibleTimeMs))
+        #print("projected")
     # ===============================================================================
 
     """def projectMask(self, mask):
