@@ -138,9 +138,9 @@ class SettingsController(ImConWidgetController):
 
         lastImgs = self.getOneSetImgs()
 
-        self.fullImages["488"] = lastImgs[0]
-        self.fullImages["561"] = lastImgs[1]
-        self.fullImages["640"] = lastImgs[2]
+        self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
+        self.fullImages["561"] = (lastImgs[1] / 16).astype(np.uint8)
+        self.fullImages["640"] = (lastImgs[2] / 16).astype(np.uint8)
 
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
@@ -188,7 +188,7 @@ class SettingsController(ImConWidgetController):
 
         full = self.fullImages[label]
         h, w = full.shape
-        half = 100
+        half = 400
 
         x0 = max(0, ox - half)
         y0 = max(0, oy - half)
@@ -247,20 +247,20 @@ class SettingsController(ImConWidgetController):
         rY0 = max(0, gY0 + dRy)
 
         for detector in self.detectors:
-            if detector.handle == "561":
+            if detector.handle == "561F":
                 detector.crop(gX0, gY0, roiSize, roiSize)
-            if detector.handle == "488":
+            if detector.handle == "488F":
                 detector.crop(bX0, bY0, roiSize, roiSize)
-                print(bX0, bY0)
-            if detector.handle == "640":
+                # print(bX0, bY0)
+            if detector.handle == "640F":
                 detector.crop(rX0, rY0, roiSize, roiSize)
 
-        currentParams = self.getCurrentParams()
-        currentParams.x0.setValue(gX0)
-        currentParams.y0.setValue(gY0)
-        currentParams.width.setValue(roiSize)
-        currentParams.height.setValue(roiSize)
-        self.updateSharedAttrs()
+        # currentParams = self.getCurrentParams()
+        # currentParams.x0.setValue(gX0)
+        # currentParams.y0.setValue(gY0)
+        # currentParams.width.setValue(roiSize)
+        # currentParams.height.setValue(roiSize)
+        # self.updateSharedAttrs()
 
 
     def getParameterValue(self, detector, parameter_name):

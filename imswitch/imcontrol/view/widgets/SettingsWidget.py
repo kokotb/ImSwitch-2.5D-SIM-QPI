@@ -364,6 +364,15 @@ class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
         super().__init__(parent)
         
+        # #Convert to 8-bit
+        # blueImg = blueImg / 16
+        # greenImg = greenImg / 16
+        # redImg = redImg / 16
+
+        # blueImg = blueImg.astype(np.uint8)
+        # greenImg = greenImg.astype(np.uint8)
+        # redImg = redImg.astype(np.uint8)
+
         self._activeImage = None
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
