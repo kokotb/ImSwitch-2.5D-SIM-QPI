@@ -347,6 +347,12 @@ class fovCorrection(QtWidgets.QLabel):
             dx = int(round((ox - offx) / fx))
             dy = int(round((oy - offy) / fy))
 
+            dx = max(0, min(self.displayW - 1, dx))
+            dy = max(0, min(self.displayH - 1, dy))
+
+            self.clickPoints = [(dx, dy)]
+
+
             self.clickPoints = [(dx, dy)]
         else:
             self.clickPoints = []
@@ -504,15 +510,17 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay.setPlainText("\n".join(lines))
 
     def formatPoint(self, label, img):
-        x, y = img.clickPoints[0]
+        if img.fullPoint is not None:
+            ox, oy = img.fullPoint
+            return f"{label}: ({ox}, {oy})"
 
+        x, y = img.clickPoints[0]
         fx, fy = img.factor
         offx, offy = self.offsets[label]
-
         ox = floor(offx + x * fx)
         oy = floor(offy + y * fy)
-
         return f"{label}: ({ox}, {oy})"
+
 
 
 

@@ -195,8 +195,22 @@ class SettingsController(ImConWidgetController):
         return full[y0:y1, x0:x1]
 
 
+    def getFullPoint(self, label, img):
+        if img.fullPoint is not None:
+            return img.fullPoint
+
+        x, y = img.clickPoints[0]
+        fx, fy = img.factor
+        offx, offy = self.fovOffsets[label]
+        ox = floor(offx + x * fx)
+        oy = floor(offy + y * fy)
+        img.fullPoint = (ox, oy)
+        return img.fullPoint
+
+    
+    
     def cropDetectors(self):
-        w = self._widget.openCorrectionWindow        
+        w = self._widget.openCorrectionWindow
 
         if not w.blueImage.clickPoints:
             return
@@ -204,57 +218,26 @@ class SettingsController(ImConWidgetController):
             return
         if not w.redImage.clickPoints:
             return
-        
-        w.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
-        w.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
-        w.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
 
         roiSize = 512
         half = roiSize // 2
 
-        # green used for reference
-        gx, gy = w.greenImage.clickPoints[0]
-        gfx, gfy = w.greenImage.factor
-        gOffsetX, gOffsetY = w.offsets["561"]
-        gOx = floor(gOffsetX + gx * gfx)    # actual clicked coordinate on full image
-        gOy = floor(gOffsetY + gy * gfy)
+        gOx, gOy = self.getFullPoint("561", w.greenImage)
+        bOx, bOy = self.getFullPoint("488", w.blueImage)
+        rOx, rOy = self.getFullPoint("640", w.redImage)
 
-        # blue
-        bx, by = w.blueImage.clickPoints[0]
-        bfx, bfy = w.blueImage.factor
-        bOffsetX, bOffsetY = w.offsets["488"]
-        bOx = floor(bOffsetX + bx * bfx)
-        bOy = floor(bOffsetY + by * bfy)
-
-        # red
-        rx, ry = w.redImage.clickPoints[0]
-        rfx, rfy = w.redImage.factor
-        rOffsetX, rOffsetY = w.offsets["640"]
-        rOx = floor(rOffsetX + rx * rfx)
-        rOy = floor(rOffsetY + ry * rfy)
-
-        # relative shifts
-        dBx = bOx - gOx
-        dBy = bOy - gOy
-        dRx = rOx - gOx
-        dRy = rOy - gOy
-
-        # final alignment
         gX0 = max(0, gOx - half)
         gY0 = max(0, gOy - half)
-        bX0 = max(0, gX0 + dBx)
-        bY0 = max(0, gY0 + dBy)
-        rX0 = max(0, gX0 + dRx)
-        rY0 = max(0, gY0 + dRy)
-
+        bX0 = max(0, bOx - half)
+        bY0 = max(0, bOy - half)
+        rX0 = max(0, rOx - half)
+        rY0 = max(0, rOy - half)
 
         for detector in self.detectors:
             if detector.handle == "561":
                 detector.crop(gX0, gY0, roiSize, roiSize)
-
             if detector.handle == "488":
                 detector.crop(bX0, bY0, roiSize, roiSize)
-
             if detector.handle == "640":
                 detector.crop(rX0, rY0, roiSize, roiSize)
 
@@ -264,6 +247,8 @@ class SettingsController(ImConWidgetController):
         currentParams.width.setValue(roiSize)
         currentParams.height.setValue(roiSize)
         self.updateSharedAttrs()
+        self.alignDetectors()
+
 
 
 
