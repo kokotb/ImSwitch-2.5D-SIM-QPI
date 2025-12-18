@@ -145,15 +145,14 @@ class SettingsController(ImConWidgetController):
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
         self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
-        self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
         w = self._widget.openCorrectionWindow
         w.offsets = self.fovOffsets
         w.blueImage.parentLabel = "488"
         w.greenImage.parentLabel = "561"
         w.redImage.parentLabel = "640"
 
-        self._widget.openCorrectionWindow.alignButton.clicked.connect(self.alignDetectors)
-        self._widget.openCorrectionWindow.cropButton.clicked.connect(self.cropDetectors)
+        w.alignButton.clicked.connect(self.alignDetectors)
+        w.cropButton.clicked.connect(self.cropDetectors)
 
     def alignDetectors(self):
         self._widget.openCorrectionWindow = self._widget.openCorrectionWindow
@@ -194,8 +193,7 @@ class SettingsController(ImConWidgetController):
 
 
     def cropDetectors(self):
-        w = self._widget.openCorrectionWindow
-        
+        w = self._widget.openCorrectionWindow        
         w.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
         w.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
         w.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
