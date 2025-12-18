@@ -314,8 +314,18 @@ class fovCorrection(QtWidgets.QLabel):
             ox = floor(offx + x * fx)
             oy = floor(offy + y * fy)
             self.fullPoint = (ox, oy)
-
         self.update()
+
+
+    def movePoint(self, dx, dy):
+        if not self.clickPoints:
+            return
+        x, y = self.clickPoints[0]
+        x = max(0, min(self.displayW - 1, x + dx))
+        y = max(0, min(self.displayH - 1, y + dy))
+        self.setPoint(x, y)
+
+
 
     def setImage(self, npImage):
         self.npImage = npImage
@@ -348,6 +358,10 @@ class fovCorrection(QtWidgets.QLabel):
 class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
         super().__init__(parent)
+        
+        self._activeImage = None
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1230, 400)
 
@@ -424,25 +438,51 @@ class FOVCorrectionWindow(QMainWindow):
         self.redImage.mousePressEvent = self.handleRedClick
 
 
+    def keyPressEvent(self, event):
+        img = self._activeImage
+        if not img or not img.clickPoints:
+            return super().keyPressEvent(event)
+
+        k = event.key()
+        if k == QtCore.Qt.Key_Left:
+            img.movePoint(-1, 0)
+        elif k == QtCore.Qt.Key_Right:
+            img.movePoint(1, 0)
+        elif k == QtCore.Qt.Key_Up:
+            img.movePoint(0, -1)
+        elif k == QtCore.Qt.Key_Down:
+            img.movePoint(0, 1)
+        else:
+            return super().keyPressEvent(event)
+
+        self.updatePointsDisplay()
+
+
+
     def handleBlueClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.blueImage.setPoint(pos.x(), pos.y())
+            self._activeImage = self.blueImage
+            self.setFocus()
             self.updatePointsDisplay()
-
 
     def handleGreenClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.greenImage.setPoint(pos.x(), pos.y())
+            self._activeImage = self.greenImage
+            self.setFocus()
             self.updatePointsDisplay()
-
 
     def handleRedClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.redImage.setPoint(pos.x(), pos.y())
+            self._activeImage = self.redImage
+            self.setFocus()
             self.updatePointsDisplay()
+
 
 
     def ignoreClick(self, event):

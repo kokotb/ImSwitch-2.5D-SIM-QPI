@@ -146,6 +146,9 @@ class SettingsController(ImConWidgetController):
 
         self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
         w = self._widget.openCorrectionWindow
+        w.offsets = self.fovOffsets   # share the SAME dict
+
+        w = self._widget.openCorrectionWindow
         w.offsets = self.fovOffsets
         w.blueImage.parentLabel = "488"
         w.greenImage.parentLabel = "561"
@@ -194,9 +197,6 @@ class SettingsController(ImConWidgetController):
 
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow        
-        w.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
-        w.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
-        w.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
 
         if not w.blueImage.clickPoints:
             return
@@ -204,6 +204,10 @@ class SettingsController(ImConWidgetController):
             return
         if not w.redImage.clickPoints:
             return
+        
+        w.blueImage.setImage(self.alignSingle("488", self._widget.openCorrectionWindow.blueImage))
+        w.greenImage.setImage(self.alignSingle("561", self._widget.openCorrectionWindow.greenImage))
+        w.redImage.setImage(self.alignSingle("640", self._widget.openCorrectionWindow.redImage))
 
         roiSize = 512
         half = roiSize // 2
