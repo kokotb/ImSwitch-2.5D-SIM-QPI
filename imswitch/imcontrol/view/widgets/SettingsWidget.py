@@ -268,6 +268,8 @@ class fovCorrection(QtWidgets.QLabel):
     def __init__(self, npImage, parent=None):
         super().__init__(parent)
 
+        self.parentLabel = None
+        self.fullPoint = None
         # convert numpy to pixmap
         self.npImage = npImage
         
@@ -276,7 +278,7 @@ class fovCorrection(QtWidgets.QLabel):
         
         self.displayW = 300
         self.displayH = 300
-        qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
+        qimg = QtGui.QImage(self.npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
         self.pixmapOriginal = QtGui.QPixmap.fromImage(qimg)
 
         scaled = self.pixmapOriginal.scaled(self.displayW, self.displayH, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
@@ -305,6 +307,14 @@ class fovCorrection(QtWidgets.QLabel):
 
     def setPoint(self, x, y):
         self.clickPoints = [(x, y)]
+
+        if self.parentLabel is not None and hasattr(self.parent(), "offsets"):
+            fx, fy = self.factor
+            offx, offy = self.parent().offsets[self.parentLabel]
+            ox = floor(offx + x * fx)
+            oy = floor(offy + y * fy)
+            self.fullPoint = (ox, oy)
+
         self.update()
 
     def setImage(self, npImage):
@@ -314,11 +324,25 @@ class fovCorrection(QtWidgets.QLabel):
         pix = QtGui.QPixmap.fromImage(qimg)
 
         scaled = pix.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
-
         self.setPixmap(scaled)
+
         self.factor = (w / self.displayW, h / self.displayH)
-        self.clickPoints = []
+
+        # keep the same full point after changing image, by projecting it back to display coords
+        if self.fullPoint is not None and self.parentLabel is not None and hasattr(self.parent(), "offsets"):
+            offx, offy = self.parent().offsets[self.parentLabel]
+            fx, fy = self.factor
+            ox, oy = self.fullPoint
+
+            dx = int(round((ox - offx) / fx))
+            dy = int(round((oy - offy) / fy))
+
+            self.clickPoints = [(dx, dy)]
+        else:
+            self.clickPoints = []
+
         self.update()
+
 
 
 class FOVCorrectionWindow(QMainWindow):

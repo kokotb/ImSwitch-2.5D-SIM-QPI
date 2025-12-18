@@ -145,8 +145,13 @@ class SettingsController(ImConWidgetController):
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
         self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
+        self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
+        w = self._widget.openCorrectionWindow
+        w.offsets = self.fovOffsets
+        w.blueImage.parentLabel = "488"
+        w.greenImage.parentLabel = "561"
+        w.redImage.parentLabel = "640"
 
-        self._widget.openCorrectionWindow = self._widget.openCorrectionWindow
         self._widget.openCorrectionWindow.alignButton.clicked.connect(self.alignDetectors)
         self._widget.openCorrectionWindow.cropButton.clicked.connect(self.cropDetectors)
 
