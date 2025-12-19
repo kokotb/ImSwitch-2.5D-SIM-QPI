@@ -30,9 +30,9 @@ class ZStackController(ImConWidgetController):
             self.initEnabled = self._widget.checkbox_zStack.isChecked()
             self._widget.checkbox_zStackCenter.setChecked(True)
             self._widget.checkbox_zStack.setChecked(True)
-        # if not start:
-            # self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
-            # self._widget.checkbox_zStack.setChecked(self.initEnabled)
+        if not start:
+            self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
+            self._widget.checkbox_zStack.setChecked(self.initEnabled)
 
     def runZStackToggle(self, state):
         if state == 0:

@@ -46,6 +46,7 @@ class PSFAnalysisController(ImConWidgetController):
             # self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.recordingPSF = False
             
+            
 
             try:
                 image_stack = self._commChannel.getPSFStack()
