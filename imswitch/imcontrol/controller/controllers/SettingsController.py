@@ -5,6 +5,8 @@ from math import floor
 import numpy as np
 import time
 
+from qtpy import QtWidgets
+
 from imswitch.imcommon.model import APIExport
 from imswitch.imcontrol.model import configfiletools
 from imswitch.imcontrol.view import guitools as guitools
@@ -155,13 +157,15 @@ class SettingsController(ImConWidgetController):
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
-
-        if w.blueImage.fullPoint is None:
-            return
-        if w.greenImage.fullPoint is None:
-            return
-        if w.redImage.fullPoint is None:
-            return
+        if (w.blueImage.fullPoint is None or
+            w.greenImage.fullPoint is None or
+            w.redImage.fullPoint is None):
+                QtWidgets.QMessageBox.warning(
+                    w,
+                    "Missing points",
+                    "Click on all the images (488, 561, 640) before cropping."
+                )
+                return
 
         halfView = 600
         w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)

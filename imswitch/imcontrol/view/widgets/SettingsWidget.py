@@ -271,9 +271,9 @@ class fovCorrection(QtWidgets.QLabel):
         self._drawCross = True
         self.parentLabel = None
         self.fullPoint = None
-        self.displayW = 300
-        self.displayH = 300
-        self.setMinimumSize(self.displayW, self.displayH)
+        self.displayW = 450
+        self.displayH = 450
+        self.setFixedSize(self.displayW, self.displayH)
         self.setScaledContents(True)
         self.setMouseTracking(True)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -520,7 +520,7 @@ class FOVCorrectionWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("FOV Correction")
-        self.setMinimumSize(1230, 400)
+        self.setMinimumSize(1830, 500)
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
