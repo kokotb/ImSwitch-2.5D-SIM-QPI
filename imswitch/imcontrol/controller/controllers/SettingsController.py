@@ -176,9 +176,10 @@ class SettingsController(ImConWidgetController):
         roiSize = 512
         half = roiSize // 2
 
-        bOx, bOy = w.blueImage.fullPoint
-        gOx, gOy = w.greenImage.fullPoint
-        rOx, rOy = w.redImage.fullPoint
+        bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
+        gOx, gOy = map(lambda v: int(round(v)), w.greenImage.fullPoint)
+        rOx, rOy = map(lambda v: int(round(v)), w.redImage.fullPoint)
+
 
         dBx = bOx - gOx
         dBy = bOy - gOy

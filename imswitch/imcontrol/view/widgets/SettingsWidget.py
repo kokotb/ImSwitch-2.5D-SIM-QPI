@@ -398,9 +398,10 @@ class fovCorrection(QtWidgets.QLabel):
         lx = self.viewX0 + dx * fx
         ly = self.viewY0 + dy * fy
 
-        ox = floor(offx + self._localShiftX + lx)
-        oy = floor(offy + self._localShiftY + ly)
+        ox = offx + self._localShiftX + lx
+        oy = offy + self._localShiftY + ly
         return (ox, oy)
+    
 
     def fullToDisplay(self, ox, oy):
         offx, offy = self.getExtOffset()
@@ -632,7 +633,8 @@ class FOVCorrectionWindow(QMainWindow):
         if img.fullPoint is None:
             return f"{label}: (-, -)"
         ox, oy = img.fullPoint
-        return f"{label}: ({ox}, {oy})"
+        return f"{label}: ({int(round(ox))}, {int(round(oy))})"
+
 
 
 
