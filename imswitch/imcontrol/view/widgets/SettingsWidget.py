@@ -580,18 +580,6 @@ class FOVCorrectionWindow(QMainWindow):
 
         self.bottomLayout.addWidget(self.pointsBox)
 
-        # crop detectors box
-        self.cropBox = QtWidgets.QWidget()
-        self.cropBox.setFixedSize(150, 54)
-        self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
-        self.cropLay.setContentsMargins(0, 0, 0, 0)
-        self.cropLay.setSpacing(0)
-
-        self.cropButton = QtWidgets.QPushButton("Crop detectors")
-        self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.cropLay.addWidget(self.cropButton)
-
-        self.bottomLayout.addWidget(self.cropBox)
 
         # two stacked buttons box
         self.modeBox = QtWidgets.QWidget()
@@ -636,6 +624,20 @@ class FOVCorrectionWindow(QMainWindow):
         """)
 
         self.bottomLayout.addWidget(self.modeBox)
+
+
+        # crop detectors box
+        self.cropBox = QtWidgets.QWidget()
+        self.cropBox.setFixedSize(150, 54)
+        self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
+        self.cropLay.setContentsMargins(0, 0, 0, 0)
+        self.cropLay.setSpacing(0)
+
+        self.cropButton = QtWidgets.QPushButton("Crop detectors")
+        self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.cropLay.addWidget(self.cropButton)
+
+        self.bottomLayout.addWidget(self.cropBox)
 
 
         self.bottomLayout.addStretch()

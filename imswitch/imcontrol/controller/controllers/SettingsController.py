@@ -169,7 +169,10 @@ class SettingsController(ImConWidgetController):
         w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
         w.updatePointsDisplay()
 
-        roiSize = 512
+        if w.buttonSIM.isChecked():
+            roiSize = 512
+        elif w.button25D.isChecked():
+            roiSize = 1024
         half = roiSize // 2
 
         bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
