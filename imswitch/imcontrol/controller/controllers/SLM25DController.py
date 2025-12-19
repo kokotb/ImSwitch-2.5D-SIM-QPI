@@ -38,6 +38,7 @@ class SLM25DController(ImConWidgetController):
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
+        self.zernikeLocked = False
         if self._setupInfo.SLM25D is None:
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
             return
@@ -94,6 +95,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
         self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
         self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
+        self._widget.sigLockZernike.connect(self.setLockZernike)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
@@ -1306,6 +1308,9 @@ class SLM25DController(ImConWidgetController):
         self._widget.autoZernCheckboxNew.setChecked(False)
             
 
+    def setLockZernike(self, value):
+        self.zernikeLocked = value
+
     def updateZernikeWithSleep(self):
         self.updateZernikePhaseMask()
         if self.slmActive:
@@ -1749,7 +1754,7 @@ class SLM25DController(ImConWidgetController):
                 self.mask25D = self._widget.matrix25d
 
         if (projZernike == 2):
-            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
+            if ((xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0)) and (not self.zernikeLocked):
                 projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift)
                 projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)
             

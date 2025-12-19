@@ -41,6 +41,8 @@ class SLM25DWidget(Widget):
     sigToggleSLM = QtCore.Signal(bool)
     sigOpenPreviewButton = QtCore.Signal()
 
+    sigLockZernike = QtCore.Signal(bool)
+
 
     
 
@@ -117,6 +119,11 @@ class SLM25DWidget(Widget):
         self.maskCenterCheckbox.setEnabled(False)
         self.maskCenterCheckbox.setChecked(False)
 
+        self.lockZernCheckbox = QCheckBox("Lock Zernike")
+        self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
+        self.lockZernCheckbox.setEnabled(False)
+        self.lockZernCheckbox.setChecked(False)
+
         self.loadImgToSLMbutton = QPushButton("Load Image")
         self.loadImgToSLMbutton.setEnabled(False)
         self.loadImgToSLMbutton.setFixedWidth(250)
@@ -145,6 +152,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.autoZernCheckbox, 4, 4)
         self.grid.addWidget(self.autoZernCheckboxNew, 4, 6)
         self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
+        self.grid.addWidget(self.lockZernCheckbox, 5, 5)
         self.grid.addWidget(self.reset25D, 17, 5)
         
         # Horizontal lines separating logic sections
@@ -386,6 +394,26 @@ class SLM25DWidget(Widget):
 
         self.connect25DSharedAttrSigs()
 
+    def zernikeLocked(self, value):
+        
+        self.beginAZbutton.setEnabled(not value)
+        self.autoZernCheckbox.setEnabled(not value)
+        self.autoZernCheckboxNew.setEnabled(not value)
+        self.maskCenterCheckbox.setEnabled(not value)
+        self.resetZern.setEnabled(not value)
+        self.loadImgToSLMbutton.setEnabled(not value)
+        for i in range(len(self.ZernikeCoefficientNames)):
+            for side in self.ZernikeSides:
+                name = self.ZernikeCoefficientNames[i]
+                self.pars['Label' + name + side].setEnabled(not value)
+                self.pars['UpButton' + name + side].setEnabled(not value)
+                self.pars['DownButton' + name + side].setEnabled(not value)
+                self.pars['AbsPosEdit' + name + side].setEnabled(not value)
+
+        self.sigLockZernike.emit(bool(value))
+
+        
+
 
     def reset25DToDefault(self):
         
@@ -433,6 +461,7 @@ class SLM25DWidget(Widget):
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckboxNew.setEnabled(False)
         self.maskCenterCheckbox.setEnabled(False)
+        self.lockZernCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
@@ -471,6 +500,7 @@ class SLM25DWidget(Widget):
         self.autoZernCheckbox.setEnabled(True)
         self.autoZernCheckboxNew.setEnabled(True)
         self.maskCenterCheckbox.setEnabled(True)
+        self.lockZernCheckbox.setEnabled(True)
         self.valLabel2.setEnabled(True)
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)
