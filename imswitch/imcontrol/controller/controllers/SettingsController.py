@@ -131,11 +131,7 @@ class SettingsController(ImConWidgetController):
 
     def open_fov_window(self):
         self.retrieveDetectors()
-
-        # self._master.arduinoManager.trigger25DWriteOnly()
-        # time.sleep(0.2)
-        # rawImg = self.detectors[2]._camera.grabFrame25D(1)
-
+        
         lastImgs = self.getOneSetImgs()
 
         self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
@@ -167,7 +163,7 @@ class SettingsController(ImConWidgetController):
         if w.redImage.fullPoint is None:
             return
 
-        halfView = 500
+        halfView = 600
         w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
         w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
         w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
@@ -179,7 +175,6 @@ class SettingsController(ImConWidgetController):
         bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
         gOx, gOy = map(lambda v: int(round(v)), w.greenImage.fullPoint)
         rOx, rOy = map(lambda v: int(round(v)), w.redImage.fullPoint)
-
 
         dBx = bOx - gOx
         dBy = bOy - gOy
@@ -196,13 +191,10 @@ class SettingsController(ImConWidgetController):
         for detector in self.detectors:
             if detector.handle == "561F":
                 detector.crop(gX0, gY0, roiSize, roiSize)
-                print(gX0, gY0, roiSize, roiSize)
             if detector.handle == "488F":
                 detector.crop(bX0, bY0, roiSize, roiSize)
-                print(bX0, bY0, roiSize, roiSize)
             if detector.handle == "640F":
                 detector.crop(rX0, rY0, roiSize, roiSize)
-                print(rX0, rY0, roiSize, roiSize)
         
         w.blueImage._drawCross = False
         w.greenImage._drawCross = False

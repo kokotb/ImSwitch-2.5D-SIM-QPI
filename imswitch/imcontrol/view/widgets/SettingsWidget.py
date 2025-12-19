@@ -564,25 +564,88 @@ class FOVCorrectionWindow(QMainWindow):
         self.columnsLayout.addLayout(self.col4)
         self.mainLayout.addLayout(self.columnsLayout)
 
-        bottomLayout = QtWidgets.QHBoxLayout()
+        self.bottomLayout = QtWidgets.QHBoxLayout()
+
+        # points display box
+        self.pointsBox = QtWidgets.QWidget()
+        self.pointsBox.setFixedSize(110, 54)
+        self.pointsLay = QtWidgets.QVBoxLayout(self.pointsBox)
+        self.pointsLay.setContentsMargins(0, 0, 0, 0)
+        self.pointsLay.setSpacing(0)
 
         self.pointsDisplay = QtWidgets.QTextEdit()
         self.pointsDisplay.setReadOnly(True)
-        self.pointsDisplay.setFixedHeight(54)
-        self.pointsDisplay.setFixedWidth(110)
-        bottomLayout.addWidget(self.pointsDisplay)
+        self.pointsDisplay.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.pointsLay.addWidget(self.pointsDisplay)
+
+        self.bottomLayout.addWidget(self.pointsBox)
+
+        # crop detectors box
+        self.cropBox = QtWidgets.QWidget()
+        self.cropBox.setFixedSize(150, 54)
+        self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
+        self.cropLay.setContentsMargins(0, 0, 0, 0)
+        self.cropLay.setSpacing(0)
 
         self.cropButton = QtWidgets.QPushButton("Crop detectors")
-        self.cropButton.setFixedHeight(54)
-        self.cropButton.setFixedWidth(150)
-        bottomLayout.addWidget(self.cropButton)
+        self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.cropLay.addWidget(self.cropButton)
 
-        bottomLayout.addStretch()
-        self.mainLayout.addLayout(bottomLayout)
+        self.bottomLayout.addWidget(self.cropBox)
 
-        central_widget = QWidget()
-        central_widget.setLayout(self.mainLayout)
-        self.setCentralWidget(central_widget)
+        # two stacked buttons box
+        self.modeBox = QtWidgets.QWidget()
+        self.modeBox.setFixedSize(150, 54)
+        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
+        self.modeLayout.setContentsMargins(0, 0, 0, 0)
+        self.modeLayout.setSpacing(4)
+
+        self.buttonSIM = QtWidgets.QPushButton("SIM 512")
+        self.button25D = QtWidgets.QPushButton("2.5D 1024")
+
+        self.buttonSIM.setCheckable(True)
+        self.button25D.setCheckable(True)
+
+        self.modeGroup = QtWidgets.QButtonGroup(self)
+        self.modeGroup.setExclusive(True)
+        self.modeGroup.addButton(self.buttonSIM)
+        self.modeGroup.addButton(self.button25D)
+
+        self.buttonSIM.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.button25D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.modeLayout.addWidget(self.buttonSIM, 1)
+        self.modeLayout.addWidget(self.button25D, 1)
+
+        self.buttonSIM.setChecked(True)
+
+        self.modeBox.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #6666CC;
+                border-radius: 6px;
+                padding: 0px;
+            }
+            QPushButton:checked {
+                background-color: #6666CC;
+                color: white;
+            }
+            QPushButton:!checked {
+                background-color: #455364;
+                color: #AAAAAA;
+            }
+        """)
+
+        self.bottomLayout.addWidget(self.modeBox)
+
+
+        self.bottomLayout.addStretch()
+        self.mainLayout.addLayout(self.bottomLayout)
+
+
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.mainLayout)
+        self.setCentralWidget(self.central_widget)
+
 
         # clicking events
         self.blueImage.mousePressEvent = self.handleBlueClick
@@ -609,7 +672,6 @@ class FOVCorrectionWindow(QMainWindow):
             self.updatePointsDisplay()
 
 
-
     def ignoreClick(self, event):
         pass
 
@@ -628,10 +690,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay.setPlainText("\n".join(lines))
 
 
-
     def formatPoint(self, label, img):
-        if img.fullPoint is None:
-            return f"{label}: (-, -)"
         ox, oy = img.fullPoint
         return f"{label}: ({int(round(ox))}, {int(round(oy))})"
 
