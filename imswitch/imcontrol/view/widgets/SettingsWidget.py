@@ -268,94 +268,248 @@ class fovCorrection(QtWidgets.QLabel):
     def __init__(self, npImage, parent=None):
         super().__init__(parent)
 
+        self._drawCross = True
         self.parentLabel = None
         self.fullPoint = None
-        # convert numpy to pixmap
-        self.npImage = npImage
-        
-        self.npImage = self.npImage[:, (self.npImage.shape[1]-4600)//2 : (self.npImage.shape[1]+4600)//2]
-        h, w = self.npImage.shape
-        
         self.displayW = 300
         self.displayH = 300
-        qimg = QtGui.QImage(self.npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
-        self.pixmapOriginal = QtGui.QPixmap.fromImage(qimg)
+        self.setMinimumSize(self.displayW, self.displayH)
+        self.setScaledContents(True)
+        self.setMouseTracking(True)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        scaled = self.pixmapOriginal.scaled(self.displayW, self.displayH, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        self.setPixmap(scaled)
-        self.setFixedSize(self.displayW, self.displayH)
-        self.setScaledContents(False)
         self.clickPoints = []
-        self.factor = (w / self.displayW, h / self.displayH)
 
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        painter = QtGui.QPainter(self)
+        self._localShiftX = 0
+        self._localShiftY = 0
 
-        # dot style
-        pen = QtGui.QPen(QtGui.QColor("red"))
-        pen.setWidth(2)
-        painter.setPen(pen)
+        self.baseImage = None
+        self.npImage = None
+        self._view = None
 
-        if self.clickPoints:
-            x, y = self.clickPoints[0]
-            size = 5
-            # draw cross
-            painter.drawLine(x - size, y - size, x + size, y + size)
-            painter.drawLine(x - size, y + size, x + size, y - size)
-        painter.end()
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = 0.0
+        self.viewH = 0.0
 
-    def setPoint(self, x, y):
-        self.clickPoints = [(x, y)]
+        self.factor = (1.0, 1.0)
 
+        self.setBaseImage(npImage, doCenterCrop=True)
+
+    def setBaseImage(self, npImage, doCenterCrop=False):
+        self.fullPoint = None
+
+        if doCenterCrop:
+            h, w = npImage.shape
+            if w > 4600:
+                sx = (w - 4600) // 2
+                self._localShiftX = sx
+                self._localShiftY = 0
+                npImage = npImage[:, sx:sx + 4600]
+            else:
+                self._localShiftX = 0
+                self._localShiftY = 0
+
+        self.baseImage = npImage
+        H, W = self.baseImage.shape
+
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = float(W)
+        self.viewH = float(H)
+
+        self.render()
+
+    def getExtOffset(self):
         if self.parentLabel is not None and hasattr(self.parent(), "offsets"):
-            fx, fy = self.factor
-            offx, offy = self.parent().offsets[self.parentLabel]
-            ox = floor(offx + x * fx)
-            oy = floor(offy + y * fy)
-            self.fullPoint = (ox, oy)
-        self.update()
+            return self.parent().offsets[self.parentLabel]
+        return (0, 0)
 
+    def render(self):
+        H, W = self.baseImage.shape
 
-    def movePoint(self, dx, dy):
-        if not self.clickPoints:
-            return
-        x, y = self.clickPoints[0]
-        x = max(0, min(self.displayW - 1, x + dx))
-        y = max(0, min(self.displayH - 1, y + dy))
-        self.setPoint(x, y)
+        vw = int(round(self.viewW))
+        vh = int(round(self.viewH))
+        vw = max(1, min(W, vw))
+        vh = max(1, min(H, vh))
 
+        x0 = int(round(self.viewX0))
+        y0 = int(round(self.viewY0))
 
+        x0 = max(0, min(W - vw, x0))
+        y0 = max(0, min(H - vh, y0))
 
-    def setImage(self, npImage, keepFullPoint=None):
-        self.npImage = npImage
-        h, w = npImage.shape
-        qimg = QtGui.QImage(npImage.tobytes(), w, h, w, QtGui.QImage.Format_Grayscale8)
+        x1 = x0 + vw
+        y1 = y0 + vh
+
+        view = self.baseImage[y0:y1, x0:x1].copy()
+        self._view = view
+        self.npImage = view
+
+        h, w = view.shape
+        qimg = QtGui.QImage(self._view.data, w, h, self._view.strides[0], QtGui.QImage.Format_Grayscale8)
         pix = QtGui.QPixmap.fromImage(qimg)
-
         scaled = pix.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
         self.setPixmap(scaled)
 
         self.factor = (w / self.displayW, h / self.displayH)
 
-        if keepFullPoint is not None and self.parentLabel is not None and hasattr(self.parent(), "offsets"):
-            ox, oy = keepFullPoint
-            offx, offy = self.parent().offsets[self.parentLabel]
-            fx, fy = self.factor
-
-            dx = int(round((ox - offx) / fx))
-            dy = int(round((oy - offy) / fy))
-
-            dx = max(0, min(self.displayW - 1, dx))
-            dy = max(0, min(self.displayH - 1, dy))
-
-            self.clickPoints = [(dx, dy)]
-            self.fullPoint = (ox, oy)
-        else:
-            self.clickPoints = []
-            self.fullPoint = None
+        self.viewX0 = float(x0)
+        self.viewY0 = float(y0)
+        self.viewW = float(w)
+        self.viewH = float(h)
 
         self.update()
+
+
+    def setViewCenteredOnFullPoint(self, fullPoint, half=400):
+        if fullPoint is None:
+            return
+
+        ox, oy = fullPoint
+        offx, offy = self.getExtOffset()
+
+        lx = ox - offx - self._localShiftX
+        ly = oy - offy - self._localShiftY
+
+        H, W = self.baseImage.shape
+
+        viewW = min(float(W), float(2 * half))
+        viewH = min(float(H), float(2 * half))
+
+        x0 = lx - viewW / 2.0
+        y0 = ly - viewH / 2.0
+
+        x0 = max(0.0, min(float(W) - viewW, x0))
+        y0 = max(0.0, min(float(H) - viewH, y0))
+
+        self.viewX0 = x0
+        self.viewY0 = y0
+        self.viewW = viewW
+        self.viewH = viewH
+
+        self.render()
+
+
+    def displayToFull(self, dx, dy):
+        offx, offy = self.getExtOffset()
+        fx, fy = self.factor
+
+        lx = self.viewX0 + dx * fx
+        ly = self.viewY0 + dy * fy
+
+        ox = floor(offx + self._localShiftX + lx)
+        oy = floor(offy + self._localShiftY + ly)
+        return (ox, oy)
+
+    def fullToDisplay(self, ox, oy):
+        offx, offy = self.getExtOffset()
+        fx, fy = self.factor
+
+        lx = (ox - offx - self._localShiftX) - self.viewX0
+        ly = (oy - offy - self._localShiftY) - self.viewY0
+
+        dx = int(round(lx / fx))
+        dy = int(round(ly / fy))
+
+        dx = max(0, min(self.displayW - 1, dx))
+        dy = max(0, min(self.displayH - 1, dy))
+        return (dx, dy)
+
+    def projectFullPointToClick(self):
+        if self.fullPoint is None:
+            self.clickPoints = []
+            return
+        dx, dy = self.fullToDisplay(*self.fullPoint)
+        self.clickPoints = [(dx, dy)]
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QtGui.QPainter(self)
+
+        pen = QtGui.QPen(QtGui.QColor("red"))
+        pen.setWidth(2)
+        painter.setPen(pen)
+
+        if self._drawCross and self.fullPoint is not None:
+            dx, dy = self.fullToDisplay(*self.fullPoint)
+            size = 5
+            painter.drawLine(dx - size, dy - size, dx + size, dy + size)
+            painter.drawLine(dx - size, dy + size, dx + size, dy - size)
+
+        painter.end()
+
+    def setPoint(self, x, y):
+        self._drawCross = True
+        x = max(0, min(self.displayW - 1, x))
+        y = max(0, min(self.displayH - 1, y))
+
+        self.fullPoint = self.displayToFull(x, y)
+        self.update()
+
+
+    def zoomAt(self, mx, my, delta):
+        if delta == 0:
+            return
+
+        H, W = self.baseImage.shape
+
+        step = 1.25
+        zoomIn = delta > 0
+
+        mx = max(0, min(self.displayW - 1, mx))
+        my = max(0, min(self.displayH - 1, my))
+
+        vx0, vy0, vw, vh = self.viewX0, self.viewY0, self.viewW, self.viewH
+
+        ix = vx0 + mx * (vw / self.displayW)
+        iy = vy0 + my * (vh / self.displayH)
+
+        if zoomIn:
+            newW = vw / step
+            newH = vh / step
+        else:
+            newW = vw * step
+            newH = vh * step
+
+        minSize = 30
+        newW = max(minSize, min(float(W), newW))
+        newH = max(minSize, min(float(H), newH))
+
+        newX0 = ix - mx * (newW / self.displayW)
+        newY0 = iy - my * (newH / self.displayH)
+
+        newX0 = max(0.0, min(float(W) - newW, newX0))
+        newY0 = max(0.0, min(float(H) - newH, newY0))
+
+        self.viewX0 = newX0
+        self.viewY0 = newY0
+        self.viewW = newW
+        self.viewH = newH
+
+        self.render()
+
+    def wheelEvent(self, event):
+        p = event.pos()
+        self.zoomAt(p.x(), p.y(), event.angleDelta().y())
+        event.accept()
+
+    def setImage(self, npImage, keepFullPoint=None):
+        self._localShiftX = 0
+        self._localShiftY = 0
+
+        self.baseImage = npImage
+        H, W = self.baseImage.shape
+
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = float(W)
+        self.viewH = float(H)
+
+        self.fullPoint = keepFullPoint
+        self.render()
+
+
 
 
 
@@ -363,18 +517,6 @@ class fovCorrection(QtWidgets.QLabel):
 class FOVCorrectionWindow(QMainWindow):
     def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
         super().__init__(parent)
-        
-        # #Convert to 8-bit
-        # blueImg = blueImg / 16
-        # greenImg = greenImg / 16
-        # redImg = redImg / 16
-
-        # blueImg = blueImg.astype(np.uint8)
-        # greenImg = greenImg.astype(np.uint8)
-        # redImg = redImg.astype(np.uint8)
-
-        self._activeImage = None
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1230, 400)
@@ -429,11 +571,6 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsDisplay.setFixedWidth(110)
         bottomLayout.addWidget(self.pointsDisplay)
 
-        self.alignButton = QtWidgets.QPushButton("Align detectors")
-        self.alignButton.setFixedHeight(54)
-        self.alignButton.setFixedWidth(150)
-        bottomLayout.addWidget(self.alignButton)
-
         self.cropButton = QtWidgets.QPushButton("Crop detectors")
         self.cropButton.setFixedHeight(54)
         self.cropButton.setFixedWidth(150)
@@ -452,49 +589,22 @@ class FOVCorrectionWindow(QMainWindow):
         self.redImage.mousePressEvent = self.handleRedClick
 
 
-    def keyPressEvent(self, event):
-        img = self._activeImage
-        if not img or not img.clickPoints:
-            return super().keyPressEvent(event)
-
-        k = event.key()
-        if k == QtCore.Qt.Key_Left:
-            img.movePoint(-1, 0)
-        elif k == QtCore.Qt.Key_Right:
-            img.movePoint(1, 0)
-        elif k == QtCore.Qt.Key_Up:
-            img.movePoint(0, -1)
-        elif k == QtCore.Qt.Key_Down:
-            img.movePoint(0, 1)
-        else:
-            return super().keyPressEvent(event)
-
-        self.updatePointsDisplay()
-
-
-
     def handleBlueClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.blueImage.setPoint(pos.x(), pos.y())
-            self._activeImage = self.blueImage
-            self.setFocus()
             self.updatePointsDisplay()
 
     def handleGreenClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.greenImage.setPoint(pos.x(), pos.y())
-            self._activeImage = self.greenImage
-            self.setFocus()
             self.updatePointsDisplay()
 
     def handleRedClick(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             pos = event.pos()
             self.redImage.setPoint(pos.x(), pos.y())
-            self._activeImage = self.redImage
-            self.setFocus()
             self.updatePointsDisplay()
 
 
@@ -506,27 +616,24 @@ class FOVCorrectionWindow(QMainWindow):
     def updatePointsDisplay(self):
         lines = []
 
-        if self.blueImage.clickPoints:
+        if self.blueImage.fullPoint is not None:
             lines.append(self.formatPoint("488", self.blueImage))
 
-        if self.greenImage.clickPoints:
+        if self.greenImage.fullPoint is not None:
             lines.append(self.formatPoint("561", self.greenImage))
 
-        if self.redImage.clickPoints:
+        if self.redImage.fullPoint is not None:
             lines.append(self.formatPoint("640", self.redImage))
-
         self.pointsDisplay.setPlainText("\n".join(lines))
 
+
+
     def formatPoint(self, label, img):
-        x, y = img.clickPoints[0]
-        fx, fy = img.factor
-        offx, offy = self.offsets[label]
-
-        ox = floor(offx + x * fx)
-        oy = floor(offy + y * fy)
-
-        img.fullPoint = (ox, oy)
+        if img.fullPoint is None:
+            return f"{label}: (-, -)"
+        ox, oy = img.fullPoint
         return f"{label}: ({ox}, {oy})"
+
 
 
 

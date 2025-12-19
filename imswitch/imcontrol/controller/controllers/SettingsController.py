@@ -146,7 +146,7 @@ class SettingsController(ImConWidgetController):
 
         self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
         w = self._widget.openCorrectionWindow
-        w.offsets = self.fovOffsets   # share the SAME dict
+        w.offsets = self.fovOffsets
 
         w = self._widget.openCorrectionWindow
         w.offsets = self.fovOffsets
@@ -154,86 +154,32 @@ class SettingsController(ImConWidgetController):
         w.greenImage.parentLabel = "561"
         w.redImage.parentLabel = "640"
 
-        w.alignButton.clicked.connect(self.alignDetectors)
         w.cropButton.clicked.connect(self.cropDetectors)
 
-    def alignDetectors(self):
-        w = self._widget.openCorrectionWindow
-
-        if not w.blueImage.clickPoints:
-            return
-        if not w.greenImage.clickPoints:
-            return
-        if not w.redImage.clickPoints:
-            return
-
-        bCrop, bFull = self.alignSingle("488", w.blueImage)
-        gCrop, gFull = self.alignSingle("561", w.greenImage)
-        rCrop, rFull = self.alignSingle("640", w.redImage)
-
-        w.blueImage.setImage(bCrop, keepFullPoint=bFull)
-        w.greenImage.setImage(gCrop, keepFullPoint=gFull)
-        w.redImage.setImage(rCrop, keepFullPoint=rFull)
-
-        w.updatePointsDisplay()
-
-
-    def alignSingle(self, label, img):
-        x, y = img.clickPoints[0]
-        fx, fy = img.factor
-        offx, offy = self.fovOffsets[label]
-
-        ox = floor(offx + x * fx)
-        oy = floor(offy + y * fy)
-
-        full = self.fullImages[label]
-        h, w = full.shape
-        half = 400
-
-        x0 = max(0, ox - half)
-        y0 = max(0, oy - half)
-        x1 = min(w, ox + half)
-        y1 = min(h, oy + half)
-
-        self.fovOffsets[label] = (x0, y0)
-        return full[y0:y1, x0:x1], (ox, oy)
-
-
-    def getFullPoint(self, label, img):
-        x, y = img.clickPoints[0]
-        fx, fy = img.factor
-        offx, offy = self.fovOffsets[label]
-        ox = floor(offx + x * fx)
-        oy = floor(offy + y * fy)
-        img.fullPoint = (ox, oy)
-        return img.fullPoint
- 
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
 
-        if not w.blueImage.clickPoints:
+        if w.blueImage.fullPoint is None:
             return
-        if not w.greenImage.clickPoints:
+        if w.greenImage.fullPoint is None:
             return
-        if not w.redImage.clickPoints:
+        if w.redImage.fullPoint is None:
             return
 
-        bCrop, bFull = self.alignSingle("488", w.blueImage)
-        gCrop, gFull = self.alignSingle("561", w.greenImage)
-        rCrop, rFull = self.alignSingle("640", w.redImage)
-
-        w.blueImage.setImage(bCrop, keepFullPoint=bFull)
-        w.greenImage.setImage(gCrop, keepFullPoint=gFull)
-        w.redImage.setImage(rCrop, keepFullPoint=rFull)
+        halfView = 500
+        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
+        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
+        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
         w.updatePointsDisplay()
 
         roiSize = 512
         half = roiSize // 2
 
-        bOx, bOy = bFull
-        gOx, gOy = gFull
-        rOx, rOy = rFull
+        bOx, bOy = w.blueImage.fullPoint
+        gOx, gOy = w.greenImage.fullPoint
+        rOx, rOy = w.redImage.fullPoint
+
         dBx = bOx - gOx
         dBy = bOy - gOy
         dRx = rOx - gOx
@@ -249,18 +195,17 @@ class SettingsController(ImConWidgetController):
         for detector in self.detectors:
             if detector.handle == "561F":
                 detector.crop(gX0, gY0, roiSize, roiSize)
+                print(gX0, gY0, roiSize, roiSize)
             if detector.handle == "488F":
                 detector.crop(bX0, bY0, roiSize, roiSize)
-                # print(bX0, bY0)
+                print(bX0, bY0, roiSize, roiSize)
             if detector.handle == "640F":
                 detector.crop(rX0, rY0, roiSize, roiSize)
-
-        # currentParams = self.getCurrentParams()
-        # currentParams.x0.setValue(gX0)
-        # currentParams.y0.setValue(gY0)
-        # currentParams.width.setValue(roiSize)
-        # currentParams.height.setValue(roiSize)
-        # self.updateSharedAttrs()
+                print(rX0, rY0, roiSize, roiSize)
+        
+        w.blueImage._drawCross = False
+        w.greenImage._drawCross = False
+        w.redImage._drawCross = False
 
 
     def getParameterValue(self, detector, parameter_name):
