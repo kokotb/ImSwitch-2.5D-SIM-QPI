@@ -39,7 +39,7 @@ class PSFAnalysisController(ImConWidgetController):
             
             self._commChannel.sigSetForPSF.emit(False)
             self._widget.loadingPopupRecord.recordImages.setEnabled(True)
-            # self._master.positionersManager._subManagers['Z'].setPosition(self.originZ, 'Z')
+            #self._master.positionersManager._subManagers['Z'].setPosition(self.originZ, 'Z')
             # zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()
             # while zValueChecked != self.originZ:
             #     zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()

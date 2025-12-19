@@ -5,7 +5,7 @@ from imswitch.imcommon.model import dirtools, initLogger, APIExport, ostools
 from imswitch.imcommon.framework import Signal
 import threading
 import ctypes
-import math
+import math 
 
 class ZStackController(ImConWidgetController):
 
@@ -31,8 +31,13 @@ class ZStackController(ImConWidgetController):
             self._widget.checkbox_zStackCenter.setChecked(True)
             self._widget.checkbox_zStack.setChecked(True)
         if not start:
+            self._widget.checkbox_zStackCenter.blockSignals(True)
             self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
+            self._widget.checkbox_zStackCenter.blockSignals(False)
+            self._widget.checkbox_zStack.blockSignals(True)
             self._widget.checkbox_zStack.setChecked(self.initEnabled)
+            self._widget.checkbox_zStack.blockSignals(False)
+
 
     def runZStackToggle(self, state):
         if state == 0:
