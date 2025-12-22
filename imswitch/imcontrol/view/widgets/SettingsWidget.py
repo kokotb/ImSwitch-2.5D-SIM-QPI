@@ -271,7 +271,7 @@ class fovCorrection(QtWidgets.QLabel):
         self._drawCross = True
         self.parentLabel = None
         self.fullPoint = None
-        self.displayW = 450
+        self.displayW = 450     # 600x600
         self.displayH = 450
         self.setFixedSize(self.displayW, self.displayH)
         self.setScaledContents(True)
@@ -601,7 +601,7 @@ class FOVCorrectionWindow(QMainWindow):
 
         # points display box
         self.pointsBox = QtWidgets.QWidget()
-        self.pointsBox.setFixedSize(110, 54)
+        self.pointsBox.setFixedSize(170, 90)
         self.pointsLay = QtWidgets.QVBoxLayout(self.pointsBox)
         self.pointsLay.setContentsMargins(0, 0, 0, 0)
         self.pointsLay.setSpacing(0)
@@ -616,7 +616,7 @@ class FOVCorrectionWindow(QMainWindow):
 
         # two stacked buttons box
         self.modeBox = QtWidgets.QWidget()
-        self.modeBox.setFixedSize(150, 54)
+        self.modeBox.setFixedSize(200, 90)
         self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
         self.modeLayout.setContentsMargins(0, 0, 0, 0)
         self.modeLayout.setSpacing(4)
@@ -657,11 +657,61 @@ class FOVCorrectionWindow(QMainWindow):
         """)
 
         self.bottomLayout.addWidget(self.modeBox)
+        
+        
+        # align box
+        self.alignBox = QtWidgets.QWidget()
+        self.alignBox.setFixedSize(200, 90)
+        self.alignLayout = QtWidgets.QVBoxLayout(self.alignBox)
+        self.alignLayout.setContentsMargins(0, 0, 0, 0)
+        self.alignLayout.setSpacing(4)
+
+        self.align488 = QtWidgets.QPushButton("Align to 488")
+        self.align561 = QtWidgets.QPushButton("Align to 561")
+        self.align640 = QtWidgets.QPushButton("Align to 640")
+
+        self.align488.setCheckable(True)
+        self.align561.setCheckable(True)
+        self.align640.setCheckable(True)
+
+        self.alignGroup = QtWidgets.QButtonGroup(self)
+        self.alignGroup.setExclusive(True)
+        self.alignGroup.addButton(self.align488)
+        self.alignGroup.addButton(self.align561)
+        self.alignGroup.addButton(self.align640)
+
+        self.align488.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.align561.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.align640.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.alignLayout.addWidget(self.align488, 1)
+        self.alignLayout.addWidget(self.align561, 1)
+        self.alignLayout.addWidget(self.align640, 1)
+
+        self.align561.setChecked(True)
+
+        self.alignBox.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #6666CC;
+                border-radius: 6px;
+                padding: 0px;
+            }
+            QPushButton:checked {
+                background-color: #6666CC;
+                color: white;
+            }
+            QPushButton:!checked {
+                background-color: #455364;
+                color: #AAAAAA;
+            }
+        """)
+
+        self.bottomLayout.addWidget(self.alignBox)
 
 
         # crop detectors box
         self.cropBox = QtWidgets.QWidget()
-        self.cropBox.setFixedSize(150, 54)
+        self.cropBox.setFixedSize(200, 90)
         self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
         self.cropLay.setContentsMargins(0, 0, 0, 0)
         self.cropLay.setSpacing(0)
@@ -728,9 +778,6 @@ class FOVCorrectionWindow(QMainWindow):
     def formatPoint(self, label, img):
         ox, oy = img.fullPoint
         return f"{label}: ({int(round(ox))}, {int(round(oy))})"
-
-
-
 
 
 

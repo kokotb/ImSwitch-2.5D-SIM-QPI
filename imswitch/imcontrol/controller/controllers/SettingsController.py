@@ -204,40 +204,52 @@ class SettingsController(ImConWidgetController):
             roiSize = 1024
         half = roiSize // 2
         halfView = 600
-        
+
+
         w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=half)
         w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
         w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=half)
-        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
+
+        if w.align488.isChecked():
+            ref = "488"
+        elif w.align640.isChecked():
+            ref = "640"
+        else:
+            ref = "561"
+
+        pts = {
+            "488": w.blueImage.fullPoint,
+            "561": w.greenImage.fullPoint,
+            "640": w.redImage.fullPoint,
+        }
+
+        refOx, refOy = map(lambda v: int(round(v)), pts[ref])
+        refX0 = max(0, refOx - half)
+        refY0 = max(0, refOy - half)
+
+        x0 = {}
+        y0 = {}
+        for k, (ox, oy) in pts.items():
+            ox = int(round(ox))
+            oy = int(round(oy))
+            x0[k] = max(0, refX0 + (ox - refOx))
+            y0[k] = max(0, refY0 + (oy - refOy))
+
+        w.compositeImage.setViewCenteredOnFullPoint(pts[ref], half=half)
         w.updatePointsDisplay()
 
-        bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
-        gOx, gOy = map(lambda v: int(round(v)), w.greenImage.fullPoint)
-        rOx, rOy = map(lambda v: int(round(v)), w.redImage.fullPoint)
-
-        dBx = bOx - gOx
-        dBy = bOy - gOy
-        dRx = rOx - gOx
-        dRy = rOy - gOy
-
-        gX0 = max(0, gOx - half)
-        gY0 = max(0, gOy - half)
-        bX0 = max(0, gX0 + dBx)
-        bY0 = max(0, gY0 + dBy)
-        rX0 = max(0, gX0 + dRx)
-        rY0 = max(0, gY0 + dRy)
-
         for detector in self.detectors:
-            if detector.handle == "561F":
-                detector.crop(gX0, gY0, roiSize, roiSize)
             if detector.handle == "488F":
-                detector.crop(bX0, bY0, roiSize, roiSize)
+                detector.crop(x0["488"], y0["488"], roiSize, roiSize)
+            if detector.handle == "561F":
+                detector.crop(x0["561"], y0["561"], roiSize, roiSize)
             if detector.handle == "640F":
-                detector.crop(rX0, rY0, roiSize, roiSize)
-        
+                detector.crop(x0["640"], y0["640"], roiSize, roiSize)
+
         w.blueImage._drawCross = False
         w.greenImage._drawCross = False
         w.redImage._drawCross = False
+
 
 
     def getParameterValue(self, detector, parameter_name):
