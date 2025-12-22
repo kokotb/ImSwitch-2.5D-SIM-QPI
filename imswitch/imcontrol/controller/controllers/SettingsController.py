@@ -199,19 +199,19 @@ class SettingsController(ImConWidgetController):
                     "Click on all the images (488, 561, 640) before cropping."
                 )
                 return
-
-        halfView = 600
-        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
-        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
-        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
-        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
-        w.updatePointsDisplay()
-
+            
         if w.buttonSIM.isChecked():
             roiSize = 512
         elif w.button25D.isChecked():
             roiSize = 1024
         half = roiSize // 2
+        halfView = half
+        
+        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
+        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
+        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
+        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
+        w.updatePointsDisplay()
 
         bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
         gOx, gOy = map(lambda v: int(round(v)), w.greenImage.fullPoint)
