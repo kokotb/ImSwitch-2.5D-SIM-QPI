@@ -133,6 +133,9 @@ class SettingsController(ImConWidgetController):
 
     def open_fov_window(self):
         self.retrieveDetectors()
+        for detector in self.detectors:
+            if detector.forAcquisition:
+                detector.stopAcquisitionSIM()
         
         lastImgs = self.getOneSetImgs()
 
@@ -243,6 +246,9 @@ class SettingsController(ImConWidgetController):
                 detector.crop(x0["561"], y0["561"], roiSize, roiSize)
             if detector.handle == "640F":
                 detector.crop(x0["640"], y0["640"], roiSize, roiSize)
+        for detector in self.detectors:
+            self.updateParamsFromDetector(detector=detector)
+
 
         w.blueImage._drawCross = False
         w.greenImage._drawCross = False

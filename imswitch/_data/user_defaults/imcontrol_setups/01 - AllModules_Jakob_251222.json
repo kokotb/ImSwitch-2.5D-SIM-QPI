@@ -10,7 +10,7 @@
 },
 
 "SLM25D":{
-  "width":1080,
+  "width":1080, 
   "height":1920,
   "mock": false,
   "Gamma": 0.5, 
@@ -87,7 +87,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 1500.0
+        "ExposureTime": 19000.0
       },
       "ROI":{  
         "OffsetX": 2008,
@@ -111,7 +111,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{
         "OffsetX": 1850,
@@ -136,11 +136,11 @@
           "TriggerMode": "Off",
           "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 18000.0
+          "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 1826,
-          "OffsetY": 1770, 
+          "OffsetX": 2650,
+          "OffsetY": 2000, 
           "Width": 1024,
           "Height": 1024
         }
@@ -217,7 +217,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 0,
+      "valueInit": 100,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +233,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 0,
+    "valueInit": 100,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
