@@ -185,8 +185,6 @@ class SettingsController(ImConWidgetController):
         
         return self.rgbu8Full
 
-
-
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
@@ -205,12 +203,12 @@ class SettingsController(ImConWidgetController):
         elif w.button25D.isChecked():
             roiSize = 1024
         half = roiSize // 2
-        halfView = half
+        halfView = 600
         
-        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
-        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
-        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
-        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
+        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=half)
+        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
+        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=half)
+        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
         w.updatePointsDisplay()
 
         bOx, bOy = map(lambda v: int(round(v)), w.blueImage.fullPoint)
@@ -251,6 +249,7 @@ class SettingsController(ImConWidgetController):
             self._logger.warning("Debugging needed.")
             self._logger.debug(f"Parameter {parameter_name} not set up in getParameterValue!")
         return value
+        
         
     def getOneSetImgs(self):
         self._master.arduinoManager.activate25DWriteOnly()
