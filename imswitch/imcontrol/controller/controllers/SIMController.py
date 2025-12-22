@@ -25,6 +25,8 @@ class SIMController(ImConWidgetController):
     sigValueChanged = Signal()
 
     
+
+    
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
@@ -97,6 +99,7 @@ class SIMController(ImConWidgetController):
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigRawImgReceived.connect(self.displayRawImage)
+        self._commChannel.sig25DPSFReceived.connect(self.displayRawImage)
 
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)

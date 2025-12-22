@@ -188,6 +188,8 @@ class CommunicationChannel(SignalInterface):
     sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
 
+    sig25DPSFReceived = Signal(np.ndarray, str)
+
 
     
 

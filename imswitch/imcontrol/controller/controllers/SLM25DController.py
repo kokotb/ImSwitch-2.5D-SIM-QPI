@@ -410,6 +410,7 @@ class SLM25DController(ImConWidgetController):
                         success = self.waitingForBuffers()
                     rawImg = self.detectors[2]._camera.grabFrame25D(1)
                     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                     images.append(beadImgAnalysis)
                     if (key == "Right Center-Y"):
@@ -551,6 +552,7 @@ class SLM25DController(ImConWidgetController):
                 self._master.arduinoManager.trigger25DWriteOnly()
                 success = self.waitingForBuffers()
             rawImg = self.detectors[2]._camera.grabFrame25D(1)
+            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
             self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -599,6 +601,7 @@ class SLM25DController(ImConWidgetController):
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -683,6 +686,7 @@ class SLM25DController(ImConWidgetController):
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -757,6 +761,7 @@ class SLM25DController(ImConWidgetController):
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -892,6 +897,7 @@ class SLM25DController(ImConWidgetController):
                     success = self.waitingForBuffers()
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
@@ -1027,6 +1033,7 @@ class SLM25DController(ImConWidgetController):
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -1102,6 +1109,7 @@ class SLM25DController(ImConWidgetController):
                 # print(self.detectors[2]._camera.getBufferValue('25D'))
                 
                 rawImg = self.detectors[2]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
                 # self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -1310,6 +1318,24 @@ class SLM25DController(ImConWidgetController):
 
     def setLockZernike(self, value):
         self.zernikeLocked = value
+
+        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
+        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
+        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
+        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+
+        # current values 
+        parameters = self.getAllWidgetParams()
+        xleftcenterC = parameters["Left Center-X"]
+        yleftcenterC = parameters["Left Center-Y"]
+        xrightcenterC = parameters["Right Center-X"]
+        yrightcenterC = parameters["Right Center-Y"]
+
+        self.xleftShiftLocked = xleftcenterC - xleftcenter
+        self.yleftShiftLocked = yleftcenterC - yleftcenter
+        self.xrightShiftLocked = xrightcenterC - xrightcenter
+        self.yrightShiftLocked = yrightcenterC - yrightcenter
+
 
     def updateZernikeWithSleep(self):
         self.updateZernikePhaseMask()
@@ -1754,7 +1780,18 @@ class SLM25DController(ImConWidgetController):
                 self.mask25D = self._widget.matrix25d
 
         if (projZernike == 2):
-            if ((xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0)) and (not self.zernikeLocked):
+            if  (self.zernikeLocked):
+                projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, self.xleftShiftLocked, self.yleftShiftLocked)
+                projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, self.xrightShiftLocked, self.yrightShiftLocked)
+            
+                widgetZernikeMask = np.concatenate((self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift),self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)), axis=1).transpose()
+                widgetZernikeMask = widgetZernikeMask.astype(np.uint8)
+        
+                self._widget.matrixZernike = widgetZernikeMask
+                self._widget.imgZernike.setImage(self._widget.matrixZernike)
+                self.maskZernike = self._widget.matrixZernike
+
+            elif ((xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0)) and (not self.zernikeLocked):
                 projectImageLeft += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatLeft, xleftShift, yleftShift)
                 projectImageRight += self.shiftMaskZeroPad(self.ZernikeAllMasksSumFloatRight, xrightShift, yrightShift)
             
