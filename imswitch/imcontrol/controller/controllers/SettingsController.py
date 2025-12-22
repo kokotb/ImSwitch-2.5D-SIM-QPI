@@ -140,18 +140,20 @@ class SettingsController(ImConWidgetController):
         self.fullImages["561"] = (lastImgs[1] / 16).astype(np.uint8)
         self.fullImages["640"] = (lastImgs[2] / 16).astype(np.uint8)
 
+        self.composite()
+        
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
         self._widget.openFOVWindow(self.fullImages["488"], self.fullImages["561"], self.fullImages["640"])
         w = self._widget.openCorrectionWindow
         w.offsets = self.fovOffsets
-
-        w = self._widget.openCorrectionWindow
-        w.offsets = self.fovOffsets
         w.blueImage.parentLabel = "488"
         w.greenImage.parentLabel = "561"
         w.redImage.parentLabel = "640"
+        
+        w.compositeImage.setBaseImage(self.rgbu8Full, doCenterCrop=True)
 
+        
         w.cropButton.clicked.connect(self.cropDetectors)
 
 
@@ -159,11 +161,11 @@ class SettingsController(ImConWidgetController):
         return img.astype(np.float32) / 255.0
 
     
-    def colorize(self):
+    def composite(self):
         self.wavelengthToRGB = {
-            "488": np.array((0.0, 1.0, 0.0), dtype=np.float32),
-            "561": np.array((1.0, 0.8, 0.0), dtype=np.float32),
-            "640": np.array((1.0, 0.0, 0.0), dtype=np.float32),
+            "488": np.array((0.0, 247.0, 255.0), dtype=np.float32)/255.0,
+            "561": np.array((198.0, 255.0, 0.0), dtype=np.float32)/255.0,
+            "640": np.array((255.0, 33.0, 0.0), dtype=np.float32)/255.0,
         }
 
         self.fullImagesNormalized = {
@@ -174,8 +176,16 @@ class SettingsController(ImConWidgetController):
         
         self.fullImagesColorized = {k: self.fullImagesNormalized[k][..., None] * self.wavelengthToRGB[k] for k in self.fullImagesNormalized}
 
+        rgb = np.zeros_like(next(iter(self.fullImagesColorized.values())))
+        for img in self.fullImagesColorized.values():
+            rgb += img / 3
+            
+        rgb = np.clip(rgb, 0, 1)
+        self.rgbu8Full = (rgb * 255).astype(np.uint8)
+        
+        return self.rgbu8Full
 
-    
+
 
     
     def cropDetectors(self):
@@ -194,6 +204,7 @@ class SettingsController(ImConWidgetController):
         w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=halfView)
         w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
         w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=halfView)
+        w.compositeImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=halfView)
         w.updatePointsDisplay()
 
         if w.buttonSIM.isChecked():

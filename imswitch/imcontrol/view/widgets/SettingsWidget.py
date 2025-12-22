@@ -296,22 +296,27 @@ class fovCorrection(QtWidgets.QLabel):
 
         self.setBaseImage(npImage, doCenterCrop=True)
 
+
     def setBaseImage(self, npImage, doCenterCrop=False):
         self.fullPoint = None
 
+        h, w = npImage.shape[:2]
+
         if doCenterCrop:
-            h, w = npImage.shape
             if w > 4600:
                 sx = (w - 4600) // 2
                 self._localShiftX = sx
                 self._localShiftY = 0
-                npImage = npImage[:, sx:sx + 4600]
+                if npImage.ndim == 2:
+                    npImage = npImage[:, sx:sx + 4600]
+                else:
+                    npImage = npImage[:, sx:sx + 4600, :]
             else:
                 self._localShiftX = 0
                 self._localShiftY = 0
 
         self.baseImage = npImage
-        H, W = self.baseImage.shape
+        H, W = self.baseImage.shape[:2]
 
         self.viewX0 = 0.0
         self.viewY0 = 0.0
@@ -320,13 +325,18 @@ class fovCorrection(QtWidgets.QLabel):
 
         self.render()
 
+
     def getExtOffset(self):
         if self.parentLabel is not None and hasattr(self.parent(), "offsets"):
             return self.parent().offsets[self.parentLabel]
         return (0, 0)
 
     def render(self):
-        H, W = self.baseImage.shape
+        if self.baseImage.ndim == 2:
+            H, W = self.baseImage.shape
+        else:
+            H, W, _ = self.baseImage.shape
+
 
         vw = int(round(self.viewW))
         vh = int(round(self.viewH))
@@ -346,8 +356,24 @@ class fovCorrection(QtWidgets.QLabel):
         self._view = view
         self.npImage = view
 
-        h, w = view.shape
-        qimg = QtGui.QImage(self._view.data, w, h, self._view.strides[0], QtGui.QImage.Format_Grayscale8)
+        h, w = view.shape[:2]
+
+        if view.ndim == 2:
+            qimg = QtGui.QImage(
+                view.data,
+                w, h,
+                view.strides[0],
+                QtGui.QImage.Format_Grayscale8
+            )
+        else:
+            qimg = QtGui.QImage(
+                view.data,
+                w, h,
+                view.strides[0],
+                QtGui.QImage.Format_RGB888
+            )
+
+
         pix = QtGui.QPixmap.fromImage(qimg)
         scaled = pix.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
         self.setPixmap(scaled)
@@ -372,7 +398,7 @@ class fovCorrection(QtWidgets.QLabel):
         lx = ox - offx - self._localShiftX
         ly = oy - offy - self._localShiftY
 
-        H, W = self.baseImage.shape
+        H, W = self.baseImage.shape[:2]
 
         viewW = min(float(W), float(2 * half))
         viewH = min(float(H), float(2 * half))
@@ -453,7 +479,8 @@ class fovCorrection(QtWidgets.QLabel):
         if delta == 0:
             return
 
-        H, W = self.baseImage.shape
+        H, W = self.baseImage.shape[:2]
+
 
         step = 1.25
         zoomIn = delta > 0
@@ -500,7 +527,13 @@ class fovCorrection(QtWidgets.QLabel):
         self._localShiftY = 0
 
         self.baseImage = npImage
-        H, W = self.baseImage.shape
+        self.baseImage = np.ascontiguousarray(npImage)
+
+        
+        if self.baseImage.ndim == 2:
+            H, W = self.baseImage.shape
+        else:
+            H, W, _ = self.baseImage.shape
 
         self.viewX0 = 0.0
         self.viewY0 = 0.0
