@@ -154,6 +154,29 @@ class SettingsController(ImConWidgetController):
 
         w.cropButton.clicked.connect(self.cropDetectors)
 
+
+    def uint8Normalize(self, img):
+        return img.astype(np.float32) / 255.0
+
+    
+    def colorize(self):
+        self.wavelengthToRGB = {
+            "488": np.array((0.0, 1.0, 0.0), dtype=np.float32),
+            "561": np.array((1.0, 0.8, 0.0), dtype=np.float32),
+            "640": np.array((1.0, 0.0, 0.0), dtype=np.float32),
+        }
+
+        self.fullImagesNormalized = {
+            "488": self.uint8Normalize(self.fullImages["488"]), 
+            "561": self.uint8Normalize(self.fullImages["561"]), 
+            "640": self.uint8Normalize(self.fullImages["640"]),
+        }
+        
+        self.fullImagesColorized = {k: self.fullImagesNormalized[k][..., None] * self.wavelengthToRGB[k] for k in self.fullImagesNormalized}
+
+
+    
+
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
