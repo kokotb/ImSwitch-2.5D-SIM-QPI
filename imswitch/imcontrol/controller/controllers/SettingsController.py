@@ -188,9 +188,7 @@ class SettingsController(ImConWidgetController):
     
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
-        if (w.blueImage.fullPoint is None or
-            w.greenImage.fullPoint is None or
-            w.redImage.fullPoint is None):
+        if (w.blueImage.fullPoint is None or w.greenImage.fullPoint is None or w.redImage.fullPoint is None):
                 QtWidgets.QMessageBox.warning(
                     w,
                     "Missing points",
@@ -206,9 +204,9 @@ class SettingsController(ImConWidgetController):
         halfView = 600
 
 
-        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=half)
-        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
-        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=half)
+        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half = half)
+        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half = half)
+        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half = half)
 
         if w.align488.isChecked():
             ref = "488"
@@ -235,7 +233,7 @@ class SettingsController(ImConWidgetController):
             x0[k] = max(0, refX0 + (ox - refOx))
             y0[k] = max(0, refY0 + (oy - refOy))
 
-        w.compositeImage.setViewCenteredOnFullPoint(pts[ref], half=half)
+        w.compositeImage.setViewCenteredOnFullPoint(pts[ref], half = half)
         w.updatePointsDisplay()
 
         for detector in self.detectors:

@@ -614,51 +614,6 @@ class FOVCorrectionWindow(QMainWindow):
         self.bottomLayout.addWidget(self.pointsBox)
 
 
-        # two stacked buttons box
-        self.modeBox = QtWidgets.QWidget()
-        self.modeBox.setFixedSize(200, 90)
-        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
-        self.modeLayout.setContentsMargins(0, 0, 0, 0)
-        self.modeLayout.setSpacing(4)
-
-        self.buttonSIM = QtWidgets.QPushButton("SIM 512")
-        self.button25D = QtWidgets.QPushButton("2.5D 1024")
-
-        self.buttonSIM.setCheckable(True)
-        self.button25D.setCheckable(True)
-
-        self.modeGroup = QtWidgets.QButtonGroup(self)
-        self.modeGroup.setExclusive(True)
-        self.modeGroup.addButton(self.buttonSIM)
-        self.modeGroup.addButton(self.button25D)
-
-        self.buttonSIM.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button25D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        self.modeLayout.addWidget(self.buttonSIM, 1)
-        self.modeLayout.addWidget(self.button25D, 1)
-
-        self.buttonSIM.setChecked(True)
-
-        self.modeBox.setStyleSheet("""
-            QPushButton {
-                border: 1px solid #6666CC;
-                border-radius: 6px;
-                padding: 0px;
-            }
-            QPushButton:checked {
-                background-color: #6666CC;
-                color: white;
-            }
-            QPushButton:!checked {
-                background-color: #455364;
-                color: #AAAAAA;
-            }
-        """)
-
-        self.bottomLayout.addWidget(self.modeBox)
-        
-        
         # align box
         self.alignBox = QtWidgets.QWidget()
         self.alignBox.setFixedSize(200, 90)
@@ -706,7 +661,52 @@ class FOVCorrectionWindow(QMainWindow):
             }
         """)
 
+
         self.bottomLayout.addWidget(self.alignBox)
+        # two stacked buttons box
+        self.modeBox = QtWidgets.QWidget()
+        self.modeBox.setFixedSize(200, 90)
+        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
+        self.modeLayout.setContentsMargins(0, 0, 0, 0)
+        self.modeLayout.setSpacing(4)
+
+        self.buttonSIM = QtWidgets.QPushButton("SIM 512")
+        self.button25D = QtWidgets.QPushButton("2.5D 1024")
+
+        self.buttonSIM.setCheckable(True)
+        self.button25D.setCheckable(True)
+
+        self.modeGroup = QtWidgets.QButtonGroup(self)
+        self.modeGroup.setExclusive(True)
+        self.modeGroup.addButton(self.buttonSIM)
+        self.modeGroup.addButton(self.button25D)
+
+        self.buttonSIM.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.button25D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.modeLayout.addWidget(self.buttonSIM, 1)
+        self.modeLayout.addWidget(self.button25D, 1)
+
+        self.buttonSIM.setChecked(True)
+
+        self.modeBox.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #6666CC;
+                border-radius: 6px;
+                padding: 0px;
+            }
+            QPushButton:checked {
+                background-color: #6666CC;
+                color: white;
+            }
+            QPushButton:!checked {
+                background-color: #455364;
+                color: #AAAAAA;
+            }
+        """)
+
+        self.bottomLayout.addWidget(self.modeBox)
+        
 
 
         # crop detectors box
