@@ -1696,7 +1696,7 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusStart(self):
-        while (self._commChannel.initRegScore != None) and (self.SIMActive): #self.active25D or 
+        while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
             self.autofocusLoop()
 
     def autofocusLoop(self):
@@ -1712,7 +1712,7 @@ class SIMController(ImConWidgetController):
 
         # time.sleep(0.05)
 
-        if not (self.firstLoop) and (self.AFCounter % 30 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 5 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')
