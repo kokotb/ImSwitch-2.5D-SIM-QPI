@@ -1646,56 +1646,56 @@ class SIMController(ImConWidgetController):
         ####
 
 
-        rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
+            rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
 
-        with lastImgLock:
-            self.lastImgDict[processor.handle] = rawImg
+            with lastImgLock:
+                self.lastImgDict[processor.handle] = rawImg
 
-        self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
-        # self.displayRawImage(rawImg, f"{processor.handle} Raw")
-        processor.stack = rawImg
+            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+            # self.displayRawImage(rawImg, f"{processor.handle} Raw")
+            processor.stack = rawImg
 
-    
-        self._commChannel.saveLastRawImgs(rawImg, processor.handle)
-
-        #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
-
-        if self.zScanActive: 
-            if z == 0:
-                resetStack = True
-            else:
-                resetStack = False
-            self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
-        ####
-                
-        # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
         
-        #### Emits every 2.5D image to tiling preview window.
-        if self.tilePreview and self.isTiling:
-            # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
-            #     self.updateWFContLimits()
-            self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
-        ####
+            self._commChannel.saveLastRawImgs(rawImg, processor.handle)
 
-        with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
-            if ((self.isRecordRaw)) and not (self.startSettingsSaved):
-                self._commChannel.sigSaveSettingsFirst.emit()
-                self.startSettingsSaved = True
+            #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
 
-        if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
-            with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
-                self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter, '25D')
+            if self.zScanActive: 
+                if z == 0:
+                    resetStack = True
+                else:
+                    resetStack = False
+                self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
+            ####
+                    
+            # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
+            
+            #### Emits every 2.5D image to tiling preview window.
+            if self.tilePreview and self.isTiling:
+                # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+                #     self.updateWFContLimits()
+                self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
+            ####
 
-        if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-            self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
-            processor.saveOneTime = False
-            with snapshotLock: #Needed to only save one settings file per snapshot.
-                if self.snapshotSettingsSaved == False:
-                    self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
-                    self.snapshotSettingsSaved = True
-                
+            with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
+                if ((self.isRecordRaw)) and not (self.startSettingsSaved):
+                    self._commChannel.sigSaveSettingsFirst.emit()
+                    self.startSettingsSaved = True
 
-        # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+            if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
+                with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
+                    self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter, '25D')
+
+            if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
+                self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
+                processor.saveOneTime = False
+                with snapshotLock: #Needed to only save one settings file per snapshot.
+                    if self.snapshotSettingsSaved == False:
+                        self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
+                        self.snapshotSettingsSaved = True
+                    
+
+            # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
 
     def autofocusThread(self):
         self._commChannel.autofocusActive = True
