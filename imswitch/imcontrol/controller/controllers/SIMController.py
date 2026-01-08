@@ -1041,8 +1041,8 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         trigger_overlap = 'PreviousFrame'
         exposure_auto = 'Off'
-        gamma = 1.0
-        gain = 0.0
+        # gamma = 1.0
+        # gain = detector._camera.getPropertyValue('Gain')
 
         # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
@@ -1060,7 +1060,7 @@ class SIMController(ImConWidgetController):
         frame_rate = 1000000/exposure_limit
 
         # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'Gamma':gamma, 'Gain': gain, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
@@ -1075,8 +1075,7 @@ class SIMController(ImConWidgetController):
         detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
-        gamma = 1.0
-        gain = detector._camera.getPropertyValue('Gain')
+        # gain = detector._camera.getPropertyValue('Gain')
         trigger_source = 'Line0'
         trigger_overlap = 'Off'
         # detector._camera.setBufferTimeout(500)
@@ -1085,14 +1084,12 @@ class SIMController(ImConWidgetController):
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
         # # exposure_time = self.exposure # anything < 19 ms
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12'
         frame_rate_enable = True
         buffer_mode = "NewestOnly"
         triggerSelector = 'FrameStart'
 
         # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gain': gain,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'StreamBufferHandlingMode':buffer_mode}
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
