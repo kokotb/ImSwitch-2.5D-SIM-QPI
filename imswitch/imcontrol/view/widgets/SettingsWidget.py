@@ -688,6 +688,10 @@ class FOVCorrectionWindow(QMainWindow):
         self.modeLayout.addWidget(self.button25D, 1)
 
         self.buttonSIM.setChecked(True)
+        
+        self.buttonSIM.clicked.connect(self.applyRoiSize)
+        self.button25D.clicked.connect(self.applyRoiSize)
+
 
         self.modeBox.setStyleSheet("""
             QPushButton {
@@ -761,6 +765,61 @@ class FOVCorrectionWindow(QMainWindow):
         pass
 
     
+    def getRefKey(self):
+        if self.align488.isChecked():
+            return "488"
+        if self.align640.isChecked():
+            return "640"
+        return "561"
+
+    def getRoiSize(self):
+        if self.buttonSIM.isChecked():
+            return 512 
+        else:
+            return 1024
+
+    def _fallbackCenter(self, key):
+        img = self.fullImages[key]
+        H, W = img.shape[:2]
+        return (W / 2.0, H / 2.0)
+
+    def applyRoiSize(self):
+        half = self.getRoiSize() // 2
+
+        c488 = None
+        c561 = None
+        c640 = None
+
+        if hasattr(self, "roiCenters"):
+            c488 = self.roiCenters.get("488")
+            c561 = self.roiCenters.get("561")
+            c640 = self.roiCenters.get("640")
+
+        if c488 is None: c488 = self._fallbackCenter("488")
+        if c561 is None: c561 = self._fallbackCenter("561")
+        if c640 is None: c640 = self._fallbackCenter("640")
+
+        p = self.blueImage.fullPoint if self.blueImage.fullPoint is not None else c488
+        self.blueImage.setViewCenteredOnFullPoint(p, half=half)
+
+        p = self.greenImage.fullPoint if self.greenImage.fullPoint is not None else c561
+        self.greenImage.setViewCenteredOnFullPoint(p, half=half)
+
+        p = self.redImage.fullPoint if self.redImage.fullPoint is not None else c640
+        self.redImage.setViewCenteredOnFullPoint(p, half=half)
+
+        ref = self.getRefKey()
+        if ref == "488":
+            pref = self.blueImage.fullPoint if self.blueImage.fullPoint is not None else c488
+        elif ref == "640":
+            pref = self.redImage.fullPoint if self.redImage.fullPoint is not None else c640
+        else:
+            pref = self.greenImage.fullPoint if self.greenImage.fullPoint is not None else c561
+
+        self.compositeImage.setViewCenteredOnFullPoint(pref, half=half)
+    
+
+
     def updatePointsDisplay(self):
         lines = []
 

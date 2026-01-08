@@ -136,6 +136,21 @@ class SettingsController(ImConWidgetController):
         for detector in self.detectors:
             if detector.forAcquisition:
                 detector.stopAcquisitionSIM()
+                
+        roiCenters = {"488": None, "561": None, "640": None}
+        for detector in self.detectors:
+            if detector.handle == "488F":
+                fs = detector.frameStart
+                sh = detector.shape
+                roiCenters["488"] = (fs[0], fs[1])
+            if detector.handle == "561F":
+                fs = detector.frameStart
+                sh = detector.shape
+                roiCenters["561"] = (fs[0], fs[1])
+            if detector.handle == "640F":
+                fs = detector.frameStart
+                sh = detector.shape
+                roiCenters["640"] = (fs[0], fs[1])
         
         lastImgs = self.getOneSetImgs()
 
@@ -155,6 +170,8 @@ class SettingsController(ImConWidgetController):
         w.redImage.parentLabel = "640"
         
         w.compositeImage.setBaseImage(self.rgbu8Full, doCenterCrop=True)
+        w.roiCenters = roiCenters
+        w.applyRoiSize()
 
         
         w.cropButton.clicked.connect(self.cropDetectors)
