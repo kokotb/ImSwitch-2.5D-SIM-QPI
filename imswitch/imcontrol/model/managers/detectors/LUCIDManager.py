@@ -184,11 +184,11 @@ class LUCIDManager(DetectorManager):
             # print(self._camera)
             self._running = True
 
-    def stopAcquisitionSIM(self):
+    def stopAcquisitionSIM(self, toPrint = True):
         if self._running:
             self._running = False
             self._camSet = False
-            self._camera.suspend_live()
+            self._camera.suspend_live(toPrint)
 
     def stopAcquisitionForROIChange(self):
         self._running = False
@@ -198,9 +198,9 @@ class LUCIDManager(DetectorManager):
     def pixelSizeUm(self):
         return [1, 1, 1]
 
-    def crop(self, hpos, vpos, hsize, vsize):
+    def crop(self, hpos, vpos, hsize, vsize, toPrint = True):
         def cropAction():
-            self._camera.setROI(hpos, vpos, hsize, vsize)
+            self._camera.setROI(hpos, vpos, hsize, vsize, toPrint)
             
 
         self._performSafeCameraAction(cropAction)
