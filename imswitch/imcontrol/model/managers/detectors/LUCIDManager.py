@@ -41,6 +41,7 @@ class LUCIDManager(DetectorManager):
         self._camera.setPropertyValue('ADCBitDepth', "Bits12", toPrint=False)
         self._camera.setPropertyValue('PixelFormat', "Mono16", toPrint=False)
         self._camera.setPropertyValue('Gain', self.setupInfo['Gain'], toPrint=False)
+        self._camera.setPropertyValue('Gamma', self.setupInfo['Gamma'], toPrint=False)
 
         
         # fullShape = (self.setupInfo['sensor_width'] ,self.setupInfo['sensor_height'])
