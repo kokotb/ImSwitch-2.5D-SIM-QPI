@@ -343,9 +343,9 @@ class SettingsController(ImConWidgetController):
             self.updateParamsFromDetector(detector=detector)
 
 
-        w.blueImage._drawCross = False
-        w.greenImage._drawCross = False
-        w.redImage._drawCross = False
+        w.blueImage._drawCross = True
+        w.greenImage._drawCross = True
+        w.redImage._drawCross = True
 
 
 
