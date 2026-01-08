@@ -132,6 +132,7 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
+        self._logger.info('FOV correction window is opening...')
         self.retrieveDetectors()
         for detector in self.detectors:
             if detector.forAcquisition:
