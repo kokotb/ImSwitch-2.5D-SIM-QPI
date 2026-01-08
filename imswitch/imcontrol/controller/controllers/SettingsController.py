@@ -139,19 +139,15 @@ class SettingsController(ImConWidgetController):
                 
         roiCenters = {"488": None, "561": None, "640": None}
         for detector in self.detectors:
+            fs = detector.frameStart
+            sh = detector.shape
             if detector.handle == "488F":
-                fs = detector.frameStart
-                sh = detector.shape
-                roiCenters["488"] = (fs[0], fs[1])
+                roiCenters["488"] = (fs[0]+sh[0]/2.0, fs[1]+sh[1]/2.0)
             if detector.handle == "561F":
-                fs = detector.frameStart
-                sh = detector.shape
-                roiCenters["561"] = (fs[0], fs[1])
+                roiCenters["561"] = (fs[0]+sh[0]/2.0, fs[1]+sh[1]/2.0)
             if detector.handle == "640F":
-                fs = detector.frameStart
-                sh = detector.shape
-                roiCenters["640"] = (fs[0], fs[1])
-        
+                roiCenters["640"] = (fs[0]+sh[0]/2.0, fs[1]+sh[1]/2.0)
+
         lastImgs = self.getOneSetImgs()
 
         self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
@@ -169,8 +165,21 @@ class SettingsController(ImConWidgetController):
         w.greenImage.parentLabel = "561"
         w.redImage.parentLabel = "640"
         
-        w.compositeImage.setBaseImage(self.rgbu8Full, doCenterCrop=True)
+        w.fullCompositeRgb = self.rgbu8Full
+        w.wavelengthToRGB = self.wavelengthToRGB
+
         w.roiCenters = roiCenters
+
+        w.blueImage.fullPoint  = roiCenters["488"]
+        w.greenImage.fullPoint = roiCenters["561"]
+        w.redImage.fullPoint   = roiCenters["640"]
+        w.updatePointsDisplay()
+
+        w._alignedPts = None
+        w._alignedRef = None
+        w._compositeIsPatch = False
+
+        w.compositeImage.setBaseImage(w.fullCompositeRgb, doCenterCrop=True)
         w.applyRoiSize()
 
         
@@ -239,6 +248,10 @@ class SettingsController(ImConWidgetController):
             "561": w.greenImage.fullPoint,
             "640": w.redImage.fullPoint,
         }
+        
+        w._alignedPts = dict(pts)
+        w._alignedRef = ref
+
 
         refOx, refOy = map(lambda v: int(round(v)), pts[ref])
 
@@ -299,6 +312,8 @@ class SettingsController(ImConWidgetController):
         rgbu8 = np.ascontiguousarray((rgb * 255).astype(np.uint8))
 
         w.compositeImage.setBaseImage(rgbu8, doCenterCrop=False)
+        w._compositeIsPatch = True
+
 
         refInPatch = (refOx - refX0, refOy - refY0)
 

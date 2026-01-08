@@ -268,7 +268,7 @@ class fovCorrection(QtWidgets.QLabel):
     def __init__(self, npImage, parent=None):
         super().__init__(parent)
 
-        self._drawCross = True
+        self._drawCross = False
         self.parentLabel = None
         self.fullPoint = None
         self.displayW = 450     # 600x600
@@ -554,8 +554,16 @@ class FOVCorrectionWindow(QMainWindow):
 
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1830, 500)
+        
+        self._alignedPts = None
+        self._alignedRef = None
+        self._compositeIsPatch = False
+        self.fullCompositeRgb = None
+        self.wavelengthToRGB = None
+
 
         dummy = np.zeros((4600, 4600), dtype=np.uint8)
+
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
         self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
 
@@ -816,7 +824,16 @@ class FOVCorrectionWindow(QMainWindow):
         else:
             pref = self.greenImage.fullPoint if self.greenImage.fullPoint is not None else c561
 
+        if self._alignedPts is not None and self._alignedRef is not None:
+            self.rebuildCompositeAligned(self.getRoiSize())
+            return
+
+        if hasattr(self, "fullCompositeRgb") and self.fullCompositeRgb is not None and getattr(self, "_compositeIsPatch", False):
+            self.compositeImage.setBaseImage(self.fullCompositeRgb, doCenterCrop=True)
+            self._compositeIsPatch = False
+
         self.compositeImage.setViewCenteredOnFullPoint(pref, half=half)
+
     
 
 
@@ -839,6 +856,78 @@ class FOVCorrectionWindow(QMainWindow):
         return f"{label}: ({int(round(ox))}, {int(round(oy))})"
 
 
+    def rebuildCompositeAligned(self, roiSize):
+        if self._alignedPts is None or self._alignedRef is None:
+            return
+        if self.wavelengthToRGB is None:
+            return
+
+        pts = self._alignedPts
+        ref = self._alignedRef
+
+        half = roiSize // 2
+        refOx, refOy = map(lambda v: int(round(v)), pts[ref])
+
+        fullH, fullW = self.fullImages["488"].shape[:2]
+        maxX0 = fullW - roiSize
+        maxY0 = fullH - roiSize
+
+        lowX = 0
+        highX = maxX0
+        lowY = 0
+        highY = maxY0
+
+        for k, (ox, oy) in pts.items():
+            dx = int(round(ox)) - refOx
+            dy = int(round(oy)) - refOy
+            lowX = max(lowX, -dx)
+            highX = min(highX, maxX0 - dx)
+            lowY = max(lowY, -dy)
+            highY = min(highY, maxY0 - dy)
+
+        desiredX0 = refOx - half
+        desiredY0 = refOy - half
+
+        if lowX <= highX:
+            refX0 = int(min(max(desiredX0, lowX), highX))
+        else:
+            refX0 = int(min(max(desiredX0, 0), maxX0))
+
+        if lowY <= highY:
+            refY0 = int(min(max(desiredY0, lowY), highY))
+        else:
+            refY0 = int(min(max(desiredY0, 0), maxY0))
+
+        x0 = {}
+        y0 = {}
+        for k, (ox, oy) in pts.items():
+            dx = int(round(ox)) - refOx
+            dy = int(round(oy)) - refOy
+            x0[k] = refX0 + dx
+            y0[k] = refY0 + dy
+
+        p488 = self.fullImages["488"][y0["488"]:y0["488"] + roiSize, x0["488"]:x0["488"] + roiSize]
+        p561 = self.fullImages["561"][y0["561"]:y0["561"] + roiSize, x0["561"]:x0["561"] + roiSize]
+        p640 = self.fullImages["640"][y0["640"]:y0["640"] + roiSize, x0["640"]:x0["640"] + roiSize]
+
+        f488 = p488.astype(np.float32) / 255.0
+        f561 = p561.astype(np.float32) / 255.0
+        f640 = p640.astype(np.float32) / 255.0
+
+        c488 = self.wavelengthToRGB["488"]
+        c561 = self.wavelengthToRGB["561"]
+        c640 = self.wavelengthToRGB["640"]
+
+        rgb = (f488[..., None] * c488 +
+            f561[..., None] * c561 +
+            f640[..., None] * c640) / 3.0
+        rgb = np.clip(rgb, 0.0, 1.0)
+        rgbu8 = np.ascontiguousarray((rgb * 255).astype(np.uint8))
+
+        self.compositeImage.setBaseImage(rgbu8, doCenterCrop=False)
+        self.compositeImage._drawCross = False
+        self.compositeImage.fullPoint = None
+        self._compositeIsPatch = True
 
 
 
