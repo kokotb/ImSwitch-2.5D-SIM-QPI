@@ -139,7 +139,11 @@
           "ExposureTime": 19000.0
         },
         "ROI":{
+<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_4Color.json
           "OffsetX": 2848,
+========
+          "OffsetX": 2650,
+>>>>>>>> Jakob_251030:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_Jakob_251222.json
           "OffsetY": 2000, 
           "Width": 1024,
           "Height": 1024

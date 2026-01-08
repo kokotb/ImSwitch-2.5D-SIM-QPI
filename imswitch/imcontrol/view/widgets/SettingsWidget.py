@@ -1,11 +1,16 @@
+import numpy as np
+from math import floor
+from qtpy import QtGui
 from pyqtgraph.parametertree import ParameterTree, Parameter
 from qtpy import QtCore, QtWidgets
 from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QCheckBox, QMainWindow, QWidget, QLineEdit, QPushButton, QLabel
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush, QPainter, QFont
 from imswitch.imcommon.model import shortcut
 from imswitch.imcommon.view.guitools import naparitools
 from imswitch.imcontrol.view import guitools
 from .basewidgets import Widget
-
+import cv2
 
 class CamParamTree(ParameterTree):
     """ Making the ParameterTree for configuration of the detector during imaging
@@ -168,6 +173,14 @@ class SettingsWidget(Widget):
 
         self.scatterCamActive = QCheckBox('Activate Scatter Cam')
         self.scatterCamActive.setEnabled(False)
+        
+        
+        # initialize FOV correction window
+        self.correctionButton = QtWidgets.QPushButton('FOV Correction')
+        self.detectorListBox.addWidget(self.correctionButton)
+        
+        
+
 
         # Add elements to GridLayout
         self.layout = QtWidgets.QVBoxLayout()
@@ -183,6 +196,12 @@ class SettingsWidget(Widget):
             lambda index: self.sigDetectorChanged.emit(self.detectorList.itemData(index))
         )
         self.nextDetectorButton.clicked.connect(self.sigNextDetectorClicked)
+        # FOVCorrectionWindow = FOVCorrectionWindow(QMainWindow)
+        
+        
+    def openFOVWindow(self, blue, green, red):
+        self.openCorrectionWindow = FOVCorrectionWindow(blue, green, red, parent=self)
+        self.openCorrectionWindow.show()
 
     def toggleCheckboxes(self, state):
         self.scatterCamActive.setEnabled(not state)
@@ -244,6 +263,528 @@ class SettingsWidget(Widget):
     @shortcut("Ctrl+N", "Next detector")
     def toggleNextButton(self):
         self.nextDetectorButton.click()
+
+class fovCorrection(QtWidgets.QLabel):
+    def __init__(self, npImage, parent=None):
+        super().__init__(parent)
+
+        self._drawCross = True
+        self.parentLabel = None
+        self.fullPoint = None
+        self.displayW = 450     # 600x600
+        self.displayH = 450
+        self.setFixedSize(self.displayW, self.displayH)
+        self.setScaledContents(True)
+        self.setMouseTracking(True)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self.clickPoints = []
+
+        self._localShiftX = 0
+        self._localShiftY = 0
+
+        self.baseImage = None
+        self.npImage = None
+        self._view = None
+
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = 0.0
+        self.viewH = 0.0
+
+        self.factor = (1.0, 1.0)
+
+        self.setBaseImage(npImage, doCenterCrop=True)
+
+
+    def setBaseImage(self, npImage, doCenterCrop=False):
+        self.fullPoint = None
+
+        h, w = npImage.shape[:2]
+
+        if doCenterCrop:
+            if w > 4600:
+                sx = (w - 4600) // 2
+                self._localShiftX = sx
+                self._localShiftY = 0
+                if npImage.ndim == 2:
+                    npImage = npImage[:, sx:sx + 4600]
+                else:
+                    npImage = npImage[:, sx:sx + 4600, :]
+            else:
+                self._localShiftX = 0
+                self._localShiftY = 0
+
+        self.baseImage = npImage
+        H, W = self.baseImage.shape[:2]
+
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = float(W)
+        self.viewH = float(H)
+
+        self.render()
+
+
+    def getExtOffset(self):
+        if self.parentLabel is not None and hasattr(self.parent(), "offsets"):
+            return self.parent().offsets[self.parentLabel]
+        return (0, 0)
+
+    def render(self):
+        if self.baseImage.ndim == 2:
+            H, W = self.baseImage.shape
+        else:
+            H, W, _ = self.baseImage.shape
+
+
+        vw = int(round(self.viewW))
+        vh = int(round(self.viewH))
+        vw = max(1, min(W, vw))
+        vh = max(1, min(H, vh))
+
+        x0 = int(round(self.viewX0))
+        y0 = int(round(self.viewY0))
+
+        x0 = max(0, min(W - vw, x0))
+        y0 = max(0, min(H - vh, y0))
+
+        x1 = x0 + vw
+        y1 = y0 + vh
+
+        view = self.baseImage[y0:y1, x0:x1].copy()
+        self._view = view
+        self.npImage = view
+
+        h, w = view.shape[:2]
+
+        if view.ndim == 2:
+            qimg = QtGui.QImage(
+                view.data,
+                w, h,
+                view.strides[0],
+                QtGui.QImage.Format_Grayscale8
+            )
+        else:
+            qimg = QtGui.QImage(
+                view.data,
+                w, h,
+                view.strides[0],
+                QtGui.QImage.Format_RGB888
+            )
+
+
+        pix = QtGui.QPixmap.fromImage(qimg)
+        scaled = pix.scaled(self.displayW, self.displayH, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.setPixmap(scaled)
+
+        self.factor = (w / self.displayW, h / self.displayH)
+
+        self.viewX0 = float(x0)
+        self.viewY0 = float(y0)
+        self.viewW = float(w)
+        self.viewH = float(h)
+
+        self.update()
+
+
+    def setViewCenteredOnFullPoint(self, fullPoint, half=400):
+        if fullPoint is None:
+            return
+
+        ox, oy = fullPoint
+        offx, offy = self.getExtOffset()
+
+        lx = ox - offx - self._localShiftX
+        ly = oy - offy - self._localShiftY
+
+        H, W = self.baseImage.shape[:2]
+
+        viewW = min(float(W), float(2 * half))
+        viewH = min(float(H), float(2 * half))
+
+        x0 = lx - viewW / 2.0
+        y0 = ly - viewH / 2.0
+
+        x0 = max(0.0, min(float(W) - viewW, x0))
+        y0 = max(0.0, min(float(H) - viewH, y0))
+
+        self.viewX0 = x0
+        self.viewY0 = y0
+        self.viewW = viewW
+        self.viewH = viewH
+
+        self.render()
+
+
+    def displayToFull(self, dx, dy):
+        offx, offy = self.getExtOffset()
+        fx, fy = self.factor
+
+        lx = self.viewX0 + dx * fx
+        ly = self.viewY0 + dy * fy
+
+        ox = offx + self._localShiftX + lx
+        oy = offy + self._localShiftY + ly
+        return (ox, oy)
+    
+
+    def fullToDisplay(self, ox, oy):
+        offx, offy = self.getExtOffset()
+        fx, fy = self.factor
+
+        lx = (ox - offx - self._localShiftX) - self.viewX0
+        ly = (oy - offy - self._localShiftY) - self.viewY0
+
+        dx = int(round(lx / fx))
+        dy = int(round(ly / fy))
+
+        dx = max(0, min(self.displayW - 1, dx))
+        dy = max(0, min(self.displayH - 1, dy))
+        return (dx, dy)
+
+    def projectFullPointToClick(self):
+        if self.fullPoint is None:
+            self.clickPoints = []
+            return
+        dx, dy = self.fullToDisplay(*self.fullPoint)
+        self.clickPoints = [(dx, dy)]
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QtGui.QPainter(self)
+
+        pen = QtGui.QPen(QtGui.QColor("red"))
+        pen.setWidth(2)
+        painter.setPen(pen)
+
+        if self._drawCross and self.fullPoint is not None:
+            dx, dy = self.fullToDisplay(*self.fullPoint)
+            size = 5
+            painter.drawLine(dx - size, dy - size, dx + size, dy + size)
+            painter.drawLine(dx - size, dy + size, dx + size, dy - size)
+
+        painter.end()
+
+    def setPoint(self, x, y):
+        self._drawCross = True
+        x = max(0, min(self.displayW - 1, x))
+        y = max(0, min(self.displayH - 1, y))
+
+        self.fullPoint = self.displayToFull(x, y)
+        self.update()
+
+
+    def zoomAt(self, mx, my, delta):
+        if delta == 0:
+            return
+
+        H, W = self.baseImage.shape[:2]
+
+
+        step = 1.25
+        zoomIn = delta > 0
+
+        mx = max(0, min(self.displayW - 1, mx))
+        my = max(0, min(self.displayH - 1, my))
+
+        vx0, vy0, vw, vh = self.viewX0, self.viewY0, self.viewW, self.viewH
+
+        ix = vx0 + mx * (vw / self.displayW)
+        iy = vy0 + my * (vh / self.displayH)
+
+        if zoomIn:
+            newW = vw / step
+            newH = vh / step
+        else:
+            newW = vw * step
+            newH = vh * step
+
+        minSize = 30
+        newW = max(minSize, min(float(W), newW))
+        newH = max(minSize, min(float(H), newH))
+
+        newX0 = ix - mx * (newW / self.displayW)
+        newY0 = iy - my * (newH / self.displayH)
+
+        newX0 = max(0.0, min(float(W) - newW, newX0))
+        newY0 = max(0.0, min(float(H) - newH, newY0))
+
+        self.viewX0 = newX0
+        self.viewY0 = newY0
+        self.viewW = newW
+        self.viewH = newH
+
+        self.render()
+
+    def wheelEvent(self, event):
+        p = event.pos()
+        self.zoomAt(p.x(), p.y(), event.angleDelta().y())
+        event.accept()
+
+    def setImage(self, npImage, keepFullPoint=None):
+        self._localShiftX = 0
+        self._localShiftY = 0
+
+        self.baseImage = npImage
+        self.baseImage = np.ascontiguousarray(npImage)
+
+        
+        if self.baseImage.ndim == 2:
+            H, W = self.baseImage.shape
+        else:
+            H, W, _ = self.baseImage.shape
+
+        self.viewX0 = 0.0
+        self.viewY0 = 0.0
+        self.viewW = float(W)
+        self.viewH = float(H)
+
+        self.fullPoint = keepFullPoint
+        self.render()
+
+
+
+
+
+
+class FOVCorrectionWindow(QMainWindow):
+    def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
+        super().__init__(parent)
+
+        self.setWindowTitle("FOV Correction")
+        self.setMinimumSize(1830, 500)
+
+        dummy = np.zeros((4600, 4600), dtype=np.uint8)
+        self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
+        self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
+
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.columnsLayout = QtWidgets.QHBoxLayout()
+
+        self.col1 = QtWidgets.QVBoxLayout()
+        self.blueLabel = QtWidgets.QLabel(f"<strong>488<strong>")
+        self.col1.addWidget(self.blueLabel)
+        self.blueImage = fovCorrection(blueImg, parent=self)
+        self.col1.addWidget(self.blueImage)
+        self.col1.addStretch()
+
+        self.col2 = QtWidgets.QVBoxLayout()
+        self.greenLabel = QtWidgets.QLabel(f"<strong>561<strong>")
+        self.col2.addWidget(self.greenLabel)
+        self.greenImage = fovCorrection(greenImg, parent=self)
+        self.col2.addWidget(self.greenImage)
+        self.col2.addStretch()
+
+        self.col3 = QtWidgets.QVBoxLayout()
+        self.redLabel = QtWidgets.QLabel(f"<strong>640<strong>")
+        self.col3.addWidget(self.redLabel)
+        self.redImage = fovCorrection(redImg, parent=self)
+        self.col3.addWidget(self.redImage)
+        self.col3.addStretch()
+
+        self.col4 = QtWidgets.QVBoxLayout()
+        self.compositeLabel = QtWidgets.QLabel("Composite")
+        self.col4.addWidget(self.compositeLabel)
+        self.compositeImage = fovCorrection(dummy, parent=self)
+        self.col4.addWidget(self.compositeImage)
+        self.compositeImage.mousePressEvent = self.ignoreClick
+        self.col4.addStretch()
+
+        self.columnsLayout.addLayout(self.col1)
+        self.columnsLayout.addLayout(self.col2)
+        self.columnsLayout.addLayout(self.col3)
+        self.columnsLayout.addLayout(self.col4)
+        self.mainLayout.addLayout(self.columnsLayout)
+
+        self.bottomLayout = QtWidgets.QHBoxLayout()
+
+        # points display box
+        self.pointsBox = QtWidgets.QWidget()
+        self.pointsBox.setFixedSize(170, 90)
+        self.pointsLay = QtWidgets.QVBoxLayout(self.pointsBox)
+        self.pointsLay.setContentsMargins(0, 0, 0, 0)
+        self.pointsLay.setSpacing(0)
+
+        self.pointsDisplay = QtWidgets.QTextEdit()
+        self.pointsDisplay.setReadOnly(True)
+        self.pointsDisplay.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.pointsLay.addWidget(self.pointsDisplay)
+
+        self.bottomLayout.addWidget(self.pointsBox)
+
+
+        # align box
+        self.alignBox = QtWidgets.QWidget()
+        self.alignBox.setFixedSize(200, 90)
+        self.alignLayout = QtWidgets.QVBoxLayout(self.alignBox)
+        self.alignLayout.setContentsMargins(0, 0, 0, 0)
+        self.alignLayout.setSpacing(4)
+
+        self.align488 = QtWidgets.QPushButton("Align to 488")
+        self.align561 = QtWidgets.QPushButton("Align to 561")
+        self.align640 = QtWidgets.QPushButton("Align to 640")
+
+        self.align488.setCheckable(True)
+        self.align561.setCheckable(True)
+        self.align640.setCheckable(True)
+
+        self.alignGroup = QtWidgets.QButtonGroup(self)
+        self.alignGroup.setExclusive(True)
+        self.alignGroup.addButton(self.align488)
+        self.alignGroup.addButton(self.align561)
+        self.alignGroup.addButton(self.align640)
+
+        self.align488.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.align561.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.align640.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.alignLayout.addWidget(self.align488, 1)
+        self.alignLayout.addWidget(self.align561, 1)
+        self.alignLayout.addWidget(self.align640, 1)
+
+        self.align561.setChecked(True)
+
+        self.alignBox.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #6666CC;
+                border-radius: 6px;
+                padding: 0px;
+            }
+            QPushButton:checked {
+                background-color: #6666CC;
+                color: white;
+            }
+            QPushButton:!checked {
+                background-color: #455364;
+                color: #AAAAAA;
+            }
+        """)
+
+
+        self.bottomLayout.addWidget(self.alignBox)
+        # two stacked buttons box
+        self.modeBox = QtWidgets.QWidget()
+        self.modeBox.setFixedSize(200, 90)
+        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
+        self.modeLayout.setContentsMargins(0, 0, 0, 0)
+        self.modeLayout.setSpacing(4)
+
+        self.buttonSIM = QtWidgets.QPushButton("SIM 512")
+        self.button25D = QtWidgets.QPushButton("2.5D 1024")
+
+        self.buttonSIM.setCheckable(True)
+        self.button25D.setCheckable(True)
+
+        self.modeGroup = QtWidgets.QButtonGroup(self)
+        self.modeGroup.setExclusive(True)
+        self.modeGroup.addButton(self.buttonSIM)
+        self.modeGroup.addButton(self.button25D)
+
+        self.buttonSIM.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.button25D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.modeLayout.addWidget(self.buttonSIM, 1)
+        self.modeLayout.addWidget(self.button25D, 1)
+
+        self.buttonSIM.setChecked(True)
+
+        self.modeBox.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #6666CC;
+                border-radius: 6px;
+                padding: 0px;
+            }
+            QPushButton:checked {
+                background-color: #6666CC;
+                color: white;
+            }
+            QPushButton:!checked {
+                background-color: #455364;
+                color: #AAAAAA;
+            }
+        """)
+
+        self.bottomLayout.addWidget(self.modeBox)
+        
+
+
+        # crop detectors box
+        self.cropBox = QtWidgets.QWidget()
+        self.cropBox.setFixedSize(200, 90)
+        self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
+        self.cropLay.setContentsMargins(0, 0, 0, 0)
+        self.cropLay.setSpacing(0)
+
+        self.cropButton = QtWidgets.QPushButton("Crop detectors")
+        self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.cropLay.addWidget(self.cropButton)
+
+        self.bottomLayout.addWidget(self.cropBox)
+
+
+        self.bottomLayout.addStretch()
+        self.mainLayout.addLayout(self.bottomLayout)
+
+
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.mainLayout)
+        self.setCentralWidget(self.central_widget)
+
+
+        # clicking events
+        self.blueImage.mousePressEvent = self.handleBlueClick
+        self.greenImage.mousePressEvent = self.handleGreenClick
+        self.redImage.mousePressEvent = self.handleRedClick
+
+
+    def handleBlueClick(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.blueImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
+
+    def handleGreenClick(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.greenImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
+
+    def handleRedClick(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.redImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
+
+
+    def ignoreClick(self, event):
+        pass
+
+    
+    def updatePointsDisplay(self):
+        lines = []
+
+        if self.blueImage.fullPoint is not None:
+            lines.append(self.formatPoint("488", self.blueImage))
+
+        if self.greenImage.fullPoint is not None:
+            lines.append(self.formatPoint("561", self.greenImage))
+
+        if self.redImage.fullPoint is not None:
+            lines.append(self.formatPoint("640", self.redImage))
+        self.pointsDisplay.setPlainText("\n".join(lines))
+
+
+    def formatPoint(self, label, img):
+        ox, oy = img.fullPoint
+        return f"{label}: ({int(round(ox))}, {int(round(oy))})"
+
+
+
+
+
+
+
 
 
 # Copyright (C) 2020-2021 ImSwitch developers

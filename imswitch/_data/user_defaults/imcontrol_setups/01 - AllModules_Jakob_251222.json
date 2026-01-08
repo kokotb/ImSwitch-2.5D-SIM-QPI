@@ -17,8 +17,8 @@
   "Psi": 0.5,
   "LeftCenterX": 440,
   "LeftCenterY": 520, 
-  "RightCenterX":1400,
-  "RightCenterY": 520,
+  "RightCenterX":1480,
+  "RightCenterY": 510,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
@@ -87,10 +87,10 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 1500.0
+        "ExposureTime": 19000.0
       },
       "ROI":{  
-        "OffsetX": 2008,
+        "OffsetX": 3000,
         "OffsetY": 1500,
         "Width": 1024,
         "Height": 1024
@@ -111,11 +111,11 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 9000.0
+        "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 1850,
-        "OffsetY": 1300,
+        "OffsetX": 1500,
+        "OffsetY": 2600,
         "Width": 1024,
         "Height": 1024
       }
@@ -134,12 +134,16 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 0.0,
+          "Gain": 5.0,
           "Gamma": 1.0,
-          "ExposureTime": 18000.0
+          "ExposureTime": 19000.0
         },
         "ROI":{
+<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_4Color.json
+          "OffsetX": 2848,
+========
           "OffsetX": 2650,
+>>>>>>>> Jakob_251030:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_Jakob_251222.json
           "OffsetY": 2000, 
           "Width": 1024,
           "Height": 1024
@@ -217,7 +221,7 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 0,
+      "valueInit": 100,
       "maxdBmValue": 17.6
       
       },
@@ -233,7 +237,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 0,
+    "valueInit": 100,
     "maxdBmValue": 20.1
     },
   "640AOTF": {
@@ -248,7 +252,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 4,
+    "valueInit": 100,
 
     "maxdBmValue": 21.8
     }
