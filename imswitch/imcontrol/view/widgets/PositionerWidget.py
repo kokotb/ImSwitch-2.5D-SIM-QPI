@@ -360,7 +360,7 @@ class PositionerSettings(QMainWindow):
         self.skew2ptTitleLayout.addWidget(self.skew2ptTitleLabel)
         self.skew2ptTitleLayout.addStretch()
         self.overallLayout.addLayout(self.skew2ptTitleLayout)
-        self.overallLayout.addLayout(self.skew2ptTitleLayout)
+        # self.overallLayout.addLayout(self.skew2ptTitleLayout)
         
         # 2 point skew layout
         self.skew2ptLayout = QtWidgets.QHBoxLayout()
