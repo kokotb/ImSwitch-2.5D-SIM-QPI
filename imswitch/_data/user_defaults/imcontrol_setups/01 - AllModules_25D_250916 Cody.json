@@ -87,11 +87,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_250916 Cody.json
         "ExposureTime": 15000.0
-========
-        "ExposureTime": 19000.0
->>>>>>>> David_250912:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_4Color.json
       },
       "ROI":{  
         "OffsetX": 3000,
@@ -115,11 +111,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-<<<<<<<< HEAD:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_250916 Cody.json
         "ExposureTime": 15000.0
-========
-        "ExposureTime": 19000.0
->>>>>>>> David_250912:imswitch/_data/user_defaults/imcontrol_setups/01 - AllModules_25D_4Color.json
       },
       "ROI":{
         "OffsetX": 1500,
