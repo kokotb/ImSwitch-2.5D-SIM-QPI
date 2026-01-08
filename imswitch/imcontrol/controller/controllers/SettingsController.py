@@ -172,11 +172,11 @@ class SettingsController(ImConWidgetController):
         }
 
         self.fullImagesNormalized = {
-            "488": self.uint8Normalize(self.fullImages["488"]), 
+            "488": self.uint8Normalize(self.fullImages["488"]),
             "561": self.uint8Normalize(self.fullImages["561"]), 
             "640": self.uint8Normalize(self.fullImages["640"]),
         }
-        
+
         self.fullImagesColorized = {k: self.fullImagesNormalized[k][..., None] * self.wavelengthToRGB[k] for k in self.fullImagesNormalized}
 
         rgb = np.zeros_like(next(iter(self.fullImagesColorized.values())))
@@ -185,7 +185,6 @@ class SettingsController(ImConWidgetController):
             
         rgb = np.clip(rgb, 0, 1)
         self.rgbu8Full = (rgb * 255).astype(np.uint8)
-        
         return self.rgbu8Full
 
     
@@ -195,7 +194,7 @@ class SettingsController(ImConWidgetController):
                 QtWidgets.QMessageBox.warning(
                     w,
                     "Missing points",
-                    "Click on all the images (488, 561, 640) before cropping."
+                    "Click on all the images (488, 561, 640) before cropping"
                 )
                 return
             
@@ -225,19 +224,81 @@ class SettingsController(ImConWidgetController):
         }
 
         refOx, refOy = map(lambda v: int(round(v)), pts[ref])
-        refX0 = max(0, refOx - half)
-        refY0 = max(0, refOy - half)
+
+        fullH, fullW = self.fullImages["488"].shape[:2]
+        maxX0 = fullW - roiSize
+        maxY0 = fullH - roiSize
+
+        lowX = 0
+        highX = maxX0
+        lowY = 0
+        highY = maxY0
+
+        for k, (ox, oy) in pts.items():
+            dx = int(round(ox)) - refOx
+            dy = int(round(oy)) - refOy
+            lowX = max(lowX, -dx)
+            highX = min(highX, maxX0 - dx)
+            lowY = max(lowY, -dy)
+            highY = min(highY, maxY0 - dy)
+
+        desiredX0 = refOx - half
+        desiredY0 = refOy - half
+
+        if lowX <= highX:
+            refX0 = int(min(max(desiredX0, lowX), highX))
+        else:
+            refX0 = int(min(max(desiredX0, 0), maxX0))
+
+        if lowY <= highY:
+            refY0 = int(min(max(desiredY0, lowY), highY))
+        else:
+            refY0 = int(min(max(desiredY0, 0), maxY0))
 
         x0 = {}
         y0 = {}
         for k, (ox, oy) in pts.items():
-            ox = int(round(ox))
-            oy = int(round(oy))
-            x0[k] = max(0, refX0 + (ox - refOx))
-            y0[k] = max(0, refY0 + (oy - refOy))
+            dx = int(round(ox)) - refOx
+            dy = int(round(oy)) - refOy
+            x0[k] = refX0 + dx
+            y0[k] = refY0 + dy
 
-        w.compositeImage.setViewCenteredOnFullPoint(pts[ref], half = half)
+        p488 = self.fullImages["488"][y0["488"]:y0["488"] + roiSize, x0["488"]:x0["488"] + roiSize]
+        p561 = self.fullImages["561"][y0["561"]:y0["561"] + roiSize, x0["561"]:x0["561"] + roiSize]
+        p640 = self.fullImages["640"][y0["640"]:y0["640"] + roiSize, x0["640"]:x0["640"] + roiSize]
+
+        f488 = p488.astype(np.float32) / 255.0
+        f561 = p561.astype(np.float32) / 255.0
+        f640 = p640.astype(np.float32) / 255.0
+
+        c488 = self.wavelengthToRGB["488"]
+        c561 = self.wavelengthToRGB["561"]
+        c640 = self.wavelengthToRGB["640"]
+
+        rgb = (f488[..., None] * c488 +
+               f561[..., None] * c561 +
+               f640[..., None] * c640) / 3.0
+        rgb = np.clip(rgb, 0.0, 1.0)
+        rgbu8 = np.ascontiguousarray((rgb * 255).astype(np.uint8))
+
+        w.compositeImage.setBaseImage(rgbu8, doCenterCrop=False)
+
+        refInPatch = (refOx - refX0, refOy - refY0)
+
+        w.compositeImage._drawCross = False
+        w.compositeImage.fullPoint = None
+
+        # center view on reference without drawing cross
+        cx, cy = refInPatch
+        w.compositeImage.viewW = float(min(rgbu8.shape[1], 2 * half))
+        w.compositeImage.viewH = float(min(rgbu8.shape[0], 2 * half))
+        w.compositeImage.viewX0 = float(max(0, min(rgbu8.shape[1] - w.compositeImage.viewW, cx - w.compositeImage.viewW / 2)))
+        w.compositeImage.viewY0 = float(max(0, min(rgbu8.shape[0] - w.compositeImage.viewH, cy - w.compositeImage.viewH / 2)))
+        w.compositeImage.render()
+
+
         w.updatePointsDisplay()
+
 
         for detector in self.detectors:
             if detector.handle == "488F":
@@ -325,6 +386,7 @@ class SettingsController(ImConWidgetController):
 
     def toggleScatterCam(self, state):
         self._commChannel.scatterCamActive = state
+
 
     def writeParamsFromCamFunc(self, detector, value):
         self._master.detectorsManager._subManagers[detector.name].parameters['ExposureTime'].value = value
