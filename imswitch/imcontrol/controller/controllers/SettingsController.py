@@ -187,7 +187,7 @@ class SettingsController(ImConWidgetController):
         self.rgbu8Full = (rgb * 255).astype(np.uint8)
         return self.rgbu8Full
 
-    
+
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
         if (w.blueImage.fullPoint is None or w.greenImage.fullPoint is None or w.redImage.fullPoint is None):
@@ -345,7 +345,6 @@ class SettingsController(ImConWidgetController):
                 detector.stopAcquisitionSIM()
 
         return lastImgs
-
 
     def setCamForFOVWindow(self, detector):
 
