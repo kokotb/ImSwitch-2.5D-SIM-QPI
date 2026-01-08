@@ -15,6 +15,7 @@ from imswitch.imcommon.model import initLogger
 # import detect_heds_module_path
 # from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
 
+import ctypes
 
 
 class SLM25DManager(SignalInterface):
@@ -46,9 +47,10 @@ class SLM25DManager(SignalInterface):
         # self.update(maskChange=True, tiltChange=True, aberChange=True)
         self.slmActive = False
         self.arrayImgScoresAZ = []
+        
 
     def calcAutoZern(self, imgs):
-        # !!! if rawImg in beginAutoZern is only one color
+        # !!! if rawImg in AutoZernLoop is only one color
         score = self.scoreImage(imgs, metric="tenegrad")
         self.arrayImgScoresAZ.append(score)
 
@@ -102,9 +104,88 @@ class SLM25DManager(SignalInterface):
         self.arrayImgScoresAZ = []
 
 
+
+
+
+
+
+
+
+    # def projectMask(self, mask):
+    #     error = self.slm.showData(mask)
+    #     assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+
+
+
+    # !!! chat made this, careful !!! ===========================================
     def projectMask(self, mask):
-        error = self.slm.showData(mask)
-        assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+        import time
+        handle = slmdisplaysdk.Datahandle(self.slm)
+        # handle.durationInFrames = 255
+        # slmdisplaysdk.ApplyDataHandleValue.DurationInFrames
+
+        h, w = mask.shape
+
+        # print("1 projection - Time Visible - " + str(handle.visibleTimeMs))
+        # Load uint8 grayscale data
+        err = self.slm._library.heds_load_data_grayscale_uchar(
+            ctypes.pointer(handle),
+            w,
+            h,
+            mask.ctypes.data_as(ctypes.POINTER(ctypes.c_ubyte)),
+            0,
+            0  # loadFlags
+        )
+
+        # Show the datahandle
+        self.slm.showDatahandle(handle, 0) #changes mask on SLM
+
+        # i = 0
+        # while i < 300:
+        #     handle.update()
+        #     print(str(handle.state))
+        #     i += 1
+
+
+
+        # Wait until mask becomes visible
+        # _ = handle.waitFor(slmdisplaysdk.State.VisibleDurationFinished, 5000)
+        # print('visTime ' + str(handle.visibleTimeMs))
+        # while (handle.visibleTimeMs < 100):
+        #     handle.update()
+        #     print('state ' + str(handle.state))
+        #     time.sleep(0.001)
+        #     print('visTime ' + str(handle.visibleTimeMs))
+        #print("4 projection - Time Visible - " + str(handle.visibleTimeMs))
+        #print("projected")
+    # ===============================================================================
+
+    """def projectMask(self, mask):
+        # create data handle
+        handle = self.slm.dataHandle()
+
+        # ensure shape matches SLM resolution
+        h, w = mask.shape
+        assert w == self.slm.width and h == self.slm.height
+        
+        # load 8-bit grayscale image
+        handle.loadDataGrayscaleUchar(mask)
+
+        # show on SLM
+        self.slm.showDataHandle(handle)
+
+        # wait until rendering is finished
+        handle.waitFor()
+
+        print("Mask projected" )"""
+
+
+
+
+
+
+
+
 
     def openPreviewWindow(self):
         if self.slmActive == False:

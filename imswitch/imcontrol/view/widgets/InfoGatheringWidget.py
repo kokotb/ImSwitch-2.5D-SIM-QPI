@@ -142,8 +142,6 @@ class MyInputDialog(QDialog):
         self.allCheckbox.clicked.connect(self.toggleAllBoxes)
 
 
-
-
     def openFileDialog(self, path):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
@@ -155,7 +153,6 @@ class MyInputDialog(QDialog):
            filename = None
         return filename
         
-    
     def loadPath(self):
 
         jsonPath = self.openFileDialog(self.filePath.text())

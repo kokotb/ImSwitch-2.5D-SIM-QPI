@@ -107,7 +107,15 @@ class CommunicationChannel(SignalInterface):
 
     sigBeginAutoZernNew = Signal(object)
 
+    sigBeginAlignMaskCenter = Signal(object)
+
     sigAutoZernikeFinished = Signal()
+
+    sigGetAZFrameCoords = Signal()
+
+    sigGetAZFrameCoordsMaskCenter = Signal()
+
+    sigSendAZFrameCooords = Signal(object)
 
 
 
@@ -179,6 +187,8 @@ class CommunicationChannel(SignalInterface):
     sigToggleAutofocus = Signal(bool)
     sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
+
+    sig25DPSFReceived = Signal(np.ndarray, str)
 
 
     

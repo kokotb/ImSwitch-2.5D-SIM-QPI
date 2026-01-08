@@ -32,7 +32,7 @@ class SLM25DManagerMock(SignalInterface):
         self.arrayImgScoresAZ = []
 
     def calcAutoZern(self, imgs):
-        # !!! if rawImg in beginAutoZern is only one color
+        # !!! if rawImg in AutoZernLoop is only one color
         score = self.scoreImage(imgs, metric="tenegrad")
         self.arrayImgScoresAZ.append(score)
 
