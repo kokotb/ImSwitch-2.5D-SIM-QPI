@@ -69,9 +69,7 @@
     "Magnification": 22.2222222,
     "saveDir": "D:\\SIM_Data\\",
     "nRotations": 3,
-    "nPhases": 3,
-    "isSimulation": 0,
-    "isMock": false
+    "nPhases": 3
 },
 "detectors": {
   "488 Fluor": {

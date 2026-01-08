@@ -369,8 +369,6 @@ class SIMInfo:
 
     Magnification: float
 
-    isMock: bool
-
     saveDir: str
 
 @dataclass(frozen=True)

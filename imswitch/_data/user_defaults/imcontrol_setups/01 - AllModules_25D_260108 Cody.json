@@ -69,9 +69,7 @@
     "Magnification": 22.2222222,
     "saveDir": "D:\\SIM_Data\\",
     "nRotations": 3,
-    "nPhases": 3,
-    "isSimulation": 0,
-    "isMock": false
+    "nPhases": 3
 },
 "detectors": {
   "488 Fluor": {
@@ -114,8 +112,8 @@
         "ExposureTime": 15000.0
       },
       "ROI":{
-        "OffsetX": 1500,
-        "OffsetY": 2600,
+        "OffsetX": 2808,
+        "OffsetY": 1800,
         "Width": 1024,
         "Height": 1024
       }
@@ -139,8 +137,8 @@
           "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 2848,
-          "OffsetY": 2000, 
+          "OffsetX": 2752,
+          "OffsetY": 1900, 
           "Width": 1024,
           "Height": 1024
         }
@@ -166,7 +164,7 @@
         },
         "ROI":{
           "OffsetX": 2152,
-          "OffsetY": 1796,
+          "OffsetY": 1750,
           "Width": 1024,
           "Height": 1024
         }
