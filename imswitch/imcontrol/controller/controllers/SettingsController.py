@@ -385,24 +385,19 @@ class SettingsController(ImConWidgetController):
         detector.crop(0,0,5320,4600)
         trigger_mode = 'On'
         exposure_auto = 'Off'
-        gamma = 1.0
-        gain = 0.0
         trigger_source = 'Line0'
         trigger_overlap = 'Off'
-        # detector._camera.setBufferTimeout(500)
 
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
         # # exposure_time = self.exposure # anything < 19 ms
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12'
         frame_rate_enable = True
         buffer_mode = "NewestOnly"
         triggerSelector = 'FrameStart'
 
         # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gain': gain,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
+        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time,  'StreamBufferHandlingMode':buffer_mode}
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
