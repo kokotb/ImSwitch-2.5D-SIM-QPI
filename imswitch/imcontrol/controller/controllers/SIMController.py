@@ -1069,7 +1069,7 @@ class SIMController(ImConWidgetController):
         trigger_mode = 'On'
         exposure_auto = 'Off'
         gamma = 1.0
-        gain = 0.0
+        gain = detector._camera.getPropertyValue('Gain')
         trigger_source = 'Line0'
         trigger_overlap = 'Off'
         # detector._camera.setBufferTimeout(500)
