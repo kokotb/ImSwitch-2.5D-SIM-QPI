@@ -36,7 +36,7 @@
   "RightPiston": 0.0,
   "RightYtilt": 0.0,
   "RightXtilt": 0.0,
-  "RightObliqueAstigmatism": -0.2,
+  "RightObliqueAstigmatism": 0.0,
   "RightDefocus": 0.0,
   "RightVerticalAstigmatism": 0.0,
   "RightVerticalTrefoil": 0.0,
