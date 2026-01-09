@@ -17,8 +17,8 @@
   "Psi": 0.5,
   "LeftCenterX": 400,
   "LeftCenterY": 520, 
-  "RightCenterX":1440,
-  "RightCenterY": 560,
+  "RightCenterX":1380,
+  "RightCenterY": 500,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
@@ -36,14 +36,14 @@
   "RightPiston": 0.0,
   "RightYtilt": 0.0,
   "RightXtilt": 0.0,
-  "RightObliqueAstigmatism": 0.0,
+  "RightObliqueAstigmatism": -0.3,
   "RightDefocus": 0.0,
-  "RightVerticalAstigmatism": 0.0,
-  "RightVerticalTrefoil": 0.0,
-  "RightVerticalComa": 0.0,
-  "RightHorizontalComa": 0.0,
-  "RightHorizontalTrefoil": 0.0,
-  "RightSpherical": 0.0
+  "RightVerticalAstigmatism": 0.6,
+  "RightVerticalTrefoil": -0.1,
+  "RightVerticalComa": -0.1,
+  "RightHorizontalComa": 0.2,
+  "RightHorizontalTrefoil": 0.4,
+  "RightSpherical": 0.15
 
 
 },
@@ -85,12 +85,12 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 0.0,
+        "Gain": 20.0,
         "Gamma": 1.0,
         "ExposureTime": 1500.0
       },
       "ROI":{  
-        "OffsetX": 2008,
+        "OffsetX": 2512,
         "OffsetY": 1500,
         "Width": 1024,
         "Height": 1024
@@ -134,7 +134,7 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 0.0,
+          "Gain": 10.0,
           "Gamma": 1.0,
           "ExposureTime": 18000.0
         },

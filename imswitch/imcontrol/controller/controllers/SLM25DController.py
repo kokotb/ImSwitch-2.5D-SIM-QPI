@@ -1824,6 +1824,9 @@ class SLM25DController(ImConWidgetController):
 
 
         projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
+        # !!!!! Factor for adjusting phase shift wrap around value, project 25d, when no response = optimal
+        # factor = 0.85
+        # projImg *= 2 * factor
         projImg = projImg.astype(np.uint8)
 
         if self.slmActive:
