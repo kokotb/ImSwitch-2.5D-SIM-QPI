@@ -12,7 +12,7 @@
 "SLM25D":{
   "width":1080, 
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 400,
