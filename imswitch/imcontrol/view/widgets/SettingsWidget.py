@@ -559,11 +559,6 @@ class FOVCorrectionWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("FOV Correction")
-        ncols = 4 if (showScatter and scatterImg is not None) else 3
-        w_img = 450
-        spacing = 10
-        targetW = ncols * w_img + (ncols + 1) * spacing
-        targetH = 500
 
 
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
