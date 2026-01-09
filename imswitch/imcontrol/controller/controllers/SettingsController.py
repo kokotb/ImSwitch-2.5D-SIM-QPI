@@ -227,10 +227,8 @@ class SettingsController(ImConWidgetController):
                 )
                 return
             
-        if w.buttonSIM.isChecked():
-            roiSize = 512
-        elif w.button25D.isChecked():
-            roiSize = 1024
+        roiSize = w.getRoiSize()
+            
         half = roiSize // 2
         halfView = 600
 

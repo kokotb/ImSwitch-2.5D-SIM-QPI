@@ -619,16 +619,45 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsBox.setFixedSize(170, 90)
         self.pointsLay = QtWidgets.QVBoxLayout(self.pointsBox)
         self.pointsLay.setContentsMargins(0, 0, 0, 0)
-        self.pointsLay.setSpacing(0)
+        self.pointsLay.setSpacing(2)
+
+        self.pointsLabel = QtWidgets.QLabel(f"<strong>Clicked point coordinates:</<strong>")
+        self.pointsLay.addWidget(self.pointsLabel)
 
         self.pointsDisplay = QtWidgets.QTextEdit()
         self.pointsDisplay.setReadOnly(True)
         self.pointsDisplay.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.pointsLay.addWidget(self.pointsDisplay)
 
+
         self.bottomLayout.addWidget(self.pointsBox)
 
+        # roi size box
+        self.modeBox = QtWidgets.QWidget()
+        self.modeBox.setFixedSize(80, 90)
+        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
+        self.modeLayout.setContentsMargins(0, 0, 0, 0)
+        self.modeLayout.setSpacing(4)
 
+
+        self.roiSizeLabel = QtWidgets.QLabel(f"<strong>ROI (px):</<strong>")
+        self.roiSizeLabel.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.modeLayout.addWidget(self.roiSizeLabel)
+
+
+        self.roiSizeBox = QtWidgets.QComboBox()
+        self.roiSizeBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        sizes = [128, 256, 512, 1024, 2048, 3072, 4096, 4600]
+        for s in sizes:
+            self.roiSizeBox.addItem(str(s), s)
+
+        self.roiSizeBox.setCurrentIndex(self.roiSizeBox.findData(512))
+        self.roiSizeBox.currentIndexChanged.connect(self.applyRoiSize)
+        self.modeLayout.addWidget(self.roiSizeBox, 1)
+        self.bottomLayout.addWidget(self.modeBox)
+        
+        
         # align box
         self.alignBox = QtWidgets.QWidget()
         self.alignBox.setFixedSize(200, 90)
@@ -676,56 +705,8 @@ class FOVCorrectionWindow(QMainWindow):
             }
         """)
 
-
         self.bottomLayout.addWidget(self.alignBox)
-        # two stacked buttons box
-        self.modeBox = QtWidgets.QWidget()
-        self.modeBox.setFixedSize(200, 90)
-        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
-        self.modeLayout.setContentsMargins(0, 0, 0, 0)
-        self.modeLayout.setSpacing(4)
 
-        self.buttonSIM = QtWidgets.QPushButton("SIM 512")
-        self.button25D = QtWidgets.QPushButton("2.5D 1024")
-
-        self.buttonSIM.setCheckable(True)
-        self.button25D.setCheckable(True)
-
-        self.modeGroup = QtWidgets.QButtonGroup(self)
-        self.modeGroup.setExclusive(True)
-        self.modeGroup.addButton(self.buttonSIM)
-        self.modeGroup.addButton(self.button25D)
-
-        self.buttonSIM.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button25D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        self.modeLayout.addWidget(self.buttonSIM, 1)
-        self.modeLayout.addWidget(self.button25D, 1)
-
-        self.buttonSIM.setChecked(True)
-        
-        self.buttonSIM.clicked.connect(self.applyRoiSize)
-        self.button25D.clicked.connect(self.applyRoiSize)
-
-
-        self.modeBox.setStyleSheet("""
-            QPushButton {
-                border: 1px solid #6666CC;
-                border-radius: 6px;
-                padding: 0px;
-            }
-            QPushButton:checked {
-                background-color: #6666CC;
-                color: white;
-            }
-            QPushButton:!checked {
-                background-color: #455364;
-                color: #AAAAAA;
-            }
-        """)
-
-        self.bottomLayout.addWidget(self.modeBox)
-        
 
 
         # crop detectors box
@@ -793,10 +774,8 @@ class FOVCorrectionWindow(QMainWindow):
         return "561"
 
     def getRoiSize(self):
-        if self.buttonSIM.isChecked():
-            return 512 
-        else:
-            return 1024
+        return int(self.roiSizeBox.currentData())
+
 
     def _fallbackCenter(self, key):
         img = self.fullImages[key]
