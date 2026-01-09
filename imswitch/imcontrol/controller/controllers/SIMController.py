@@ -1716,7 +1716,7 @@ class SIMController(ImConWidgetController):
 
         # time.sleep(0.05)
 
-        if not (self.firstLoop) and (self.AFCounter % 5 == 0):
+        if not (self.firstLoop) and (self.AFCounter % 12 == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')
