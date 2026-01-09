@@ -240,12 +240,16 @@ class SettingsController(ImConWidgetController):
             w.scatterImage.setViewCenteredOnFullPoint(w.scatterImage.fullPoint, half=half)
 
 
-        if w.align488.isChecked():
-            ref = "488"
-        elif w.align640.isChecked():
-            ref = "640"
-        else:
-            ref = "561"
+        ref = w.getRefKey()
+
+        if ref == "Scatter":
+            if not hasattr(w, "scatterImage") or w.scatterImage is None or w.scatterImage.fullPoint is None:
+                QtWidgets.QMessageBox.warning(
+                    w,
+                    "Missing point",
+                    "Click on the Scatter image before aligning to Scatter"
+                )
+                return
 
         pts = {
             "488": w.blueImage.fullPoint,
@@ -255,7 +259,11 @@ class SettingsController(ImConWidgetController):
 
 
 
-        refOx, refOy = map(lambda v: int(round(v)), pts[ref])
+        if ref == "Scatter":
+            refOx, refOy = map(lambda v: int(round(v)), w.scatterImage.fullPoint)
+        else:
+            refOx, refOy = map(lambda v: int(round(v)), pts[ref])
+
 
         fullH, fullW = self.fullImages["488"].shape[:2]
         maxX0 = fullW - roiSize
