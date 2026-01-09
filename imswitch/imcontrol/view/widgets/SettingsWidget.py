@@ -559,7 +559,12 @@ class FOVCorrectionWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("FOV Correction")
-        self.setMinimumSize(1830, 500)
+        ncols = 4 if (showScatter and scatterImg is not None) else 3
+        w_img = 450
+        spacing = 10
+        targetW = ncols * w_img + (ncols + 1) * spacing
+        targetH = 500
+
 
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
         self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
@@ -861,7 +866,6 @@ class FOVCorrectionWindow(QMainWindow):
     def formatPoint(self, label, img):
         ox, oy = img.fullPoint
         return f"{label}: ({int(round(ox))}, {int(round(oy))})"
-
 
 
 
