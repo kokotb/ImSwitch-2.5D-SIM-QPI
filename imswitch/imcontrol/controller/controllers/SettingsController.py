@@ -332,7 +332,7 @@ class SettingsController(ImConWidgetController):
             dets = self.detectors
 
         self._master.arduinoManager.activate25DWriteOnly()
-        for detector in self.dets:
+        for detector in dets:
             detector._prevShape = detector._shape
             detector._prevOffset = detector._frameStart
             self.setCamForFOVWindow(detector)

@@ -42,7 +42,7 @@ class LucidCamMock:
     def stop_live(self):
         pass
 
-    def suspend_live(self):
+    def suspend_live(self, toPrint):
         pass
 
     def prepare_live(self):
@@ -51,7 +51,7 @@ class LucidCamMock:
     def start_live25D(self):
         pass
 
-    def setROI(self, hpos, vpos, hsize, vsize):
+    def setROI(self, hpos, vpos, hsize, vsize, toPrint = True):
         # Change the width and height in properties
         # Simulating the properties changed on camera
         self.properties['Height'] = hsize
