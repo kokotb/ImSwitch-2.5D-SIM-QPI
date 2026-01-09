@@ -132,6 +132,7 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
+        self._logger.info('FOV correction window is opening...')
         self.retrieveDetectors()
         for detector in self.detectors:
             if detector.forAcquisition:
@@ -331,7 +332,9 @@ class SettingsController(ImConWidgetController):
             dets = self.detectors
 
         self._master.arduinoManager.activate25DWriteOnly()
-        for detector in dets:
+        for detector in self.dets:
+            detector._prevShape = detector._shape
+            detector._prevOffset = detector._frameStart
             self.setCamForFOVWindow(detector)
 
         self._master.arduinoManager.trigger25DWriteOnly()
@@ -344,48 +347,43 @@ class SettingsController(ImConWidgetController):
         self._master.arduinoManager.deactivateSLMWriteOnly()
 
         for detector in dets:
-            try:
-                detector.stopAcquisitionSIM()
-            except Exception:
-                pass
+            if detector.forAcquisition:
+                detector.stopAcquisitionSIM(toPrint = False)
+                detector.crop(detector._prevOffset[0],detector._prevOffset[1],detector._prevShape[0],detector._prevShape[1], toPrint = False)
 
         return lastImgs
 
 
     def setCamForFOVWindow(self, detector):
 
-        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 10.0)
-        detector.crop(0,0,5320,4600)
-        trigger_mode = 'On'
-        exposure_auto = 'Off'
-        gamma = 1.0
-        gain = 0.0
-        trigger_source = 'Line0'
-        trigger_overlap = 'Off'
-        # detector._camera.setBufferTimeout(500)
+        # detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
+        # detector._camera.setPropertyValue('AcquisitionFrameRate', 10.0)
 
-        # # Pull the exposure time from settings widget
-        exposure_time = self.getParameterValue(detector, 'ExposureTime')
+        detector.crop(0,0,5320,4600, toPrint=False)
+        # trigger_mode = 'On'
+        # exposure_auto = 'Off'
+        # trigger_source = 'Line0'
+        # trigger_overlap = 'Off'
 
-        # # exposure_time = self.exposure # anything < 19 ms
-        pixel_format = 'Mono16'
-        bit_depth = 'Bits12'
-        frame_rate_enable = True
-        buffer_mode = "NewestOnly"
-        triggerSelector = 'FrameStart'
+        # # # Pull the exposure time from settings widget
+        # exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # Set cam parameters
-        dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'Gain': gain,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time, 'Gamma':gamma, 'StreamBufferHandlingMode':buffer_mode}
+        # # # exposure_time = self.exposure # anything < 19 ms
+        # frame_rate_enable = True
+        # buffer_mode = "NewestOnly"
+        # triggerSelector = 'FrameStart'
 
-        # for detector in detectors:
-        for parameter_name in dic_parameters:
-            # print(detector._camera.getPropertyValue(parameter_name))
-            detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
-            if parameter_name == 'ExposureTime':
-                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
-            # print(detector._camera.getPropertyValue(parameter_name))
-        # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
+        # # Set cam parameters
+        # dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSelector': triggerSelector,'TriggerSource':trigger_source,'TriggerMode':trigger_mode,'AcquisitionFrameRateEnable':frame_rate_enable, 'ExposureAuto':exposure_auto, 'ExposureTime': exposure_time,  'StreamBufferHandlingMode':buffer_mode}
+
+        # # for detector in detectors:
+        # for parameter_name in dic_parameters:
+        #     # print(detector._camera.getPropertyValue(parameter_name))
+        #     detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+        #     if parameter_name == 'ExposureTime':
+        #         self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
+        #     # print(detector._camera.getPropertyValue(parameter_name))
+        # # detector.tl_stream_nodemap['StreamBufferHandlingMode'].value = buffer_mode
         detector.startAcquisition25D()
 
 

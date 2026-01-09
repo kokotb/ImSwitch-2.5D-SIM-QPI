@@ -82,8 +82,9 @@ class LucidCam:
         self.__logger.info("stop_live")
         self.device.stop_stream()
 
-    def suspend_live(self):
-        self.__logger.info("Suspended")
+    def suspend_live(self, toPrint):
+        if toPrint:
+            self.__logger.info("Suspended")
         # print(self.device)
         self.device.stop_stream()
         
@@ -93,9 +94,6 @@ class LucidCam:
         self.__logger.info("prepare_live")
         self.device.start_stream()
         # self.cam.prepare_live()  # prepare prepared state for live imaging
-
-    # def toggleTrigger(self):
-
     
     def forceValidROI(self, hpos, vpos, hsize, vsize):
 
@@ -133,7 +131,7 @@ class LucidCam:
 
         return hpos_new, vpos_new, hsize_new, vsize_new
     
-    def setROI(self, hpos, vpos, hsize, vsize):
+    def setROI(self, hpos, vpos, hsize, vsize, toPrint = True):
         # v-vertical, h-horizontal
 
         hsize_max = self.SensorWidth
@@ -187,9 +185,10 @@ class LucidCam:
         hei = self.roiNodes['Height'].value
         wid = self.roiNodes['Width'].value
 ##Large string of ROI info that print during camera initialization
-        self.__logger.info(
-            f'ROI set: {wid}x{hei} at ({left},{top})'
-        )
+        if toPrint:
+            self.__logger.info(
+                f'ROI set: {wid}x{hei} at ({left},{top})'
+            )
 
         return left, top, wid, hei
 ##

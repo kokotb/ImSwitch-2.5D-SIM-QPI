@@ -83,7 +83,7 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 10.0,
+        "Gain": 0.0,
         "Gamma": 1.0,
         "ExposureTime": 15000.0
       },
@@ -107,7 +107,7 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 10.0,     
+        "Gain": 0.0,     
         "Gamma": 1.0,
         "ExposureTime": 15000.0
       },
@@ -132,7 +132,7 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 20.0,
+          "Gain": 0.0,
           "Gamma": 1.0,
           "ExposureTime": 19000.0
         },
