@@ -199,9 +199,15 @@ class SettingsWidget(Widget):
         # FOVCorrectionWindow = FOVCorrectionWindow(QMainWindow)
         
         
-    def openFOVWindow(self, blue, green, red):
-        self.openCorrectionWindow = FOVCorrectionWindow(blue, green, red, parent=self)
+    def openFOVWindow(self, blue, green, red, scatter=None, showScatter=False):
+        self.openCorrectionWindow = FOVCorrectionWindow(
+            blue, green, red,
+            scatterImg=scatter,
+            showScatter=showScatter,
+            parent=self
+        )
         self.openCorrectionWindow.show()
+
 
     def toggleCheckboxes(self, state):
         self.scatterCamActive.setEnabled(not state)
@@ -549,23 +555,20 @@ class fovCorrection(QtWidgets.QLabel):
 
 
 class FOVCorrectionWindow(QMainWindow):
-    def __init__(self, blueImg, greenImg, redImg, parent=SettingsWidget):
+    def __init__(self, blueImg, greenImg, redImg, scatterImg=None, showScatter=False, parent=SettingsWidget):
         super().__init__(parent)
 
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(1830, 500)
-        
-        self._alignedPts = None
-        self._alignedRef = None
-        self._compositeIsPatch = False
-        self.fullCompositeRgb = None
-        self.wavelengthToRGB = None
-
-
-        dummy = np.zeros((4600, 4600), dtype=np.uint8)
 
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
         self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
+        self.scatterImage = None
+
+        if showScatter and scatterImg is not None:
+            self.fullImages["Scatter"] = scatterImg
+            self.offsets["Scatter"] = (0, 0)
+
 
         self.mainLayout = QtWidgets.QVBoxLayout()
         self.columnsLayout = QtWidgets.QHBoxLayout()
@@ -591,20 +594,24 @@ class FOVCorrectionWindow(QMainWindow):
         self.col3.addWidget(self.redImage)
         self.col3.addStretch()
 
-        self.col4 = QtWidgets.QVBoxLayout()
-        self.compositeLabel = QtWidgets.QLabel("Composite")
-        self.col4.addWidget(self.compositeLabel)
-        self.compositeImage = fovCorrection(dummy, parent=self)
-        self.col4.addWidget(self.compositeImage)
-        self.compositeImage.mousePressEvent = self.ignoreClick
-        self.col4.addStretch()
+        if showScatter and scatterImg is not None:
+            self.col4 = QtWidgets.QVBoxLayout()
+            self.scatterLabel = QtWidgets.QLabel(f"<strong>Scatter<strong>")
+            self.col4.addWidget(self.scatterLabel)
+            self.scatterImage = fovCorrection(scatterImg, parent=self)
+            self.col4.addWidget(self.scatterImage)
+            self.col4.addStretch()
+
+
+
 
         self.columnsLayout.addLayout(self.col1)
         self.columnsLayout.addLayout(self.col2)
         self.columnsLayout.addLayout(self.col3)
-        self.columnsLayout.addLayout(self.col4)
-        self.mainLayout.addLayout(self.columnsLayout)
 
+        self.mainLayout.addLayout(self.columnsLayout)
+        if self.scatterImage is not None:
+            self.columnsLayout.addLayout(self.col4)
         self.bottomLayout = QtWidgets.QHBoxLayout()
 
         # points display box
@@ -748,6 +755,10 @@ class FOVCorrectionWindow(QMainWindow):
         self.blueImage.mousePressEvent = self.handleBlueClick
         self.greenImage.mousePressEvent = self.handleGreenClick
         self.redImage.mousePressEvent = self.handleRedClick
+        if self.scatterImage is not None:
+            self.scatterImage.mousePressEvent = self.handleScatterClick
+            self.scatterImage.parentLabel = "Scatter"
+
 
 
     def handleBlueClick(self, event):
@@ -768,10 +779,11 @@ class FOVCorrectionWindow(QMainWindow):
             self.redImage.setPoint(pos.x(), pos.y())
             self.updatePointsDisplay()
 
-
-    def ignoreClick(self, event):
-        pass
-
+    def handleScatterClick(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos = event.pos()
+            self.scatterImage.setPoint(pos.x(), pos.y())
+            self.updatePointsDisplay()
     
     def getRefKey(self):
         if self.align488.isChecked():
@@ -797,15 +809,18 @@ class FOVCorrectionWindow(QMainWindow):
         c488 = None
         c561 = None
         c640 = None
+        cSca = None
 
         if hasattr(self, "roiCenters"):
             c488 = self.roiCenters.get("488")
             c561 = self.roiCenters.get("561")
             c640 = self.roiCenters.get("640")
+            cSca = self.roiCenters.get("Scatter")
 
         if c488 is None: c488 = self._fallbackCenter("488")
         if c561 is None: c561 = self._fallbackCenter("561")
         if c640 is None: c640 = self._fallbackCenter("640")
+        if self.scatterImage is not None and cSca is None: cSca = self._fallbackCenter("Scatter")
 
         p = self.blueImage.fullPoint if self.blueImage.fullPoint is not None else c488
         self.blueImage.setViewCenteredOnFullPoint(p, half=half)
@@ -816,23 +831,10 @@ class FOVCorrectionWindow(QMainWindow):
         p = self.redImage.fullPoint if self.redImage.fullPoint is not None else c640
         self.redImage.setViewCenteredOnFullPoint(p, half=half)
 
-        ref = self.getRefKey()
-        if ref == "488":
-            pref = self.blueImage.fullPoint if self.blueImage.fullPoint is not None else c488
-        elif ref == "640":
-            pref = self.redImage.fullPoint if self.redImage.fullPoint is not None else c640
-        else:
-            pref = self.greenImage.fullPoint if self.greenImage.fullPoint is not None else c561
+        if self.scatterImage is not None:
+            p = self.scatterImage.fullPoint if self.scatterImage.fullPoint is not None else cSca
+            self.scatterImage.setViewCenteredOnFullPoint(p, half=half)
 
-        if self._alignedPts is not None and self._alignedRef is not None:
-            self.rebuildCompositeAligned(self.getRoiSize())
-            return
-
-        if hasattr(self, "fullCompositeRgb") and self.fullCompositeRgb is not None and getattr(self, "_compositeIsPatch", False):
-            self.compositeImage.setBaseImage(self.fullCompositeRgb, doCenterCrop=True)
-            self._compositeIsPatch = False
-
-        self.compositeImage.setViewCenteredOnFullPoint(pref, half=half)
 
     
 
@@ -848,7 +850,12 @@ class FOVCorrectionWindow(QMainWindow):
 
         if self.redImage.fullPoint is not None:
             lines.append(self.formatPoint("640", self.redImage))
+
+        if self.scatterImage is not None and self.scatterImage.fullPoint is not None:
+            lines.append(self.formatPoint("Scatter", self.scatterImage))
+
         self.pointsDisplay.setPlainText("\n".join(lines))
+
 
 
     def formatPoint(self, label, img):
@@ -856,78 +863,6 @@ class FOVCorrectionWindow(QMainWindow):
         return f"{label}: ({int(round(ox))}, {int(round(oy))})"
 
 
-    def rebuildCompositeAligned(self, roiSize):
-        if self._alignedPts is None or self._alignedRef is None:
-            return
-        if self.wavelengthToRGB is None:
-            return
-
-        pts = self._alignedPts
-        ref = self._alignedRef
-
-        half = roiSize // 2
-        refOx, refOy = map(lambda v: int(round(v)), pts[ref])
-
-        fullH, fullW = self.fullImages["488"].shape[:2]
-        maxX0 = fullW - roiSize
-        maxY0 = fullH - roiSize
-
-        lowX = 0
-        highX = maxX0
-        lowY = 0
-        highY = maxY0
-
-        for k, (ox, oy) in pts.items():
-            dx = int(round(ox)) - refOx
-            dy = int(round(oy)) - refOy
-            lowX = max(lowX, -dx)
-            highX = min(highX, maxX0 - dx)
-            lowY = max(lowY, -dy)
-            highY = min(highY, maxY0 - dy)
-
-        desiredX0 = refOx - half
-        desiredY0 = refOy - half
-
-        if lowX <= highX:
-            refX0 = int(min(max(desiredX0, lowX), highX))
-        else:
-            refX0 = int(min(max(desiredX0, 0), maxX0))
-
-        if lowY <= highY:
-            refY0 = int(min(max(desiredY0, lowY), highY))
-        else:
-            refY0 = int(min(max(desiredY0, 0), maxY0))
-
-        x0 = {}
-        y0 = {}
-        for k, (ox, oy) in pts.items():
-            dx = int(round(ox)) - refOx
-            dy = int(round(oy)) - refOy
-            x0[k] = refX0 + dx
-            y0[k] = refY0 + dy
-
-        p488 = self.fullImages["488"][y0["488"]:y0["488"] + roiSize, x0["488"]:x0["488"] + roiSize]
-        p561 = self.fullImages["561"][y0["561"]:y0["561"] + roiSize, x0["561"]:x0["561"] + roiSize]
-        p640 = self.fullImages["640"][y0["640"]:y0["640"] + roiSize, x0["640"]:x0["640"] + roiSize]
-
-        f488 = p488.astype(np.float32) / 255.0
-        f561 = p561.astype(np.float32) / 255.0
-        f640 = p640.astype(np.float32) / 255.0
-
-        c488 = self.wavelengthToRGB["488"]
-        c561 = self.wavelengthToRGB["561"]
-        c640 = self.wavelengthToRGB["640"]
-
-        rgb = (f488[..., None] * c488 +
-            f561[..., None] * c561 +
-            f640[..., None] * c640) / 3.0
-        rgb = np.clip(rgb, 0.0, 1.0)
-        rgbu8 = np.ascontiguousarray((rgb * 255).astype(np.uint8))
-
-        self.compositeImage.setBaseImage(rgbu8, doCenterCrop=False)
-        self.compositeImage._drawCross = False
-        self.compositeImage.fullPoint = None
-        self._compositeIsPatch = True
 
 
 
