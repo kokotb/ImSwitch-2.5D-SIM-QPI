@@ -5,7 +5,7 @@ from math import floor
 import numpy as np
 import time
 
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from imswitch.imcommon.model import APIExport
 from imswitch.imcontrol.model import configfiletools
@@ -132,6 +132,12 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
+        busy = QtWidgets.QProgressDialog("FOV Window Opening...", None, 0, 0, self._widget)
+        busy.setCancelButton(None)
+        busy.show()
+        QtWidgets.QApplication.processEvents()
+
+
         self._logger.info('FOV correction window is opening...')
         self.retrieveDetectors()
         for detector in self.detectors:
@@ -213,6 +219,9 @@ class SettingsController(ImConWidgetController):
         except Exception:
             pass
         w.cropButton.clicked.connect(self.cropDetectors)
+        
+        busy.close()
+        busy.deleteLater()
 
 
 
