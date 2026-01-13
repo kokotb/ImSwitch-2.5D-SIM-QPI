@@ -102,6 +102,7 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.scale_bar.visible = True
             
         else:
+            self.sortScatter()
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
@@ -129,27 +130,23 @@ class SIMWidget(NapariHybridWidget):
         layerNames = []
         for layerObj in self.viewer.layers:
             layerNames.append(layerObj.name)
+        print(layerNames)
         sortingKey = [i[0] for i in sorted(enumerate(layerNames), key= lambda x:x[1] )]
         sortingKey.reverse()
+        # sortingKey = [2, 1, 3, 0]
         self.viewer.layers.move_multiple(sortingKey)
-        # print("tets")
-        # maxLayerIndex = len(self.viewer.layers) - 1
-        # layerNames = []
-        # searchList = ['488S Raw', '488S Recon', '488S WF']
-        # for searchKey in searchList:
-        #     for layerObj in self.viewer.layers:
-        #         layerNames.append(layerObj.name)
-        #     matching_index = next((i for i, item in enumerate(layerNames) if searchKey in item), -1)
-        #     if matching_index == -1:
-        #         continue
-        #     layer = self.viewer.layers[matching_index]
-            
-        #     self.viewer.layers.remove(layer)
-        #     self.viewer.layers.insert(maxLayerIndex,layer)         
+        # scatterIndex = next((i for i, s in enumerate(layerNames) if '488S' in s), None)
+        # if scatterIndex:
+        #     self.viewer.layers.move(scatterIndex, 0)
+        # print('test')
 
-
-            
-
+    def sortScatter(self):
+        layerNames = []
+        for layerObj in self.viewer.layers:
+            layerNames.append(layerObj.name)
+        scatterIndex = next((i for i, s in enumerate(layerNames) if '488S' in s), None)
+        if scatterIndex != 0:
+            self.viewer.layers.move(scatterIndex, 0)
 
     def contrastReconFunc(self):
             

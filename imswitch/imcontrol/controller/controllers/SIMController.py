@@ -1647,9 +1647,9 @@ class SIMController(ImConWidgetController):
 
             with lastImgLock:
                 self.lastImgDict[processor.handle] = rawImg
-
+           
             self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
-            # self.displayRawImage(rawImg, f"{processor.handle} Raw")
+
             processor.stack = rawImg
 
         
