@@ -130,15 +130,10 @@ class SIMWidget(NapariHybridWidget):
         layerNames = []
         for layerObj in self.viewer.layers:
             layerNames.append(layerObj.name)
-        print(layerNames)
         sortingKey = [i[0] for i in sorted(enumerate(layerNames), key= lambda x:x[1] )]
         sortingKey.reverse()
-        # sortingKey = [2, 1, 3, 0]
         self.viewer.layers.move_multiple(sortingKey)
-        # scatterIndex = next((i for i, s in enumerate(layerNames) if '488S' in s), None)
-        # if scatterIndex:
-        #     self.viewer.layers.move(scatterIndex, 0)
-        # print('test')
+
 
     def sortScatter(self):
         layerNames = []
