@@ -78,7 +78,7 @@ class SIMController(ImConWidgetController):
         self.SimProcessorLaser1.handle = str(self.SimProcessorLaser1.exWavelength) + 'F'
         self.SimProcessorLaser2.handle = str(self.SimProcessorLaser2.exWavelength) + 'F'
         self.SimProcessorLaser3.handle = str(self.SimProcessorLaser3.exWavelength) + 'F'
-        self.SimProcessorLaser4.handle = str(self.SimProcessorLaser4.exWavelength) + 'S'
+        self.SimProcessorLaser4.handle = str('Scatter')
         self.SimProcessorLaser1.source = 'fluor'
         self.SimProcessorLaser2.source = 'fluor'
         self.SimProcessorLaser3.source = 'fluor'
@@ -95,6 +95,9 @@ class SIMController(ImConWidgetController):
                 shortName = fullName[:5].replace(" ", "")
                 detector[1].handle = shortName
                 self.detectors.append(detector[1])
+                if detector[0] == '488 Scatter':
+                    shortName = 'Scatter'
+                    detector[1].handle = shortName
 
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
@@ -217,7 +220,7 @@ class SIMController(ImConWidgetController):
             if laser.percentPower > 0:
                 poweredLasers.append(str(laser.wavelength)+'F')
         if '488F' in poweredLasers and self.scatterCam:
-            poweredLasers.append(str('488S'))
+            poweredLasers.append(str('Scatter'))
         #
         self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
         ####Set flags for using in logic later.
@@ -270,7 +273,7 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors):
             processor.processorIndex = k
             shapeList.append(processor.shape)
-        if ('488S' in poweredLasers):
+        if ('Scatter' in poweredLasers):
             self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
         ####
 
@@ -519,7 +522,7 @@ class SIMController(ImConWidgetController):
             lastChan = True
         else: 
             lastChan = False
-        if processor.handle == '488S': lastChan = False
+        if processor.handle == 'Scatter': lastChan = False
 
         broken = False # Initialize flag
         detector = processor.detObj # Set current detector object associated with proecssor.
@@ -1212,7 +1215,7 @@ class SIMController(ImConWidgetController):
             if laser.percentPower > 0:
                 poweredLasers.append(str(laser.wavelength)+'F')
         if '488F' in poweredLasers and self.scatterCam:
-            poweredLasers.append(str('488S'))
+            poweredLasers.append(str('Scatter'))
         #
         self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
         ####Set flags for using in logic later.
@@ -1258,7 +1261,7 @@ class SIMController(ImConWidgetController):
         for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
             processor.processorIndex = k
             shapeList.append(processor.shape)
-        if ('488S' in poweredLasers):
+        if ('Scatter' in poweredLasers):
             self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
         ####
             
@@ -1605,7 +1608,7 @@ class SIMController(ImConWidgetController):
             lastChan = True 
         else: 
             lastChan = False
-        if processor.handle == '488S': lastChan = False
+        if processor.handle == 'Scatter': lastChan = False
 
         broken = False # Initialize flag
         detector = processor.detObj # Set current detector object associated with proecssor.

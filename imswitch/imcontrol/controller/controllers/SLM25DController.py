@@ -175,6 +175,8 @@ class SLM25DController(ImConWidgetController):
                 shortName = fullName[:5].replace(" ", "")
                 detector[1].handle = shortName
                 self.detectors.append(detector[1])
+                if detector[0] == '488 Scatter':
+                    detector[1].handle = 'Scatter'
 
     def beginAutoZernThread(self):
         threading.Thread(target=self.AutoZernLoop, args=(), daemon=True).start()

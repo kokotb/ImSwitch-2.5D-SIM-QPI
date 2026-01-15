@@ -213,7 +213,7 @@ class CommunicationChannel(SignalInterface):
         self.simActive = False
         self.activeDir = None
         self.stop25DNow = False
-        self.lastImgDict = {'488F': np.zeros((1024,1024)), '561F': np.zeros((1024,1024)),'640F': np.zeros((1024,1024)), '488S': np.zeros((1024,1024))}
+        self.lastImgDict = {'488F': np.zeros((1024,1024)), '561F': np.zeros((1024,1024)),'640F': np.zeros((1024,1024)), 'Scatter': np.zeros((1024,1024))}
 
         #Autofocus variables
         self.calCurveFit = False

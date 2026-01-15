@@ -69,7 +69,7 @@ class SIMWidget(NapariHybridWidget):
         ]
         # Set layer properties
         self.layer = None
-        self.laserColormaps = {'488F':'cyan','561F':'green','640F':'red', '488S': 'grayclip'}
+        self.laserColormaps = {'488F':'cyan','561F':'green','640F':'red', 'Scatter': 'grayclip'}
         self.micronsPerPixel = [.1233,.1233]
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
@@ -139,7 +139,7 @@ class SIMWidget(NapariHybridWidget):
         layerNames = []
         for layerObj in self.viewer.layers:
             layerNames.append(layerObj.name)
-        scatterIndex = next((i for i, s in enumerate(layerNames) if '488S' in s), None)
+        scatterIndex = next((i for i, s in enumerate(layerNames) if 'Scatter' in s), None)
         if scatterIndex != 0:
             self.viewer.layers.move(scatterIndex, 0)
 
@@ -147,7 +147,7 @@ class SIMWidget(NapariHybridWidget):
             
         layerList = self.getAllLayerNames()
         reconLayerList = [x for x in layerList if 'Recon' in x]
-        reconLayerList = [item for item in reconLayerList if '488S' not in item]
+        reconLayerList = [item for item in reconLayerList if 'Scatter' not in item]
         # if reconLayerList == []:
         #     return
         for name in reconLayerList:
@@ -293,7 +293,7 @@ class SIMWidget(NapariHybridWidget):
         self.hideShow488FLayers = QPushButton("488 Fluor")
         self.hideShow561FLayers = QPushButton("561 Fluor")
         self.hideShow640FLayers = QPushButton("640 Fluor")
-        self.hideShow488SLayers = QPushButton("488 Scatter")
+        self.hideShowScatterLayers = QPushButton("488 Scatter")
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.StyledPanel)
         self.myframe.setFrameShadow(QFrame.Plain)
@@ -302,7 +302,7 @@ class SIMWidget(NapariHybridWidget):
         layersHideShowChannel.addWidget(self.hideShow488FLayers)
         layersHideShowChannel.addWidget(self.hideShow561FLayers)
         layersHideShowChannel.addWidget(self.hideShow640FLayers)
-        layersHideShowChannel.addWidget(self.hideShow488SLayers)
+        layersHideShowChannel.addWidget(self.hideShowScatterLayers)
         layersHideShowChannelBoxed = QVBoxLayout()
         layersHideShowChannelBoxed.addWidget(self.myframe)
 
@@ -349,7 +349,7 @@ class SIMWidget(NapariHybridWidget):
         self.hideShow488FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('488F'))
         self.hideShow561FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('561F'))
         self.hideShow640FLayers.clicked.connect(lambda: self.hideShowLayerByChannel('640F'))
-        self.hideShow488SLayers.clicked.connect(lambda: self.hideShowLayerByChannel('488S'))
+        self.hideShowScatterLayers.clicked.connect(lambda: self.hideShowLayerByChannel('Scatter'))
         self.hideShowAllLayers.clicked.connect(self.hideShowAllLayersFunc)
 
         # tab.setLayout(parentLayout)
