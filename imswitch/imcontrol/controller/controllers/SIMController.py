@@ -1175,7 +1175,7 @@ class SIMController(ImConWidgetController):
                         metadata = metadata_grab, imagej=True)
             # tif.imwrite(filename, image, imagej=True)
             # tif.imwrite(filename, image, metadata=ijmetadata)
-            self._logger.debug("Saving file: " + filename)
+            self._logger.debug("Saving file: " + filename[:25] + '...' + filename[-20:])
         except  Exception as e:
             self._logger.error(e)
 
