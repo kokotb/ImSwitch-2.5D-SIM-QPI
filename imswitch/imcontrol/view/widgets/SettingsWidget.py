@@ -643,7 +643,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.roiSizeLabel = QtWidgets.QLabel(f"<strong>ROI (px):<strong>")
         self.roiSizeLabel.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.modeLayout.addWidget(self.roiSizeLabel)
-
+        
         
         self.roiSizeBox = QtWidgets.QComboBox()
         self.roiSizeBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -662,37 +662,6 @@ class FOVCorrectionWindow(QMainWindow):
         self.roiSizeBox.currentIndexChanged.connect(self.applyRoiSize)
         self.modeLayout.addWidget(self.roiSizeBox, 1)
         self.bottomLayout.addWidget(self.modeBox)
-        
-        
-        # align box
-        self.alignBox = QtWidgets.QWidget()
-        self.alignBox.setFixedSize(80, 90)
-        self.alignLayout = QtWidgets.QVBoxLayout(self.alignBox)
-        self.alignLayout.setContentsMargins(0, 0, 0, 0)
-        self.alignLayout.setSpacing(4)
-
-        self.alignLabel = QtWidgets.QLabel(f"<strong>Align to:</strong>")
-        self.alignLayout.addWidget(self.alignLabel)
-
-        self.alignRefBox = QtWidgets.QComboBox()
-        self.alignRefBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        for k in ["488", "561", "640"]:
-            self.alignRefBox.addItem(k, k)
-
-        if self.scatterImage is not None:
-            self.alignRefBox.addItem("Scatter", "Scatter")
-            
-        self.alignRefBox.setEditable(True)
-        le = self.alignRefBox.lineEdit()
-        le.setReadOnly(True)
-        le.setAlignment(QtCore.Qt.AlignCenter)
-        le.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
-
-        self.alignRefBox.setCurrentIndex(self.alignRefBox.findData("561"))
-        self.alignLayout.addWidget(self.alignRefBox, 1)
-
-        self.bottomLayout.addWidget(self.alignBox)
 
 
 
@@ -757,9 +726,6 @@ class FOVCorrectionWindow(QMainWindow):
             pos = event.pos()
             self.scatterImage.setPoint(pos.x(), pos.y())
             self.updatePointsDisplay()
-    
-    def getRefKey(self):
-        return str(self.alignRefBox.currentData())
 
 
     def getRoiSize(self):
