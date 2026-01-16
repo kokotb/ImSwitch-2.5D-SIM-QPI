@@ -5,8 +5,8 @@ from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
-from PyQt5.QtGui import QPainter, QFont
-from PyQt5.QtCore import QPointF, QRect, QPoint, Qt, QTimer
+from PyQt5.QtGui import QPainter, QFont, QIntValidator, QDoubleValidator
+from PyQt5.QtCore import QPointF, QRect, QPoint, Qt, QTimer, QLocale
 
 
 
@@ -198,10 +198,19 @@ class SetAFWindow(QMainWindow):
 
         
         settings_box = QGroupBox("Autofocus Settings")
-        settings_layout = QtWidgets.QVBoxLayout()
+        settings_layout = QtWidgets.QGridLayout()
+        self.numAvgLabel = QLabel("Avg. Bin")
+        self.numAvgTextEdit = QtWidgets.QLineEdit('1')
+        self.validator = QIntValidator(0,100)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.numAvgTextEdit.setValidator(self.validator)
 
-        self.settings_label = QLabel("Test Dummy")
-        settings_layout.addWidget(self.settings_label)
+
+        row = 0
+          
+        settings_layout.addWidget(self.numAvgLabel, row , 0)
+        settings_layout.addWidget(self.numAvgTextEdit, row , 1)
+
         settings_box.setLayout(settings_layout)
 
         instructionsAndSettingsLayout.addWidget(settings_box)
@@ -228,6 +237,8 @@ class SetAFWindow(QMainWindow):
         self.regReflection.clicked.connect(self.regCoordsFunc)
 
         self.coordsRegistered = False
+
+
 
     def regCoordsFunc(self):
         if self.embeddedImage.setCoords:

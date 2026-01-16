@@ -1328,17 +1328,24 @@ class SIMController(ImConWidgetController):
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
 
-        ####Autofocus
-        if (self._commChannel.initRegScore != None) :
-            self.autofocusThread()
-            self.AFMaskLeft = self._commChannel.AFMaskLeft
-            self.AFMaskRight = self._commChannel.AFMaskRight
-            self._logger.info('Autofocus active')    
-        ####
-
-
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         while self.active25D:
+            ####Autofocus
+            if (self._commChannel.initRegScore != None) and (self.firstLoop == True):
+                self.loopsToAvgAF = self._commChannel.numLoopsToAvg
+                self.AFMaskLeft = self._commChannel.AFMaskLeft
+                self.AFMaskRight = self._commChannel.AFMaskRight
+                self.autofocusThread()
+                self._logger.info('Autofocus active')
+                self._commChannel.autofocusActive = True
+
+            if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
+                self.autofocusThread()
+                self._commChannel.autofocusActive = True
+                self._logger.info('Autofocus active')
+            self.loopsToAvgAF = self._commChannel.numLoopsToAvg
+            ####
+
             self.roiIter = 0
             #### For timing period. Check every 1/10s if period time is exceeded yet.
             if self.completeFrameSets == 0 and isTimed:
@@ -1695,16 +1702,26 @@ class SIMController(ImConWidgetController):
                     
 
     def autofocusThread(self):
-        self._commChannel.autofocusActive = True
         self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
         self.AFThread.start()
         
     def autofocusStart(self):
+        nextTime = time.monotonic()
+        period = 0.5
+        i = 0
         while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
+            # self._logger.info(f'Loop number: {i}')
             self.autofocusLoop()
+            nextTime += period
+            sleepTime = nextTime - time.monotonic()
+            if sleepTime > 0:
+                time.sleep(sleepTime)
+
+            i += 1
 
     def autofocusLoop(self):
         # periodInSec = self.getPeriodInSec()
+        
         if self.firstLoop:
             self.AFScores = []
             self.cumZDiff = 0
@@ -1716,7 +1733,7 @@ class SIMController(ImConWidgetController):
 
         # time.sleep(0.05)
 
-        if not (self.firstLoop) and (self.AFCounter % 12 == 0):
+        if not (self.firstLoop) and (self.AFCounter % int(self.loopsToAvgAF) == 0):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             # medScore = statistics.median(self.AFScores)
             # print('10 AF Frames')

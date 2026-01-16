@@ -218,14 +218,16 @@ class CommunicationChannel(SignalInterface):
         #Autofocus variables
         self.calCurveFit = False
         self.initRegScore = None
-        # self.offsetFromInitZ = 0.0
-        self.currentRegScore = None
-        self.currentPredZ = None
-        self.initZ = None
-        self.autofocusEnabled = False
+        # self.currentRegScore = None
+        # self.currentPredZ = None
+        # self.initZ = None
+        # self.autofocusEnabled = False
         self.autofocusActive = False
         self.AFMaskLeft = None
         self.AFMaskRight = None
+        self.numLoopsToAvg = 1
+
+
         #Scatter Cam 
         self.scatterCamActive = 0 #False
         self.autoZernChecked = False
