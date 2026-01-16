@@ -132,11 +132,14 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
-        busy = QtWidgets.QProgressDialog("FOV Window Opening...", None, 0, 0, self._widget)
+        
+        self._commChannel.sigStop25D.emit()
+        
+        
+        busy = QtWidgets.QProgressDialog("FOV Correction Window is Opening...", None, 0, 0, self._widget)
         busy.setCancelButton(None)
         busy.show()
         QtWidgets.QApplication.processEvents()
-
 
         self._logger.info('FOV correction window is opening...')
         self.retrieveDetectors()
@@ -195,6 +198,7 @@ class SettingsController(ImConWidgetController):
         )
 
         w = self._widget.openCorrectionWindow
+        w.scatterDet = scatterDet if (showScatter and scatterDet is not None) else None
         w.offsets = self.fovOffsets
 
         w.blueImage.parentLabel = "488"
@@ -228,106 +232,112 @@ class SettingsController(ImConWidgetController):
 
     def cropDetectors(self):
         w = self._widget.openCorrectionWindow
+
+        scatterEnabled = (getattr(w, "scatterImage", None) is not None and getattr(w, "scatterDet", None) is not None)
+
         if (w.blueImage.fullPoint is None or w.greenImage.fullPoint is None or w.redImage.fullPoint is None):
-                QtWidgets.QMessageBox.warning(
-                    w,
-                    "Missing points",
-                    "Click on all the images (488, 561, 640) before cropping"
-                )
-                return
-            
+            QtWidgets.QMessageBox.warning(
+                w,
+                "Missing points",
+                "Click on all the images (488, 561, 640) before cropping"
+            )
+            return
+
+        if scatterEnabled and w.scatterImage.fullPoint is None:
+            QtWidgets.QMessageBox.warning(
+                w,
+                "Missing point",
+                "Click on the Scatter image before cropping"
+            )
+            return
+
         roiSize = w.getRoiSize()
-            
         half = roiSize // 2
-        halfView = 600
 
-
-        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half = half)
-        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half = half)
-        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half = half)
-        if hasattr(w, "scatterImage") and w.scatterImage is not None and w.scatterImage.fullPoint is not None:
+        w.blueImage.setViewCenteredOnFullPoint(w.blueImage.fullPoint, half=half)
+        w.greenImage.setViewCenteredOnFullPoint(w.greenImage.fullPoint, half=half)
+        w.redImage.setViewCenteredOnFullPoint(w.redImage.fullPoint, half=half)
+        if scatterEnabled:
             w.scatterImage.setViewCenteredOnFullPoint(w.scatterImage.fullPoint, half=half)
 
-
         ref = w.getRefKey()
-
-        if ref == "Scatter":
-            if not hasattr(w, "scatterImage") or w.scatterImage is None or w.scatterImage.fullPoint is None:
-                QtWidgets.QMessageBox.warning(
-                    w,
-                    "Missing point",
-                    "Click on the Scatter image before aligning to Scatter"
-                )
-                return
-
         pts = {
             "488": w.blueImage.fullPoint,
             "561": w.greenImage.fullPoint,
             "640": w.redImage.fullPoint,
         }
+        if scatterEnabled:
+            pts["Scatter"] = w.scatterImage.fullPoint
 
+        if ref == "Scatter" and not scatterEnabled:
+            QtWidgets.QMessageBox.warning(
+                w,
+                "Scatter not available",
+                "Scatter is not enabled/available."
+            )
+            return
 
+        refOx, refOy = map(lambda v: int(round(v)), pts[ref])
 
-        if ref == "Scatter":
-            refOx, refOy = map(lambda v: int(round(v)), w.scatterImage.fullPoint)
-        else:
-            refOx, refOy = map(lambda v: int(round(v)), pts[ref])
+        imgs = w.fullImages
 
+        maxX0 = {}
+        maxY0 = {}
+        for k in pts.keys():
+            fullH, fullW = imgs[k].shape[:2]
+            maxX0[k] = fullW - roiSize
+            maxY0[k] = fullH - roiSize
 
-        fullH, fullW = self.fullImages["488"].shape[:2]
-        maxX0 = fullW - roiSize
-        maxY0 = fullH - roiSize
-
-        lowX = 0
-        highX = maxX0
-        lowY = 0
-        highY = maxY0
+        lowX, lowY = 0, 0
+        highX, highY = maxX0[ref], maxY0[ref]
 
         for k, (ox, oy) in pts.items():
             dx = int(round(ox)) - refOx
             dy = int(round(oy)) - refOy
             lowX = max(lowX, -dx)
-            highX = min(highX, maxX0 - dx)
+            highX = min(highX, maxX0[k] - dx)
             lowY = max(lowY, -dy)
-            highY = min(highY, maxY0 - dy)
+            highY = min(highY, maxY0[k] - dy)
 
         desiredX0 = refOx - half
         desiredY0 = refOy - half
 
-        if lowX <= highX:
-            refX0 = int(min(max(desiredX0, lowX), highX))
-        else:
-            refX0 = int(min(max(desiredX0, 0), maxX0))
+        refX0 = int(min(max(desiredX0, lowX), highX)) if lowX <= highX else int(min(max(desiredX0, 0), maxX0[ref]))
+        refY0 = int(min(max(desiredY0, lowY), highY)) if lowY <= highY else int(min(max(desiredY0, 0), maxY0[ref]))
 
-        if lowY <= highY:
-            refY0 = int(min(max(desiredY0, lowY), highY))
-        else:
-            refY0 = int(min(max(desiredY0, 0), maxY0))
-
-        x0 = {}
-        y0 = {}
+        x0, y0 = {}, {}
         for k, (ox, oy) in pts.items():
             dx = int(round(ox)) - refOx
             dy = int(round(oy)) - refOy
             x0[k] = refX0 + dx
             y0[k] = refY0 + dy
 
+        handleToKey = {"488F": "488", "561F": "561", "640F": "640"}
+        for detector in self.detectors: 
+            k = handleToKey.get(detector.handle)
+            if k is None:
+                continue
+            detector.crop(x0[k], y0[k], roiSize, roiSize)
+            print(detector.handle, x0[k], y0[k], roiSize, roiSize)
+
+        if scatterEnabled:
+            w.scatterDet.crop(x0["Scatter"], y0["Scatter"], roiSize, roiSize)
+            print("Scatter", x0["Scatter"], y0["Scatter"], roiSize, roiSize)
 
         for detector in self.detectors:
-            if detector.handle == "488F":
-                detector.crop(x0["488"], y0["488"], roiSize, roiSize)
-            if detector.handle == "561F":
-                detector.crop(x0["561"], y0["561"], roiSize, roiSize)
-            if detector.handle == "640F":
-                detector.crop(x0["640"], y0["640"], roiSize, roiSize)
-        for detector in self.detectors:
             self.updateParamsFromDetector(detector=detector)
+
+        if scatterEnabled:
+            self.updateParamsFromDetector(detector=w.scatterDet)
 
         w.updatePointsDisplay()
 
         w.blueImage._drawCross = True
         w.greenImage._drawCross = True
         w.redImage._drawCross = True
+        if scatterEnabled:
+            w.scatterImage._drawCross = True
+
 
 
 
