@@ -124,6 +124,15 @@ class SLM25DWidget(Widget):
         self.lockZernCheckbox.setEnabled(False)
         self.lockZernCheckbox.setChecked(False)
 
+        self.autocorectLeftRadioButton = QRadioButton('Left-Autocorrect')
+        self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
+        self.autocorectRightRadioButton.setChecked(True)
+
+        self.autocorectRedRadioButton = QRadioButton('Red-Autocorrect')
+        self.autocorectGreenRadioButton = QRadioButton('Green-Autocorrect')
+        self.autocorectBlueRadioButton = QRadioButton('Blue-Autocorrect')
+        self.autocorectRedRadioButton.setChecked(True)
+
         self.loadImgToSLMbutton = QPushButton("Load Image")
         self.loadImgToSLMbutton.setEnabled(False)
         self.loadImgToSLMbutton.setFixedWidth(250)
@@ -153,7 +162,33 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.autoZernCheckboxNew, 4, 6)
         self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
         self.grid.addWidget(self.lockZernCheckbox, 5, 5)
+        self.grid.addWidget(self.autocorectLeftRadioButton, 6, 5)
+        self.grid.addWidget(self.autocorectRightRadioButton, 6, 6)
+        self.grid.addWidget(self.autocorectRedRadioButton, 7, 4)
+        self.grid.addWidget(self.autocorectGreenRadioButton, 7, 5)
+        self.grid.addWidget(self.autocorectBlueRadioButton, 7, 6)
         self.grid.addWidget(self.reset25D, 17, 5)
+
+        self.LRbutton_group = QButtonGroup()  
+        self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
+        self.LRbutton_group.addButton(self.autocorectRightRadioButton)
+
+        self.Colorbutton_group = QButtonGroup()  
+        self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
+        self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
+        self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
+        
+        self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
+        self.maskScaleNumber = QtWidgets.QDoubleSpinBox()
+        self.maskScaleNumber._type = 'int'
+        self.maskScaleNumber.setRange(0,255)
+        self.maskScaleNumber.setSingleStep(1)
+        self.maskScaleNumber.setDecimals(0)
+        #self.maskScaleNumber.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.maskScaleNumber.setValue(255)
+        self.maskScaleNumber.setFixedWidth(75)
+        self.grid.addWidget(self.maskScaleNumberLabel, 8, 5)
+        self.grid.addWidget(self.maskScaleNumber, 8, 6)
         
         # Horizontal lines separating logic sections
         self.myframe = QFrame()

@@ -114,6 +114,9 @@ class SLM25DController(ImConWidgetController):
         self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
         self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
+        self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
+        self._widget.Colorbutton_group.buttonClicked.connect(self.selectAZColor)
+        self._widget.maskScaleNumber.valueChanged.connect(self.MaskScaleChanged)
 
 
         self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
@@ -133,7 +136,9 @@ class SLM25DController(ImConWidgetController):
 
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
-
+        self.maskSideSelected = "Right"
+        self.maskAZColorSelected = "Red"
+        self.maskscaleValue = 255
 
         self.fullZernList = self.createFullZernList1stLoop()
 
@@ -167,6 +172,32 @@ class SLM25DController(ImConWidgetController):
             self.filePath.setText(jsonPath[0])
         else: pass
 
+    def selectMaskSide(self):
+        if self._widget.autocorectLeftRadioButton.isChecked():
+            self.maskSideSelected = "Left"
+        elif self._widget.autocorectRightRadioButton.isChecked():
+            self.maskSideSelected = "Right"
+
+        print(self.maskSideSelected + " side of the mask selected for AZ")
+
+
+    def selectAZColor(self):
+        if self._widget.autocorectRedRadioButton.isChecked():
+            self.maskAZColorSelected = "Red"
+        elif self._widget.autocorectGreenRadioButton.isChecked():
+            self.maskAZColorSelected = "Green"
+        elif self._widget.autocorectBlueRadioButton.isChecked():
+            self.maskAZColorSelected = "Blue"
+
+        print(self.maskAZColorSelected + " color selected for AZ")
+
+
+    def MaskScaleChanged(self, value):
+        self.maskscaleValue = int(value)
+        print("Mask scale:", self.maskscaleValue)
+        self.combineAndProject()
+
+
 
     def retrieveDetectors(self):
         for detector in self._master.detectorsManager: #detector object list
@@ -175,6 +206,12 @@ class SLM25DController(ImConWidgetController):
                 shortName = fullName[:5].replace(" ", "")
                 detector[1].handle = shortName
                 self.detectors.append(detector[1])
+        # !!! ask Cody if this is acceptable
+        try:
+            self.detectorsDict = {"Red": self.detectors[2], "Green": self.detectors[1], "Blue": self.detectors[0], "Scatter": self.detectors[3]}
+        except:
+            print("Could not create detectors Dictionary")
+
 
     def beginAutoZernThread(self):
         threading.Thread(target=self.AutoZernLoop, args=(), daemon=True).start()
@@ -216,9 +253,9 @@ class SLM25DController(ImConWidgetController):
 
         #     self._master.arduinoManager.trigger25DWriteOnly()
             
-        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
             
         #     self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
 
@@ -255,22 +292,22 @@ class SLM25DController(ImConWidgetController):
                 #self.sigZernMaskProjected = False
 
                 self._master.arduinoManager.trigger25DWriteOnly()
-                # waitingBuffers = self.detectors[2]._camera.getBufferValue('25D') # Arguement is unused by method.
+                # waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D') # Arguement is unused by method.
                 # print(waitingBuffers)
                 # startBufferTime = time.time()
                 # totalBufferTime = 0
                 # while waitingBuffers != 1:
                 #     endBufferTime = time.time()
                 #     totalBufferTime = endBufferTime - startBufferTime
-                #     waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+                #     waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
                 #     # time.sleep(0.002)
 
                 #     print(waitingBuffers)
 
 
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 
                 self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 
@@ -338,7 +375,7 @@ class SLM25DController(ImConWidgetController):
         ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
         zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        self.detectors[2]._camera.setBufferTimeout(2000)
+        self.detectorsDict[self.maskAZColorSelected]._camera.setBufferTimeout(2000)
 
         # self._widget.project25D.setChecked(False)
         # zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)
@@ -355,7 +392,7 @@ class SLM25DController(ImConWidgetController):
         print('Aligning mask center process finished')
 
     def alignCenterLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        for key in ["Right Center-Y", "Right Center-X"]:
+        for key in [self.maskSideSelected + " Center-Y", self.maskSideSelected + " Center-X"]:
             current = int(self._widget.pars['AbsPosEdit' + key].text())
             testvalues = np.linspace(current - 140, current + 140, 15, dtype=int)
             scores = []
@@ -384,13 +421,13 @@ class SLM25DController(ImConWidgetController):
                 #     while not success:
                 #         self._master.arduinoManager.trigger25DWriteOnly()
                 #         success = self.waitingForBuffers()
-                #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 #     images.append(beadImgAnalysis)
-                #     if (key == "Right Center-Y"):
+                #     if (key == self.maskSideSelected + " Center-Y"):
                 #         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[1])
-                #     elif (key == "Right Center-X"):
+                #     elif (key == self.maskSideSelected + " Center-X"):
                 #         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
                 # score = abs(np.diff(Com_frames).sum())
@@ -408,14 +445,14 @@ class SLM25DController(ImConWidgetController):
                     while not success:
                         self._master.arduinoManager.trigger25DWriteOnly()
                         success = self.waitingForBuffers()
-                    rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                    self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
-                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
+                    rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                    self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                     images.append(beadImgAnalysis)
-                    if (key == "Right Center-Y"):
+                    if (key == self.maskSideSelected + " Center-Y"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[1])
-                    elif (key == "Right Center-X"):
+                    elif (key == self.maskSideSelected + " Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
                 avg = sum(Com_frames) / len(Com_frames)
@@ -446,15 +483,15 @@ class SLM25DController(ImConWidgetController):
 
     def waitingForBuffers(self):
         success = False
-        waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+        waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
         i = 0
         while (waitingBuffers != 1) and i < 10:
             time.sleep(0.01)
             # print(f'try {i}: {waitingBuffers}')
-            waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+            waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
             
             # self._master.arduinoManager.trigger25DWriteOnly()
-            # waitingBuffers = self.detectors[2]._camera.getBufferValue('25D')
+            # waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
             i+=1
         if waitingBuffers == 1:
             success = True
@@ -478,7 +515,7 @@ class SLM25DController(ImConWidgetController):
         self.startAutoZern()
         zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        self.detectors[2]._camera.setBufferTimeout(2000)
+        self.detectorsDict[self.maskAZColorSelected]._camera.setBufferTimeout(2000)
 
         zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
@@ -551,10 +588,10 @@ class SLM25DController(ImConWidgetController):
             while not success:
                 self._master.arduinoManager.trigger25DWriteOnly()
                 success = self.waitingForBuffers()
-            rawImg = self.detectors[2]._camera.grabFrame25D(1)
-            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-            self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+            rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+            self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
             images.append(beadImgAnalysis)
             Zmaxprofile.append(np.max(beadImgAnalysis))
@@ -576,7 +613,7 @@ class SLM25DController(ImConWidgetController):
 
     
     def sphericalAberrationLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        key = '(4,0)Right'
+        key = '(4,0)' + self.maskSideSelected
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.5, current + 0.5, 21)
         scores = []
@@ -600,10 +637,10 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 Zmaxprofile.append(np.max(beadImgAnalysis))
@@ -659,7 +696,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.15)
 
         # Oblique Astigmatism 
-        key = '(2,-2)Right'
+        key = '(2,-2)' + self.maskSideSelected
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -685,10 +722,10 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -735,7 +772,7 @@ class SLM25DController(ImConWidgetController):
         # =======================================================================================================
 
         # Vertical Astigmatism 
-        key = '(2,2)Right'
+        key = '(2,2)' + self.maskSideSelected
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -760,10 +797,10 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -823,7 +860,7 @@ class SLM25DController(ImConWidgetController):
 
     def horizontalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Horizontal Comma
-        key = '(3,1)Right'
+        key = '(3,1)' + self.maskSideSelected
         testvalues = list(self.autoZernCalibValuesDict[key])
         horCommaScores = []
         horCommaScores2 = []
@@ -845,9 +882,9 @@ class SLM25DController(ImConWidgetController):
             # while not success:
             #     self._master.arduinoManager.trigger25DWriteOnly()
             #     success = self.waitingForBuffers()
-        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
         #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
         #     sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
         #     scores.append(sigma)
@@ -895,10 +932,10 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -942,7 +979,7 @@ class SLM25DController(ImConWidgetController):
 
     def verticalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Vertical Comma 
-        key = '(3,-1)Right'
+        key = '(3,-1)' + self.maskSideSelected
         testvalues = list(self.autoZernCalibValuesDict[key])
         vertCommaScores = []
         images = []
@@ -969,9 +1006,9 @@ class SLM25DController(ImConWidgetController):
             # while not success:
             #     self._master.arduinoManager.trigger25DWriteOnly()
             #     success = self.waitingForBuffers()
-        #     rawImg = self.detectors[2]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
         #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
         #     sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
         #     scores.append(sigma)
@@ -1030,10 +1067,10 @@ class SLM25DController(ImConWidgetController):
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
 
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -1076,8 +1113,8 @@ class SLM25DController(ImConWidgetController):
 
     def trefoilLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Vertical Comma 
-        for key in ['(3,-3)Right', '(3,3)Right']:
-        #for key in ['(3,-3)Right', '(3,3)Right', '(3,-1)Right', '(3,1)Right', '(2,2)Right', '(2,-2)Right']:
+        for key in ['(3,-3)' + self.maskSideSelected, '(3,3)' + self.maskSideSelected]:
+        #for key in ['(3,-3)' + self.maskSideSelected', '(3,3)' + self.maskSideSelected', '(3,-1)' + self.maskSideSelected', '(3,1)' + self.maskSideSelected', '(2,2)' + self.maskSideSelected, '(2,-2)' + self.maskSideSelected]:
             current = round(self._widget.pars['AbsPosEdit' + key].value(),2)
             testvalues = np.round(np.linspace(current - 0.7, current + 0.7, 15), 2)
 
@@ -1089,29 +1126,22 @@ class SLM25DController(ImConWidgetController):
             # self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + 1. , 'Z')
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
             for testvalue in testvalues:
-                # zernikeParametersNew = self.getAllZernikeParams()
-                # print("1: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
                 self._widget.pars["AbsPosEdit" + key].blockSignals(True)
                 self._widget.pars["AbsPosEdit" + key].setStyleSheet("border: 3px solid green;")
                 self._widget.pars["AbsPosEdit" + key].setValue(testvalue)
                 self._widget.pars["AbsPosEdit" + key].blockSignals(False)
-                # zernikeParametersNew = self.getAllZernikeParams()
-                # print("2: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
                 self.updateZernikeWithSleep()
-                #time.sleep(0.1)
-                
-
 
                 success = False
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                # print(self.detectors[2]._camera.getBufferValue('25D'))
+                # print(self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D'))
                 
-                rawImg = self.detectors[2]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectors[2].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectors[2].handle)
-                # self._commChannel.saveLastRawImgs(rawImg, self.detectors[2].handle)
+                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                # self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
 
 
@@ -1146,7 +1176,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             zernikeParametersNew = self.getAllZernikeParams()
-            print("Opt Best: " + str(zernikeParametersNew['(3,-3)Right']) + ' ' + str(zernikeParametersNew['(3,3)Right']))
+            print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self.maskSideSelected]) + ' ' + str(zernikeParametersNew['(3,3)' + self.maskSideSelected]))
             self.updateZernikeWithSleep()
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -1824,8 +1854,9 @@ class SLM25DController(ImConWidgetController):
 
 
         projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
+        projImg *= self.maskscaleValue / 255
         projImg = projImg.astype(np.uint8)
-
+        
         if self.slmActive:
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
