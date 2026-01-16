@@ -474,7 +474,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars['AbsPosEdit' + key].blockSignals(False)
             self.updatePhaseMask()
                 
-            self.show_images_grid(images)
+            # self.show_images_grid(images)
             self._widget.pars['AbsPosEdit' + key].setStyleSheet('')
 
 
@@ -666,7 +666,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -751,7 +751,7 @@ class SLM25DController(ImConWidgetController):
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
@@ -824,7 +824,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -970,7 +970,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
@@ -1105,7 +1105,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
-        self.show_images_grid(images)
+        # self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -1182,7 +1182,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
             #self._widget.start25D.setEnabled(True)
-            self.show_images_grid(images)
+            # self.show_images_grid(images)
             
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 

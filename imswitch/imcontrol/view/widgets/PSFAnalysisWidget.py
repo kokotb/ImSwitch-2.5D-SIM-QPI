@@ -646,7 +646,7 @@ class PSFWindowRecord(QMainWindow):
         self.button_group.addButton(self.checkboxRecordGreen)
         self.button_group.addButton(self.checkboxRecordBlue)
 
-        self.button_group.buttonClicked.connect(self.selectChannel)
+        # self.button_group.buttonClicked.connect(self.selectChannel)
 
         self.openDialog.clicked.connect(self.loadPath)
         self.LoadDialog.clicked.connect(self.loadPathLoad)
@@ -811,8 +811,14 @@ class PSFWindowRecord(QMainWindow):
         
         self.updatelines()
 
-    def selectChannel(self):
-        pass
+    # def selectChannel(self):
+    #     if self.checkboxRecordRed.isChecked():
+    #         self.PSFColorSelected = "Red"
+    #     if self.checkboxRecordGreen.isChecked():
+    #         self.PSFColorSelected = "Green"
+    #     if self.checkboxRecordBlue.isChecked():
+    #         self.PSFColorSelected = "Blue"
+    #     print(self.PSFColorSelected + " color selected for PSF stack")
 
     def updatelines(self):
         shape = np.shape(self.PSFstack)
