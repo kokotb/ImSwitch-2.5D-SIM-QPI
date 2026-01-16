@@ -621,9 +621,6 @@ class PSFWindowRecord(QMainWindow):
 
         self.LoadImages.clicked.connect(self.displayStackOfImages)
 
-
-
-        
         self.checkboxRecordRed = QRadioButton('Red')
         self.checkboxRecordRed.setChecked(True)
         self.checkboxRecordGreen = QRadioButton('Green')
