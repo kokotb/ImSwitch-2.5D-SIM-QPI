@@ -125,7 +125,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.loadSIMSettings)
         self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
         self._commChannel.sig25DAcqToggled.connect(self.start25D)
-        # self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
+        self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
         self._commChannel.sigStart25D.connect(self.start25D)
         self._commChannel.sigRecordPSFStack.connect(self.recordPSFStackSetFlag)
 
