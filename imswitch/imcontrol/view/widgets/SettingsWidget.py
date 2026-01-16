@@ -274,7 +274,7 @@ class fovCorrection(QtWidgets.QLabel):
     def __init__(self, npImage, parent=None):
         super().__init__(parent)
 
-        self._drawCross = False
+        self._drawCross = True
         self.parentLabel = None
         self.fullPoint = None
         self.displayW = 450     # 600x600
