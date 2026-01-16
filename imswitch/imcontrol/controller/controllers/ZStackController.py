@@ -39,7 +39,7 @@ class ZStackController(ImConWidgetController):
             self._widget.checkbox_zStack.blockSignals(False)
 
 
-    def runZStackToggle(self, state):
+    def runZStackToggle(self, state): #Toggle enabling/disabling options when the 'Run Z Stack' checkbox is clicked.
         if state == 0:
             self._widget.zStepDistance_textedit.setEnabled(False)
             self._widget.totalZ_textedit.setEnabled(False)
@@ -52,10 +52,6 @@ class ZStackController(ImConWidgetController):
             self._widget.checkbox_zStackCenter.setEnabled(True)
             self._widget.zStackScanDir.setEnabled(True)
 
-
-
-
-
     def calcZStepArray(self): 
         try: 
             stepDist = float(self._widget.zStepDistance_textedit.text())
@@ -67,7 +63,7 @@ class ZStackController(ImConWidgetController):
             return
         
         zScanDir = self._widget.zStackScanDir.currentText()
-        currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position'])
+        currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position']) #CTFUTURE The value this pulls from is updated with signal. If a problem, create specific variable in CommChannel.
         centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
 
         if zScanDir == 'Up':

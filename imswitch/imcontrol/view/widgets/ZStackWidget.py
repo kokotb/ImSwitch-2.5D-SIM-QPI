@@ -25,10 +25,10 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit = QLineEdit("")
         self.zStepDistance_textedit._name = 'Step Size'
         self.zStepDistance_textedit._type = 'str'
-        self.validator = QDoubleValidator(0.1, 20.0, 3)
+        self.validator = QDoubleValidator(0.1, 20.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.zStepDistance_textedit.setValidator(self.validator)
-        self.zStepDistance_textedit.setToolTip('Size between steps in microns. 0.1< Value <20.0') 
+        self.zStepDistance_textedit.setToolTip('Size between steps in microns. 0.1 < Value < 20.0') 
         self.zStepDistance_textedit.setEnabled(False)
         self.zStepDistance_textedit.setFixedWidth(50)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
@@ -43,7 +43,7 @@ class ZStackWidget(NapariHybridWidget):
         self.validator = QDoubleValidator(0.2, 450.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.totalZ_textedit.setValidator(self.validator)
-        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only whole steps calculated. If "Center" is selected, "Total Z" will force itself to an even number.')  
+        self.totalZ_textedit.setToolTip('Total distance covered in Z. Only whole steps calculated. If "Center" is selected, "Total Z" will force itself to create an odd number of steps.')  
         self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z /um", value))
         self.totalZ_textedit.setText("")
         self.totalZ_textedit.setFixedWidth(50)
@@ -133,7 +133,7 @@ class ZStackWidget(NapariHybridWidget):
             self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
 
     def initZStackInfo(self):
-        self.zStepDistance_textedit.setText("0.123")
+        self.zStepDistance_textedit.setText("0.1")
         self.totalZ_textedit.setText("10.0")
         self.zOffset_textedit.setText("0")
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", '0')
