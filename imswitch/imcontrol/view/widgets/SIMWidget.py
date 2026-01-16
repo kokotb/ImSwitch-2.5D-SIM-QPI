@@ -102,7 +102,7 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.scale_bar.visible = True
             
         else:
-            self.sortScatter()
+            # self.sortScatter()
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
@@ -135,13 +135,13 @@ class SIMWidget(NapariHybridWidget):
         self.viewer.layers.move_multiple(sortingKey)
 
 
-    def sortScatter(self):
-        layerNames = []
-        for layerObj in self.viewer.layers:
-            layerNames.append(layerObj.name)
-        scatterIndex = next((i for i, s in enumerate(layerNames) if 'Scatter' in s), None)
-        if scatterIndex != 0:
-            self.viewer.layers.move(scatterIndex, 0)
+    # def sortScatter(self):
+    #     layerNames = []
+    #     for layerObj in self.viewer.layers:
+    #         layerNames.append(layerObj.name)
+    #     scatterIndex = next((i for i, s in enumerate(layerNames) if 'Scatter' in s), None)
+    #     if scatterIndex != 0:
+    #         self.viewer.layers.move(scatterIndex, 0)
 
     def contrastReconFunc(self):
             

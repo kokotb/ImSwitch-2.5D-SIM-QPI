@@ -83,13 +83,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 2.0,
+        "Gain": 15.0,
         "Gamma": 1.0,
         "ExposureTime": 19000.0
       },
       "ROI":{  
-        "OffsetX": 3000,
-        "OffsetY": 1500,
+        "OffsetX": 3288,
+        "OffsetY": 1476,
         "Width": 1024,
         "Height": 1024
       } 
@@ -107,13 +107,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 5.0,     
+        "Gain": 9.0,     
         "Gamma": 1.0,
         "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 2808,
-        "OffsetY": 1800,
+        "OffsetX": 2648,
+        "OffsetY": 1904,
         "Width": 1024,
         "Height": 1024
       }
@@ -132,14 +132,14 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 15.0,
+          "Gain": 21.0,
           "Gamma": 1.00
           ,
           "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 2752,
-          "OffsetY": 1900, 
+          "OffsetX": 3032,
+          "OffsetY": 1852, 
           "Width": 1024,
           "Height": 1024
         }
