@@ -222,6 +222,7 @@ class CommunicationChannel(SignalInterface):
         # self.currentPredZ = None
         # self.initZ = None
         # self.autofocusEnabled = False
+        self.thresholdForAutofocusAction = 0
         self.autofocusActive = False
         self.AFMaskLeft = None
         self.AFMaskRight = None

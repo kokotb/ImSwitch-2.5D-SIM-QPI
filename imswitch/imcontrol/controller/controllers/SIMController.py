@@ -1706,6 +1706,7 @@ class SIMController(ImConWidgetController):
         nextTime = time.monotonic()
         period = 0.5
         i = 0
+        
         while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
             # self._logger.info(f'Loop number: {i}')
             self.autofocusLoop()
@@ -1739,15 +1740,15 @@ class SIMController(ImConWidgetController):
             zDiff = self.AFManager.x_slp * scoreDiff
             # print(f'Z Difference: {zDiff}')
 
-            # if abs(zDiff) >= 0.01:
-            self.cumZDiff = self.cumZDiff + zDiff
-            currentZ = self.positioner._position['Z']
-            wantedZ = currentZ - zDiff
-            self.positioner.setPosition(wantedZ, 'Z')
-            self._commChannel.sigUpdateZPosition.emit('Z','Z')
-            # self._commChannel.offsetFromInitZ = self.cumZDiff
-            self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-            self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+            if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
+                self.cumZDiff = self.cumZDiff + zDiff
+                currentZ = self.positioner._position['Z']
+                wantedZ = currentZ - zDiff
+                self.positioner.setPosition(wantedZ, 'Z')
+                self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                # self._commChannel.offsetFromInitZ = self.cumZDiff
+                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
+                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
                 
                 
             self.AFScores = []

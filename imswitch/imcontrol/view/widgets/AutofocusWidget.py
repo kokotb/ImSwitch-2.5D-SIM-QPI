@@ -205,11 +205,19 @@ class SetAFWindow(QMainWindow):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numAvgTextEdit.setValidator(self.validator)
 
+        self.thresholdLabel = QLabel("Threshold (/um)")
+        self.thresholdTextEdit = QtWidgets.QLineEdit('0.0')
+        self.validator = QDoubleValidator(0.0, 1.0, 1)
+        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.numAvgTextEdit.setValidator(self.validator)
+
 
         row = 0
           
         settings_layout.addWidget(self.numAvgLabel, row , 0)
         settings_layout.addWidget(self.numAvgTextEdit, row , 1)
+        settings_layout.addWidget(self.thresholdLabel, row + 1 , 0)
+        settings_layout.addWidget(self.thresholdTextEdit, row + 1 , 1)
 
         settings_box.setLayout(settings_layout)
 

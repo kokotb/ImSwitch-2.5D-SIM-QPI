@@ -32,6 +32,7 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
         self._widget.AFWindow.resetMask.clicked.connect(self.resetMask)
         self._widget.AFWindow.numAvgTextEdit.textEdited.connect(self.updateCommChannelValueAvgs)
+        self._widget.AFWindow.thresholdTextEdit.textEdited.connect(self.updateCommChannelValueThresh)
         self._manager = self._master.autofocusManager
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
@@ -47,6 +48,9 @@ class AutofocusController(ImConWidgetController):
 
     def updateCommChannelValueAvgs(self, loops):
         self._commChannel.numLoopsToAvg = loops
+
+    def updateCommChannelValueThresh(self, threshold):
+        self._commChannel.thresholdForAutofocusAction = threshold
 
 
     def initWidget(self):
@@ -114,7 +118,6 @@ class AutofocusController(ImConWidgetController):
         self._commChannel.sigSendZDrift.emit(0.0)
         score = self.getAndScoreOne()
         self._commChannel.initRegScore = score
-        # self._commChannel.autofocusActive = True
         self._logger.info(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
