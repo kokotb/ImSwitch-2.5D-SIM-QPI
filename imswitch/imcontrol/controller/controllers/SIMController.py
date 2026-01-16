@@ -973,9 +973,6 @@ class SIMController(ImConWidgetController):
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.zScanActive = False
-        if self._commChannel.autofocusActive == True:
-            self._commChannel.autofocusActive = False
-
 
     def startSIM(self):
 
@@ -1331,19 +1328,19 @@ class SIMController(ImConWidgetController):
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         while self.active25D:
             ####Autofocus
-            if (self._commChannel.initRegScore != None) and (self.firstLoop == True):
-                self.loopsToAvgAF = self._commChannel.numLoopsToAvg
+            self.loopsToAvgAF = self._commChannel.numLoopsToAvg
+            if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
                 self.AFMaskLeft = self._commChannel.AFMaskLeft
                 self.AFMaskRight = self._commChannel.AFMaskRight
                 self.autofocusThread()
                 self._logger.info('Autofocus active')
                 self._commChannel.autofocusActive = True
 
-            if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
-                self.autofocusThread()
-                self._commChannel.autofocusActive = True
-                self._logger.info('Autofocus active')
-            self.loopsToAvgAF = self._commChannel.numLoopsToAvg
+            # if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
+            #     self.autofocusThread()
+            #     self._commChannel.autofocusActive = True
+            #     self._logger.info('Autofocus active')
+            # self.loopsToAvgAF = self._commChannel.numLoopsToAvg
             ####
 
             self.roiIter = 0

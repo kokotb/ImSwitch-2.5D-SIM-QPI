@@ -179,7 +179,7 @@ class SetAFWindow(QMainWindow):
         self.instruction_label2.setWordWrap(True)  # Enable text wrapping 
         self.instruction_label2.setStyleSheet("color: gray;")
 
-        self.instruction_label3 = QLabel("3. Click the 'Run Cal. Curve' button to obtain calibration curve.\n\n-- If successful, calibration curve data will appear in the chart. Acceptable sensitivity is >7 pixels/um.")
+        self.instruction_label3 = QLabel("3. Click the 'Run Cal. Curve' button to obtain calibration curve.\n\n-- If successful, calibration curve data will appear in the chart. Acceptable sensitivity is >5 pixels/um.")
         self.instruction_label3.setWordWrap(True)  # Enable text wrapping
         self.instruction_label3.setStyleSheet("color: gray;")
 
