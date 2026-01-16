@@ -192,7 +192,7 @@ class LUCIDManager(DetectorManager):
 
     def stopAcquisitionForROIChange(self):
         self._running = False
-        self._camera.suspend_live()
+        self._camera.suspend_live(toPrint = False)
 
     @property
     def pixelSizeUm(self):
