@@ -109,8 +109,6 @@ class AutofocusController(ImConWidgetController):
         self._commChannel.sigSendZDrift.emit(0.0)
         score = self.getAndScoreOne()
         self._commChannel.initRegScore = score
-        # registeredZ = self.zPositioner.get_abs()
-        # self._commChannel.initZ = registeredZ
         self._logger.info(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 

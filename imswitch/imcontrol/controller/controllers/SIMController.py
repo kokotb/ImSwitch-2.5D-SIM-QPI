@@ -1173,8 +1173,7 @@ class SIMController(ImConWidgetController):
             
             tif.imwrite(filename, image, resolution = resolution_grab,
                         metadata = metadata_grab, imagej=True)
-            # tif.imwrite(filename, image, imagej=True)
-            # tif.imwrite(filename, image, metadata=ijmetadata)
+
             self._logger.debug("Saving file: " + filename[:25] + '...' + filename[-20:])
         except  Exception as e:
             self._logger.error(e)
@@ -1695,8 +1694,6 @@ class SIMController(ImConWidgetController):
                         self.snapshotSettingsSaved = True
                     
 
-            # processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
-
     def autofocusThread(self):
         self._commChannel.autofocusActive = True
         self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
@@ -1727,7 +1724,6 @@ class SIMController(ImConWidgetController):
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
             # print(f'Z Difference: {zDiff}')
-            print('AF execute')
 
             # if abs(zDiff) >= 0.01:
             self.cumZDiff = self.cumZDiff + zDiff

@@ -22,7 +22,7 @@ class AutofocusWidget(NapariHybridWidget):
         overallLayout = QtWidgets.QHBoxLayout()
         self.setLayout(overallLayout)
         self.led = LedIndicator(self)
-        self.openPreview = QtWidgets.QPushButton('Autofocus Preview')
+        self.openPreview = QtWidgets.QPushButton('Autofocus Settings')
         self.openPreview.setEnabled(False)
         self.registerPlane = QtWidgets.QPushButton('Register Plane')
         self.registerPlane.setEnabled(False)
@@ -126,7 +126,7 @@ class SetAFWindow(QMainWindow):
         self.maskWidth = QtWidgets.QSpinBox()
         self.maskWidth.setMinimum(10)
         self.maskWidth.setMaximum(250)
-        self.maskWidth.setValue(90)
+        self.maskWidth.setValue(150)
 
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(1)
@@ -189,9 +189,30 @@ class SetAFWindow(QMainWindow):
             instruction_layout.addWidget(name)
             name.order = i
 
+
         instruction_box.setLayout(instruction_layout)
-        textHorizLayout.addWidget(instruction_box)
-        # textHorizLayout.addStretch()
+        instructionsAndSettingsLayout = QtWidgets.QVBoxLayout()
+        instructionsAndSettingsLayout.addWidget(instruction_box)
+        # textHorizLayout.addWidget(instruction_box)
+
+
+        
+        settings_box = QGroupBox("Autofocus Settings")
+        settings_layout = QtWidgets.QVBoxLayout()
+
+        self.settings_label = QLabel("Test Dummy")
+        settings_layout.addWidget(self.settings_label)
+        settings_box.setLayout(settings_layout)
+
+        instructionsAndSettingsLayout.addWidget(settings_box)
+
+        textHorizLayout.addLayout(instructionsAndSettingsLayout)
+
+        
+
+
+
+
 
         self.embeddedImage = ClickableImage(blankImage, self)
         buttonAndTextLayout.addLayout(buttonLayout)
