@@ -250,7 +250,7 @@ class CommunicationChannel(SignalInterface):
         self.zStackList488 = getattr(self, "zStackList488", [])
         self.zStackList561 = getattr(self, "zStackList561", [])
         self.zStackList640 = getattr(self, "zStackList640", [])
-        allPSFStacks = [self.zStackList488, self.zStackList561, self.zStackList640]
+        allPSFStacks = {"Blue": self.zStackList488, "Green": self.zStackList561, "Red": self.zStackList640}
 
         return allPSFStacks
 
@@ -270,6 +270,8 @@ class CommunicationChannel(SignalInterface):
             if reset == True:
                 self.zStackList640 = []   
             self.zStackList640.append(stack)
+
+        #We should add scatter
 
     def storeRecAFStack(self, stack, reset, handle):
         if reset == True:
