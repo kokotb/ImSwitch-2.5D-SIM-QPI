@@ -5,7 +5,7 @@ from pyqtgraph.parametertree import ParameterTree
 from imswitch.imcontrol.view import guitools
 from imswitch.imcommon.model.shortcut import shortcut
 from imswitch.imcontrol.view.widgets.basewidgets import NapariHybridWidget
-from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtGui import QIntValidator, QDoubleValidator, QFont
 from PyQt5.QtCore import QLocale
 import cv2
 import time
@@ -39,9 +39,9 @@ class SIMWidget(NapariHybridWidget):
         # Side TabView
         # self.tabView = QTabWidget()
         # self.layout.addWidget(self.tabView, 0)
-        
-        self.experiment_tab = self.create_experiment_tab()
         self.layer_control_tab = self.create_layer_control_tab()
+        self.experiment_tab = self.create_experiment_tab()
+
 
         self.layout.addLayout(self.experiment_tab)
 
@@ -52,7 +52,7 @@ class SIMWidget(NapariHybridWidget):
 
         # horizLine = QVBoxLayout(self.myframe)
         # layersContrastBoxed = QVBoxLayout()
-        self.layout.addWidget(self.myframe)
+        # self.layout.addWidget(self.myframe)
 
 
 
@@ -60,7 +60,7 @@ class SIMWidget(NapariHybridWidget):
 
 
 
-        self.layout.addLayout(self.layer_control_tab)
+        # self.layout.addLayout(self.layer_control_tab)
         # self.tabView.addTab(self.experiment_tab, "Experiment")
         # self.tabView.addTab(self.layer_control_tab, "Layer Control")
 
@@ -250,6 +250,7 @@ class SIMWidget(NapariHybridWidget):
         # tab = QWidget()
         parentLayout = QVBoxLayout()
         self.hideShowAllLayers = QPushButton("Hide/Show All Layers")
+        self.hideShowAllLayers.setFixedWidth(200)
 
         #Layer contrast buttons grouped together
         self.contrastLabel = QtWidgets.QLabel('Layer Contrasts')
@@ -360,7 +361,7 @@ class SIMWidget(NapariHybridWidget):
 
     def create_experiment_tab(self):
         # tab = QWidget()
-        wholeTabVertLayout = QVBoxLayout()
+        # wholeTabVertLayout = QVBoxLayout()
         tabBottomVertLayout1 = QVBoxLayout()
         tabBottomVertLayout2 = QVBoxLayout()
         tabBottomHorLayout = QHBoxLayout()
@@ -401,6 +402,19 @@ class SIMWidget(NapariHybridWidget):
         # checkbox_layout.addWidget(self.scatterCamEnable)
         # checkbox_layout.addWidget(self.checkbox_logging)
         # checkbox_layout.addWidget(self.checkbox_tilepreview)
+
+        self.recAreaLabel = QLabel("Recording Settings")
+        self.recAreaLabel.setAlignment(QtCore.Qt.AlignCenter)
+        font = QFont()
+        font.setPointSize(12)   
+        font.setBold(True)
+        self.recAreaLabel.setFont(font)
+
+
+        tabBottomVertLayout1.addWidget(self.recAreaLabel)
+
+
+
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
@@ -445,20 +459,51 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.path_label, row+2, 0)
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
         parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
+
+
         tabBottomVertLayout1.addLayout(parameters2_layout)
+        tabBottomVertLayout1.addStretch(1)
         
         # FIXME: delete after development
         # self.start_button_test = QPushButton("Test_long-text-test")
         # button_layout_test = QtWidgets.QGridLayout()
         # button_layout_test.addWidget(self.start_button_test,0,0)
         # tabBottomVertLayout2.addLayout(button_layout_test)
+
+        self.SIMAreaLabel = QLabel("SIM Settings")
+        self.SIMAreaLabel.setAlignment(QtCore.Qt.AlignCenter)
+        font = QFont()
+        font.setPointSize(12)   
+        font.setBold(True)
+        self.SIMAreaLabel.setFont(font)
+
+
+
+        tabBottomVertLayout2.addWidget(self.SIMAreaLabel)
         tabBottomVertLayout2.addLayout(button_layout)
         reconstruction_parameters_tab = self.create_reconstruction_parameters()
         tabBottomVertLayout2.addLayout(reconstruction_parameters_tab)
+        tabBottomVertLayout2.addStretch(1)
         
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.VLine)
+        separator2.setFrameShadow(QFrame.Sunken)
+
+
         tabBottomHorLayout.addLayout(tabBottomVertLayout2)
+        tabBottomHorLayout.addWidget(separator)
         tabBottomHorLayout.addLayout(tabBottomVertLayout1)
-        wholeTabVertLayout.addLayout(tabBottomHorLayout)
+        tabBottomHorLayout.addWidget(separator2)
+        tabBottomHorLayout.addLayout(self.layer_control_tab)
+
+        
+        
+
+        # wholeTabVertLayout.addLayout(tabBottomHorLayout)
 
         # self.startSIM_button.toggled.connect(self.sigSIMAcqToggled)
         # self.stop_button.toggled.connect(self._commChannel.sigStopSim.emit())
@@ -466,7 +511,7 @@ class SIMWidget(NapariHybridWidget):
 
 
         # tab.setLayout(wholeTabVertLayout)
-        return wholeTabVertLayout
+        return tabBottomHorLayout
     
     def toggleBoxes(self, state):
 
