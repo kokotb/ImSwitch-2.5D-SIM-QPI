@@ -42,7 +42,7 @@ class CamParamTree(ParameterTree):
                        'title': 'Save current parameters as mode'},
                       {'name': 'Delete mode', 'type': 'action',
                        'title': 'Remove current mode from list'},
-                      {'name': 'Sync Frame Size', 'type': 'bool', 'value': True}
+                      {'name': 'Sync Frame Size', 'type': 'bool', 'value': False}
                   ]}]
 
         detectorParamGroups = {}
