@@ -455,8 +455,9 @@ class SettingsController(ImConWidgetController):
                     newROI=framePar.param('New ROI'),
                     abortROI=framePar.param('Abort ROI'),
                     saveMode=framePar.param('Save mode'),
-                    deleteMode=framePar.param('Delete mode'),
-                    allDetectorsFrame=framePar.param('Update all detectors')
+                    deleteMode=framePar.param('Delete mode')
+                    ,
+                    allDetectorsFrame=framePar.param('Sync Frame Size')
                 )
 
                 params = self.allParams[detectorName]
@@ -789,7 +790,7 @@ class SettingsController(ImConWidgetController):
         """ Changes the current detector to the next detector. """
         self._widget.selectNextDetector()
 
-    def syncFrameParams(self, doAdjustFrame=True, doUpdateFrameActionButtons=True):
+    def syncFrameParams(self, doAdjustFrame=True, doUpdateFrameActionButtons=True): #These parameters update when selecting "Update All Detectors"
         currentParams = self.getCurrentParams()
         shouldSync = currentParams.allDetectorsFrame.value()
 
@@ -797,8 +798,8 @@ class SettingsController(ImConWidgetController):
             params.allDetectorsFrame.setValue(shouldSync)
             if shouldSync:
                 params.frameMode.setValue(currentParams.frameMode.value())
-                params.x0.setValue(currentParams.x0.value())
-                params.y0.setValue(currentParams.y0.value())
+                # params.x0.setValue(currentParams.x0.value())
+                # params.y0.setValue(currentParams.y0.value())
                 params.width.setValue(currentParams.width.value())
                 params.height.setValue(currentParams.height.value())
 

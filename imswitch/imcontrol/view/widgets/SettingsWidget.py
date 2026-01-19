@@ -42,7 +42,7 @@ class CamParamTree(ParameterTree):
                        'title': 'Save current parameters as mode'},
                       {'name': 'Delete mode', 'type': 'action',
                        'title': 'Remove current mode from list'},
-                      {'name': 'Update all detectors', 'type': 'bool', 'value': False}
+                      {'name': 'Sync Frame Size', 'type': 'bool', 'value': True}
                   ]}]
 
         detectorParamGroups = {}
@@ -156,7 +156,7 @@ class SettingsWidget(Widget):
         super().__init__(*args, **kwargs)
 
         # Graphical elements
-        detectorTitle = QtWidgets.QLabel('<h2><strong>Detector settings</strong></h2>')
+        detectorTitle = QtWidgets.QLabel('<h2><strong>Detector Settings</strong></h2>')
         detectorTitle.setTextFormat(QtCore.Qt.RichText)
         self.ROI = naparitools.VispyROIVisual(rect_color='yellow', handle_color='orange')
         self.stack = QtWidgets.QStackedWidget()
