@@ -200,17 +200,28 @@ class SLM25DController(ImConWidgetController):
 
 
     def retrieveDetectors(self):
+        self.detectorsDict = {}
         for detector in self._master.detectorsManager: #detector object list
             if detector[1]._DetectorManager__forAcquisition:
                 fullName = detector[0]
                 shortName = fullName[:5].replace(" ", "")
                 detector[1].handle = shortName
                 self.detectors.append(detector[1])
+        
+                if shortName == '488S':
+                    self.detectorsDict["Scatter"] = detector[1]
+                elif shortName == '488F':
+                    self.detectorsDict["Blue"] = detector[1]
+                elif shortName == '561F':
+                    self.detectorsDict["Green"] = detector[1]
+                elif shortName == '640F':
+                    self.detectorsDict["Red"] = detector[1]
+
         # !!! ask Cody if this is acceptable
-        try:
-            self.detectorsDict = {"Red": self.detectors[2], "Green": self.detectors[1], "Blue": self.detectors[0], "Scatter": self.detectors[3]}
-        except:
-            print("Could not create detectors Dictionary")
+        # try:
+        #     self.detectorsDict = {"Red": self.detectors[2], "Green": self.detectors[1], "Blue": self.detectors[0], "Scatter": self.detectors[3]}
+        # except:
+        #     print("Could not create detectors Dictionary")
 
 
     def beginAutoZernThread(self):

@@ -54,11 +54,11 @@ class PSFAnalysisController(ImConWidgetController):
 
                 # 2 = red,  1 = green,  0 = blue
                 if self._widget.loadingPopupRecord.checkboxRecordRed.isChecked():
-                    self.channelStack = np.array(image_stack[2])   
+                    self.channelStack = np.array(image_stack["Red"])
                 elif self._widget.loadingPopupRecord.checkboxRecordGreen.isChecked():
-                    self.channelStack = np.array(image_stack[1])
+                    self.channelStack = np.array(image_stack["Green"])
                 elif self._widget.loadingPopupRecord.checkboxRecordBlue.isChecked():
-                    self.channelStack = np.array(image_stack[0])
+                    self.channelStack = np.array(image_stack["Blue"])
 
                 self._widget.loadingPopupRecord.image_stack = np.rot90(self.channelStack, k=3, axes=(1, 2))
                 self._widget.loadingPopupRecord.imgZStack.setImage(self.channelStack[0], levels=(0,4095))
