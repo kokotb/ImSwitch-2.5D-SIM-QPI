@@ -359,8 +359,9 @@ class SLM25DController(ImConWidgetController):
         '''Only for right half of zern mask, MUST USE LIGHT POLARIZER!!!'''
 
         print('Aligning mask center process started')
+        submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
         self._master.arduinoManager.activate25DWriteOnly()
-        self._master.detectorsManager._subManagers["640 Fluor"].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].startAcquisition25D()
 
         self._widget.pars["AbsPosEditGamma"].blockSignals(True)
         self._widget.pars["AbsPosEditGamma"].setStyleSheet("border: 3px solid green;")
@@ -398,7 +399,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectCenter.setEnabled(True)
     
         self._master.arduinoManager.deactivateSLMWriteOnly()
-        self._master.detectorsManager._subManagers["640 Fluor"].stopAcquisition()
+        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].stopAcquisition()
 
         print('Aligning mask center process finished')
 
@@ -512,8 +513,9 @@ class SLM25DController(ImConWidgetController):
         '''Only for right half of zern mask, MUST USE LIGHT POLARIZER!!!'''
 
         print('autozern started')
+        submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
         self._master.arduinoManager.activate25DWriteOnly()
-        self._master.detectorsManager._subManagers["640 Fluor"].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].startAcquisition25D()
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
@@ -583,7 +585,7 @@ class SLM25DController(ImConWidgetController):
         # self._widget.stop_button.setChecked(False) # probably dont need this here
         # self.stop25D()    
         self._master.arduinoManager.deactivateSLMWriteOnly()
-        self._master.detectorsManager._subManagers["640 Fluor"].stopAcquisition()
+        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].stopAcquisition()
 
         self._commChannel.sigAutoZernikeFinished.emit()
 
@@ -1987,8 +1989,8 @@ class SLM25DController(ImConWidgetController):
         maskRight = self.phase_function_fast(gamma, psi, rhomatrixright) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 127, 0)
-        self.mask25dbinaryRight = np.where(maskRight >= 0, 127, 0)
+        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 255, 0)  #!!! back to 127
+        self.mask25dbinaryRight = np.where(maskRight >= 0, 255, 0)
         # maskbinary = maskbinary.astype(np.uint8)
         # maskbinary = maskbinary.transpose()
 
