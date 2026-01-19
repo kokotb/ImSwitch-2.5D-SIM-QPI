@@ -20,10 +20,10 @@ class SIMWidget(NapariHybridWidget):
     """ Widget containing sim interface. """
 
 
-    sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
-    sigPatternID = QtCore.Signal(int)  # (display pattern id)
-    sigStartSIM = QtCore.Signal()
-    sigStopSIM = QtCore.Signal()
+    # sigSIMMonitorChanged = QtCore.Signal(int)  # (monitor)
+    # sigPatternID = QtCore.Signal(int)  # (display pattern id)
+    sigStartSIM = QtCore.Signal() #Starts SIM from keyboard shortcut
+    sigStopSIM = QtCore.Signal() #Stops SIM from keyboard shortcut
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
     # sigTilingInfoChanged = QtCore.Signal(str, str, str)
@@ -375,13 +375,13 @@ class SIMWidget(NapariHybridWidget):
         self.stop_button.setEnabled(False)
         self.calibrateButton = QPushButton("Calibrate")
         self.saveOneSetButton = QPushButton("Snapshot")
-        button_layout = QtWidgets.QGridLayout()
-        button_layout.addWidget(self.startSIM_button,0,0,1,2)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(self.startSIM_button)
 
-        button_layout.addWidget(self.stop_button,0,2,1,2)
-        button_layout.addWidget(self.calibrateButton,1,0,1,2)
-        button_layout.addWidget(self.saveOneSetButton,1,2,1,2)
-        wholeTabVertLayout.addLayout(button_layout)
+        button_layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.calibrateButton)
+        # button_layout.addWidget(self.saveOneSetButton)
+        # wholeTabVertLayout.addLayout(button_layout)
     
         # Checkbox options
         self.checkbox_reconstruction = QCheckBox('Live Reconstruction')
@@ -393,6 +393,7 @@ class SIMWidget(NapariHybridWidget):
         # self.checkbox_logging = QCheckBox("Logging")
         # self.checkbox_tilepreview =  QCheckBox("Tile Preview")
         checkbox_layout = QtWidgets.QVBoxLayout()
+        checkbox_layout.addWidget(self.saveOneSetButton)
         checkbox_layout.addWidget(self.checkbox_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_reconstruction)
         checkbox_layout.addWidget(self.checkbox_record_raw)
@@ -403,15 +404,15 @@ class SIMWidget(NapariHybridWidget):
         tabBottomVertLayout1.addLayout(checkbox_layout)
         
         #RO selection on 4DD sLM
-        self.roSelectLayout = QtWidgets.QHBoxLayout()
-        self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
-        self.roSelectList = QtWidgets.QComboBox()
-        self.roSelectList._name = 'SLM Running Order'
-        self.roSelectList._type = 'combostr'
-        self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM Parameters',"SLM Running Order", value))
-        self.roSelectLayout.addWidget(self.roSelectLabel)
-        self.roSelectLayout.addWidget(self.roSelectList)
-        tabBottomVertLayout1.addLayout(self.roSelectLayout)
+        # self.roSelectLayout = QtWidgets.QHBoxLayout()
+        # self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
+        # self.roSelectList = QtWidgets.QComboBox()
+        # self.roSelectList._name = 'SLM Running Order'
+        # self.roSelectList._type = 'combostr'
+        # self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM Parameters',"SLM Running Order", value))
+        # self.roSelectLayout.addWidget(self.roSelectLabel)
+        # self.roSelectLayout.addWidget(self.roSelectList)
+        # tabBottomVertLayout1.addLayout(self.roSelectLayout)
 
 
 
@@ -451,6 +452,7 @@ class SIMWidget(NapariHybridWidget):
         # button_layout_test = QtWidgets.QGridLayout()
         # button_layout_test.addWidget(self.start_button_test,0,0)
         # tabBottomVertLayout2.addLayout(button_layout_test)
+        tabBottomVertLayout2.addLayout(button_layout)
         reconstruction_parameters_tab = self.create_reconstruction_parameters()
         tabBottomVertLayout2.addLayout(reconstruction_parameters_tab)
         
@@ -520,7 +522,7 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL1_textedit = QLineEdit("")
         self.ReconWL1_textedit._name = "ReconWL1"
         self.ReconWL1_textedit._type = "str"
-        # self.ReconWL1_textedit.setFixedWidth(75)
+        self.ReconWL1_label.setFixedWidth(150)
         self.validator = QIntValidator(100,999)
         self.ReconWL1_textedit.setValidator(self.validator)
 
@@ -529,6 +531,7 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL2_textedit._name = "ReconWL2"
         self.ReconWL2_textedit._type = "str"
         # self.ReconWL2_textedit.setFixedWidth(75)
+        self.ReconWL2_label.setFixedWidth(150)
         self.validator = QIntValidator(100,999)
         self.ReconWL2_textedit.setValidator(self.validator)
 
@@ -537,13 +540,13 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL3_textedit._name = "ReconWL3"
         self.ReconWL3_textedit._type = "str"
         self.validator = QIntValidator(100,999)
+        self.ReconWL3_label.setFixedWidth(150)
         self.ReconWL3_textedit.setValidator(self.validator)
 
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
         self.NA_textedit._name = "NA"
         self.NA_textedit._type = "str"
-        self.NA_textedit.setInputMask("B.9;0;_")
 
         self.pixelsize_label = QLabel("")
         self.pixelsize_textedit = QLineEdit("")
@@ -558,24 +561,29 @@ class SIMWidget(NapariHybridWidget):
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.alpha_textedit.setValidator(self.validator)
         self.alpha_textedit.setInputMask("[0].D;0;_")
+        self.alpha_label.setFixedWidth(150)
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
         self.beta_textedit._name = "Beta"
         self.beta_textedit._type = "str"
         self.beta_textedit.setInputMask("0.00;0;_")
+        self.beta_label.setFixedWidth(150)
+        
         
         self.w_label = QLabel("")
         self.w_textedit = QLineEdit("")
         self.w_textedit._name = "w"
         self.w_textedit._type = "str"
         self.w_textedit.setInputMask("0.00;0;_")
+        self.w_label.setFixedWidth(150)
 
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
         self.eta_textedit._name = "eta"
         self.eta_textedit._type = "str"
         self.eta_textedit.setInputMask("0.0;0;_")
+        self.eta_label.setFixedWidth(150)
 
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
         self.n_label = QLabel("")
@@ -587,6 +595,14 @@ class SIMWidget(NapariHybridWidget):
         self.magnification_textedit._name = "Magnification"
         self.magnification_textedit._type = "str"
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
+
+        
+        self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
+        self.roSelectLabel.setFixedWidth(150)
+        self.roSelectList = QtWidgets.QComboBox()
+        self.roSelectList._name = 'SLM Running Order'
+        self.roSelectList._type = 'combostr'
+        self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM Parameters',"SLM Running Order", value))
 
         
 
@@ -601,8 +617,10 @@ class SIMWidget(NapariHybridWidget):
         self.elementListSIM.append(self.eta_textedit)
         self.elementListSIM.append(self.n_textedit)
         self.elementListSIM.append(self.magnification_textedit)
-
         self.elementListSIM.append(self.roSelectList)
+
+
+        
 
         row_layout_1 = QHBoxLayout()
         row_layout_1.addWidget(self.ReconWL1_label)
@@ -634,6 +652,11 @@ class SIMWidget(NapariHybridWidget):
         row_layout_9.addWidget(self.eta_label)
         row_layout_9.addWidget(self.eta_textedit)
         # row_layout_10 = QHBoxLayout()
+
+        self.roSelectLayout = QtWidgets.QHBoxLayout()
+        self.roSelectLayout.addWidget(self.roSelectLabel)
+        self.roSelectLayout.addWidget(self.roSelectList)
+        
         # row_layout_10.addWidget(self.n_label)
         # row_layout_10.addWidget(self.n_textedit)
         # row_layout_11 = QHBoxLayout()
@@ -649,7 +672,7 @@ class SIMWidget(NapariHybridWidget):
         layout.addLayout(row_layout_7)
         layout.addLayout(row_layout_8)
         layout.addLayout(row_layout_9)
-        # layout.addLayout(row_layout_10)
+        layout.addLayout(self.roSelectLayout)
         # layout.addLayout(row_layout_11)
         
         

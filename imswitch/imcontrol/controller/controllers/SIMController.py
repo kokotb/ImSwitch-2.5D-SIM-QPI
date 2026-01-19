@@ -45,7 +45,7 @@ class SIMController(ImConWidgetController):
         #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
         self._widget.sigSIMParamChanged.connect(self.valueChanged)
         self._widget.sigUserDirInfoChanged.connect(self.valueChanged)
-        self._widget.sigROInfoChanged.connect(self.valueChanged)
+        self._widget.sigROInfoChanged.connect(self.valueChanged) #Updates RO info
 
         setupInfoDict = self.makeSetupInfoDict() # Pull SIM setup info into dict and also set on SIM widget.
 
