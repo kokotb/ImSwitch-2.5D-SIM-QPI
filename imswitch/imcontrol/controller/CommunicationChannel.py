@@ -4,6 +4,7 @@ import numpy as np
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import pythontools, APIExport, SharedAttributes
 from imswitch.imcommon.model import initLogger
+import time
 
 
 class CommunicationChannel(SignalInterface):
@@ -104,6 +105,8 @@ class CommunicationChannel(SignalInterface):
 
     #sigRequestScannersInScan = Signal()
     sigBeginAutoZern = Signal()
+
+    sigSet25dParVals = Signal(float, float)
 
     sigBeginAutoZernNew = Signal(object)
 
@@ -284,6 +287,8 @@ class CommunicationChannel(SignalInterface):
         self.simActive = active
         if self.simActive == False:
             self.sigSIMStopped.emit()
+            print("sleep started")
+
 
     def storeLoadedSettings(self, dict):
         self.loadedSettings = dict

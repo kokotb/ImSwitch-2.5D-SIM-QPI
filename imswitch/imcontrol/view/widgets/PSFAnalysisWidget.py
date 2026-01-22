@@ -598,6 +598,8 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.saveZstack, 5, 2)
         self.savePSFstack = QPushButton("Save PSFstack")
         self.ZstackLayout.addWidget(self.savePSFstack, 6, 2)
+        self.recordPSFdataset = QPushButton("Rec 25d Dataset")
+        self.ZstackLayout.addWidget(self.recordPSFdataset, 6, 3)
         self.messageForUser = QLabel("Please select settings for Z-stack in main window, then click the 'Record Stack' button in this window.")
 
         self.myframe = QFrame()
@@ -975,7 +977,14 @@ class PSFWindowRecord(QMainWindow):
         folderpath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
         self.folderPathLoad.setText(folderpath)
 
-
+    def savePSFfuncDataset(self, foldername):
+        PSFstackSavePath = os.path.join(self.folderPath.text(), foldername + 'PSF')
+        if not os.path.exists(PSFstackSavePath):
+            os.makedirs(PSFstackSavePath)
+        #saveImageName = self.saveImagesName.text() + ".tif"
+        for i in range (self.PSFstack.shape[0]):
+            saveImageName = f"f{i:04}_roi{0:03}_pos{0:04}_z{i:03}_640F_000h00m00s000ms.tif"
+            tif.imwrite(os.path.join(PSFstackSavePath, saveImageName), self.PSFstack[i])
 
     def savePSFfunc(self):
         PSFstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text() + 'PSF')

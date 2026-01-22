@@ -121,6 +121,7 @@ class SLM25DController(ImConWidgetController):
 
         self._commChannel.sigBeginAutoZern.connect(self.beginAutoZernThread)
         self._commChannel.sigBeginAutoZernNew.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
+        self._commChannel.sigSet25dParVals.connect(lambda gamma, psi: self.set25dParVals(gamma, psi))
         self._commChannel.sigBeginAlignMaskCenter.connect(lambda selected_frame: self.beginAlignMaskCenterThreadNew(selected_frame))
         
 
@@ -196,6 +197,23 @@ class SLM25DController(ImConWidgetController):
         self.maskscaleValue = int(value)
         print("Mask scale:", self.maskscaleValue)
         self.combineAndProject()
+
+
+    def set25dParVals(self, gamma, psi):
+        self._widget.pars["AbsPosEditGamma"].blockSignals(True)
+        self._widget.pars["AbsPosEditGamma"].setText(str(gamma))
+        self._widget.pars["AbsPosEditGamma"].blockSignals(False)
+
+        self._widget.pars["AbsPosEditPsi"].blockSignals(True)
+        self._widget.pars["AbsPosEditPsi"].setText(str(psi))
+        self._widget.pars["AbsPosEditPsi"].blockSignals(False)
+
+        self.updatePhaseMask()
+        timeinit = time.time()
+        timeelap = 0
+        while timeelap < 0.2:
+            time.sleep(0.004)
+            timeelap = time.time()-timeinit
 
 
 

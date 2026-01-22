@@ -58,13 +58,16 @@ class ImConMainView(QtWidgets.QMainWindow):
         rightDockInfos = {
             'Laser': _DockInfo(name='Laser Control', yPosition=0),
             'Positioner': _DockInfo(name='Positioner', yPosition=1),
-            'Autofocus': _DockInfo(name='Autofocus', yPosition=2),
-            'ROI': _DockInfo(name = 'ROI List', yPosition = 3),
-            'Tiling': _DockInfo(name='Tiling', yPosition=3),
-            'Timing': _DockInfo(name='Timing', yPosition=4),
-            'ZStack': _DockInfo(name='Z-Stack', yPosition=5),
-            'InfoGathering': _DockInfo(name = 'Info', yPosition = 6),
-            'PSFAnalysis': _DockInfo(name = 'PSF', yPosition = 7)
+            'PSFAnalysis': _DockInfo(name = 'PSF', yPosition = 3),
+            'InfoGathering': _DockInfo(name = 'Info', yPosition = 4),
+            'ZStack': _DockInfo(name='Z-Stack', yPosition=5),         
+            'Tiling': _DockInfo(name='Tiling', yPosition=6),
+            'Timing': _DockInfo(name='Timing', yPosition=7),
+            'Autofocus': _DockInfo(name='Autofocus', yPosition=8),
+            'ROI': _DockInfo(name = 'ROI List', yPosition = 9)
+
+            
+
 
             
             
@@ -131,7 +134,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'Image' in self.docks:
             self.docks['Image'].setStretch(15, 1)
         if 'ZStack' in self.docks:
-            self.docks['ZStack'].setStretch(1, 0.5)
+            self.docks['ZStack'].setStretch(1, 10)
         if 'Positioner' in self.docks:
             self.docks['Positioner'].setStretch(1, 0.6)
         if 'Timing' in self.docks:
@@ -145,7 +148,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'PSFAnalysis' in self.docks:
             self.docks['PSFAnalysis'].setStretch(1, 0.1)
         if 'ROI' in self.docks:
-            self.docks['ROI'].setStretch(1, 2)
+            self.docks['ROI'].setStretch(1, 0.5)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 
