@@ -1991,8 +1991,8 @@ class SLM25DController(ImConWidgetController):
         maskRight = self.phase_function_fast(gamma, psi, rhomatrixright) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 255, 0)  #!!! back to 127
-        self.mask25dbinaryRight = np.where(maskRight >= 0, 255, 0)
+        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 127, 0)  #!!! back to 127
+        self.mask25dbinaryRight = np.where(maskRight >= 0, 127, 0)
         # maskbinary = maskbinary.astype(np.uint8)
         # maskbinary = maskbinary.transpose()
 

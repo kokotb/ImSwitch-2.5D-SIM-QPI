@@ -15,10 +15,10 @@
   "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 400,
-  "LeftCenterY": 520, 
-  "RightCenterX":1380,
-  "RightCenterY": 500,
+  "LeftCenterX": 480,
+  "LeftCenterY": 540,
+  "RightCenterX":1440,
+  "RightCenterY": 540,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
@@ -36,14 +36,14 @@
   "RightPiston": 0.0,
   "RightYtilt": 0.0,
   "RightXtilt": 0.0,
-  "RightObliqueAstigmatism": -0.3,
+  "RightObliqueAstigmatism": 0.0,
   "RightDefocus": 0.0,
-  "RightVerticalAstigmatism": 0.6,
-  "RightVerticalTrefoil": -0.1,
-  "RightVerticalComa": -0.1,
-  "RightHorizontalComa": 0.2,
-  "RightHorizontalTrefoil": 0.4,
-  "RightSpherical": 0.15
+  "RightVerticalAstigmatism": 0.0,
+  "RightVerticalTrefoil": 0.0,
+  "RightVerticalComa": 0.0,
+  "RightHorizontalComa": 0.0,
+  "RightHorizontalTrefoil": 0.0,
+  "RightSpherical": 0.0
 
 
 },
@@ -137,8 +137,8 @@
           "ExposureTime": 18000.0
         },
         "ROI":{
-          "OffsetX": 2450,
-          "OffsetY": 2050, 
+          "OffsetX": 2250,
+          "OffsetY": 1850, 
           "Width": 1024,
           "Height": 1024
         }

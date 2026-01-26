@@ -168,7 +168,8 @@ class LUCIDManager(DetectorManager):
         if self._running:
             self._running = False
             self._camSet = False
-            self._camera.suspend_live()
+            self._camera.suspend_live(toPrint = True) #!!!! ask cody: this is just temporary fix
+
 
     def startAcquisitionSIM(self, num_buffers):
         if not self._running:
