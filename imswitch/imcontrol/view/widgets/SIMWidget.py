@@ -33,7 +33,6 @@ class SIMWidget(NapariHybridWidget):
 
         self.mainLayout = QtWidgets.QVBoxLayout() #Top most layout that the tabs are set into
 
-        # Side TabView
         self.tabView = QTabWidget() #Widget containing all tabs
         self.tabSIMRec = QWidget() #The SIM/Rec widget that will become 1 of the tabs
         self.tabLayers = QWidget() #The Layers widget that will become 1 of the tabs
@@ -53,18 +52,20 @@ class SIMWidget(NapariHybridWidget):
         self.params = [
             "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
         ]
+
         # Set layer properties
         self.layer = None
         self.laserColormaps = {'488F':'cyan','561F':'green','640F':'red', 'Scatter': 'grayclip'}
-        self.micronsPerPixel = [.1233,.1233]
+        self.micronsPerPixel = [.1233,.1233] #Microns in sample plane captured by one camera pixel.
+
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
 
-    def askYesNoQuestion(self):
-        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
-        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis. Would you like to countiniue?',
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+    # def askYesNoQuestion(self): #CTNote: Was this supposed to be in SIMWidget or just 25DWidget
+    #     """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+    #     result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis. Would you like to countiniue?',
+    #                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+    #     return result == QtWidgets.QMessageBox.Yes
 
         
     # def getImage(self): #CTNote: Do not see any refs to this anywhere
@@ -101,8 +102,6 @@ class SIMWidget(NapariHybridWidget):
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
             
-
-
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:4]]
@@ -210,9 +209,6 @@ class SIMWidget(NapariHybridWidget):
         else:
             for name in layerList:
                 self.viewer.layers[name].visible = True
-    
-
-    
 
     # def colormapToggleReconFunc(self, channel):
     #     # self.laserColormaps
@@ -232,14 +228,14 @@ class SIMWidget(NapariHybridWidget):
     def createLayersTab(self):
 
         # tab = QWidget()
-        parentLayout = QVBoxLayout()
+        parentLayout1 = QVBoxLayout()
+        parentLayout2 = QHBoxLayout()
         self.hideShowAllLayers = QPushButton("Hide/Show All Layers")
-        self.hideShowAllLayers.setFixedWidth(200)
+        # self.hideShowAllLayers.setFixedWidth(200)
 
         #Layer contrast buttons grouped together
         self.contrastLabel = QtWidgets.QLabel('Layer Contrasts')
         self.contrastLabel.setAlignment(QtCore.Qt.AlignCenter)
-        # self.contrastLabel.setStyleSheet("padding-bottom :5px;") 
         self.contrastRecon = QPushButton("Recons Once")
         self.contrastFSRaw = QPushButton("Raws Full Scale")
         self.contrastRaw = QPushButton("Raws Once")
@@ -253,6 +249,7 @@ class SIMWidget(NapariHybridWidget):
         layersContrast.addWidget(self.contrastFSRaw)
         layersContrast.addWidget(self.contrastRaw)
         layersContrastBoxed = QVBoxLayout()
+        layersContrastBoxed.addWidget(self.contrastLabel)
         layersContrastBoxed.addWidget(self.myframe)
 
         # Hide/show buttons boxed by channel.
@@ -272,6 +269,7 @@ class SIMWidget(NapariHybridWidget):
         layersHideShowChannel.addWidget(self.hideShow640FLayers)
         layersHideShowChannel.addWidget(self.hideShowScatterLayers)
         layersHideShowChannelBoxed = QVBoxLayout()
+        layersHideShowChannelBoxed.addWidget(self.hideShowChanLabel)
         layersHideShowChannelBoxed.addWidget(self.myframe)
 
         
@@ -290,27 +288,24 @@ class SIMWidget(NapariHybridWidget):
         layersHideShowType.addWidget(self.hideShowWFLayers)
         layersHideShowType.addWidget(self.hideShowRawLayers)
         layersHideShowTypeBoxed = QVBoxLayout()
+        layersHideShowTypeBoxed.addWidget(self.hideShowTypeLabel)
         layersHideShowTypeBoxed.addWidget(self.myframe)
 
 
         #Add elements in order you want them to appear
-        parentLayout.addWidget(self.contrastLabel)
-        parentLayout.addLayout(layersContrastBoxed)
-        # parentLayout.addWidget(self.colormapToggleLabel)
-        # parentLayout.addLayout(layersColormapToggleBoxed)
-        parentLayout.addWidget(self.hideShowChanLabel)
-        parentLayout.addLayout(layersHideShowChannelBoxed)
-        parentLayout.addWidget(self.hideShowTypeLabel)
-        parentLayout.addLayout(layersHideShowTypeBoxed) 
-        parentLayout.addWidget(self.hideShowAllLayers)
+        parentLayout2.addLayout(layersContrastBoxed)
+        parentLayout2.addLayout(layersHideShowChannelBoxed)
+
+        parentLayout2.addLayout(layersHideShowTypeBoxed) 
+        parentLayout1.addLayout(parentLayout2)
+        parentLayout1.addWidget(self.hideShowAllLayers)
+        parentLayout1.addStretch(1)
+
 
         #Connect all buttons to functions. Lambda syntax used when a argument is needed to be passed with the function.
         self.contrastRecon.clicked.connect(self.contrastReconFunc)
         self.contrastFSRaw.clicked.connect(self.contrastRawsFSFunc)
         self.contrastRaw.clicked.connect(self.contrastRawsFunc)
-        # self.colormapToggle488.clicked.connect(lambda: self.colormapToggleReconFunc('488 Recon'))
-        # self.colormapToggle561.clicked.connect(lambda: self.colormapToggleReconFunc('561 Recon'))
-        # self.colormapToggle640.clicked.connect(lambda: self.colormapToggleReconFunc('640 Recon'))
         self.hideShowReconLayers.clicked.connect(lambda: self.hideShowLayerByType('Recon'))
         self.hideShowWFLayers.clicked.connect(lambda: self.hideShowLayerByType('WF'))
         self.hideShowRawLayers.clicked.connect(lambda: self.hideShowLayerByType('Raw'))
@@ -320,11 +315,8 @@ class SIMWidget(NapariHybridWidget):
         self.hideShowScatterLayers.clicked.connect(lambda: self.hideShowLayerByChannel('Scatter'))
         self.hideShowAllLayers.clicked.connect(self.hideShowAllLayersFunc)
 
-        # tab.setLayout(parentLayout)
-        return parentLayout
-
-
-
+        # tab.setLayout(parentLayout2)
+        return parentLayout1
 
     def createSIMRecTab(self):
         # tab = QWidget()
@@ -380,23 +372,7 @@ class SIMWidget(NapariHybridWidget):
 
         tabBottomVertLayout1.addWidget(self.recAreaLabel)
 
-
-
         tabBottomVertLayout1.addLayout(checkbox_layout)
-        
-        #RO selection on 4DD sLM
-        # self.roSelectLayout = QtWidgets.QHBoxLayout()
-        # self.roSelectLabel = QtWidgets.QLabel('Running Orders:')
-        # self.roSelectList = QtWidgets.QComboBox()
-        # self.roSelectList._name = 'SLM Running Order'
-        # self.roSelectList._type = 'combostr'
-        # self.roSelectList.currentTextChanged.connect(lambda value: self.sigROInfoChanged.emit('SIM Parameters',"SLM Running Order", value))
-        # self.roSelectLayout.addWidget(self.roSelectLabel)
-        # self.roSelectLayout.addWidget(self.roSelectList)
-        # tabBottomVertLayout1.addLayout(self.roSelectLayout)
-
-
-
 
         # Save folder
         parameters2_layout = QtWidgets.QGridLayout()
@@ -430,12 +406,6 @@ class SIMWidget(NapariHybridWidget):
 
         tabBottomVertLayout1.addLayout(parameters2_layout)
         tabBottomVertLayout1.addStretch(1)
-        
-        # FIXME: delete after development
-        # self.start_button_test = QPushButton("Test_long-text-test")
-        # button_layout_test = QtWidgets.QGridLayout()
-        # button_layout_test.addWidget(self.start_button_test,0,0)
-        # tabBottomVertLayout2.addLayout(button_layout_test)
 
         self.SIMAreaLabel = QLabel("SIM Settings")
         self.SIMAreaLabel.setAlignment(QtCore.Qt.AlignCenter)
@@ -443,8 +413,6 @@ class SIMWidget(NapariHybridWidget):
         font.setPointSize(12)   
         font.setBold(True)
         self.SIMAreaLabel.setFont(font)
-
-
 
         tabBottomVertLayout2.addWidget(self.SIMAreaLabel)
         tabBottomVertLayout2.addLayout(button_layout)
@@ -465,18 +433,6 @@ class SIMWidget(NapariHybridWidget):
         tabBottomHorLayout.addWidget(separator)
         tabBottomHorLayout.addLayout(tabBottomVertLayout1)
 
-
-        
-        
-
-        # wholeTabVertLayout.addLayout(tabBottomHorLayout)
-
-        # self.startSIM_button.toggled.connect(self.sigSIMAcqToggled)
-        # self.stop_button.toggled.connect(self._commChannel.sigStopSim.emit())
-        
-
-
-        # tab.setLayout(wholeTabVertLayout)
         return tabBottomHorLayout
     
     def toggleBoxes(self, state):
@@ -487,7 +443,6 @@ class SIMWidget(NapariHybridWidget):
         self.openFolderButton.setEnabled(not state)
         self.roSelectList.setEnabled(not state)
 
-    
     def addROName(self, roIndex, roName):
         self.roSelectList.addItem(f'{roName}', roIndex)
 
@@ -520,8 +475,6 @@ class SIMWidget(NapariHybridWidget):
         self.expt_edit.setPlaceholderText('Experiment Name')
         self.sigUserDirInfoChanged.emit('User Dir Info','User Name',"username")
         self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',"exptname")
-
-
 
     def create_reconstruction_parameters(self):
         # tab = QWidget() #BKEDIT
@@ -693,7 +646,7 @@ class SIMWidget(NapariHybridWidget):
         return layout
 
         
-    def setSIMWidgetFromConfig(self,setupInfoDict):
+    def setSIMWidgetFromConfig(self,setupInfoDict): # Can probably make this general, not with explicit indices.
 
 
         self.ReconWL1_label.setText(self.params[0])
