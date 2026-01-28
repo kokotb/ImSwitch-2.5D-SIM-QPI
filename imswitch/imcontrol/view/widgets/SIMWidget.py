@@ -26,43 +26,29 @@ class SIMWidget(NapariHybridWidget):
     sigStopSIM = QtCore.Signal() #Stops SIM from keyboard shortcut
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
-    # sigTilingInfoChanged = QtCore.Signal(str, str, str)
     sigROInfoChanged = QtCore.Signal(str, str, str)
     
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
 
-        # Main GUI 
-        self.layout = QtWidgets.QVBoxLayout()
-        self.setLayout(self.layout)
+        self.mainLayout = QtWidgets.QVBoxLayout() #Top most layout that the tabs are set into
 
         # Side TabView
-        # self.tabView = QTabWidget()
-        # self.layout.addWidget(self.tabView, 0)
-        self.layer_control_tab = self.create_layer_control_tab()
-        self.experiment_tab = self.create_experiment_tab()
+        self.tabView = QTabWidget() #Widget containing all tabs
+        self.tabSIMRec = QWidget() #The SIM/Rec widget that will become 1 of the tabs
+        self.tabLayers = QWidget() #The Layers widget that will become 1 of the tabs
 
+        self.tabLayersLayout = self.createLayersTab() #Assemble the tab elements in another function and return the layout object.
+        self.tabSIMRecLayout = self.createSIMRecTab()
+         
+        self.tabSIMRec.setLayout(self.tabSIMRecLayout) #Set the assembled layout into the tab.
+        self.tabLayers.setLayout(self.tabLayersLayout)
 
-        self.layout.addLayout(self.experiment_tab)
+        self.tabView.addTab(self.tabSIMRec, "SIM / Rec") #Add the individual tab to the overall tab widget.
+        self.tabView.addTab(self.tabLayers, "Layers")
 
-        self.myframe = QFrame()
-        self.myframe.setFrameShape(QFrame.HLine)
-        self.myframe.setFrameShadow(QFrame.Plain)
-        self.myframe.setLineWidth(50)
-
-        # horizLine = QVBoxLayout(self.myframe)
-        # layersContrastBoxed = QVBoxLayout()
-        # self.layout.addWidget(self.myframe)
-
-
-
-
-
-
-
-        # self.layout.addLayout(self.layer_control_tab)
-        # self.tabView.addTab(self.experiment_tab, "Experiment")
-        # self.tabView.addTab(self.layer_control_tab, "Layer Control")
+        self.mainLayout.addWidget(self.tabView) #Set the overall tab widget to a layout.
+        self.setLayout(self.mainLayout) #Set the top level layout into the 'Napari Hybrid Widget'
 
         self.params = [
             "ReconWL1", "ReconWL2", "ReconWL3","NA", "Pixelsize", "Alpha", "Beta", "w","eta","n","Magnification"
@@ -74,11 +60,19 @@ class SIMWidget(NapariHybridWidget):
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
 
+    def askYesNoQuestion(self):
+        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis. Would you like to countiniue?',
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        return result == QtWidgets.QMessageBox.Yes
+
         
-    def getImage(self):
-        if self.layer is not None:
-            return self.img.image
-        
+    # def getImage(self): #CTNote: Do not see any refs to this anywhere
+    #     if self.layer is not None:
+    #         return self.img.image
+
+
+###Functions after here are for the layer contrasts section        
     def setSIMImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
             colormap = self.laserColormaps[name[:4]]
@@ -107,11 +101,7 @@ class SIMWidget(NapariHybridWidget):
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
             
-    def askYesNoQuestion(self):
-        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
-        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis. Would you like to countiniue?',
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+
 
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
@@ -134,14 +124,27 @@ class SIMWidget(NapariHybridWidget):
         sortingKey.reverse()
         self.viewer.layers.move_multiple(sortingKey)
 
+    def putNameLabel(self, im, name, scale):
+        imgstack = []
+        
+        if len(im) != 9:
+            im = [im]
+        for i in range(len(im)):
+            labelledIm = cv2.putText(
+                im[i],
+                name,
+                org=(int(80*scale), int(80*scale)),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=2*scale,
+                color=(2100),              
+                thickness=int(4*scale),
+                lineType=cv2.LINE_AA
+            )
+            imgstack.append(labelledIm)
+        
+        imgstack = np.stack(imgstack, axis=0)
 
-    # def sortScatter(self):
-    #     layerNames = []
-    #     for layerObj in self.viewer.layers:
-    #         layerNames.append(layerObj.name)
-    #     scatterIndex = next((i for i, s in enumerate(layerNames) if 'Scatter' in s), None)
-    #     if scatterIndex != 0:
-    #         self.viewer.layers.move(scatterIndex, 0)
+        return imgstack
 
     def contrastReconFunc(self):
             
@@ -154,20 +157,6 @@ class SIMWidget(NapariHybridWidget):
             # initMaxLimit = np.max(self.viewer.layers[name].data_raw)
             percentile9999 = np.percentile(self.viewer.layers[name].data_raw[0][82:], 99.99) #This restricts the data to calculate correct brightness level, ignoring the first X rows for the label.
             self.viewer.layers[name].contrast_limits = [0,percentile9999]
-
-    def colormapToggleReconFunc(self, channel):
-        # self.laserColormaps
-        layerList = self.getAllLayerNames()
-        reconLayerList = [x for x in layerList if 'Recon' in x]
-        if channel not in reconLayerList:
-            return
-        currentColor = self.viewer.layers[channel].colormap.name
-        if currentColor == 'grayclip':
-            self.viewer.layers[channel].colormap = self.laserColormaps[channel[:4]]
-        else:
-            self.viewer.layers[channel].colormap = 'grayclip'
-
-
 
 
     def contrastRawsFSFunc(self):
@@ -183,14 +172,6 @@ class SIMWidget(NapariHybridWidget):
             initMaxLimit = np.max(self.viewer.layers[name].data_raw)
             self.viewer.layers[name].contrast_limits = [0,initMaxLimit]
 
-    def hideShowAllLayersFunc(self):
-        layerList = self.getAllLayerNames()
-        if True in [self.viewer.layers[name].visible for name in layerList]:
-            for name in layerList:
-                self.viewer.layers[name].visible = False
-        else:
-            for name in layerList:
-                self.viewer.layers[name].visible = True
         
     def hideShowLayerByType(self, layerType):
         layerList = self.getAllLayerNames()
@@ -221,32 +202,35 @@ class SIMWidget(NapariHybridWidget):
             layerList.append(self.viewer.layers[i].name)
         return layerList
     
-    def putNameLabel(self, im, name, scale):
-        imgstack = []
-        
-        if len(im) != 9:
-            im = [im]
-        for i in range(len(im)):
-            labelledIm = cv2.putText(
-                im[i],
-                name,
-                org=(int(80*scale), int(80*scale)),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=2*scale,
-                color=(2100),              
-                thickness=int(4*scale),
-                lineType=cv2.LINE_AA
-            )
-            imgstack.append(labelledIm)
-        
-        imgstack = np.stack(imgstack, axis=0)
+    def hideShowAllLayersFunc(self):
+        layerList = self.getAllLayerNames()
+        if True in [self.viewer.layers[name].visible for name in layerList]:
+            for name in layerList:
+                self.viewer.layers[name].visible = False
+        else:
+            for name in layerList:
+                self.viewer.layers[name].visible = True
+    
 
-        return imgstack
+    
 
-    def create_layer_control_tab(self):
+    # def colormapToggleReconFunc(self, channel):
+    #     # self.laserColormaps
+    #     layerList = self.getAllLayerNames()
+    #     reconLayerList = [x for x in layerList if 'Recon' in x]
+    #     if channel not in reconLayerList:
+    #         return
+    #     currentColor = self.viewer.layers[channel].colormap.name
+    #     if currentColor == 'grayclip':
+    #         self.viewer.layers[channel].colormap = self.laserColormaps[channel[:4]]
+    #     else:
+    #         self.viewer.layers[channel].colormap = 'grayclip'
 
-        
-        
+###Functions above here are for the layer contrasts section  
+
+
+    def createLayersTab(self):
+
         # tab = QWidget()
         parentLayout = QVBoxLayout()
         self.hideShowAllLayers = QPushButton("Hide/Show All Layers")
@@ -270,23 +254,6 @@ class SIMWidget(NapariHybridWidget):
         layersContrast.addWidget(self.contrastRaw)
         layersContrastBoxed = QVBoxLayout()
         layersContrastBoxed.addWidget(self.myframe)
-
-        # Recon colormap toggle buttons boxed by channel.
-        # self.colormapToggleLabel = QtWidgets.QLabel('Toggle Recon Colormaps')
-        # self.colormapToggleLabel.setAlignment(QtCore.Qt.AlignCenter)
-        # self.colormapToggle488 = QPushButton("488")
-        # self.colormapToggle561 = QPushButton("561")
-        # self.colormapToggle640 = QPushButton("640")
-        # self.myframe = QFrame()
-        # self.myframe.setFrameShape(QFrame.StyledPanel)
-        # self.myframe.setFrameShadow(QFrame.Plain)
-        # self.myframe.setLineWidth(5)
-        # layersColormapToggle = QVBoxLayout(self.myframe)
-        # layersColormapToggle.addWidget(self.colormapToggle488)
-        # layersColormapToggle.addWidget(self.colormapToggle561)
-        # layersColormapToggle.addWidget(self.colormapToggle640)
-        # layersColormapToggleBoxed = QVBoxLayout()
-        # layersColormapToggleBoxed.addWidget(self.myframe)
 
         # Hide/show buttons boxed by channel.
         self.hideShowChanLabel = QtWidgets.QLabel('Hide/Show by Channel')
@@ -359,7 +326,7 @@ class SIMWidget(NapariHybridWidget):
 
 
 
-    def create_experiment_tab(self):
+    def createSIMRecTab(self):
         # tab = QWidget()
         # wholeTabVertLayout = QVBoxLayout()
         tabBottomVertLayout1 = QVBoxLayout()
@@ -497,8 +464,7 @@ class SIMWidget(NapariHybridWidget):
         tabBottomHorLayout.addLayout(tabBottomVertLayout2)
         tabBottomHorLayout.addWidget(separator)
         tabBottomHorLayout.addLayout(tabBottomVertLayout1)
-        tabBottomHorLayout.addWidget(separator2)
-        tabBottomHorLayout.addLayout(self.layer_control_tab)
+
 
         
         

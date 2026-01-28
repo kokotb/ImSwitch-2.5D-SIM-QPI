@@ -49,7 +49,7 @@ class SLM25DWidget(Widget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Placeholders for both image displays at top of widget.
+        ### Placeholders for entire image display box (2 labels, 2 images).
         self.slmFrame = pg.GraphicsLayoutWidget()
         self.slmFrame.setEnabled(False)
         self.slmFrame.addLabel('Zernike', angle=-90, row=0, col=0)
@@ -69,13 +69,14 @@ class SLM25DWidget(Widget):
         self.vbZernike.addItem(self.imgZernike)
         self.vb25D.addItem(self.img25d) #This line must before addItem(self.overlayImg25D) so transparent overlay is on top of this layer.
         self.vb25D.addItem(self.overlayImg25D)
+        ###
+
+
+
         #Initialize buttons on top row of the widget + reset buttons
         self.start25D = QPushButton("Start 2.5D")
-
         self.stop25D = QPushButton("Stop 2.5D")
         self.stop25D.setEnabled(False)
-        
-        # self.start25D.setFixedWidth(250)
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
         self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
         self.projectZernike = QCheckBox('Project Zernike')
@@ -97,12 +98,10 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton = QPushButton("Center Mask")
         self.centerMaskbutton.setEnabled(False)
         self.centerMaskbutton.setFixedWidth(250)
-        self.resetZern = QPushButton("Reset")
+        self.resetZern = QPushButton("Reset Zern")
         self.resetZern.setEnabled(False)
         self.resetZern.clicked.connect(self.sigResetZern.emit)
-        self.reset25D = QPushButton("Reset")
-        self.reset25D.setEnabled(False)
-        self.reset25D.clicked.connect(self.sigReset25D.emit)
+
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
         self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
@@ -144,6 +143,7 @@ class SLM25DWidget(Widget):
         # Grid layout for the entire widget
         self.grid = QtWidgets.QGridLayout()
         self.setLayout(self.grid)
+
         self.grid.addWidget(self.start25D,0,0)
         self.grid.addWidget(self.stop25D,0,1)
         self.grid.addWidget(self.activate25DSLM,0,2)
@@ -157,7 +157,7 @@ class SLM25DWidget(Widget):
         
 
         self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
-        self.grid.addWidget(self.resetZern, 4, 2)
+        self.grid.addWidget(self.resetZern, 4, 3)
         self.grid.addWidget(self.autoZernCheckbox, 4, 4)
         self.grid.addWidget(self.autoZernCheckboxNew, 4, 6)
         self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
@@ -167,7 +167,7 @@ class SLM25DWidget(Widget):
         self.grid.addWidget(self.autocorectRedRadioButton, 7, 4)
         self.grid.addWidget(self.autocorectGreenRadioButton, 7, 5)
         self.grid.addWidget(self.autocorectBlueRadioButton, 7, 6)
-        self.grid.addWidget(self.reset25D, 17, 5)
+
 
         self.LRbutton_group = QButtonGroup()  
         self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
@@ -196,11 +196,11 @@ class SLM25DWidget(Widget):
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(200)
         self.grid.addWidget(self.myframe, 3, 0, 1, 6)
-        self.myframe2 = QFrame()
-        self.myframe2.setFrameShape(QFrame.HLine)
-        self.myframe2.setFrameShadow(QFrame.Plain)
-        self.myframe2.setLineWidth(200)
-        self.grid.addWidget(self.myframe2, 16, 0, 1, 6)
+        # self.myframe2 = QFrame()
+        # self.myframe2.setFrameShape(QFrame.HLine)
+        # self.myframe2.setFrameShadow(QFrame.Plain)
+        # self.myframe2.setLineWidth(200)
+        # self.grid.addWidget(self.myframe2, 16, 0, 1, 6)
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
@@ -268,7 +268,7 @@ class SLM25DWidget(Widget):
                 if side == "Left":
                     index = 0
                 elif side == "Right":
-                    index = 2
+                    index = 1
                 else:
                     print("ERROR: Zernike buttons left - right failed")
                 if side == "Left":
@@ -290,6 +290,11 @@ class SLM25DWidget(Widget):
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================0
+
+        self.reset25D = QPushButton("Reset 2.5D")
+        self.reset25D.setEnabled(False)
+        self.reset25D.clicked.connect(self.sigReset25D.emit)
+        self.grid.addWidget(self.reset25D, 17, 5)
         self.numParams = 17
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
@@ -390,10 +395,15 @@ class SLM25DWidget(Widget):
         # self.stepLabel.setTextFormat(QtCore.Qt.RichText)
         # self.grid.addWidget(self.stepLabel, 4, 3)
 
-        self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
+        self.valLabel = QtWidgets.QLabel(f'<strong>Left</strong>')
         self.valLabel.setEnabled(False)
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid.addWidget(self.valLabel, 4, 1)
+
+        self.valLabel2 = QtWidgets.QLabel(f'<strong>Right</strong>')
+        self.valLabel2.setEnabled(False)
+        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
+        self.grid.addWidget(self.valLabel2, 4, 2)
 
         self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel2.setEnabled(False)
@@ -578,27 +588,12 @@ class SLM25DWidget(Widget):
         self.start25D.setEnabled(not boolSIM)
         self.stop25D.setEnabled(boolSIM)
 
-    # def toggled25D(self, boolSIM):
-    #     self.stop25D.setEnabled(not boolSIM)
-
-
-    # def incrementZern(self, name):
-    #     stepVal = 0.1
-    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-    #     newVal = round(currentVal+stepVal, 4)
-    #     self.pars['AbsPosEdit' + name].setValue(newVal)
         
     def decrement(self, name):
         stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
         currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
         newVal = str(round(currentVal-stepVal,4))
         self.pars['AbsPosEdit' + name].setText(newVal)
-
-    # def decrementZern(self, name):
-    #     stepVal = 0.1
-    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-    #     newVal = round(currentVal-stepVal,4)
-    #     self.pars['AbsPosEdit' + name].setValue(newVal)
 
     def connect25DSharedAttrSigs(self):
         self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
