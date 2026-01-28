@@ -271,7 +271,8 @@ class SLM25DWidget(Widget):
                     index = 2
                 else:
                     print("ERROR: Zernike buttons left - right failed")
-                self.grid.addWidget(self.pars['Label' + name + side], self.numParams, 0 + index)
+                if side == "Left":
+                    self.grid.addWidget(self.pars['Label' + name + side], self.numParams, 0 + index)
                 # self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
                 # self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
                 self.grid.addWidget(self.pars['AbsPosEdit' + name + side], self.numParams, 1 + index)
