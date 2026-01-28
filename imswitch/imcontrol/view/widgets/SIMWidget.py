@@ -43,7 +43,7 @@ class SIMWidget(NapariHybridWidget):
         self.tabSIMRec.setLayout(self.tabSIMRecLayout) #Set the assembled layout into the tab.
         self.tabLayers.setLayout(self.tabLayersLayout)
 
-        self.tabView.addTab(self.tabSIMRec, "SIM / Rec") #Add the individual tab to the overall tab widget.
+        self.tabView.addTab(self.tabSIMRec, "SIM / Recording") #Add the individual tab to the overall tab widget.
         self.tabView.addTab(self.tabLayers, "Layers")
 
         self.mainLayout.addWidget(self.tabView) #Set the overall tab widget to a layout.
