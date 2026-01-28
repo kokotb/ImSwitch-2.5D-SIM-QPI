@@ -118,7 +118,7 @@ class ImConMainView(QtWidgets.QMainWindow):
 
         # Adjust dock sizes (the window has to be maximized first for this to work properly)
         if 'Settings' in self.docks:
-            self.docks['Settings'].setStretch(1, 5)
+            self.docks['Settings'].setStretch(1, 1)
             # self.docks['Settings'].container().setStretch(3, 5)
         if 'SIM' in self.docks:
             self.docks['SIM'].setStretch(1, 1)

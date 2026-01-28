@@ -141,32 +141,35 @@ class SLM25DWidget(Widget):
 
 
         # Grid layout for the entire widget
-        self.grid = QtWidgets.QGridLayout()
-        self.setLayout(self.grid)
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.gridHorizLayout = QtWidgets.QHBoxLayout()
+        self.topLayout = QtWidgets.QGridLayout()
+        self.grid1 = QtWidgets.QGridLayout()
+        self.grid2 = QtWidgets.QGridLayout()
+        self.setLayout(self.mainLayout)
 
-        self.grid.addWidget(self.start25D,0,0)
-        self.grid.addWidget(self.stop25D,0,1)
-        self.grid.addWidget(self.activate25DSLM,0,2)
-        self.grid.addWidget(self.projectZernike,0,3)
-        self.grid.addWidget(self.project25D,0,4)
-        self.grid.addWidget(self.projectCenter,0,5)
-        self.grid.addWidget(self.slmPreview, 0, 6)
-        self.grid.addWidget(self.loadImgToSLMbutton, 1, 6)
-        self.grid.addWidget(self.beginAZbutton, 2, 6)
-        self.grid.addWidget(self.centerMaskbutton, 3, 6)
-        
-
-        self.grid.addWidget(self.slmFrame, 1, 0, 2, 6)
-        self.grid.addWidget(self.resetZern, 4, 3)
-        self.grid.addWidget(self.autoZernCheckbox, 4, 4)
-        self.grid.addWidget(self.autoZernCheckboxNew, 4, 6)
-        self.grid.addWidget(self.maskCenterCheckbox, 4, 5)
-        self.grid.addWidget(self.lockZernCheckbox, 5, 5)
-        self.grid.addWidget(self.autocorectLeftRadioButton, 6, 5)
-        self.grid.addWidget(self.autocorectRightRadioButton, 6, 6)
-        self.grid.addWidget(self.autocorectRedRadioButton, 7, 4)
-        self.grid.addWidget(self.autocorectGreenRadioButton, 7, 5)
-        self.grid.addWidget(self.autocorectBlueRadioButton, 7, 6)
+        self.topLayout.addWidget(self.start25D,0,0)
+        self.topLayout.addWidget(self.stop25D,0,1)
+        self.topLayout.addWidget(self.activate25DSLM,0,2)
+        self.topLayout.addWidget(self.projectZernike,0,3)
+        self.topLayout.addWidget(self.project25D,0,4)
+        self.topLayout.addWidget(self.projectCenter,0,5)
+        self.topLayout.addWidget(self.slmPreview, 0, 6)
+        # self.grid1.addWidget(self.loadImgToSLMbutton, 1, 6)
+        # self.grid1.addWidget(self.beginAZbutton, 2, 6)
+        # self.grid1.addWidget(self.centerMaskbutton, 3, 6)
+        self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 7)
+        self.topLayout.setRowMinimumHeight(1, 100)
+        # self.grid1.addWidget(self.resetZern, 4, 3)
+        # self.grid1.addWidget(self.autoZernCheckbox, 4, 4)
+        # self.grid1.addWidget(self.autoZernCheckboxNew, 4, 6)
+        # self.grid1.addWidget(self.maskCenterCheckbox, 4, 5)
+        # self.grid1.addWidget(self.lockZernCheckbox, 5, 5)
+        # self.grid1.addWidget(self.autocorectLeftRadioButton, 6, 5)
+        # self.grid1.addWidget(self.autocorectRightRadioButton, 6, 6)
+        # self.grid1.addWidget(self.autocorectRedRadioButton, 7, 4)
+        # self.grid1.addWidget(self.autocorectGreenRadioButton, 7, 5)
+        # self.grid1.addWidget(self.autocorectBlueRadioButton, 7, 6)
 
 
         self.LRbutton_group = QButtonGroup()  
@@ -187,20 +190,18 @@ class SLM25DWidget(Widget):
         #self.maskScaleNumber.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.maskScaleNumber.setValue(255)
         self.maskScaleNumber.setFixedWidth(75)
-        self.grid.addWidget(self.maskScaleNumberLabel, 8, 5)
-        self.grid.addWidget(self.maskScaleNumber, 8, 6)
+        # self.grid1.addWidget(self.maskScaleNumberLabel, 8, 5)
+        # self.grid1.addWidget(self.maskScaleNumber, 8, 6)
         
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
         self.myframe.setFrameShape(QFrame.HLine)
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(200)
-        self.grid.addWidget(self.myframe, 3, 0, 1, 6)
-        # self.myframe2 = QFrame()
-        # self.myframe2.setFrameShape(QFrame.HLine)
-        # self.myframe2.setFrameShadow(QFrame.Plain)
-        # self.myframe2.setLineWidth(200)
-        # self.grid.addWidget(self.myframe2, 16, 0, 1, 6)
+
+        self.mainLayout.addLayout(self.topLayout)
+        self.mainLayout.addWidget(self.myframe)
+
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
@@ -211,12 +212,25 @@ class SLM25DWidget(Widget):
         self.ZernikeSides = ["Left", "Right"]
         self.elementListZern = []
 
-        #self.numParams = 4
+        self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
+        self.zernLabel.setEnabled(False)
+        self.zernLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid1.addWidget(self.zernLabel, 0, 0)
+
+        self.valLabel = QtWidgets.QLabel(f'<strong>Left</strong>')
+        self.valLabel.setEnabled(False)
+        self.valLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid1.addWidget(self.valLabel, 0, 1)
+
+        self.valLabel2 = QtWidgets.QLabel(f'<strong>Right</strong>')
+        self.valLabel2.setEnabled(False)
+        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
+        self.grid1.addWidget(self.valLabel2, 0, 2)
 
         for side in self.ZernikeSides:
-            self.numParams = 4
+            self.row = 0
             for i in range(len(self.ZernikeCoefficientNames)):
-                self.numParams += 1
+                self.row += 1
                 name = self.ZernikeCoefficientNames[i]
                 labelNames = f'{self.ZernikeCoefficientNames[i]} - {self.ZernikeAberrationNames[i]}'
                 self.axisValTypes[name + side] = float
@@ -228,13 +242,6 @@ class SLM25DWidget(Widget):
                 #Define all widget items
                 self.pars['Label' + name + side] = QtWidgets.QLabel(f'{label}')
                 self.pars['Label' + name + side].setTextFormat(QtCore.Qt.RichText)
-                self.pars['UpButton' + name + side] = guitools.BetterPushButton('+')
-                self.pars['UpButton' + name + side].setFixedWidth(100)
-                self.pars['UpButton' + name + side].setAutoRepeat(True)
-                self.pars['DownButton' + name + side] = guitools.BetterPushButton('-')
-                self.pars['DownButton' + name + side].setFixedWidth(100)
-                self.pars['DownButton' + name + side].setAutoRepeat(True)
-                # self.pars['AbsPosEdit' + name + side] = QtWidgets.QLineEdit('')
                 self.pars['AbsPosEdit' + name + side] = QtWidgets.QDoubleSpinBox()
                 self.pars['AbsPosEdit' + name + side]._name = self.ZernikeAberrationNames[i]
                 self.pars['AbsPosEdit' + name + side]._type = 'flt'
@@ -254,8 +261,8 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
 
                 self.pars['Label' + name + side].setEnabled(False)
-                self.pars['UpButton' + name + side].setEnabled(False)
-                self.pars['DownButton' + name + side].setEnabled(False)
+                # self.pars['UpButton' + name + side].setEnabled(False)
+                # self.pars['DownButton' + name + side].setEnabled(False)
                 self.pars['AbsPosEdit' + name + side].setEnabled(False)
 
                 self.elementListZern.append(self.pars['AbsPosEdit' + name + side])
@@ -272,10 +279,10 @@ class SLM25DWidget(Widget):
                 else:
                     print("ERROR: Zernike buttons left - right failed")
                 if side == "Left":
-                    self.grid.addWidget(self.pars['Label' + name + side], self.numParams, 0 + index)
-                # self.grid.addWidget(self.pars['DownButton' + name], self.numParams,1)
-                # self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
-                self.grid.addWidget(self.pars['AbsPosEdit' + name + side], self.numParams, 1 + index)
+                    self.grid1.addWidget(self.pars['Label' + name + side], self.row, 0 + index)
+                # self.grid1.addWidget(self.pars['DownButton' + name], self.row,1)
+                # self.grid1.addWidget(self.pars['UpButton' + name], self.row, 2)
+                self.grid1.addWidget(self.pars['AbsPosEdit' + name + side], self.row, 1 + index)
                 # self.pars['AbsPosEdit' + name].setValue(0.1)       
 
 
@@ -288,23 +295,40 @@ class SLM25DWidget(Widget):
                 # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
 
+        
 
-        # SETTING PHASE MASK PARAMETERS =========================================================================0
+
+
+        
+
+        # SETTING PHASE MASK PARAMETERS =========================================================================
+        self.row = 0
+
+        self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
+        self.label25D.setEnabled(False)
+        self.label25D.setTextFormat(QtCore.Qt.RichText)
+        self.grid2.addWidget(self.label25D, self.row, 0)
+
+        self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
+        self.valLabel2.setEnabled(False)
+        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
+        self.grid2.addWidget(self.valLabel2, self.row, 1)
 
         self.reset25D = QPushButton("Reset 2.5D")
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
-        self.grid.addWidget(self.reset25D, 17, 5)
-        self.numParams = 17
+        self.grid2.addWidget(self.reset25D, self.row, 2)
+
+
+        
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
         self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         self.elementList25D = []
         for i in range(len(self.paramNames)):
-            self.numParams += 1
+            self.row += 1
             name = self.paramNames[i]
-            StepInitialValue = self.stepAxisInitialValues[name]
             # AbsInitialValue = self.absAxisInitialValues[name]
             self.unit = UnitaxisInitialValues[name]
 
@@ -313,12 +337,12 @@ class SLM25DWidget(Widget):
             #Define all widget items
             self.pars['Label' + name] = QtWidgets.QLabel(f'{label}')
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
-            self.pars['DownButton' + name] = guitools.BetterPushButton('-')
-            self.pars['DownButton' + name].setFixedWidth(100)
-            self.pars['UpButton' + name] = guitools.BetterPushButton('+')
-            self.pars['UpButton' + name].setFixedWidth(100)
-            self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
-            self.pars['StepEdit' + name].setFixedWidth(75)
+            # self.pars['DownButton' + name] = guitools.BetterPushButton('-')
+            # self.pars['DownButton' + name].setFixedWidth(100)
+            # self.pars['UpButton' + name] = guitools.BetterPushButton('+')
+            # self.pars['UpButton' + name].setFixedWidth(100)
+            # self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
+            # self.pars['StepEdit' + name].setFixedWidth(75)
             # self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
             self.pars['AbsPosEdit' + name]._name = name
@@ -327,9 +351,9 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setFixedWidth(75)
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['Label' + name].setEnabled(False)
-            self.pars['UpButton' + name].setEnabled(False)
-            self.pars['DownButton' + name].setEnabled(False)
-            self.pars['StepEdit' + name].setEnabled(False)
+            # self.pars['UpButton' + name].setEnabled(False)
+            # self.pars['DownButton' + name].setEnabled(False)
+            # self.pars['StepEdit' + name].setEnabled(False)
             # self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
@@ -338,92 +362,68 @@ class SLM25DWidget(Widget):
 
             # Integer validator
             if (name == 'Left Center-X') or (name == 'Left Center-Y') or (name == 'Right Center-X') or (name == 'Right Center-Y'):
-                self.validator = QIntValidator(1,100)
-                self.pars['StepEdit' + name].setValidator(self.validator)
+                # self.validator = QIntValidator(1,100)
+                # self.pars['StepEdit' + name].setValidator(self.validator)
                 self.validator = QIntValidator(1,1920)
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
 
             # Double validator
             elif (name == 'Gamma') or (name == 'Psi'):
-                self.validator = QDoubleValidator(0.01,1.0,2)
-                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['StepEdit' + name].setValidator(self.validator)
+                # self.validator = QDoubleValidator(0.01,1.0,2)
+                # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+                # self.pars['StepEdit' + name].setValidator(self.validator)
                 self.validator = QDoubleValidator(-25.0,25.0,2)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
-                self.pars['UpButton' + name].setAutoRepeat(True)
-                self.pars['DownButton' + name].setAutoRepeat(True)
+                # self.pars['UpButton' + name].setAutoRepeat(True)
+                # self.pars['DownButton' + name].setAutoRepeat(True)
             elif (name == 'Beam Diameter'):
-                self.validator = QDoubleValidator(0.1,2.0,1)
-                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['StepEdit' + name].setValidator(self.validator)
+                # self.validator = QDoubleValidator(0.1,2.0,1)
+                # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+                # self.pars['StepEdit' + name].setValidator(self.validator)
                 self.validator = QDoubleValidator(0.0,8.0,1)
                 self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 self.pars['AbsPosEdit' + name].setValidator(self.validator)
 
             # Add to widget object
-            self.grid.addWidget(self.pars['Label' + name], self.numParams, 0)
-            self.grid.addWidget(self.pars['DownButton' + name], self.numParams, 1)
-            self.grid.addWidget(self.pars['UpButton' + name], self.numParams, 2)
-            self.grid.addWidget(self.pars['StepEdit' + name], self.numParams, 3)
-            # self.grid.addWidget(self.pars['StepUnit' + name], self.numParams, 4)
-            self.grid.addWidget(self.pars['AbsPosEdit' + name], self.numParams, 4)
-            self.grid.addWidget(self.pars['AbsPosUnit' + name], self.numParams, 5)
+            self.grid2.addWidget(self.pars['Label' + name], self.row, 0)
+            # self.grid2.addWidget(self.pars['DownButton' + name], self.row, 1)
+            # self.grid2.addWidget(self.pars['UpButton' + name], self.row, 2)
+            # self.grid2.addWidget(self.pars['StepEdit' + name], self.row, 3)
+            # self.grid2.addWidget(self.pars['StepUnit' + name], self.row, 4)
+            self.grid2.addWidget(self.pars['AbsPosEdit' + name], self.row, 1)
+            self.grid2.addWidget(self.pars['AbsPosUnit' + name], self.row, 2)
 
             # Connect buttons to signals
 
             if (name == 'Gamma') or (name == 'Psi'):
-                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
-                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
+                # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
+                # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
                 self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-                self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+                # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
             else:
-                self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
-                self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
+                # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
+                # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
                 self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
                 self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-                self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+                # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
                 # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
         self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
-        self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
-        self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
+        # self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
+        # self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
 
-        # self.stepLabel = QtWidgets.QLabel(f'<strong>Step</strong>')
-        # self.stepLabel.setTextFormat(QtCore.Qt.RichText)
-        # self.grid.addWidget(self.stepLabel, 4, 3)
+        self.myframe = QFrame() #Vertical divider between Zernike and 2.5D
+        self.myframe.setFrameShape(QFrame.VLine)
+        self.myframe.setFrameShadow(QFrame.Plain)
+        self.myframe.setLineWidth(200)
 
-        self.valLabel = QtWidgets.QLabel(f'<strong>Left</strong>')
-        self.valLabel.setEnabled(False)
-        self.valLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel, 4, 1)
-
-        self.valLabel2 = QtWidgets.QLabel(f'<strong>Right</strong>')
-        self.valLabel2.setEnabled(False)
-        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel2, 4, 2)
-
-        self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
-        self.valLabel2.setEnabled(False)
-        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.valLabel2, 17, 4)
-
-        self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
-        self.zernLabel.setEnabled(False)
-        self.zernLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.zernLabel, 4, 0)
-
-        self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
-        self.label25D.setEnabled(False)
-        self.label25D.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.label25D, 17, 0)
-
-        self.label25DStep = QtWidgets.QLabel(f'<strong>Step</strong>')
-        self.label25DStep.setEnabled(False)
-        self.label25DStep.setTextFormat(QtCore.Qt.RichText)
-        self.grid.addWidget(self.label25DStep, 17, 3)
+        self.gridHorizLayout.addLayout(self.grid1)
+        self.gridHorizLayout.addWidget(self.myframe)
+        self.gridHorizLayout.addLayout(self.grid2)
+        self.mainLayout.addLayout(self.gridHorizLayout)
 
         # Connect received signals to funcions
         self.sigStepUp25DMask.connect(self.increment)
@@ -452,8 +452,8 @@ class SLM25DWidget(Widget):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(not value)
-                self.pars['UpButton' + name + side].setEnabled(not value)
-                self.pars['DownButton' + name + side].setEnabled(not value)
+                # self.pars['UpButton' + name + side].setEnabled(not value)
+                # self.pars['DownButton' + name + side].setEnabled(not value)
                 self.pars['AbsPosEdit' + name + side].setEnabled(not value)
 
         self.sigLockZernike.emit(bool(value))
@@ -514,7 +514,7 @@ class SLM25DWidget(Widget):
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
         self.projectCenter.setEnabled(False)
-        self.label25DStep.setEnabled(False)
+        # self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
         self.loadImgToSLMbutton.setEnabled(False)
@@ -524,16 +524,16 @@ class SLM25DWidget(Widget):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(False)
-                self.pars['UpButton' + name + side].setEnabled(False)
-                self.pars['DownButton' + name + side].setEnabled(False)
+                # self.pars['UpButton' + name + side].setEnabled(False)
+                # self.pars['DownButton' + name + side].setEnabled(False)
                 self.pars['AbsPosEdit' + name + side].setEnabled(False)
 
         for i in range(len(self.paramNames)):
             name = self.paramNames[i]
             self.pars['Label' + name].setEnabled(False)
-            self.pars['UpButton' + name].setEnabled(False)
-            self.pars['DownButton' + name].setEnabled(False)
-            self.pars['StepEdit' + name].setEnabled(False)
+            # self.pars['UpButton' + name].setEnabled(False)
+            # self.pars['DownButton' + name].setEnabled(False)
+            # self.pars['StepEdit' + name].setEnabled(False)
             # self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
@@ -554,7 +554,7 @@ class SLM25DWidget(Widget):
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
         self.projectCenter.setEnabled(True)
-        self.label25DStep.setEnabled(True)
+        # self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)
         self.loadImgToSLMbutton.setEnabled(True)
@@ -564,16 +564,16 @@ class SLM25DWidget(Widget):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(True)
-                self.pars['UpButton' + name + side].setEnabled(True)
-                self.pars['DownButton' + name + side].setEnabled(True)
+                # self.pars['UpButton' + name + side].setEnabled(True)
+                # self.pars['DownButton' + name + side].setEnabled(True)
                 self.pars['AbsPosEdit' + name + side].setEnabled(True)
 
         for i in range(len(self.paramNames)):
             name = self.paramNames[i]
             self.pars['Label' + name].setEnabled(True)
-            self.pars['UpButton' + name].setEnabled(True)
-            self.pars['DownButton' + name].setEnabled(True)
-            self.pars['StepEdit' + name].setEnabled(True)
+            # self.pars['UpButton' + name].setEnabled(True)
+            # self.pars['DownButton' + name].setEnabled(True)
+            # self.pars['StepEdit' + name].setEnabled(True)
             # self.pars['StepUnit' + name].setEnabled(True)
             self.pars['AbsPosEdit' + name].setEnabled(True)
             self.pars['AbsPosUnit' + name].setEnabled(True)
