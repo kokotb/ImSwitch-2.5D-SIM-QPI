@@ -11,36 +11,23 @@ from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
-    sig25DParamChanged = QtCore.Signal(str, str, str)
-    sigZernParamChanged = QtCore.Signal(str, str, str, str)
-    sigAutoZernParamChanged = QtCore.Signal(str, str, str, str)
-#Signals for pressing the increment/decrement buttons
-    sigStepUp25DMask = QtCore.Signal(str)
-    sigStepDown25DMask = QtCore.Signal(str)
+    # sig25DParamChanged = QtCore.Signal(str, str, str)
+    # sigZernParamChanged = QtCore.Signal(str, str, str, str)
+    # sigAutoZernParamChanged = QtCore.Signal(str, str, str, str)
 
-    # sigStepUpCenterClicked = QtCore.Signal(str)
-    # sigStepDownCenterClicked = QtCore.Signal(str)
+
+    #Signals for updating and eventually projecting images
+    sigZernikeMaskChanged = QtCore.Signal()
+    sig25DMaskChanged = QtCore.Signal()
     sigMaskCenterChanged = QtCore.Signal()
 
-    sigStepUpZernikeLeft = QtCore.Signal(str)
-    sigStepDownZernikeLeft = QtCore.Signal(str)
-    sigStepUpZernikeRight = QtCore.Signal(str)
-    sigStepDownZernikeRight = QtCore.Signal(str)
-#Signals for updating and eventually projecting images
-    update25DMask = QtCore.Signal(str)
-    # updateCenterMask = QtCore.Signal(str)
-    sigUpdateZernikeMask = QtCore.Signal(str)
 
-#Signals to control red highlighting of incorreect QLineEdit entries
-    sigCheckValidityAbsPos = QtCore.Signal(str)
-    sigCheckValidityStep = QtCore.Signal(str)
+
 #Reset button signals
     sigResetZern = QtCore.Signal()
     sigReset25D = QtCore.Signal()
-#Signals to control enabling buttons/SLM/displaying preview window
-    sigToggleSLM = QtCore.Signal(bool)
-    sigOpenPreviewButton = QtCore.Signal()
 
+#Signals to control enabling buttons/SLM/displaying preview window
     sigLockZernike = QtCore.Signal(bool)
 
 
@@ -73,12 +60,12 @@ class SLM25DWidget(Widget):
 
 
 
-        #Initialize buttons on top row of the widget + reset buttons
+        #Initialize buttons on top row of the widget
         self.start25D = QPushButton("Start 2.5D")
         self.stop25D = QPushButton("Stop 2.5D")
         self.stop25D.setEnabled(False)
         self.activate25DSLM = QCheckBox('Activate 2.5D SLM')
-        self.activate25DSLM.stateChanged.connect(lambda value: self.sigToggleSLM.emit(value))
+        
         self.projectZernike = QCheckBox('Project Zernike')
         self.projectZernike.setChecked(True)
         self.projectZernike.setEnabled(False)
@@ -90,8 +77,8 @@ class SLM25DWidget(Widget):
         self.projectCenter.setEnabled(False)
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
-        self.slmPreview.clicked.connect(self.sigOpenPreviewButton.emit)
         self.slmPreview.setFixedWidth(250)
+        #Other buttons at the bottom
         self.beginAZbutton = QPushButton("AutoZernike New")
         self.beginAZbutton.setEnabled(False)
         self.beginAZbutton.setFixedWidth(250)
@@ -102,19 +89,18 @@ class SLM25DWidget(Widget):
         self.resetZern.setEnabled(False)
         self.resetZern.clicked.connect(self.sigResetZern.emit)
 
-
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
+        # self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
 
         self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
-        self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
+        # self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
         self.autoZernCheckboxNew.setEnabled(False)
         self.autoZernCheckboxNew.setChecked(True)
 
         self.maskCenterCheckbox = QCheckBox("Mask Center")
-        self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Center',str(value)))
+        # self.maskCenterCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','Center',str(value)))
         self.maskCenterCheckbox.setEnabled(False)
         self.maskCenterCheckbox.setChecked(False)
 
@@ -135,12 +121,15 @@ class SLM25DWidget(Widget):
         self.loadImgToSLMbutton = QPushButton("Load Image")
         self.loadImgToSLMbutton.setEnabled(False)
         self.loadImgToSLMbutton.setFixedWidth(250)
-        
-        
-        
 
+        self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
+        self.maskScaleNumber = QtWidgets.QSpinBox()
+        self.maskScaleNumber.setRange(0,255)
+        self.maskScaleNumber.setSingleStep(1)
+        self.maskScaleNumber.setValue(255)
+        self.maskScaleNumber.setFixedWidth(75)
 
-        # Grid layout for the entire widget
+        #Setup layouts
         self.mainLayout = QtWidgets.QVBoxLayout() #Overall main layout
         self.grid12HorizLayout = QtWidgets.QHBoxLayout() #Zernike/2.5D horizontal layout to contain 2 grid layouts.
         self.topLayout = QtWidgets.QGridLayout() #Layout containing everything above grids 1 and 2.
@@ -149,6 +138,7 @@ class SLM25DWidget(Widget):
         self.grid3 = QtWidgets.QGridLayout() #David's million buttons
         self.setLayout(self.mainLayout)
 
+        #Add the buttons/checkboxes on top row
         self.topLayout.addWidget(self.start25D,0,0)
         self.topLayout.addWidget(self.stop25D,0,1)
         self.topLayout.addWidget(self.activate25DSLM,0,2)
@@ -157,10 +147,18 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.projectCenter,0,5)
         self.topLayout.addWidget(self.slmPreview, 0, 6)
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 7)
-        self.topLayout.setRowMinimumHeight(1, 100)
+        self.topLayout.setRowMinimumHeight(1, 110)
 
+        #Group radio buttons together in a logical group.
+        self.LRbutton_group = QButtonGroup()  
+        self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
+        self.LRbutton_group.addButton(self.autocorectRightRadioButton)
+        self.Colorbutton_group = QButtonGroup()  
+        self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
+        self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
+        self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
 
-        ###David's buttons
+        ###Add David's buttons
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
         self.grid3.addWidget(self.beginAZbutton, 0, 1)
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
@@ -174,24 +172,6 @@ class SLM25DWidget(Widget):
         self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
         self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
         self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
-
-
-        self.LRbutton_group = QButtonGroup()  
-        self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
-        self.LRbutton_group.addButton(self.autocorectRightRadioButton)
-
-        self.Colorbutton_group = QButtonGroup()  
-        self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
-        self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
-        self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
-        
-        self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
-        self.maskScaleNumber = QtWidgets.QSpinBox()
-        self.maskScaleNumber.setRange(0,255)
-        self.maskScaleNumber.setSingleStep(1)
-        #self.maskScaleNumber.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        self.maskScaleNumber.setValue(255)
-        self.maskScaleNumber.setFixedWidth(75)
         self.grid3.addWidget(self.maskScaleNumberLabel, 2, 3)
         self.grid3.addWidget(self.maskScaleNumber, 2, 4)
         ###
@@ -206,7 +186,7 @@ class SLM25DWidget(Widget):
         self.mainLayout.addWidget(self.myframe)
 
 
-        self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
+        # self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
         # SETTING PHASE MASK PARAMETERS =========================================================================
         
@@ -220,15 +200,15 @@ class SLM25DWidget(Widget):
         self.zernLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid1.addWidget(self.zernLabel, 0, 0)
 
-        self.valLabel = QtWidgets.QLabel(f'<strong>Left</strong>')
-        self.valLabel.setEnabled(False)
-        self.valLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid1.addWidget(self.valLabel, 0, 1)
+        self.leftZernLabel = QtWidgets.QLabel(f'<strong>Left</strong>')
+        self.leftZernLabel.setEnabled(False)
+        self.leftZernLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid1.addWidget(self.leftZernLabel, 0, 1)
 
-        self.valLabel2 = QtWidgets.QLabel(f'<strong>Right</strong>')
-        self.valLabel2.setEnabled(False)
-        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid1.addWidget(self.valLabel2, 0, 2)
+        self.rightZernLabel = QtWidgets.QLabel(f'<strong>Right</strong>')
+        self.rightZernLabel.setEnabled(False)
+        self.rightZernLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid1.addWidget(self.rightZernLabel, 0, 2)
 
         for side in self.ZernikeSides:
             self.row = 0
@@ -236,7 +216,7 @@ class SLM25DWidget(Widget):
                 self.row += 1
                 name = self.ZernikeCoefficientNames[i]
                 labelNames = f'{self.ZernikeCoefficientNames[i]} - {self.ZernikeAberrationNames[i]}'
-                self.axisValTypes[name + side] = float
+                # self.axisValTypes[name + side] = float
                 # StepInitialValue = "0.1"
 
 
@@ -269,10 +249,6 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name + side].setEnabled(False)
 
                 self.elementListZern.append(self.pars['AbsPosEdit' + name + side])
-
-                # self.validator = QDoubleValidator(-5.0,5.0,1)
-                # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                # self.pars['AbsPosEdit' + name].setValidator(self.validator)
                 
                 # Add to widget object
                 if side == "Left":
@@ -283,20 +259,10 @@ class SLM25DWidget(Widget):
                     print("ERROR: Zernike buttons left - right failed")
                 if side == "Left":
                     self.grid1.addWidget(self.pars['Label' + name + side], self.row, 0 + index)
-                # self.grid1.addWidget(self.pars['DownButton' + name], self.row,1)
-                # self.grid1.addWidget(self.pars['UpButton' + name], self.row, 2)
                 self.grid1.addWidget(self.pars['AbsPosEdit' + name + side], self.row, 1 + index)
                 # self.pars['AbsPosEdit' + name].setValue(0.1)       
 
-
-                # Connect buttons to signals
-                # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpZernike.emit(name))
-                # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownZernike.emit(name)) 
-
-                self.pars['AbsPosEdit' + name + side].valueChanged.connect(lambda *args, name=name + side: self.sigUpdateZernikeMask.emit(name + side))
-
-                # self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateZernikeMask.emit(name))
-                # self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+                self.pars['AbsPosEdit' + name + side].valueChanged.connect(self.sigZernikeMaskChanged.emit) #Anytime a Zernike value is changed, it sends this signal received by controller
 
         
 
@@ -322,16 +288,16 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
         self.grid2.addWidget(self.reset25D, self.row, 2)
 
-        self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
         self.paramConstraintDict = {'Gamma':('double',(-10,10),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,1920),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1920),0, 10, 'px'), 
                                     'Right Center-X': ('integer',(1,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1920),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
-        UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
+        self.paramNames = list(self.paramConstraintDict.keys())
+
         self.elementList25D = []
-        for i in range(len(self.paramNames)):
+        for i in range(len(self.paramConstraintDict)):
             self.row += 1
             name = self.paramNames[i]
             # AbsInitialValue = self.absAxisInitialValues[name]
-            self.unit = UnitaxisInitialValues[name]
+            self.unit = self.paramConstraintDict[name][4]
 
             label = f'{name}'
 
@@ -339,15 +305,8 @@ class SLM25DWidget(Widget):
             self.pars['Label' + name] = QtWidgets.QLabel(f'{label}')
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
 
-
-            # self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
-
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['Label' + name].setEnabled(False)
-            # self.pars['UpButton' + name].setEnabled(False)
-            # self.pars['DownButton' + name].setEnabled(False)
-            # self.pars['StepEdit' + name].setEnabled(False)
-            # self.pars['StepUnit' + name].setEnabled(False)
             
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
@@ -385,25 +344,11 @@ class SLM25DWidget(Widget):
             self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
 
             # Connect buttons to signals
-
             if (name == 'Gamma') or (name == 'Psi'):
-                pass
-        #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
-        #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
-        #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
-        #         self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-        #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
-        #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
-            elif self.paramConstraintDict[name][0] == 'integer':
-                self.pars['AbsPosEdit' + name].valueChanged.connect(self.sigMaskCenterChanged.emit)
-                
-        #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
-        #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
-        #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
-        #         self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-        #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
-        #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
+                self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
 
+            elif self.paramConstraintDict[name][0] == 'integer': #All center/position fields.
+                self.pars['AbsPosEdit' + name].valueChanged.connect(self.sigMaskCenterChanged.emit)
 
         self.myframe = QFrame() #Vertical divider between Zernike and 2.5D
         self.myframe.setFrameShape(QFrame.VLine)
@@ -421,8 +366,8 @@ class SLM25DWidget(Widget):
         # # Connect received signals to funcions
         # self.sigStepUpZernike.connect(self.incrementZern)
         # self.sigStepDownZernike.connect(self.decrementZern)
-        self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
-        self.sigCheckValidityStep.connect(self.checkValidityStep)
+        # self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
+        # self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
@@ -446,15 +391,10 @@ class SLM25DWidget(Widget):
 
         self.sigLockZernike.emit(bool(value))
 
-        
-
-
     def reset25DToDefault(self):
         
         for name in self.paramNames:
             absInitValue = self.valueDict25D[name]
-            stepInitValue = self.stepAxisInitialValues[name]
-            self.pars['StepEdit' + name].setText(stepInitValue)
             self.pars['AbsPosEdit' + name].setText(absInitValue)
         self.sigMaskCenterChanged.emit()
 
@@ -462,7 +402,7 @@ class SLM25DWidget(Widget):
         for side in self.ZernikeSides:
             for name in self.ZernikeCoefficientNames:
                 self.pars['AbsPosEdit' + name + side].setValue(self.valueDictZern25D[name + side])
-        self.sigUpdateZernikeMask.emit('_')
+        self.sigUpdateZernikeMask.emit()
 
     def checkValidityAbsPos(self, name):
         valid = self.pars['AbsPosEdit'+name].hasAcceptableInput()
@@ -490,7 +430,8 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(False)
         self.beginAZbutton.setEnabled(False)
         self.centerMaskbutton.setEnabled(False)
-        self.valLabel.setEnabled(False)
+        self.leftZernLabel.setEnabled(False)
+        self.rightZernLabel.setEnabled(False)
         self.valLabel2.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckboxNew.setEnabled(False)
@@ -519,10 +460,6 @@ class SLM25DWidget(Widget):
         for i in range(len(self.paramNames)):
             name = self.paramNames[i]
             self.pars['Label' + name].setEnabled(False)
-            # self.pars['UpButton' + name].setEnabled(False)
-            # self.pars['DownButton' + name].setEnabled(False)
-            # self.pars['StepEdit' + name].setEnabled(False)
-            # self.pars['StepUnit' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
@@ -530,7 +467,8 @@ class SLM25DWidget(Widget):
         self.slmPreview.setEnabled(True)
         self.beginAZbutton.setEnabled(True)
         self.centerMaskbutton.setEnabled(True)
-        self.valLabel.setEnabled(True)
+        self.leftZernLabel.setEnabled(True)
+        self.rightZernLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
         self.autoZernCheckboxNew.setEnabled(True)
         self.maskCenterCheckbox.setEnabled(True)
@@ -584,37 +522,38 @@ class SLM25DWidget(Widget):
         # self.pars['AbsPosEdit' + name].setText(newVal)
 
     def connect25DSharedAttrSigs(self):
-        self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
-        self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',value))
-        self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',value))
-        self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',value))
-        self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',value))
-        self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',value))
-        self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',value))
-        #######################
-        self.pars['AbsPosEdit(0,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Piston',value))
-        self.pars['AbsPosEdit(1,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Y-tilt',value))
-        self.pars['AbsPosEdit(1,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','X-tilt',value))
-        self.pars['AbsPosEdit(2,-2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Oblique Astigmatism',value))
-        self.pars['AbsPosEdit(2,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Defocus',value))
-        self.pars['AbsPosEdit(2,2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Astigmatism',value))
-        self.pars['AbsPosEdit(3,-3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Trefoil',value))
-        self.pars['AbsPosEdit(3,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Coma',value))
-        self.pars['AbsPosEdit(3,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Coma',value))
-        self.pars['AbsPosEdit(3,3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Trefoil',value))
-        self.pars['AbsPosEdit(4,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Spherical',value))
-        ######################
-        self.pars['AbsPosEdit(0,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Piston',value))
-        self.pars['AbsPosEdit(1,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Y-tilt',value))
-        self.pars['AbsPosEdit(1,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','X-tilt',value))
-        self.pars['AbsPosEdit(2,-2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Oblique Astigmatism',value))
-        self.pars['AbsPosEdit(2,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Defocus',value))
-        self.pars['AbsPosEdit(2,2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Astigmatism',value))
-        self.pars['AbsPosEdit(3,-3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Trefoil',value))
-        self.pars['AbsPosEdit(3,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Coma',value))
-        self.pars['AbsPosEdit(3,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Coma',value))
-        self.pars['AbsPosEdit(3,3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Trefoil',value))
-        self.pars['AbsPosEdit(4,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Spherical',value))
+        pass
+        # self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
+        # self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',value))
+        # self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',value))
+        # self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',value))
+        # self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',value))
+        # self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',value))
+        # self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',value))
+        # #######################
+        # self.pars['AbsPosEdit(0,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Piston',value))
+        # self.pars['AbsPosEdit(1,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Y-tilt',value))
+        # self.pars['AbsPosEdit(1,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','X-tilt',value))
+        # self.pars['AbsPosEdit(2,-2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Oblique Astigmatism',value))
+        # self.pars['AbsPosEdit(2,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Defocus',value))
+        # self.pars['AbsPosEdit(2,2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Astigmatism',value))
+        # self.pars['AbsPosEdit(3,-3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Trefoil',value))
+        # self.pars['AbsPosEdit(3,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Coma',value))
+        # self.pars['AbsPosEdit(3,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Coma',value))
+        # self.pars['AbsPosEdit(3,3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Trefoil',value))
+        # self.pars['AbsPosEdit(4,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Spherical',value))
+        # ######################
+        # self.pars['AbsPosEdit(0,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Piston',value))
+        # self.pars['AbsPosEdit(1,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Y-tilt',value))
+        # self.pars['AbsPosEdit(1,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','X-tilt',value))
+        # self.pars['AbsPosEdit(2,-2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Oblique Astigmatism',value))
+        # self.pars['AbsPosEdit(2,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Defocus',value))
+        # self.pars['AbsPosEdit(2,2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Astigmatism',value))
+        # self.pars['AbsPosEdit(3,-3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Trefoil',value))
+        # self.pars['AbsPosEdit(3,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Coma',value))
+        # self.pars['AbsPosEdit(3,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Coma',value))
+        # self.pars['AbsPosEdit(3,3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Trefoil',value))
+        # self.pars['AbsPosEdit(4,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Spherical',value))
 
 
 

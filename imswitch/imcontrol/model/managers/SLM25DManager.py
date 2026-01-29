@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
 # import detect_heds_module_path
-# from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
+from dlls.holoeye import showSLMPreview, slmdisplaysdk, detect_heds_module_path #detect_heds_module_path only needed if runningSDK from local folder. If a part of environment, not needed.
 
 import ctypes
 
@@ -195,7 +195,7 @@ class SLM25DManager(SignalInterface):
     
 
     def toggleSLMResource(self, state):
-        if state == True:
+        if state == 2:
             self.slm = slmdisplaysdk.SLMInstance()
             if not self.slm.requiresVersion(5):
                 exit(1)
@@ -205,7 +205,7 @@ class SLM25DManager(SignalInterface):
             assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
             showSLMPreview.showSLMPreview(self.slm, scale=0.0)
             self.slmActive = True
-        if state == False:
+        if state == 0:
             self.slm = None
             self.slmActive = False
         return self.slmActive

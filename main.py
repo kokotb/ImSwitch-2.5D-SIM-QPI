@@ -24,7 +24,5 @@ import shutil
 # shutil.rmtree(R'C:/Users/SIM_admin/Documents/ImSwitchConfig')    
 
 
-
-
 main()
 

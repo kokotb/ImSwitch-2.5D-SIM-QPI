@@ -1,9 +1,6 @@
-import json
-import os
+
 import threading
 import numpy as np
-import matplotlib.pyplot as plt
-from qtpy import QtCore, QtWidgets
 import cv2
 
 from imswitch.imcommon.model import dirtools, initLogger
@@ -18,7 +15,6 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QFileDialog
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui
 from PIL import Image
 import time
 import re
@@ -31,10 +27,6 @@ class SLM25DController(ImConWidgetController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
-        # self.pars = self._widget.pars
-        # self.axes = self._widget.axes
-        #self.autoZernCalibValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-        #self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
         self.axisValTypes = self._widget.axisValTypes
         self.paramNames = self._widget.paramNames
@@ -50,7 +42,6 @@ class SLM25DController(ImConWidgetController):
         self.centerMaskLeft = np.zeros((1080, 960))
         self.centerMaskRight = np.zeros((1080, 960))
         
-
         self.mask25dbinaryLeft = np.zeros((1080, 960))
         self.mask25dbinaryRight = np.zeros((1080, 960))
         
@@ -75,26 +66,19 @@ class SLM25DController(ImConWidgetController):
              (4, -4): (-3.1570215166935713, 3.1570215166935713), (4, -2): (-3.130426605396449, 3.130426605396449), (4, 0): (-1.1180339823972583, 2.23606797749979),
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
+        self._widget.activate25DSLM.stateChanged.connect(self.toggleSLMFromButton) #Opens SLM resource and enables relevant fields if activated, closes SLM resource and disables relevant fields if deactivated.
+        self._widget.sigMaskCenterChanged.connect(self.updateAll)
+        self._widget.sig25DMaskChanged.connect(self.updatePhaseMask)
+        self._widget.sigZernikeMaskChanged.connect(self.updateZernike)
+
+        
+        
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
 
         self._widget.pars['AbsPosEditBeam Diameter'].valueChanged.connect(self.updateAll)
 
-        self._widget.sigMaskCenterChanged.connect(self.combineAndProject)
 
 
-        # self._widget.updateCenterMask.connect(self.combineAndProject)
-        # self._widget.sigStepUpCenterClicked.connect(self.combineAndProject)
-        # self._widget.sigStepDownCenterClicked.connect(self.combineAndProject)
-
-        self._widget.update25DMask.connect(self.updatePhaseMask)
-        self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
-        self._widget.sigStepDown25DMask.connect(self.updatePhaseMask)
-    
-        self._widget.sigUpdateZernikeMask.connect(self.updateZernike)
-        self._widget.sigStepUpZernikeLeft.connect(self.updateZernike)
-        self._widget.sigStepDownZernikeLeft.connect(self.updateZernike)
-        self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
-        self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
         self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
         self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
         self._widget.sigLockZernike.connect(self.setLockZernike)
@@ -105,10 +89,14 @@ class SLM25DController(ImConWidgetController):
 
         self.slm25DManager = self._master.slm25DManager
 
-        self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
-        self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
-        self._widget.sig25DParamChanged.connect(self.valueChanged25D)
-        self._widget.sigZernParamChanged.connect(self.valueChangedZern)
+
+
+        # self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+        self._widget.slmPreview.clicked.connect(self.openPreviewWindow)
+
+
+        # self._widget.sig25DParamChanged.connect(self.valueChanged25D)
+        # self._widget.sigZernParamChanged.connect(self.valueChangedZern)
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
@@ -2248,39 +2236,39 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def valueChanged25D(self, attrCategory, parameterName, value):
-        self.setSharedAttr25D(attrCategory, parameterName, value)
+    # def valueChanged25D(self, attrCategory, parameterName, value):
+    #     self.setSharedAttr25D(attrCategory, parameterName, value)
 
-    def setSharedAttr25D(self, attrCategory, parameterName, value):
-        """Sending attribute to shared attributes
+    # def setSharedAttr25D(self, attrCategory, parameterName, value):
+    #     """Sending attribute to shared attributes
 
-        Args:
-            parameterName (str): name of a parameter passed from wdiget
-            attr (_type_): type of a attribute (value, enabled, ...)
-            value (_type_): value of the parameter read from wdiget
-        """
-        self.settingAttr = True
-        try:
-            self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
-        finally:
-            self.settingAttr = False
+    #     Args:
+    #         parameterName (str): name of a parameter passed from wdiget
+    #         attr (_type_): type of a attribute (value, enabled, ...)
+    #         value (_type_): value of the parameter read from wdiget
+    #     """
+    #     self.settingAttr = True
+    #     try:
+    #         self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
+    #     finally:
+    #         self.settingAttr = False
 
-    def valueChangedZern(self, attrCategory, subCategory, parameterName, value):
-        self.setSharedAttrZern(attrCategory, subCategory, parameterName, value)
+    # def valueChangedZern(self, attrCategory, subCategory, parameterName, value):
+    #     self.setSharedAttrZern(attrCategory, subCategory, parameterName, value)
 
-    def setSharedAttrZern(self, attrCategory, subCategory, parameterName, value):
-        """Sending attribute to shared attributes
+    # def setSharedAttrZern(self, attrCategory, subCategory, parameterName, value):
+    #     """Sending attribute to shared attributes
 
-        Args:
-            parameterName (str): name of a parameter passed from wdiget
-            attr (_type_): type of a attribute (value, enabled, ...)
-            value (_type_): value of the parameter read from wdiget
-        """
-        self.settingAttr = True
-        try:
-            self._commChannel.sharedAttrs[(attrCategory, subCategory, parameterName)] = value
-        finally:
-            self.settingAttr = False
+    #     Args:
+    #         parameterName (str): name of a parameter passed from wdiget
+    #         attr (_type_): type of a attribute (value, enabled, ...)
+    #         value (_type_): value of the parameter read from wdiget
+    #     """
+    #     self.settingAttr = True
+    #     try:
+    #         self._commChannel.sharedAttrs[(attrCategory, subCategory, parameterName)] = value
+    #     finally:
+    #         self.settingAttr = False
 
 
 
