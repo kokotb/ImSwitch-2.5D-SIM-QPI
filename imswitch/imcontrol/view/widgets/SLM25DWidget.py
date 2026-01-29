@@ -9,6 +9,7 @@ from PyQt5.QtCore import QLocale
 from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 
+
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
     # sig25DParamChanged = QtCore.Signal(str, str, str)
@@ -149,7 +150,7 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 7)
         self.topLayout.setRowMinimumHeight(1, 110)
 
-        #Group radio buttons together in a logical group.
+        #Group radio buttons together in logical groups.
         self.LRbutton_group = QButtonGroup()  
         self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
         self.LRbutton_group.addButton(self.autocorectRightRadioButton)
@@ -177,16 +178,16 @@ class SLM25DWidget(Widget):
         ###
         
         # Horizontal lines separating logic sections
-        self.myframe = QFrame()
-        self.myframe.setFrameShape(QFrame.HLine)
-        self.myframe.setFrameShadow(QFrame.Plain)
-        self.myframe.setLineWidth(200)
+        self.dividerHoriz = QFrame()
+        self.dividerHoriz.setFrameShape(QFrame.HLine)
+        self.dividerHoriz.setFrameShadow(QFrame.Plain)
+        self.dividerHoriz.setLineWidth(200)
 
         self.mainLayout.addLayout(self.topLayout)
-        self.mainLayout.addWidget(self.myframe)
+        self.mainLayout.addWidget(self.dividerHoriz)
 
 
-        # self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
+        self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
         # SETTING PHASE MASK PARAMETERS =========================================================================
         
@@ -216,9 +217,7 @@ class SLM25DWidget(Widget):
                 self.row += 1
                 name = self.ZernikeCoefficientNames[i]
                 labelNames = f'{self.ZernikeCoefficientNames[i]} - {self.ZernikeAberrationNames[i]}'
-                # self.axisValTypes[name + side] = float
-                # StepInitialValue = "0.1"
-
+                self.axisValTypes[name + side] = float
 
                 label = f'{labelNames}'
 
@@ -278,10 +277,10 @@ class SLM25DWidget(Widget):
         self.label25D.setTextFormat(QtCore.Qt.RichText)
         self.grid2.addWidget(self.label25D, self.row, 0)
 
-        self.valLabel2 = QtWidgets.QLabel(f'<strong>Value</strong>')
-        self.valLabel2.setEnabled(False)
-        self.valLabel2.setTextFormat(QtCore.Qt.RichText)
-        self.grid2.addWidget(self.valLabel2, self.row, 1)
+        self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
+        self.valLabel.setEnabled(False)
+        self.valLabel.setTextFormat(QtCore.Qt.RichText)
+        self.grid2.addWidget(self.valLabel, self.row, 1)
 
         self.reset25D = QPushButton("Reset 2.5D")
         self.reset25D.setEnabled(False)
@@ -343,31 +342,28 @@ class SLM25DWidget(Widget):
             self.grid2.setRowStretch(self.grid2.rowCount(), 1)
             self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
 
-            # Connect buttons to signals
+            # Connect spinboxes to signals (Beam Diameter connected in Controller)
             if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
 
             elif self.paramConstraintDict[name][0] == 'integer': #All center/position fields.
-                self.pars['AbsPosEdit' + name].valueChanged.connect(self.sigMaskCenterChanged.emit)
+                self.pars['AbsPosEdit' + name].editingFinished.connect(self.sigMaskCenterChanged.emit)
 
-        self.myframe = QFrame() #Vertical divider between Zernike and 2.5D
-        self.myframe.setFrameShape(QFrame.VLine)
-        self.myframe.setFrameShadow(QFrame.Plain)
-        self.myframe.setLineWidth(200)
+        self.dividerVert = QFrame() #Vertical divider between Zernike and 2.5D
+        self.dividerVert.setFrameShape(QFrame.VLine)
+        self.dividerVert.setFrameShadow(QFrame.Plain)
+        self.dividerVert.setLineWidth(200)
 
         self.grid12HorizLayout.addLayout(self.grid1)
-        self.grid12HorizLayout.addWidget(self.myframe)
+        self.grid12HorizLayout.addWidget(self.dividerVert)
         self.grid12HorizLayout.addLayout(self.grid2)
         self.mainLayout.addLayout(self.grid12HorizLayout)
+        self.mainLayout.addWidget(self.dividerHoriz)
         self.mainLayout.addLayout(self.grid3)
 
         
 
         # # Connect received signals to funcions
-        # self.sigStepUpZernike.connect(self.incrementZern)
-        # self.sigStepDownZernike.connect(self.decrementZern)
-        # self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
-        # self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
@@ -395,28 +391,14 @@ class SLM25DWidget(Widget):
         
         for name in self.paramNames:
             absInitValue = self.valueDict25D[name]
-            self.pars['AbsPosEdit' + name].setText(absInitValue)
-        self.sigMaskCenterChanged.emit()
+            self.pars['AbsPosEdit' + name].setValue(absInitValue)
+        # self.sigMaskCenterChanged.emit()
 
     def resetZernToDefault(self):
         for side in self.ZernikeSides:
             for name in self.ZernikeCoefficientNames:
                 self.pars['AbsPosEdit' + name + side].setValue(self.valueDictZern25D[name + side])
-        self.sigUpdateZernikeMask.emit()
-
-    def checkValidityAbsPos(self, name):
-        valid = self.pars['AbsPosEdit'+name].hasAcceptableInput()
-        if valid:
-            self.pars['AbsPosEdit'+name].setStyleSheet('')
-        else:
-            self.pars['AbsPosEdit'+name].setStyleSheet("border: 1px solid red;")
-         
-    def checkValidityStep(self, name):
-        valid = self.pars['StepEdit'+name].hasAcceptableInput()
-        if valid:
-            self.pars['StepEdit'+name].setStyleSheet('')
-        else:
-            self.pars['StepEdit'+name].setStyleSheet("border: 1px solid red;")
+        # self.sigUpdateZernikeMask.emit()
 
     def askYesNoQuestion(self):
         """ Asks the user a yes/no question and returns whether "yes" was clicked. """
@@ -432,7 +414,7 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton.setEnabled(False)
         self.leftZernLabel.setEnabled(False)
         self.rightZernLabel.setEnabled(False)
-        self.valLabel2.setEnabled(False)
+        self.valLabel.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckboxNew.setEnabled(False)
         self.maskCenterCheckbox.setEnabled(False)
@@ -473,7 +455,7 @@ class SLM25DWidget(Widget):
         self.autoZernCheckboxNew.setEnabled(True)
         self.maskCenterCheckbox.setEnabled(True)
         self.lockZernCheckbox.setEnabled(True)
-        self.valLabel2.setEnabled(True)
+        self.valLabel.setEnabled(True)
         self.slmFrame.setEnabled(True)
         self.zernLabel.setEnabled(True)
         self.label25D.setEnabled(True)
@@ -504,22 +486,10 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setEnabled(True)
             self.pars['AbsPosUnit' + name].setEnabled(True)
 
-    # def increment(self, name):
-    #     stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
-    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-    #     newVal = str(round(currentVal+stepVal, 4))
-    #     self.pars['AbsPosEdit' + name].setText(newVal)
 
-    def SIMToggled(self, boolSIM):
+    def SIMToggled(self, boolSIM): #Only function is to disable/enable 2.5D Start button as SIM is turned on/off.
         self.start25D.setEnabled(not boolSIM)
         self.stop25D.setEnabled(boolSIM)
-
-        
-    # def decrement(self, name):
-        # stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
-        # currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        # newVal = str(round(currentVal-stepVal,4))
-        # self.pars['AbsPosEdit' + name].setText(newVal)
 
     def connect25DSharedAttrSigs(self):
         pass

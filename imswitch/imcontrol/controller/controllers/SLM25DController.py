@@ -75,7 +75,7 @@ class SLM25DController(ImConWidgetController):
         
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
 
-        self._widget.pars['AbsPosEditBeam Diameter'].valueChanged.connect(self.updateAll)
+        self._widget.pars['AbsPosEditBeam Diameter'].editingFinished.connect(self.updateAll)
 
 
 
@@ -183,7 +183,7 @@ class SLM25DController(ImConWidgetController):
 
 
     def MaskScaleChanged(self, value):
-        self.maskscaleValue = int(value)
+        self.maskscaleValue = value
         print("Mask scale:", self.maskscaleValue)
         self.combineAndProject()
 
@@ -1325,7 +1325,7 @@ class SLM25DController(ImConWidgetController):
                 self._logger.warning('Please select single isolated bead before aberration correction.')
 
 
-    def init25DWidgetValues(self):
+    def init25DWidgetValues(self): #The spripped values are needed as the config file does not have spaces or special characters.
         strippedNames = []
         self._widget.valueDict25D = dict()
         for i in range(len(self._widget.paramNames)):
@@ -1355,14 +1355,17 @@ class SLM25DController(ImConWidgetController):
         self._widget.autoZernCheckbox.setChecked(False)
         self._widget.autoZernCheckboxNew.setChecked(False)
             
+    def getOriginalMaskPositions(self):
+            xleftcenter = self._widget.valueDict25D["Left Center-X"]
+            yleftcenter = self._widget.valueDict25D["Left Center-Y"]
+            xrightcenter = self._widget.valueDict25D["Right Center-X"]
+            yrightcenter = self._widget.valueDict25D["Right Center-Y"]
+            return xleftcenter, yleftcenter, xrightcenter, yrightcenter
 
     def setLockZernike(self, value):
         self.zernikeLocked = value
 
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()
 
         # current values 
         parameters = self.getAllWidgetParams()
@@ -1401,15 +1404,12 @@ class SLM25DController(ImConWidgetController):
             self.combineAndProject()
 
     def updatePhaseMask(self , recalc = True):
-        self.calculatePhaseMask()
-        if self.slmActive:
-            self.combineAndProject()
+        self.calculatePhaseMask() # Calcs new mask and stores it as self.mask25dbinaryLeft and self.mask25dbinaryRight
+        # if self.slmActive:
+        #     self.combineAndProject()
 
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        # Original values
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
         parameters = self.getAllWidgetParams()
@@ -1422,7 +1422,7 @@ class SLM25DController(ImConWidgetController):
         yleftShift = yleftcenterC - yleftcenter
         xrightShift = xrightcenterC - xrightcenter
         yrightShift = yrightcenterC - yrightcenter
-
+  
         projectImageLeft = np.zeros((1080, 960))
         projectImageRight = np.zeros((1080, 960))
 
@@ -1441,7 +1441,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.img25d.setImage(self._widget.matrix25d)
         self.mask25D = self._widget.matrix25d
         # self._widget.vb25D.setAspectLocked(True)
-        self.createCenterDotImage()
+        # self.createCenterDotImage()
 
         if recalc:
             self.combineAndProject()
@@ -1451,7 +1451,6 @@ class SLM25DController(ImConWidgetController):
 
     def toggleSLMFromButton(self, state):
         self.toggleSLMResource(state)
-
 
 
     def toggleSLMResource(self, state):
@@ -1539,10 +1538,7 @@ class SLM25DController(ImConWidgetController):
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -1627,10 +1623,7 @@ class SLM25DController(ImConWidgetController):
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -1772,10 +1765,7 @@ class SLM25DController(ImConWidgetController):
 
         self.createCenterDotImage()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
         parameters = self.getAllWidgetParams()
@@ -1784,11 +1774,11 @@ class SLM25DController(ImConWidgetController):
         xrightcenterC = parameters["Right Center-X"]
         yrightcenterC = parameters["Right Center-Y"]
 
+        #Shift from original
         xleftShift = xleftcenterC - xleftcenter
         yleftShift = yleftcenterC - yleftcenter
         xrightShift = xrightcenterC - xrightcenter
         yrightShift = yrightcenterC - yrightcenter
-
 
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
@@ -1871,7 +1861,7 @@ class SLM25DController(ImConWidgetController):
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         else:
-            pass
+            # pass
             print('No masks projected')
 
 
@@ -1892,10 +1882,10 @@ class SLM25DController(ImConWidgetController):
     def createCenterMask(self):
         #xLeft, yLeft, xRight, yRight = self.getCurrentCenters()
 
-        xLeft = int(self._widget.valueDict25D["Left Center-X"])
-        yLeft = int(self._widget.valueDict25D["Left Center-Y"])
-        xRight = int(self._widget.valueDict25D["Right Center-X"])
-        yRight = int(self._widget.valueDict25D["Right Center-Y"])
+        xLeft = self._widget.valueDict25D["Left Center-X"]
+        yLeft = self._widget.valueDict25D["Left Center-Y"]
+        xRight = self._widget.valueDict25D["Right Center-X"]
+        yRight = self._widget.valueDict25D["Right Center-Y"]
 
 
         # SLM screen size parameters
@@ -1944,24 +1934,19 @@ class SLM25DController(ImConWidgetController):
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
 
-    def calculatePhaseMask(self): 
-
-        # Returns Phase mask in shape of 1080x1920 numpy array
-        
+    def calculatePhaseMask(self):         
         # TO DO: connect these input parameters with GUI 
         parameters = self.getAllWidgetParams()
 
-        rho = parameters["Beam Diameter"]
+        rho = parameters["Beam Diameter"] #Current value
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
+        gamma = parameters["Gamma"] #Current value
+        psi = parameters["Psi"] #Current value
+
         # xleftcenter = parameters["Left Center-X"]
         # yleftcenter = parameters["Left Center-Y"]
         # xrightcenter = parameters["Right Center-X"]
         # yrightcenter = parameters["Right Center-Y"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-        gamma = parameters["Gamma"]
-        psi = parameters["Psi"]
 
 
         # SLM screen size parameters
@@ -1979,15 +1964,15 @@ class SLM25DController(ImConWidgetController):
         rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
         rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
 
-        rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
+        # rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         # ====================================================================================================================================
 
         maskLeft = self.phase_function_fast(gamma, psi, rhomatrixleft) 
         maskRight = self.phase_function_fast(gamma, psi, rhomatrixright) 
 
         # binarization (to 0 and 255; for 8 bit format)?????  
-        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 255, 0)  #!!! back to 127
-        self.mask25dbinaryRight = np.where(maskRight >= 0, 255, 0)
+        self.mask25dbinaryLeft = np.where(maskLeft >= 0, 127, 0)  #!!! back to 127
+        self.mask25dbinaryRight = np.where(maskRight >= 0, 127, 0)
         # maskbinary = maskbinary.astype(np.uint8)
         # maskbinary = maskbinary.transpose()
 
@@ -1999,10 +1984,7 @@ class SLM25DController(ImConWidgetController):
 
         self.calculateZernikePhaseMask()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
         parameters = self.getAllWidgetParams()
@@ -2038,10 +2020,7 @@ class SLM25DController(ImConWidgetController):
     def recalculateZernikePhaseMask(self):
         self.calculateNewZernikePhaseMask()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
         parameters = self.getAllWidgetParams()
