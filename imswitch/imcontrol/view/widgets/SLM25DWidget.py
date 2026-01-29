@@ -141,11 +141,12 @@ class SLM25DWidget(Widget):
 
 
         # Grid layout for the entire widget
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.gridHorizLayout = QtWidgets.QHBoxLayout()
-        self.topLayout = QtWidgets.QGridLayout()
-        self.grid1 = QtWidgets.QGridLayout()
-        self.grid2 = QtWidgets.QGridLayout()
+        self.mainLayout = QtWidgets.QVBoxLayout() #Overall main layout
+        self.grid12HorizLayout = QtWidgets.QHBoxLayout() #Zernike/2.5D horizontal layout to contain 2 grid layouts.
+        self.topLayout = QtWidgets.QGridLayout() #Layout containing everything above grids 1 and 2.
+        self.grid1 = QtWidgets.QGridLayout() #Zernike
+        self.grid2 = QtWidgets.QGridLayout() #2.5D
+        self.grid3 = QtWidgets.QGridLayout() #David's million buttons
         self.setLayout(self.mainLayout)
 
         self.topLayout.addWidget(self.start25D,0,0)
@@ -155,21 +156,24 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.project25D,0,4)
         self.topLayout.addWidget(self.projectCenter,0,5)
         self.topLayout.addWidget(self.slmPreview, 0, 6)
-        # self.grid1.addWidget(self.loadImgToSLMbutton, 1, 6)
-        # self.grid1.addWidget(self.beginAZbutton, 2, 6)
-        # self.grid1.addWidget(self.centerMaskbutton, 3, 6)
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 7)
         self.topLayout.setRowMinimumHeight(1, 100)
-        # self.grid1.addWidget(self.resetZern, 4, 3)
-        # self.grid1.addWidget(self.autoZernCheckbox, 4, 4)
-        # self.grid1.addWidget(self.autoZernCheckboxNew, 4, 6)
-        # self.grid1.addWidget(self.maskCenterCheckbox, 4, 5)
-        # self.grid1.addWidget(self.lockZernCheckbox, 5, 5)
-        # self.grid1.addWidget(self.autocorectLeftRadioButton, 6, 5)
-        # self.grid1.addWidget(self.autocorectRightRadioButton, 6, 6)
-        # self.grid1.addWidget(self.autocorectRedRadioButton, 7, 4)
-        # self.grid1.addWidget(self.autocorectGreenRadioButton, 7, 5)
-        # self.grid1.addWidget(self.autocorectBlueRadioButton, 7, 6)
+
+
+        ###David's buttons
+        self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
+        self.grid3.addWidget(self.beginAZbutton, 0, 1)
+        self.grid3.addWidget(self.centerMaskbutton, 0, 2)
+        self.grid3.addWidget(self.resetZern, 0, 3)
+        self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
+        self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
+        self.grid3.addWidget(self.maskCenterCheckbox, 1, 1)
+        self.grid3.addWidget(self.lockZernCheckbox, 1, 2)
+        self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 3)
+        self.grid3.addWidget(self.autocorectRightRadioButton, 1, 4)
+        self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
+        self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
+        self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
 
 
         self.LRbutton_group = QButtonGroup()  
@@ -182,16 +186,16 @@ class SLM25DWidget(Widget):
         self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
         
         self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
-        self.maskScaleNumber = QtWidgets.QDoubleSpinBox()
+        self.maskScaleNumber = QtWidgets.QSpinBox()
         self.maskScaleNumber._type = 'int'
         self.maskScaleNumber.setRange(0,255)
         self.maskScaleNumber.setSingleStep(1)
-        self.maskScaleNumber.setDecimals(0)
         #self.maskScaleNumber.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.maskScaleNumber.setValue(255)
         self.maskScaleNumber.setFixedWidth(75)
-        # self.grid1.addWidget(self.maskScaleNumberLabel, 8, 5)
-        # self.grid1.addWidget(self.maskScaleNumber, 8, 6)
+        self.grid3.addWidget(self.maskScaleNumberLabel, 2, 3)
+        self.grid3.addWidget(self.maskScaleNumber, 2, 4)
+        ###
         
         # Horizontal lines separating logic sections
         self.myframe = QFrame()
@@ -407,10 +411,11 @@ class SLM25DWidget(Widget):
         self.myframe.setFrameShadow(QFrame.Plain)
         self.myframe.setLineWidth(200)
 
-        self.gridHorizLayout.addLayout(self.grid1)
-        self.gridHorizLayout.addWidget(self.myframe)
-        self.gridHorizLayout.addLayout(self.grid2)
-        self.mainLayout.addLayout(self.gridHorizLayout)
+        self.grid12HorizLayout.addLayout(self.grid1)
+        self.grid12HorizLayout.addWidget(self.myframe)
+        self.grid12HorizLayout.addLayout(self.grid2)
+        self.mainLayout.addLayout(self.grid12HorizLayout)
+        self.mainLayout.addLayout(self.grid3)
 
         
 
