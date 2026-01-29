@@ -17,20 +17,20 @@ class SLM25DWidget(Widget):
 #Signals for pressing the increment/decrement buttons
     sigStepUp25DMask = QtCore.Signal(str)
     sigStepDown25DMask = QtCore.Signal(str)
-    sigStepUpCenterClicked = QtCore.Signal(str)
-    sigStepDownCenterClicked = QtCore.Signal(str)
+
+    # sigStepUpCenterClicked = QtCore.Signal(str)
+    # sigStepDownCenterClicked = QtCore.Signal(str)
+    sigMaskCenterChanged = QtCore.Signal()
+
     sigStepUpZernikeLeft = QtCore.Signal(str)
     sigStepDownZernikeLeft = QtCore.Signal(str)
     sigStepUpZernikeRight = QtCore.Signal(str)
     sigStepDownZernikeRight = QtCore.Signal(str)
 #Signals for updating and eventually projecting images
     update25DMask = QtCore.Signal(str)
-    updateCenterMask = QtCore.Signal(str)
+    # updateCenterMask = QtCore.Signal(str)
     sigUpdateZernikeMask = QtCore.Signal(str)
 
-    updateDiameterMask = QtCore.Signal(str)
-    sigStepUpDiameterClicked = QtCore.Signal(str)
-    sigStepDownDiameterClicked = QtCore.Signal(str)
 #Signals to control red highlighting of incorreect QLineEdit entries
     sigCheckValidityAbsPos = QtCore.Signal(str)
     sigCheckValidityStep = QtCore.Signal(str)
@@ -187,7 +187,6 @@ class SLM25DWidget(Widget):
         
         self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
         self.maskScaleNumber = QtWidgets.QSpinBox()
-        self.maskScaleNumber._type = 'int'
         self.maskScaleNumber.setRange(0,255)
         self.maskScaleNumber.setSingleStep(1)
         #self.maskScaleNumber.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
@@ -216,7 +215,7 @@ class SLM25DWidget(Widget):
         self.ZernikeSides = ["Left", "Right"]
         self.elementListZern = []
 
-        self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike</strong>')
+        self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike Coefficients</strong>')
         self.zernLabel.setEnabled(False)
         self.zernLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid1.addWidget(self.zernLabel, 0, 0)
@@ -362,7 +361,7 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name].setValue(0)
                 self.pars['AbsPosEdit' + name].setEnabled(False)
 
-            if self.paramConstraintDict[name][0] == 'integer':
+            if self.paramConstraintDict[name][0] == 'integer': #All the center/position parameters
                 self.pars['AbsPosEdit' + name] = QtWidgets.QSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
                 self.pars['AbsPosEdit' + name].setFixedWidth(75)
@@ -387,14 +386,17 @@ class SLM25DWidget(Widget):
 
             # Connect buttons to signals
 
-        #     if (name == 'Gamma') or (name == 'Psi'):
+            if (name == 'Gamma') or (name == 'Psi'):
+                pass
         #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
         #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
         #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
         #         self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
         #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
         #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
-        #     else:
+            elif self.paramConstraintDict[name][0] == 'integer':
+                self.pars['AbsPosEdit' + name].valueChanged.connect(self.sigMaskCenterChanged.emit)
+                
         #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
         #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
         #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
@@ -402,9 +404,6 @@ class SLM25DWidget(Widget):
         #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
         #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
-        # self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
-        # self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
-        # self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
 
         self.myframe = QFrame() #Vertical divider between Zernike and 2.5D
         self.myframe.setFrameShape(QFrame.VLine)
@@ -419,12 +418,7 @@ class SLM25DWidget(Widget):
 
         
 
-        # Connect received signals to funcions
-        self.sigStepUp25DMask.connect(self.increment)
-        self.sigStepDown25DMask.connect(self.decrement)
-        self.sigStepUpCenterClicked.connect(self.increment)
-        self.sigStepDownCenterClicked.connect(self.decrement)
-
+        # # Connect received signals to funcions
         # self.sigStepUpZernike.connect(self.incrementZern)
         # self.sigStepDownZernike.connect(self.decrementZern)
         self.sigCheckValidityAbsPos.connect(self.checkValidityAbsPos)
@@ -462,7 +456,7 @@ class SLM25DWidget(Widget):
             stepInitValue = self.stepAxisInitialValues[name]
             self.pars['StepEdit' + name].setText(stepInitValue)
             self.pars['AbsPosEdit' + name].setText(absInitValue)
-        self.updateCenterMask.emit('_')
+        self.sigMaskCenterChanged.emit()
 
     def resetZernToDefault(self):
         for side in self.ZernikeSides:
@@ -572,22 +566,22 @@ class SLM25DWidget(Widget):
             self.pars['AbsPosEdit' + name].setEnabled(True)
             self.pars['AbsPosUnit' + name].setEnabled(True)
 
-    def increment(self, name):
-        stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
-        currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = str(round(currentVal+stepVal, 4))
-        self.pars['AbsPosEdit' + name].setText(newVal)
+    # def increment(self, name):
+    #     stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
+    #     currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
+    #     newVal = str(round(currentVal+stepVal, 4))
+    #     self.pars['AbsPosEdit' + name].setText(newVal)
 
     def SIMToggled(self, boolSIM):
         self.start25D.setEnabled(not boolSIM)
         self.stop25D.setEnabled(boolSIM)
 
         
-    def decrement(self, name):
-        stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
-        currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
-        newVal = str(round(currentVal-stepVal,4))
-        self.pars['AbsPosEdit' + name].setText(newVal)
+    # def decrement(self, name):
+        # stepVal = self.axisValTypes[name](self.pars['StepEdit' + name].text())
+        # currentVal = self.axisValTypes[name](self.pars['AbsPosEdit' + name].text())
+        # newVal = str(round(currentVal-stepVal,4))
+        # self.pars['AbsPosEdit' + name].setText(newVal)
 
     def connect25DSharedAttrSigs(self):
         self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))

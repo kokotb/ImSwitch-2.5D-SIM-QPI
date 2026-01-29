@@ -76,13 +76,15 @@ class SLM25DController(ImConWidgetController):
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
-        self._widget.updateDiameterMask.connect(self.updateAll)
-        self._widget.sigStepUpDiameterClicked.connect(self.updateAll)
-        self._widget.sigStepDownDiameterClicked.connect(self.updateAll) #!!! fix this
 
-        self._widget.updateCenterMask.connect(self.combineAndProject)
-        self._widget.sigStepUpCenterClicked.connect(self.combineAndProject)
-        self._widget.sigStepDownCenterClicked.connect(self.combineAndProject)
+        self._widget.pars['AbsPosEditBeam Diameter'].valueChanged.connect(self.updateAll)
+
+        self._widget.sigMaskCenterChanged.connect(self.combineAndProject)
+
+
+        # self._widget.updateCenterMask.connect(self.combineAndProject)
+        # self._widget.sigStepUpCenterClicked.connect(self.combineAndProject)
+        # self._widget.sigStepDownCenterClicked.connect(self.combineAndProject)
 
         self._widget.update25DMask.connect(self.updatePhaseMask)
         self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
