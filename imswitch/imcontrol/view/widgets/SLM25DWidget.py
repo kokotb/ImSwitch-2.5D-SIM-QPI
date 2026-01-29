@@ -319,11 +319,9 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
         self.grid2.addWidget(self.reset25D, self.row, 2)
 
-
-        
         self.paramNames = ["Gamma", "Psi", "Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y", "Beam Diameter"]
-        self.typeStrings = {"Gamma": "str", "Psi": "str", "Left Center-X": "str", "Left Center-Y": "str", "Right Center-X": "str", "Right Center-Y": "str", "Beam Diameter": "str"}
-        self.stepAxisInitialValues = {"Gamma": "0.1", "Psi": "0.1", "Left Center-X": "20", "Left Center-Y": "20", "Right Center-X": "20", "Right Center-Y": "20", "Beam Diameter": "0.5"}
+        self.paramConstraintDict = {'Gamma':('double',(-10,10),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,1920),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1920),0, 10, 'px'), 
+                                    'Right Center-X': ('integer',(1,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1920),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
         UnitaxisInitialValues = {"Gamma": "-", "Psi": "-", "Left Center-X": "px", "Left Center-Y": "px", "Right Center-X": "px", "Right Center-Y": "px", "Beam Diameter": "mm"}
         self.elementList25D = []
         for i in range(len(self.paramNames)):
@@ -337,81 +335,70 @@ class SLM25DWidget(Widget):
             #Define all widget items
             self.pars['Label' + name] = QtWidgets.QLabel(f'{label}')
             self.pars['Label' + name].setTextFormat(QtCore.Qt.RichText)
-            # self.pars['DownButton' + name] = guitools.BetterPushButton('-')
-            # self.pars['DownButton' + name].setFixedWidth(100)
-            # self.pars['UpButton' + name] = guitools.BetterPushButton('+')
-            # self.pars['UpButton' + name].setFixedWidth(100)
-            # self.pars['StepEdit' + name] = QtWidgets.QLineEdit(StepInitialValue)
-            # self.pars['StepEdit' + name].setFixedWidth(75)
-            # self.pars['StepUnit' + name] = QtWidgets.QLabel(self.unit)
-            self.pars['AbsPosEdit' + name] = QtWidgets.QLineEdit('')
-            self.pars['AbsPosEdit' + name]._name = name
-            self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
 
-            self.pars['AbsPosEdit' + name].setFixedWidth(75)
+
+            # self.pars['AbsPosEdit' + name]._type = self.typeStrings[name]
+
             self.pars['AbsPosUnit' + name] = QtWidgets.QLabel(self.unit)
             self.pars['Label' + name].setEnabled(False)
             # self.pars['UpButton' + name].setEnabled(False)
             # self.pars['DownButton' + name].setEnabled(False)
             # self.pars['StepEdit' + name].setEnabled(False)
             # self.pars['StepUnit' + name].setEnabled(False)
-            self.pars['AbsPosEdit' + name].setEnabled(False)
+            
             self.pars['AbsPosUnit' + name].setEnabled(False)
+
+            if self.paramConstraintDict[name][0] == 'double':
+                self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
+                self.pars['AbsPosEdit' + name]._name = name
+                self.pars['AbsPosEdit' + name].setFixedWidth(75)
+                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict[name][1][0], self.paramConstraintDict[name][1][1])
+                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict[name][3])
+                self.pars['AbsPosEdit' + name].setDecimals(self.paramConstraintDict[name][2])
+                self.pars['AbsPosEdit' + name].setValue(0)
+                self.pars['AbsPosEdit' + name].setEnabled(False)
+
+            if self.paramConstraintDict[name][0] == 'integer':
+                self.pars['AbsPosEdit' + name] = QtWidgets.QSpinBox()
+                self.pars['AbsPosEdit' + name]._name = name
+                self.pars['AbsPosEdit' + name].setFixedWidth(75)
+                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict[name][1][0], self.paramConstraintDict[name][1][1])
+                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict[name][3])
+                self.pars['AbsPosEdit' + name].setValue(0)
+                self.pars['AbsPosEdit' + name].setEnabled(False)
+
+
+
 
             self.elementList25D.append(self.pars['AbsPosEdit' + name])
 
-            # Integer validator
-            if (name == 'Left Center-X') or (name == 'Left Center-Y') or (name == 'Right Center-X') or (name == 'Right Center-Y'):
-                # self.validator = QIntValidator(1,100)
-                # self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QIntValidator(1,1920)
-                self.pars['AbsPosEdit' + name].setValidator(self.validator)
-
-            # Double validator
-            elif (name == 'Gamma') or (name == 'Psi'):
-                # self.validator = QDoubleValidator(0.01,1.0,2)
-                # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                # self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QDoubleValidator(-25.0,25.0,2)
-                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['AbsPosEdit' + name].setValidator(self.validator)
-                # self.pars['UpButton' + name].setAutoRepeat(True)
-                # self.pars['DownButton' + name].setAutoRepeat(True)
-            elif (name == 'Beam Diameter'):
-                # self.validator = QDoubleValidator(0.1,2.0,1)
-                # self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                # self.pars['StepEdit' + name].setValidator(self.validator)
-                self.validator = QDoubleValidator(0.0,8.0,1)
-                self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['AbsPosEdit' + name].setValidator(self.validator)
-
             # Add to widget object
             self.grid2.addWidget(self.pars['Label' + name], self.row, 0)
-            # self.grid2.addWidget(self.pars['DownButton' + name], self.row, 1)
-            # self.grid2.addWidget(self.pars['UpButton' + name], self.row, 2)
-            # self.grid2.addWidget(self.pars['StepEdit' + name], self.row, 3)
-            # self.grid2.addWidget(self.pars['StepUnit' + name], self.row, 4)
+
             self.grid2.addWidget(self.pars['AbsPosEdit' + name], self.row, 1)
             self.grid2.addWidget(self.pars['AbsPosUnit' + name], self.row, 2)
 
+            self.grid2.setRowStretch(self.grid2.rowCount(), 1)
+            self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
+
             # Connect buttons to signals
 
-            if (name == 'Gamma') or (name == 'Psi'):
-                # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
-                # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
-                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
-                self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-                # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
-                # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
-            else:
-                # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
-                # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
-                self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
-                self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
-                # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
-                # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
+        #     if (name == 'Gamma') or (name == 'Psi'):
+        #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUp25DMask.emit(name))
+        #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDown25DMask.emit(name))
+        #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.update25DMask.emit(name))
+        #         self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+        #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+        #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
+        #     else:
+        #         # self.pars['UpButton' + name].clicked.connect(lambda *args, name=name: self.sigStepUpCenterClicked.emit(name))
+        #         # self.pars['DownButton' + name].clicked.connect(lambda *args, name=name: self.sigStepDownCenterClicked.emit(name))
+        #         self.pars['AbsPosEdit' + name].editingFinished.connect(lambda *args, name=name: self.updateCenterMask.emit(name))
+        #         self.pars['AbsPosEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityAbsPos.emit(name))
+        #         # self.pars['StepEdit' + name].textChanged.connect(lambda *args, name=name: self.sigCheckValidityStep.emit(name))
+        #         # self.pars['AbsPosEdit' + name].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters',name,str(value)))
 
-        self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
+        # self.pars['AbsPosEditBeam Diameter'].editingFinished.connect(lambda *args, name='Beam Diameter': self.updateDiameterMask.emit('Beam Diameter'))
         # self.pars['UpButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepUpDiameterClicked.emit('Beam Diameter'))
         # self.pars['DownButtonBeam Diameter'].clicked.connect(lambda *args, name='Beam Diameter': self.sigStepDownDiameterClicked.emit('Beam Diameter'))
 
@@ -424,6 +411,8 @@ class SLM25DWidget(Widget):
         self.gridHorizLayout.addWidget(self.myframe)
         self.gridHorizLayout.addLayout(self.grid2)
         self.mainLayout.addLayout(self.gridHorizLayout)
+
+        
 
         # Connect received signals to funcions
         self.sigStepUp25DMask.connect(self.increment)
