@@ -104,7 +104,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
         self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
-        self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
+        # self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
         # self._widget.Colorbutton_group.buttonClicked.connect(self.selectAZColor) #NOTE
         self._widget.maskScaleNumber.valueChanged.connect(self.MaskScaleChanged)
 
@@ -126,7 +126,6 @@ class SLM25DController(ImConWidgetController):
 
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
-        self.maskSideSelected = "Right"
 
         self.maskscaleValue = 255
 
@@ -162,13 +161,13 @@ class SLM25DController(ImConWidgetController):
             self.filePath.setText(jsonPath[0])
         else: pass
 
-    def selectMaskSide(self):
-        if self._widget.autocorectLeftRadioButton.isChecked():
-            self.maskSideSelected = "Left"
-        elif self._widget.autocorectRightRadioButton.isChecked():
-            self.maskSideSelected = "Right"
+    # def selectMaskSide(self):
+    #     if self._widget.autocorectLeftRadioButton.isChecked():
+    #         self.maskSideSelected = "Left"
+    #     elif self._widget.autocorectRightRadioButton.isChecked():
+    #         self.maskSideSelected = "Right"
 
-        print(self.maskSideSelected + " side of the mask selected for AZ")
+    #     print(self.maskSideSelected + " side of the mask selected for AZ")
 
 
     # def selectAZColor(self):
@@ -396,7 +395,7 @@ class SLM25DController(ImConWidgetController):
         print('Aligning mask center process finished')
 
     def alignCenterLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        for key in [self.maskSideSelected + " Center-Y", self.maskSideSelected + " Center-X"]:
+        for key in [self._widget.sideSelectCombo.currentText() + " Center-Y", self._widget.sideSelectCombo.currentText() + " Center-X"]:
             current = self._widget.pars['AbsPosEdit' + key].value()
             testvalues = np.linspace(current - 140, current + 140, 15, dtype=int)
             scores = []
@@ -454,9 +453,9 @@ class SLM25DController(ImConWidgetController):
                     self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                     images.append(beadImgAnalysis)
-                    if (key == self.maskSideSelected + " Center-Y"):
+                    if (key == self._widget.sideSelectCombo.currentText() + " Center-Y"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[1])
-                    elif (key == self.maskSideSelected + " Center-X"):
+                    elif (key == self._widget.sideSelectCombo.currentText() + " Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
                 avg = sum(Com_frames) / len(Com_frames)
@@ -618,7 +617,7 @@ class SLM25DController(ImConWidgetController):
 
     
     def sphericalAberrationLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        key = '(4,0)' + self.maskSideSelected
+        key = '(4,0)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.5, current + 0.5, 21)
         scores = []
@@ -701,7 +700,7 @@ class SLM25DController(ImConWidgetController):
             time.sleep(0.15)
 
         # Oblique Astigmatism 
-        key = '(2,-2)' + self.maskSideSelected
+        key = '(2,-2)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -777,7 +776,7 @@ class SLM25DController(ImConWidgetController):
         # =======================================================================================================
 
         # Vertical Astigmatism 
-        key = '(2,2)' + self.maskSideSelected
+        key = '(2,2)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -865,7 +864,7 @@ class SLM25DController(ImConWidgetController):
 
     def horizontalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Horizontal Comma
-        key = '(3,1)' + self.maskSideSelected
+        key = '(3,1)' + self._widget.sideSelectCombo.currentText()
         testvalues = list(self.autoZernCalibValuesDict[key])
         horCommaScores = []
         horCommaScores2 = []
@@ -984,7 +983,7 @@ class SLM25DController(ImConWidgetController):
 
     def verticalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Vertical Comma 
-        key = '(3,-1)' + self.maskSideSelected
+        key = '(3,-1)' + self._widget.sideSelectCombo.currentText()
         testvalues = list(self.autoZernCalibValuesDict[key])
         vertCommaScores = []
         images = []
@@ -1118,8 +1117,8 @@ class SLM25DController(ImConWidgetController):
 
     def trefoilLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Vertical Comma 
-        for key in ['(3,-3)' + self.maskSideSelected, '(3,3)' + self.maskSideSelected]:
-        #for key in ['(3,-3)' + self.maskSideSelected', '(3,3)' + self.maskSideSelected', '(3,-1)' + self.maskSideSelected', '(3,1)' + self.maskSideSelected', '(2,2)' + self.maskSideSelected, '(2,-2)' + self.maskSideSelected]:
+        for key in ['(3,-3)' + self._widget.sideSelectCombo.currentText(), '(3,3)' + self._widget.sideSelectCombo.currentText()]:
+        #for key in ['(3,-3)' + self._widget.sideSelectCombo.currentText()', '(3,3)' + self._widget.sideSelectCombo.currentText()', '(3,-1)' + self._widget.sideSelectCombo.currentText()', '(3,1)' + self._widget.sideSelectCombo.currentText()', '(2,2)' + self._widget.sideSelectCombo.currentText(), '(2,-2)' + self._widget.sideSelectCombo.currentText()]:
             current = round(self._widget.pars['AbsPosEdit' + key].value(),2)
             testvalues = np.round(np.linspace(current - 0.7, current + 0.7, 15), 2)
 
@@ -1181,7 +1180,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             zernikeParametersNew = self.getAllZernikeParams()
-            print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self.maskSideSelected]) + ' ' + str(zernikeParametersNew['(3,3)' + self.maskSideSelected]))
+            print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self._widget.sideSelectCombo.currentText()]) + ' ' + str(zernikeParametersNew['(3,3)' + self._widget.sideSelectCombo.currentText()]))
             self.updateZernikeWithSleep()
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')

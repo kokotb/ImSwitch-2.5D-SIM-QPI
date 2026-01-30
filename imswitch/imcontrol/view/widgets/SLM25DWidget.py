@@ -99,13 +99,16 @@ class SLM25DWidget(Widget):
         # self.autoZernCheckboxNew.setEnabled(False)
         # self.autoZernCheckboxNew.setChecked(True)
 
+        self.sideSelectComboLabel = QtWidgets.QLabel('Auto Side:')
+        self.sideSelectCombo = QComboBox()
+        self.sideSelectCombo.addItems(["Left", "Right"])
+        self.sideSelectCombo.setCurrentIndex(1)
 
+        # self.autocorectLeftRadioButton = QRadioButton('Left-Autocorrect')
+        # self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
+        # self.autocorectRightRadioButton.setChecked(True)
 
-        self.autocorectLeftRadioButton = QRadioButton('Left-Autocorrect')
-        self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
-        self.autocorectRightRadioButton.setChecked(True)
-
-        self.channelSelectCombLabel = QtWidgets.QLabel('Auto Channel:')
+        self.channelSelectComboLabel = QtWidgets.QLabel('Auto Channel:')
         self.channelSelectCombo = QComboBox()
         self.channelSelectCombo.addItems(["Red", "Green", "Blue"])
         self.channelSelectCombo.setCurrentIndex(0)
@@ -145,9 +148,9 @@ class SLM25DWidget(Widget):
         self.topLayout.setRowMinimumHeight(1, 110)
 
         #Group radio buttons together in logical groups.
-        self.LRbutton_group = QButtonGroup()  
-        self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
-        self.LRbutton_group.addButton(self.autocorectRightRadioButton)
+        # self.LRbutton_group = QButtonGroup()  
+        # self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
+        # self.LRbutton_group.addButton(self.autocorectRightRadioButton)
         # self.Colorbutton_group = QButtonGroup()  
         # self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
         # self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
@@ -161,12 +164,12 @@ class SLM25DWidget(Widget):
         # self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
         # self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
 
-        self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 0)
-        self.grid3.addWidget(self.autocorectRightRadioButton, 1, 1)
+        self.grid3.addWidget(self.sideSelectComboLabel, 1, 0)
+        self.grid3.addWidget(self.sideSelectCombo, 1, 1)
         # self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
         # self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
         # self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
-        self.grid3.addWidget(self.channelSelectCombLabel, 2, 0)
+        self.grid3.addWidget(self.channelSelectComboLabel, 2, 0)
         self.grid3.addWidget(self.channelSelectCombo, 2, 1)
 
         ###
