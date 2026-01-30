@@ -86,9 +86,7 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton = QPushButton("Center Mask")
         self.centerMaskbutton.setEnabled(False)
         self.centerMaskbutton.setFixedWidth(250)
-        self.resetZern = QPushButton("Reset Zern")
-        self.resetZern.setEnabled(False)
-        self.resetZern.clicked.connect(self.sigResetZern.emit)
+
 
         self.autoZernCheckbox = QCheckBox("Auto Zernike")
         # self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
@@ -100,10 +98,7 @@ class SLM25DWidget(Widget):
         # self.autoZernCheckboxNew.setEnabled(False)
         # self.autoZernCheckboxNew.setChecked(True)
 
-        self.lockZernCheckbox = QCheckBox("Lock Zernike")
-        self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
-        self.lockZernCheckbox.setEnabled(False)
-        self.lockZernCheckbox.setChecked(False)
+
 
         self.autocorectLeftRadioButton = QRadioButton('Left-Autocorrect')
         self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
@@ -130,6 +125,8 @@ class SLM25DWidget(Widget):
         self.grid12HorizLayout = QtWidgets.QHBoxLayout() #Zernike/2.5D horizontal layout to contain 2 grid layouts.
         self.topLayout = QtWidgets.QGridLayout() #Layout containing everything above grids 1 and 2.
         self.grid1 = QtWidgets.QGridLayout() #Zernike
+        self.grid1Buttons = QtWidgets.QHBoxLayout() #Buttons below zernike parameters
+        self.grid1Main = QtWidgets.QVBoxLayout() #Container for grid1 and the botton below grid 1
         self.grid2 = QtWidgets.QGridLayout() #2.5D
         self.grid3 = QtWidgets.QGridLayout() #David's million buttons layout
         self.setLayout(self.mainLayout)
@@ -158,10 +155,10 @@ class SLM25DWidget(Widget):
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
         self.grid3.addWidget(self.beginAZbutton, 0, 1)
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
-        self.grid3.addWidget(self.resetZern, 0, 3)
+
         self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
         # self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
-        self.grid3.addWidget(self.lockZernCheckbox, 1, 2)
+
         self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 3)
         self.grid3.addWidget(self.autocorectRightRadioButton, 1, 4)
         self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
@@ -257,11 +254,6 @@ class SLM25DWidget(Widget):
 
                 self.pars['AbsPosEdit' + name + side].valueChanged.connect(self.sigZernikeMaskChanged.emit) #Anytime a Zernike value is changed, it sends this signal received by controller
 
-        
-
-
-
-        
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.row = 0
@@ -343,12 +335,29 @@ class SLM25DWidget(Widget):
             elif self.paramConstraintDict[name][0] == 'integer': #All center/position fields.
                 self.pars['AbsPosEdit' + name].editingFinished.connect(self.sigMaskCenterChanged.emit)
 
+
+
+        self.resetZern = QPushButton("Reset Zern")
+        self.resetZern.setEnabled(False)
+        self.resetZern.clicked.connect(self.sigResetZern.emit)
+        self.grid1Buttons.addWidget(self.resetZern)
+
+        self.lockZernCheckbox = QCheckBox("Lock Zernike")
+        self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
+        self.lockZernCheckbox.setEnabled(False)
+        self.lockZernCheckbox.setChecked(False)
+        self.grid1Buttons.addWidget(self.lockZernCheckbox)
+
+        self.grid1Main.addLayout(self.grid1)
+        self.grid1Main.addLayout(self.grid1Buttons)
+
+
         self.dividerVert = QFrame() #Vertical divider between Zernike and 2.5D
         self.dividerVert.setFrameShape(QFrame.VLine)
         self.dividerVert.setFrameShadow(QFrame.Plain)
         self.dividerVert.setLineWidth(200)
 
-        self.grid12HorizLayout.addLayout(self.grid1)
+        self.grid12HorizLayout.addLayout(self.grid1Main)
         self.grid12HorizLayout.addWidget(self.dividerVert)
         self.grid12HorizLayout.addLayout(self.grid2)
         self.mainLayout.addLayout(self.grid12HorizLayout)
