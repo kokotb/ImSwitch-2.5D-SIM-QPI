@@ -36,6 +36,9 @@ class SLM25DWidget(Widget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        #For development only:
+        self.maskScaleAvailable = False
 
         ### Placeholders for entire image display box (2 labels, 2 images).
         self.slmFrame = pg.GraphicsLayoutWidget()
@@ -59,8 +62,6 @@ class SLM25DWidget(Widget):
         self.vb25D.addItem(self.overlayImg25D)
         ###
 
-
-
         #Initialize buttons on top row of the widget
         self.start25D = QPushButton("Start 2.5D")
         self.stop25D = QPushButton("Stop 2.5D")
@@ -73,9 +74,9 @@ class SLM25DWidget(Widget):
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(False)
         self.project25D.setEnabled(False)
-        self.projectCenter = QCheckBox('Project Center')
-        self.projectCenter.setChecked(False)
-        self.projectCenter.setEnabled(False)
+        # self.projectCenter = QCheckBox('Project Center')
+        # self.projectCenter.setChecked(False)
+        # self.projectCenter.setEnabled(False)
         self.slmPreview = QPushButton("Preview SLM")
         self.slmPreview.setEnabled(False)
         self.slmPreview.setFixedWidth(250)
@@ -88,10 +89,10 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton.setFixedWidth(250)
 
 
-        self.autoZernCheckbox = QCheckBox("Auto Zernike")
+        # self.autoZernCheckbox = QCheckBox("Auto Zernike")
         # self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
-        self.autoZernCheckbox.setEnabled(False)
-        self.autoZernCheckbox.setChecked(True)
+        # self.autoZernCheckbox.setEnabled(False)
+        # self.autoZernCheckbox.setChecked(True)
 
         # self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
         # # self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
@@ -104,21 +105,22 @@ class SLM25DWidget(Widget):
         self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
         self.autocorectRightRadioButton.setChecked(True)
 
-        self.autocorectRedRadioButton = QRadioButton('Red-Autocorrect')
-        self.autocorectGreenRadioButton = QRadioButton('Green-Autocorrect')
-        self.autocorectBlueRadioButton = QRadioButton('Blue-Autocorrect')
-        self.autocorectRedRadioButton.setChecked(True)
+        self.channelSelectCombLabel = QtWidgets.QLabel('Auto Channel:')
+        self.channelSelectCombo = QComboBox()
+        self.channelSelectCombo.addItems(["Red", "Green", "Blue"])
+        self.channelSelectCombo.setCurrentIndex(0)
+        # self.channelSelectCombo.currentTextChanged.connect()
+
+        # self.autocorectRedRadioButton = QRadioButton('Red-Autocorrect')
+        # self.autocorectGreenRadioButton = QRadioButton('Green-Autocorrect')
+        # self.autocorectBlueRadioButton = QRadioButton('Blue-Autocorrect')
+        # self.autocorectRedRadioButton.setChecked(True)
 
         self.loadImgToSLMbutton = QPushButton("Load Image")
         self.loadImgToSLMbutton.setEnabled(False)
         self.loadImgToSLMbutton.setFixedWidth(250)
 
-        self.maskScaleNumberLabel = QtWidgets.QLabel("Mask scale")
-        self.maskScaleNumber = QtWidgets.QSpinBox()
-        self.maskScaleNumber.setRange(0,255)
-        self.maskScaleNumber.setSingleStep(1)
-        self.maskScaleNumber.setValue(255)
-        self.maskScaleNumber.setFixedWidth(75)
+
 
         #Setup layouts
         self.mainLayout = QtWidgets.QVBoxLayout() #Overall main layout
@@ -137,35 +139,36 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.activate25DSLM,0,2)
         self.topLayout.addWidget(self.projectZernike,0,3)
         self.topLayout.addWidget(self.project25D,0,4)
-        self.topLayout.addWidget(self.projectCenter,0,5)
-        self.topLayout.addWidget(self.slmPreview, 0, 6)
-        self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 7)
+        # self.topLayout.addWidget(self.projectCenter,0,5)
+        self.topLayout.addWidget(self.slmPreview, 0, 5)
+        self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 6)
         self.topLayout.setRowMinimumHeight(1, 110)
 
         #Group radio buttons together in logical groups.
         self.LRbutton_group = QButtonGroup()  
         self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
         self.LRbutton_group.addButton(self.autocorectRightRadioButton)
-        self.Colorbutton_group = QButtonGroup()  
-        self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
-        self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
-        self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
+        # self.Colorbutton_group = QButtonGroup()  
+        # self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
+        # self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
+        # self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
 
         ###Add David's buttons
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
         self.grid3.addWidget(self.beginAZbutton, 0, 1)
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
 
-        self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
+        # self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
         # self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
 
-        self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 3)
-        self.grid3.addWidget(self.autocorectRightRadioButton, 1, 4)
-        self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
-        self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
-        self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
-        self.grid3.addWidget(self.maskScaleNumberLabel, 2, 3)
-        self.grid3.addWidget(self.maskScaleNumber, 2, 4)
+        self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 0)
+        self.grid3.addWidget(self.autocorectRightRadioButton, 1, 1)
+        # self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
+        # self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
+        # self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
+        self.grid3.addWidget(self.channelSelectCombLabel, 2, 0)
+        self.grid3.addWidget(self.channelSelectCombo, 2, 1)
+
         ###
         
         # Horizontal lines separating logic sections
@@ -254,6 +257,20 @@ class SLM25DWidget(Widget):
 
                 self.pars['AbsPosEdit' + name + side].valueChanged.connect(self.sigZernikeMaskChanged.emit) #Anytime a Zernike value is changed, it sends this signal received by controller
 
+        self.resetZern = QPushButton("Reset Zern")
+        self.resetZern.setEnabled(False)
+        self.resetZern.clicked.connect(self.sigResetZern.emit)
+        self.grid1Buttons.addWidget(self.resetZern)
+
+        self.lockZernCheckbox = QCheckBox("Lock Zernike")
+        self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
+        self.lockZernCheckbox.setEnabled(False)
+        self.lockZernCheckbox.setChecked(False)
+        self.grid1Buttons.addWidget(self.lockZernCheckbox)
+
+        self.grid1Main.addLayout(self.grid1)
+        self.grid1Main.addLayout(self.grid1Buttons)
+
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.row = 0
@@ -325,8 +342,7 @@ class SLM25DWidget(Widget):
             self.grid2.addWidget(self.pars['AbsPosEdit' + name], self.row, 1)
             self.grid2.addWidget(self.pars['AbsPosUnit' + name], self.row, 2)
 
-            self.grid2.setRowStretch(self.grid2.rowCount(), 1)
-            self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
+
 
             # Connect spinboxes to signals (Beam Diameter connected in Controller)
             if (name == 'Gamma') or (name == 'Psi'):
@@ -337,20 +353,21 @@ class SLM25DWidget(Widget):
 
 
 
-        self.resetZern = QPushButton("Reset Zern")
-        self.resetZern.setEnabled(False)
-        self.resetZern.clicked.connect(self.sigResetZern.emit)
-        self.grid1Buttons.addWidget(self.resetZern)
+        self.maskScaleNumberLabel = QtWidgets.QLabel("Mask Scale")
+        self.maskScaleNumberLabel.setEnabled(False)
+        self.maskScaleNumber = QtWidgets.QSpinBox()
+        self.maskScaleNumber.setRange(0,255)
+        self.maskScaleNumber.setSingleStep(1)
+        self.maskScaleNumber.setValue(255)
+        self.maskScaleNumber.setEnabled(False)
 
-        self.lockZernCheckbox = QCheckBox("Lock Zernike")
-        self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
-        self.lockZernCheckbox.setEnabled(False)
-        self.lockZernCheckbox.setChecked(False)
-        self.grid1Buttons.addWidget(self.lockZernCheckbox)
+        self.maskScaleNumber.setFixedWidth(75)
 
-        self.grid1Main.addLayout(self.grid1)
-        self.grid1Main.addLayout(self.grid1Buttons)
+        self.grid2.addWidget(self.maskScaleNumberLabel, self.row + 1, 0)
+        self.grid2.addWidget(self.maskScaleNumber, self.row + 1, 1)
 
+        self.grid2.setRowStretch(self.grid2.rowCount(), 1)
+        self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
 
         self.dividerVert = QFrame() #Vertical divider between Zernike and 2.5D
         self.dividerVert.setFrameShape(QFrame.VLine)
@@ -375,7 +392,7 @@ class SLM25DWidget(Widget):
     def zernikeLocked(self, value):
         
         self.beginAZbutton.setEnabled(not value)
-        self.autoZernCheckbox.setEnabled(not value)
+        # self.autoZernCheckbox.setEnabled(not value)
         # self.autoZernCheckboxNew.setEnabled(not value)
         self.resetZern.setEnabled(not value)
         self.loadImgToSLMbutton.setEnabled(not value)
@@ -417,7 +434,9 @@ class SLM25DWidget(Widget):
         self.leftZernLabel.setEnabled(False)
         self.rightZernLabel.setEnabled(False)
         self.valLabel.setEnabled(False)
-        self.autoZernCheckbox.setEnabled(False)
+        self.maskScaleNumberLabel.setEnabled(False)
+        self.maskScaleNumber.setEnabled(False)
+        # self.autoZernCheckbox.setEnabled(False)
         # self.autoZernCheckboxNew.setEnabled(False)
         self.lockZernCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
@@ -425,7 +444,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
-        self.projectCenter.setEnabled(False)
+        # self.projectCenter.setEnabled(False)
         # self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
@@ -452,7 +471,10 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton.setEnabled(True)
         self.leftZernLabel.setEnabled(True)
         self.rightZernLabel.setEnabled(True)
-        self.autoZernCheckbox.setEnabled(True)
+        if self.maskScaleAvailable:
+            self.maskScaleNumberLabel.setEnabled(True)
+            self.maskScaleNumber.setEnabled(True)
+        # self.autoZernCheckbox.setEnabled(True)
         # self.autoZernCheckboxNew.setEnabled(True)
 
         self.lockZernCheckbox.setEnabled(True)
@@ -462,7 +484,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
-        self.projectCenter.setEnabled(True)
+        # self.projectCenter.setEnabled(True)
         # self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)

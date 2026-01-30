@@ -1435,19 +1435,19 @@ class SIMController(ImConWidgetController):
                     while z < len(zList):
 
                         # # Auto Zernike loop ==================================================================
-                        if self._commChannel.autoZernChecked:
-                            self._commChannel.sigBeginAutoZern.emit()
-                            time.sleep(1)
-                            while self._commChannel.autoZernChecked:
-                                time.sleep(0.1) # probably just remove
+                        # if self._commChannel.autoZernChecked:
+                        #     self._commChannel.sigBeginAutoZern.emit()
+                        #     time.sleep(1)
+                        #     while self._commChannel.autoZernChecked:
+                        #         time.sleep(0.1) # probably just remove
 
-                                rawImg = self._commChannel.lastImgDict['640F']
+                        #         rawImg = self._commChannel.lastImgDict['640F']
 
-                                self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
-                                if self._commChannel.stop25DNow: #allows exit of the loop
-                                    self.stop25D()
+                        #         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                        #         if self._commChannel.stop25DNow: #allows exit of the loop
+                        #             self.stop25D()
 
-                            print('autozern ended')
+                        #     print('autozern ended')
                         # # ====================================================================================
   
                         # Sets current value to Zernike coefficient ========================
