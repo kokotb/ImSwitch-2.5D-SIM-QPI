@@ -136,7 +136,7 @@ class SLM25DWidget(Widget):
         self.topLayout = QtWidgets.QGridLayout() #Layout containing everything above grids 1 and 2.
         self.grid1 = QtWidgets.QGridLayout() #Zernike
         self.grid2 = QtWidgets.QGridLayout() #2.5D
-        self.grid3 = QtWidgets.QGridLayout() #David's million buttons
+        self.grid3 = QtWidgets.QGridLayout() #David's million buttons layout
         self.setLayout(self.mainLayout)
 
         #Add the buttons/checkboxes on top row
@@ -287,8 +287,8 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
         self.grid2.addWidget(self.reset25D, self.row, 2)
 
-        self.paramConstraintDict = {'Gamma':('double',(-10,10),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,1920),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1920),0, 10, 'px'), 
-                                    'Right Center-X': ('integer',(1,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1920),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
+        self.paramConstraintDict = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 
+                                    'Right Center-X': ('integer',(960,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
         self.paramNames = list(self.paramConstraintDict.keys())
 
         self.elementList25D = []

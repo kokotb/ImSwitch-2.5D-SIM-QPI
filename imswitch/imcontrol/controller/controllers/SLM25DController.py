@@ -357,12 +357,12 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.pars["AbsPosEditGamma"].blockSignals(True)
         self._widget.pars["AbsPosEditGamma"].setStyleSheet("border: 3px solid green;")
-        self._widget.pars["AbsPosEditGamma"].setText("2.5")
+        self._widget.pars["AbsPosEditGamma"].setValue(2.5)
         self._widget.pars["AbsPosEditGamma"].blockSignals(False)
 
         self._widget.pars["AbsPosEditPsi"].blockSignals(True)
         self._widget.pars["AbsPosEditPsi"].setStyleSheet("border: 3px solid green;")
-        self._widget.pars["AbsPosEditPsi"].setText("0.3")
+        self._widget.pars["AbsPosEditPsi"].setValue(0.3)
         self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
         self.updatePhaseMask()
@@ -397,7 +397,7 @@ class SLM25DController(ImConWidgetController):
 
     def alignCenterLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         for key in [self.maskSideSelected + " Center-Y", self.maskSideSelected + " Center-X"]:
-            current = int(self._widget.pars['AbsPosEdit' + key].text())
+            current = self._widget.pars['AbsPosEdit' + key].value()
             testvalues = np.linspace(current - 140, current + 140, 15, dtype=int)
             scores = []
             images = []
@@ -405,7 +405,7 @@ class SLM25DController(ImConWidgetController):
                 
                 self._widget.pars['AbsPosEdit' + key].blockSignals(True)
                 self._widget.pars['AbsPosEdit' + key].setStyleSheet("border: 3px solid green;")
-                self._widget.pars['AbsPosEdit' + key].setText(str(testvalue))
+                self._widget.pars['AbsPosEdit' + key].setValue(testvalue)
                 self._widget.pars['AbsPosEdit' + key].blockSignals(False)
 
                 self.updatePhaseMask()
@@ -474,7 +474,7 @@ class SLM25DController(ImConWidgetController):
             posOptimal = testvalues[idx]
 
             self._widget.pars['AbsPosEdit' + key].blockSignals(True)
-            self._widget.pars['AbsPosEdit' + key].setText(str(posOptimal))
+            self._widget.pars['AbsPosEdit' + key].setValue(posOptimal)
             self._widget.pars['AbsPosEdit' + key].blockSignals(False)
             self.updatePhaseMask()
                 
@@ -511,7 +511,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
-        # self._widget.project25D.setChecked(False)
+        self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
         self._widget.projectCenter.setChecked(False)
         self._widget.projectCenter.setEnabled(False)
@@ -691,10 +691,10 @@ class SLM25DController(ImConWidgetController):
         # set 25d mask and project it stronger aberration effects
         if flag25dOn:
             self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].setValue(2.0)
             self._widget.pars["AbsPosEditGamma"].blockSignals(False)
             self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].setValue(0.0)
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
@@ -766,10 +766,10 @@ class SLM25DController(ImConWidgetController):
         # set 25d mask and project it stronger aberration effects =============================================
         if flag25dOn:
             self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].setValue(2.0)
             self._widget.pars["AbsPosEditGamma"].blockSignals(False)
             self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].setValue(0.0)
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
@@ -1368,7 +1368,7 @@ class SLM25DController(ImConWidgetController):
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -1412,7 +1412,7 @@ class SLM25DController(ImConWidgetController):
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -1471,16 +1471,16 @@ class SLM25DController(ImConWidgetController):
 
         return maskReshaped
 
-    def getAllWidgetParams(self): #is there a loop somewhere
+    def getAll25DParams(self): #is there a loop somewhere
 
         valueList = {}
         for index in self._widget.paramNames:
             name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
             if index == 'Beam Diameter': # Want beam diamter in meters, but entry box in millimeters.
-                valueList[index] = self.axisValTypes[index](widgetObject.text()) / 1000
+                valueList[index] = widgetObject.value() / 1000
             else:
-                valueList[index] = self.axisValTypes[index](widgetObject.text())
+                valueList[index] = widgetObject.value()
 
         return valueList
     
@@ -1502,7 +1502,7 @@ class SLM25DController(ImConWidgetController):
 
         im = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0))
 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         rho = parameters["Beam Diameter"]
         pszSLM = 0.000008 # (in m, 8 um) pixel size
         rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
@@ -1534,7 +1534,7 @@ class SLM25DController(ImConWidgetController):
         return valueList
     
     def calculateZernikePhaseMask(self):
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
@@ -1619,7 +1619,7 @@ class SLM25DController(ImConWidgetController):
         return self.ZernikeAllMasksSum
 
     def calculateNewZernikePhaseMask(self):
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
@@ -1768,7 +1768,7 @@ class SLM25DController(ImConWidgetController):
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -1875,7 +1875,7 @@ class SLM25DController(ImConWidgetController):
             if index in wantedParams:
                 name = 'AbsPosEdit' + index
                 widgetObject = self._widget.pars[name]
-                valueList.append(self.axisValTypes[index](widgetObject.text()))
+                valueList.append(widgetObject.value())
 
         return valueList[0], valueList[1], valueList[2], valueList[3], 
 
@@ -1892,7 +1892,7 @@ class SLM25DController(ImConWidgetController):
         numberXpix = 1920
         numberYpix = 1080
         pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = self.getAllWidgetParams()['Beam Diameter']  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
+        rhoPupilAperture = self.getAll25DParams()['Beam Diameter']  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
         rhoPupilAperturePix = rhoPupilAperture/pszSLM
         
         # ====================================================================================================================================
@@ -1936,7 +1936,7 @@ class SLM25DController(ImConWidgetController):
 
     def calculatePhaseMask(self):         
         # TO DO: connect these input parameters with GUI 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
         rho = parameters["Beam Diameter"] #Current value
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
@@ -1987,7 +1987,7 @@ class SLM25DController(ImConWidgetController):
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -2023,7 +2023,7 @@ class SLM25DController(ImConWidgetController):
         xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
