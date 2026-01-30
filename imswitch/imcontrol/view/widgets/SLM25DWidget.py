@@ -77,9 +77,7 @@ class SLM25DWidget(Widget):
         # self.projectCenter = QCheckBox('Project Center')
         # self.projectCenter.setChecked(False)
         # self.projectCenter.setEnabled(False)
-        self.slmPreview = QPushButton("Preview SLM")
-        self.slmPreview.setEnabled(False)
-        self.slmPreview.setFixedWidth(250)
+
         #Other buttons at the bottom
         self.beginAZbutton = QPushButton("AutoZernike New")
         self.beginAZbutton.setEnabled(False)
@@ -143,7 +141,6 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.projectZernike,0,3)
         self.topLayout.addWidget(self.project25D,0,4)
         # self.topLayout.addWidget(self.projectCenter,0,5)
-        self.topLayout.addWidget(self.slmPreview, 0, 5)
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 6)
         self.topLayout.setRowMinimumHeight(1, 110)
 
@@ -270,6 +267,11 @@ class SLM25DWidget(Widget):
         self.lockZernCheckbox.setEnabled(False)
         self.lockZernCheckbox.setChecked(False)
         self.grid1Buttons.addWidget(self.lockZernCheckbox)
+
+        self.slmPreview = QPushButton("SLM View")
+        self.slmPreview.setEnabled(False)
+        self.slmPreview.setFixedWidth(250)
+        self.grid1Buttons.addWidget(self.slmPreview)
 
         self.grid1Main.addLayout(self.grid1)
         self.grid1Main.addLayout(self.grid1Buttons)

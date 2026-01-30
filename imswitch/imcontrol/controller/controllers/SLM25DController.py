@@ -18,6 +18,7 @@ import pyqtgraph as pg
 from PIL import Image
 import time
 import re
+from contextlib import contextmanager
 
 
 
@@ -1333,12 +1334,14 @@ class SLM25DController(ImConWidgetController):
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
             if self._widget.paramConstraintDict[self._widget.paramNames[i]][0] == 'double':
-                self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                self._widget.valueDict25D[self._widget.paramNames[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
+                    self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                    self._widget.valueDict25D[self._widget.paramNames[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
             if self._widget.paramConstraintDict[self._widget.paramNames[i]][0] == 'integer':
-                self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                self._widget.valueDict25D[self._widget.paramNames[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
+                    self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                    self._widget.valueDict25D[self._widget.paramNames[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
         strippedNames = []
         self._widget.valueDictZern25D = dict()
@@ -2249,7 +2252,13 @@ class SLM25DController(ImConWidgetController):
     #         self.settingAttr = False
 
 
-
+    @contextmanager
+    def blockSignalsFunc(self, widget):
+        widget.blockSignals(True)
+        try:
+            yield
+        finally:
+            widget.blockSignals(False)
 
 
 
