@@ -127,7 +127,7 @@ class SLM25DController(ImConWidgetController):
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
         self.maskSideSelected = "Right"
-        self._widget.channelSelectCombo.currentText() = "Red"
+
         self.maskscaleValue = 255
 
         self.fullZernList = self.createFullZernList1stLoop()
