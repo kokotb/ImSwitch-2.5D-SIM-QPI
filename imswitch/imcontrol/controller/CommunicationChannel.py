@@ -232,7 +232,7 @@ class CommunicationChannel(SignalInterface):
         #Scatter Cam 
         self.scatterCamActive = 0 #False
         self.autoZernChecked = False
-        self.autoZernCheckedNew = False
+        # self.autoZernCheckedNew = False
 
 
     # def storeROIList(self, roiList):

@@ -80,7 +80,7 @@ class SLM25DController(ImConWidgetController):
 
 
         self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
-        self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
+        # self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
         self._widget.sigLockZernike.connect(self.setLockZernike)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
@@ -600,10 +600,10 @@ class SLM25DController(ImConWidgetController):
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
             images.append(beadImgAnalysis)
             Zmaxprofile.append(np.max(beadImgAnalysis))
-            if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                self.toggleAutoZernNew(False)
-                self._commChannel.autoZernCheckedNew = False
-                break
+            # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+            #     self.toggleAutoZernNew(False)
+            #     self._commChannel.autoZernCheckedNew = False
+            #     break
         
 
         ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
@@ -649,10 +649,10 @@ class SLM25DController(ImConWidgetController):
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 Zmaxprofile.append(np.max(beadImgAnalysis))
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
@@ -735,10 +735,10 @@ class SLM25DController(ImConWidgetController):
                 images.append(beadImgAnalysis)
                 sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmas12.append([sigma1, sigma2])
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             astigMetric = abs(sigmas12[1][0] - sigmas12[1][1]) + abs(sigmas12[0][0] - sigmas12[0][1])
@@ -810,10 +810,10 @@ class SLM25DController(ImConWidgetController):
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             astigMetric = abs(sigmasXY[1][0] - sigmasXY[1][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1])
@@ -949,10 +949,10 @@ class SLM25DController(ImConWidgetController):
                 score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[0]
                 if (offset == 0.):
                     scores.append(score)
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             try:
@@ -1084,10 +1084,10 @@ class SLM25DController(ImConWidgetController):
                 score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[1]
                 if (offset == 0.):
                     scores.append(score)
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
             try:
                 commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
@@ -1302,27 +1302,27 @@ class SLM25DController(ImConWidgetController):
     def toggleAutoZern(self, state):
         self._widget.autoZernCheckbox.setChecked(state)
 
-    def toggleAutoZernNew(self, state):
-        self._widget.autoZernCheckboxNew.setChecked(state)
+    # def toggleAutoZernNew(self, state):
+    #     self._widget.autoZernCheckboxNew.setChecked(state)
 
     def autoZernChecked(self, state):
         self._commChannel.autoZernChecked = state
 
-    def autoZernCheckedNew(self, state):
-        # self._commChannel.autoZernCheckedNew = state
-        # self._commChannel.stop25DNow = True
-        if state:
-            pointSelected = self._widget.askYesNoQuestion()
-            if pointSelected == True:
-                self._commChannel.autoZernCheckedNew = state
-                self._commChannel.stop25DNow = True
-                # if not self._commChannel.simActive:
-                #     self._commChannel.sigStart25D.emit()
-            else:
-                self._widget.autoZernCheckboxNew.setChecked(False)
-                self._commChannel.autoZernCheckedNew = False
-                self.toggleAutoZernNew(False)
-                self._logger.warning('Please select single isolated bead before aberration correction.')
+    # def autoZernCheckedNew(self, state):
+    #     # self._commChannel.autoZernCheckedNew = state
+    #     # self._commChannel.stop25DNow = True
+    #     if state:
+    #         pointSelected = self._widget.askYesNoQuestion()
+    #         if pointSelected == True:
+    #             self._commChannel.autoZernCheckedNew = state
+    #             self._commChannel.stop25DNow = True
+    #             # if not self._commChannel.simActive:
+    #             #     self._commChannel.sigStart25D.emit()
+    #         else:
+    #             self._widget.autoZernCheckboxNew.setChecked(False)
+    #             self._commChannel.autoZernCheckedNew = False
+    #             self.toggleAutoZernNew(False)
+    #             self._logger.warning('Please select single isolated bead before aberration correction.')
 
 
     def init25DWidgetValues(self): #The spripped values are needed as the config file does not have spaces or special characters.
@@ -1353,7 +1353,7 @@ class SLM25DController(ImConWidgetController):
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i]) #Initial value dictionary to reset to when 'Reset' is rpessed.
         
         self._widget.autoZernCheckbox.setChecked(False)
-        self._widget.autoZernCheckboxNew.setChecked(False)
+        # self._widget.autoZernCheckboxNew.setChecked(False)
             
     def getOriginalMaskPositions(self):
             xleftcenter = self._widget.valueDict25D["Left Center-X"]

@@ -95,10 +95,10 @@ class SLM25DWidget(Widget):
         self.autoZernCheckbox.setEnabled(False)
         self.autoZernCheckbox.setChecked(True)
 
-        self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
-        # self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
-        self.autoZernCheckboxNew.setEnabled(False)
-        self.autoZernCheckboxNew.setChecked(True)
+        # self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
+        # # self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
+        # self.autoZernCheckboxNew.setEnabled(False)
+        # self.autoZernCheckboxNew.setChecked(True)
 
         self.lockZernCheckbox = QCheckBox("Lock Zernike")
         self.lockZernCheckbox.stateChanged.connect(lambda value: self.zernikeLocked(value))
@@ -160,7 +160,7 @@ class SLM25DWidget(Widget):
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
         self.grid3.addWidget(self.resetZern, 0, 3)
         self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
-        self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
+        # self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
         self.grid3.addWidget(self.lockZernCheckbox, 1, 2)
         self.grid3.addWidget(self.autocorectLeftRadioButton, 1, 3)
         self.grid3.addWidget(self.autocorectRightRadioButton, 1, 4)
@@ -367,7 +367,7 @@ class SLM25DWidget(Widget):
         
         self.beginAZbutton.setEnabled(not value)
         self.autoZernCheckbox.setEnabled(not value)
-        self.autoZernCheckboxNew.setEnabled(not value)
+        # self.autoZernCheckboxNew.setEnabled(not value)
         self.resetZern.setEnabled(not value)
         self.loadImgToSLMbutton.setEnabled(not value)
         for i in range(len(self.ZernikeCoefficientNames)):
@@ -409,7 +409,7 @@ class SLM25DWidget(Widget):
         self.rightZernLabel.setEnabled(False)
         self.valLabel.setEnabled(False)
         self.autoZernCheckbox.setEnabled(False)
-        self.autoZernCheckboxNew.setEnabled(False)
+        # self.autoZernCheckboxNew.setEnabled(False)
         self.lockZernCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
@@ -444,7 +444,7 @@ class SLM25DWidget(Widget):
         self.leftZernLabel.setEnabled(True)
         self.rightZernLabel.setEnabled(True)
         self.autoZernCheckbox.setEnabled(True)
-        self.autoZernCheckboxNew.setEnabled(True)
+        # self.autoZernCheckboxNew.setEnabled(True)
 
         self.lockZernCheckbox.setEnabled(True)
         self.valLabel.setEnabled(True)
