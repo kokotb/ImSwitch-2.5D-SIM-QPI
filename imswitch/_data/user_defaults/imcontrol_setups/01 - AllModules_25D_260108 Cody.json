@@ -12,13 +12,13 @@
 "SLM25D":{
   "width":1080, 
   "height":1920,
-  "mock": true,
+  "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 440,
-  "LeftCenterY": 520, 
-  "RightCenterX":1480,
-  "RightCenterY": 510,
+  "LeftCenterX": 480,
+  "LeftCenterY": 540, 
+  "RightCenterX":1440,
+  "RightCenterY": 540,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
@@ -83,13 +83,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 15.0,
+        "Gain": 0.0,
         "Gamma": 1.0,
         "ExposureTime": 19000.0
       },
       "ROI":{  
-        "OffsetX": 2280,
-        "OffsetY": 1762,
+        "OffsetX": 2400,
+        "OffsetY": 1262,
         "Width": 1024,
         "Height": 1024
       } 
@@ -107,13 +107,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 9.0,     
+        "Gain": 0.0,     
         "Gamma": 1.0,
         "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 1840,
-        "OffsetY": 2136,
+        "OffsetX": 1640,
+        "OffsetY": 2108,
         "Width": 1024,
         "Height": 1024
       }
@@ -132,14 +132,14 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 21.0,
+          "Gain": 0.0,
           "Gamma": 1.00
           ,
           "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 2112,
-          "OffsetY": 2158, 
+          "OffsetX": 2168,
+          "OffsetY": 1814, 
           "Width": 1024,
           "Height": 1024
         }
@@ -159,13 +159,13 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 25.0,
+          "Gain": 0.0,
           "Gamma": 1.0,
-          "ExposureTime": 15000.0
+          "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 2152,
-          "OffsetY": 1750,
+          "OffsetX": 1504,
+          "OffsetY": 1458,
           "Width": 1024,
           "Height": 1024
         }
@@ -217,7 +217,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 17.6
+      "maxdBmValue": 18.4
       
       },
   "561AOTF": {
@@ -233,7 +233,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.1
+    "maxdBmValue": 20.7
     },
   "640AOTF": {
     "analogChannel": null,
@@ -249,7 +249,7 @@
     "valueRangeStep": 2,
     "valueInit": 100,
 
-    "maxdBmValue": 21.8
+    "maxdBmValue": 22.1
     }
     
 },
