@@ -22,6 +22,7 @@ from pyqtgraph.Qt import QtGui
 from PIL import Image
 import time
 import re
+import h5py
 
 
 
@@ -99,7 +100,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
-        self._widget.projectCenter.stateChanged.connect(self.combineAndProject)
+        self._widget.projectFlatnessCorretion.stateChanged.connect(self.combineAndProject)
 
         self.slm25DManager = self._master.slm25DManager
 
@@ -261,8 +262,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectZernike.setEnabled(False)
         self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
-        self._widget.projectCenter.setChecked(False)
-        self._widget.projectCenter.setEnabled(False)
+        # self._widget.projectFlatnessCorretion.setChecked(False)
+        # self._widget.projectFlatnessCorretion.setEnabled(False)
 
         self.startAutoZern()
         # for rep in range(self.numAZAlltestPoints):
@@ -363,7 +364,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectCenter.setEnabled(True)
+        self._widget.projectFlatnessCorretion.setEnabled(True)
 
         # self._widget.stop_button.setChecked(False) # probably dont need this here
         # self.stop25D()    
@@ -401,8 +402,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectZernike.setEnabled(False)
         self._widget.project25D.setChecked(True)
         self._widget.project25D.setEnabled(False)
-        self._widget.projectCenter.setChecked(False)
-        self._widget.projectCenter.setEnabled(False)
+        # self._widget.projectFlatnessCorretion.setChecked(False)
+        # self._widget.projectFlatnessCorretion.setEnabled(False)
 
         ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
         zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
@@ -416,7 +417,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectCenter.setEnabled(True)
+        self._widget.projectFlatnessCorretion.setEnabled(True)
     
         self._master.arduinoManager.deactivateSLMWriteOnly()
         self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].stopAcquisition()
@@ -539,10 +540,10 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
-        # self._widget.project25D.setChecked(False)
+        self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
-        self._widget.projectCenter.setChecked(False)
-        self._widget.projectCenter.setEnabled(False)
+        # self._widget.projectFlatnessCorretion.setChecked(False)
+        # self._widget.projectFlatnessCorretion.setEnabled(False)
 
         ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
         self.startAutoZern()
@@ -600,7 +601,7 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectCenter.setEnabled(True)
+        self._widget.projectFlatnessCorretion.setEnabled(True)
 
         # self._widget.stop_button.setChecked(False) # probably dont need this here
         # self.stop25D()    
@@ -1719,7 +1720,7 @@ class SLM25DController(ImConWidgetController):
     # def combineAndProject(self):
     #     projZernike = self._widget.projectZernike.checkState()
     #     proj25D = self._widget.project25D.checkState()
-    #     projCenter = self._widget.projectCenter.checkState()
+    #     projCenter = self._widget.projectFlatnessCorretion.checkState()
 
     #     if (projZernike == 2) and (proj25D == 2):
     #         #if ((self._widget.matrixZernike == 0).all()):
@@ -1815,7 +1816,7 @@ class SLM25DController(ImConWidgetController):
 
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
-        projCenter = self._widget.projectCenter.checkState()
+        projCenter = self._widget.projectFlatnessCorretion.checkState()
 
         projectImageLeft = np.zeros((1080, 960))
         projectImageRight = np.zeros((1080, 960))
@@ -1886,9 +1887,17 @@ class SLM25DController(ImConWidgetController):
                 projectImageRight += self.centerMaskRight
 
 
+
+
         projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
         projImg *= self.maskscaleValue / 255
         projImg = projImg.astype(np.uint8)
+
+        # if (projCenter == 2):
+        #     with h5py.File(r"C:\Users\SIM\Desktop\David\Holoeye SLM\WavefrontCompensation\U.14-2144-204707-24-07-06_7020-1 6010-1441.h5") as f:
+        #         wf = f["measurementtgi/data/wavefront"][:]
+        #     projCenterImage = wf.astype(np.uint8)
+        #     projImg += projCenterImage
         
         if self.slmActive:
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
