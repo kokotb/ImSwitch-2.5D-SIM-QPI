@@ -68,6 +68,7 @@ class SLM25DController(ImConWidgetController):
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
         self._widget.activate25DSLM.stateChanged.connect(self.toggleSLMFromButton) #Opens SLM resource and enables relevant fields if activated, closes SLM resource and disables relevant fields if deactivated.
+
         self._widget.sigMaskCenterChanged.connect(self.updateAll)
         self._widget.sig25DMaskChanged.connect(self.updatePhaseMask)
         self._widget.sigZernikeMaskChanged.connect(self.updateZernike)
@@ -96,8 +97,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.slmPreview.clicked.connect(self.openPreviewWindow)
 
 
-        # self._widget.sig25DParamChanged.connect(self.valueChanged25D)
-        # self._widget.sigZernParamChanged.connect(self.valueChangedZern)
+        self._widget.sig25DParamChanged.connect(self.valueChanged25D)
+        self._widget.sigZernParamChanged.connect(self.valueChangedZern)
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
@@ -2217,39 +2218,39 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    # def valueChanged25D(self, attrCategory, parameterName, value):
-    #     self.setSharedAttr25D(attrCategory, parameterName, value)
+    def valueChanged25D(self, attrCategory, parameterName, value):
+        self.setSharedAttr25D(attrCategory, parameterName, value)
 
-    # def setSharedAttr25D(self, attrCategory, parameterName, value):
-    #     """Sending attribute to shared attributes
+    def setSharedAttr25D(self, attrCategory, parameterName, value):
+        """Sending attribute to shared attributes
 
-    #     Args:
-    #         parameterName (str): name of a parameter passed from wdiget
-    #         attr (_type_): type of a attribute (value, enabled, ...)
-    #         value (_type_): value of the parameter read from wdiget
-    #     """
-    #     self.settingAttr = True
-    #     try:
-    #         self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
-    #     finally:
-    #         self.settingAttr = False
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(attrCategory, parameterName)] = value
+        finally:
+            self.settingAttr = False
 
-    # def valueChangedZern(self, attrCategory, subCategory, parameterName, value):
-    #     self.setSharedAttrZern(attrCategory, subCategory, parameterName, value)
+    def valueChangedZern(self, attrCategory, subCategory, parameterName, value):
+        self.setSharedAttrZern(attrCategory, subCategory, parameterName, value)
 
-    # def setSharedAttrZern(self, attrCategory, subCategory, parameterName, value):
-    #     """Sending attribute to shared attributes
+    def setSharedAttrZern(self, attrCategory, subCategory, parameterName, value):
+        """Sending attribute to shared attributes
 
-    #     Args:
-    #         parameterName (str): name of a parameter passed from wdiget
-    #         attr (_type_): type of a attribute (value, enabled, ...)
-    #         value (_type_): value of the parameter read from wdiget
-    #     """
-    #     self.settingAttr = True
-    #     try:
-    #         self._commChannel.sharedAttrs[(attrCategory, subCategory, parameterName)] = value
-    #     finally:
-    #         self.settingAttr = False
+        Args:
+            parameterName (str): name of a parameter passed from wdiget
+            attr (_type_): type of a attribute (value, enabled, ...)
+            value (_type_): value of the parameter read from wdiget
+        """
+        self.settingAttr = True
+        try:
+            self._commChannel.sharedAttrs[(attrCategory, subCategory, parameterName)] = value
+        finally:
+            self.settingAttr = False
 
 
     @contextmanager

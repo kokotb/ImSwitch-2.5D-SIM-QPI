@@ -12,8 +12,8 @@ from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
-    # sig25DParamChanged = QtCore.Signal(str, str, str)
-    # sigZernParamChanged = QtCore.Signal(str, str, str, str)
+    sig25DParamChanged = QtCore.Signal(str, str, str)
+    sigZernParamChanged = QtCore.Signal(str, str, str, float)
     # sigAutoZernParamChanged = QtCore.Signal(str, str, str, str)
 
 
@@ -110,7 +110,7 @@ class SLM25DWidget(Widget):
         self.channelSelectCombo = QComboBox()
         self.channelSelectCombo.addItems(["Red", "Green", "Blue"])
         self.channelSelectCombo.setCurrentIndex(0)
-        # self.channelSelectCombo.currentTextChanged.connect()
+        # self.channelSelectCombo.currenteditingFinished.connect()
 
         # self.autocorectRedRadioButton = QRadioButton('Red-Autocorrect')
         # self.autocorectGreenRadioButton = QRadioButton('Green-Autocorrect')
@@ -233,7 +233,7 @@ class SLM25DWidget(Widget):
                     self.pars['AbsPosEdit' + name + side].setSingleStep(0.1)
                     self.pars['AbsPosEdit' + name + side].setDecimals(2)
                 self.pars['AbsPosEdit' + name + side].setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-                self.pars['AbsPosEdit' + name + side].setValue(0.1)
+                self.pars['AbsPosEdit' + name + side].setValue(0.101)
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
 
                 self.pars['Label' + name + side].setEnabled(False)
@@ -520,38 +520,37 @@ class SLM25DWidget(Widget):
         self.stop25D.setEnabled(boolSIM)
 
     def connect25DSharedAttrSigs(self):
-        pass
-        # self.pars['AbsPosEditGamma'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',value))
-        # self.pars['AbsPosEditPsi'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',value))
-        # self.pars['AbsPosEditLeft Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',value))
-        # self.pars['AbsPosEditLeft Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',value))
-        # self.pars['AbsPosEditRight Center-X'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',value))
-        # self.pars['AbsPosEditRight Center-Y'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',value))
-        # self.pars['AbsPosEditBeam Diameter'].textChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',value))
-        # #######################
-        # self.pars['AbsPosEdit(0,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Piston',value))
-        # self.pars['AbsPosEdit(1,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Y-tilt',value))
-        # self.pars['AbsPosEdit(1,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','X-tilt',value))
-        # self.pars['AbsPosEdit(2,-2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Oblique Astigmatism',value))
-        # self.pars['AbsPosEdit(2,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Defocus',value))
-        # self.pars['AbsPosEdit(2,2)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Astigmatism',value))
-        # self.pars['AbsPosEdit(3,-3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Trefoil',value))
-        # self.pars['AbsPosEdit(3,-1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Coma',value))
-        # self.pars['AbsPosEdit(3,1)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Coma',value))
-        # self.pars['AbsPosEdit(3,3)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Trefoil',value))
-        # self.pars['AbsPosEdit(4,0)' + 'Left'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Spherical',value))
-        # ######################
-        # self.pars['AbsPosEdit(0,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Piston',value))
-        # self.pars['AbsPosEdit(1,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Y-tilt',value))
-        # self.pars['AbsPosEdit(1,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','X-tilt',value))
-        # self.pars['AbsPosEdit(2,-2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Oblique Astigmatism',value))
-        # self.pars['AbsPosEdit(2,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Defocus',value))
-        # self.pars['AbsPosEdit(2,2)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Astigmatism',value))
-        # self.pars['AbsPosEdit(3,-3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Trefoil',value))
-        # self.pars['AbsPosEdit(3,-1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Coma',value))
-        # self.pars['AbsPosEdit(3,1)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Coma',value))
-        # self.pars['AbsPosEdit(3,3)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Trefoil',value))
-        # self.pars['AbsPosEdit(4,0)' + 'Right'].textChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Spherical',value))
+        self.pars['AbsPosEditGamma'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',str(value)))
+        self.pars['AbsPosEditPsi'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',str(value)))
+        self.pars['AbsPosEditLeft Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',str(value)))
+        self.pars['AbsPosEditLeft Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',str(value)))
+        self.pars['AbsPosEditRight Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',str(value)))
+        self.pars['AbsPosEditRight Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',str(value)))
+        self.pars['AbsPosEditBeam Diameter'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',str(value)))
+        #######################
+        self.pars['AbsPosEdit(0,0)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Piston',value))
+        self.pars['AbsPosEdit(1,-1)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Y-tilt',value))
+        self.pars['AbsPosEdit(1,1)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','X-tilt',value))
+        self.pars['AbsPosEdit(2,-2)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Oblique Astigmatism',value))
+        self.pars['AbsPosEdit(2,0)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Defocus',value))
+        self.pars['AbsPosEdit(2,2)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Astigmatism',value))
+        self.pars['AbsPosEdit(3,-3)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Trefoil',value))
+        self.pars['AbsPosEdit(3,-1)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Vertical Coma',value))
+        self.pars['AbsPosEdit(3,1)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Coma',value))
+        self.pars['AbsPosEdit(3,3)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Horizontal Trefoil',value))
+        self.pars['AbsPosEdit(4,0)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Spherical',value))
+        ######################
+        self.pars['AbsPosEdit(0,0)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Piston',value))
+        self.pars['AbsPosEdit(1,-1)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Y-tilt',value))
+        self.pars['AbsPosEdit(1,1)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','X-tilt',value))
+        self.pars['AbsPosEdit(2,-2)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Oblique Astigmatism',value))
+        self.pars['AbsPosEdit(2,0)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Defocus',value))
+        self.pars['AbsPosEdit(2,2)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Astigmatism',value))
+        self.pars['AbsPosEdit(3,-3)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Trefoil',value))
+        self.pars['AbsPosEdit(3,-1)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Vertical Coma',value))
+        self.pars['AbsPosEdit(3,1)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Coma',value))
+        self.pars['AbsPosEdit(3,3)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Horizontal Trefoil',value))
+        self.pars['AbsPosEdit(4,0)' + 'Right'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Right','Spherical',value))
 
 
 
