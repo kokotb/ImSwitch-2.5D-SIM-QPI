@@ -1334,12 +1334,12 @@ class SLM25DController(ImConWidgetController):
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            if self._widget.paramConstraintDict[self._widget.paramNames[i]][0] == 'double':
+            if self._widget.paramConstraintDict25DPos[self._widget.paramNames[i]][0] == 'double':
                 with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
                     self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
                     self._widget.valueDict25D[self._widget.paramNames[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
-            if self._widget.paramConstraintDict[self._widget.paramNames[i]][0] == 'integer':
+            if self._widget.paramConstraintDict25DPos[self._widget.paramNames[i]][0] == 'integer':
                 with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
                     self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
                     self._widget.valueDict25D[self._widget.paramNames[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))

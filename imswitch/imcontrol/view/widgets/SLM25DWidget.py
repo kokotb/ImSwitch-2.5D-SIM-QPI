@@ -188,7 +188,7 @@ class SLM25DWidget(Widget):
         self.ZernikeCoefficientNames = ["(0,0)", "(1,-1)", "(1,1)", "(2,-2)", "(2,0)", "(2,2)", "(3,-3)", "(3,-1)", "(3,1)", "(3,3)", "(4,0)"]
         self.ZernikeAberrationNames = ["Piston", "Y-tilt", "X-tilt", "Oblique Astigmatism", "Defocus", "Vertical Astigmatism", "Vertical Trefoil", "Vertical Coma", "Horizontal Coma", "Horizontal Trefoil", "Spherical"]
         self.ZernikeSides = ["Left", "Right"]
-        self.elementListZern = []
+        self.elementListZern = [] # Used in controller to load Zernike settings from save file.
 
         self.zernLabel = QtWidgets.QLabel(f'<strong>Zernike Coefficients</strong>')
         self.zernLabel.setEnabled(False)
@@ -237,8 +237,6 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name + side].setFixedWidth(75)
 
                 self.pars['Label' + name + side].setEnabled(False)
-                # self.pars['UpButton' + name + side].setEnabled(False)
-                # self.pars['DownButton' + name + side].setEnabled(False)
                 self.pars['AbsPosEdit' + name + side].setEnabled(False)
 
                 self.elementListZern.append(self.pars['AbsPosEdit' + name + side])
@@ -253,7 +251,6 @@ class SLM25DWidget(Widget):
                 if side == "Left":
                     self.grid1.addWidget(self.pars['Label' + name + side], self.row, 0 + index)
                 self.grid1.addWidget(self.pars['AbsPosEdit' + name + side], self.row, 1 + index)
-                # self.pars['AbsPosEdit' + name].setValue(0.1)       
 
                 self.pars['AbsPosEdit' + name + side].valueChanged.connect(self.sigZernikeMaskChanged.emit) #Anytime a Zernike value is changed, it sends this signal received by controller
 
@@ -295,16 +292,15 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
         self.grid2.addWidget(self.reset25D, self.row, 2)
 
-        self.paramConstraintDict = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 
+        self.paramConstraintDict25DPos = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 
                                     'Right Center-X': ('integer',(960,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
-        self.paramNames = list(self.paramConstraintDict.keys())
+        self.paramNames25DPos = list(self.paramConstraintDict25DPos.keys())
 
-        self.elementList25D = []
-        for i in range(len(self.paramConstraintDict)):
+        self.elementList25D = [] # Used in controller to load 2.5D and position settings from save file.
+        for i in range(len(self.paramConstraintDict25DPos)):
             self.row += 1
-            name = self.paramNames[i]
-            # AbsInitialValue = self.absAxisInitialValues[name]
-            self.unit = self.paramConstraintDict[name][4]
+            name = self.paramNames25DPos[i]
+            self.unit = self.paramConstraintDict25DPos[name][4]
 
             label = f'{name}'
 
@@ -317,43 +313,37 @@ class SLM25DWidget(Widget):
             
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
-            if self.paramConstraintDict[name][0] == 'double':
+            if self.paramConstraintDict25DPos[name][0] == 'double':
                 self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
                 self.pars['AbsPosEdit' + name].setFixedWidth(75)
-                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict[name][1][0], self.paramConstraintDict[name][1][1])
-                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict[name][3])
-                self.pars['AbsPosEdit' + name].setDecimals(self.paramConstraintDict[name][2])
+                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict25DPos[name][1][0], self.paramConstraintDict25DPos[name][1][1])
+                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict25DPos[name][3])
+                self.pars['AbsPosEdit' + name].setDecimals(self.paramConstraintDict25DPos[name][2])
                 self.pars['AbsPosEdit' + name].setValue(0)
                 self.pars['AbsPosEdit' + name].setEnabled(False)
 
-            if self.paramConstraintDict[name][0] == 'integer': #All the center/position parameters
+            if self.paramConstraintDict25DPos[name][0] == 'integer': #All the center/position parameters
                 self.pars['AbsPosEdit' + name] = QtWidgets.QSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
                 self.pars['AbsPosEdit' + name].setFixedWidth(75)
-                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict[name][1][0], self.paramConstraintDict[name][1][1])
-                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict[name][3])
+                self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict25DPos[name][1][0], self.paramConstraintDict25DPos[name][1][1])
+                self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict25DPos[name][3])
                 self.pars['AbsPosEdit' + name].setValue(0)
                 self.pars['AbsPosEdit' + name].setEnabled(False)
-
-
-
 
             self.elementList25D.append(self.pars['AbsPosEdit' + name])
 
             # Add to widget object
             self.grid2.addWidget(self.pars['Label' + name], self.row, 0)
-
             self.grid2.addWidget(self.pars['AbsPosEdit' + name], self.row, 1)
             self.grid2.addWidget(self.pars['AbsPosUnit' + name], self.row, 2)
-
-
 
             # Connect spinboxes to signals (Beam Diameter connected in Controller)
             if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
 
-            elif self.paramConstraintDict[name][0] == 'integer': #All center/position fields.
+            elif self.paramConstraintDict25DPos[name][0] == 'integer': #All center/position fields.
                 self.pars['AbsPosEdit' + name].editingFinished.connect(self.sigMaskCenterChanged.emit)
 
 
@@ -386,9 +376,7 @@ class SLM25DWidget(Widget):
         self.mainLayout.addWidget(self.dividerHoriz)
         self.mainLayout.addLayout(self.grid3)
 
-        
-
-        # # Connect received signals to funcions
+        # Connect received signals to funcions
         self.sigResetZern.connect(self.resetZernToDefault)
         self.sigReset25D.connect(self.reset25DToDefault)
 
@@ -411,28 +399,27 @@ class SLM25DWidget(Widget):
 
         self.sigLockZernike.emit(bool(value))
 
-    def reset25DToDefault(self):
-        
-        for name in self.paramNames:
+    def reset25DToDefault(self): # Connected to the Reset 25D button, resets it to the values in the config file.
+        for name in self.paramNames25DPos:
             absInitValue = self.valueDict25D[name]
             self.pars['AbsPosEdit' + name].setValue(absInitValue)
         # self.sigMaskCenterChanged.emit()
 
-    def resetZernToDefault(self):
+    def resetZernToDefault(self): # Connected to the Reset Zernike button, resets it to the values in the config file.
         for side in self.ZernikeSides:
             for name in self.ZernikeCoefficientNames:
                 self.pars['AbsPosEdit' + name + side].setValue(self.valueDictZern25D[name + side])
         # self.sigUpdateZernikeMask.emit()
 
-    def askYesNoQuestion(self):
-        """ Asks the user a yes/no question and returns whether "yes" was clicked. """
-        result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis.'
-                                                ' . Go to image display window -> New shapes layer -> Add rectangles. Draw frame aproximately 20x20 pixels, '
-                                                 'with isolated bead in the middle and empty dark background. Would you like to countiniue?',
-                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+    # def askYesNoQuestion(self):
+    #     """ Asks the user a yes/no question and returns whether "yes" was clicked. """
+    #     result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis.'
+    #                                             ' . Go to image display window -> New shapes layer -> Add rectangles. Draw frame aproximately 20x20 pixels, '
+    #                                              'with isolated bead in the middle and empty dark background. Would you like to countiniue?',
+    #                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+    #     return result == QtWidgets.QMessageBox.Yes
          
-    def disableAll(self):
+    def disableAll(self): #Disable everything once the SLM resource (or mocker) is opened.
         self.slmPreview.setEnabled(False)
         self.beginAZbutton.setEnabled(False)
         self.centerMaskbutton.setEnabled(False)
@@ -441,47 +428,32 @@ class SLM25DWidget(Widget):
         self.valLabel.setEnabled(False)
         self.maskScaleNumberLabel.setEnabled(False)
         self.maskScaleNumber.setEnabled(False)
-        # self.autoZernCheckbox.setEnabled(False)
-        # self.autoZernCheckboxNew.setEnabled(False)
         self.lockZernCheckbox.setEnabled(False)
         self.slmFrame.setEnabled(False)
         self.zernLabel.setEnabled(False)
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
-        # self.projectCenter.setEnabled(False)
-        # self.label25DStep.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
         self.loadImgToSLMbutton.setEnabled(False)
-        # self.slmFrameCenter.setEnabled(False)
-        # self.slmFrame25d.setEnabled(False)
         for i in range(len(self.ZernikeCoefficientNames)):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(False)
-                # self.pars['UpButton' + name + side].setEnabled(False)
-                # self.pars['DownButton' + name + side].setEnabled(False)
                 self.pars['AbsPosEdit' + name + side].setEnabled(False)
-
-        for i in range(len(self.paramNames)):
-            name = self.paramNames[i]
+        for i in range(len(self.paramNames25DPos)):
+            name = self.paramNames25DPos[i]
             self.pars['Label' + name].setEnabled(False)
             self.pars['AbsPosEdit' + name].setEnabled(False)
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
-    def enableAll(self):
+    def enableAll(self): #Enable everything once the SLM resource (or mocker) is opened.
         self.slmPreview.setEnabled(True)
         self.beginAZbutton.setEnabled(True)
         self.centerMaskbutton.setEnabled(True)
         self.leftZernLabel.setEnabled(True)
         self.rightZernLabel.setEnabled(True)
-        if self.maskScaleAvailable:
-            self.maskScaleNumberLabel.setEnabled(True)
-            self.maskScaleNumber.setEnabled(True)
-        # self.autoZernCheckbox.setEnabled(True)
-        # self.autoZernCheckboxNew.setEnabled(True)
-
         self.lockZernCheckbox.setEnabled(True)
         self.valLabel.setEnabled(True)
         self.slmFrame.setEnabled(True)
@@ -489,37 +461,29 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
-        # self.projectCenter.setEnabled(True)
-        # self.label25DStep.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)
         self.loadImgToSLMbutton.setEnabled(True)
-        # self.slmFrameCenter.setEnabled(True)
-        # self.slmFrame25d.setEnabled(True)
+        if self.maskScaleAvailable:
+            self.maskScaleNumberLabel.setEnabled(True)
+            self.maskScaleNumber.setEnabled(True)
         for i in range(len(self.ZernikeCoefficientNames)):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(True)
-                # self.pars['UpButton' + name + side].setEnabled(True)
-                # self.pars['DownButton' + name + side].setEnabled(True)
                 self.pars['AbsPosEdit' + name + side].setEnabled(True)
-
-        for i in range(len(self.paramNames)):
-            name = self.paramNames[i]
+        for i in range(len(self.paramNames25DPos)):
+            name = self.paramNames25DPos[i]
             self.pars['Label' + name].setEnabled(True)
-            # self.pars['UpButton' + name].setEnabled(True)
-            # self.pars['DownButton' + name].setEnabled(True)
-            # self.pars['StepEdit' + name].setEnabled(True)
-            # self.pars['StepUnit' + name].setEnabled(True)
             self.pars['AbsPosEdit' + name].setEnabled(True)
             self.pars['AbsPosUnit' + name].setEnabled(True)
 
 
-    def SIMToggled(self, boolSIM): #Only function is to disable/enable 2.5D Start button as SIM is turned on/off.
+    def SIMToggled(self, boolSIM): #Only purpose is to disable/enable 2.5D Start button as SIM is turned on/off.
         self.start25D.setEnabled(not boolSIM)
         self.stop25D.setEnabled(boolSIM)
 
-    def connect25DSharedAttrSigs(self):
+    def connect25DSharedAttrSigs(self): #Connect changing values with a signal that then sends value and name of changed info to InfoGatheringController for saving and loading settings.
         self.pars['AbsPosEditGamma'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',str(value)))
         self.pars['AbsPosEditPsi'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',str(value)))
         self.pars['AbsPosEditLeft Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',str(value)))
