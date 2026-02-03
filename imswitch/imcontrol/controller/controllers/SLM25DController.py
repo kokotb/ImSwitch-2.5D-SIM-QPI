@@ -29,8 +29,8 @@ class SLM25DController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
         self.slmActive = False
-        self.axisValTypes = self._widget.axisValTypes
-        self.paramNames = self._widget.paramNames
+        # self.axisValTypes = self._widget.axisValTypes
+        # self.paramNames = self._widget.paramNames25DPos
         self.zernikeLocked = False
         if self._setupInfo.SLM25D is None:
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
@@ -1329,20 +1329,20 @@ class SLM25DController(ImConWidgetController):
     def init25DWidgetValues(self): #The spripped values are needed as the config file does not have spaces or special characters.
         strippedNames = []
         self._widget.valueDict25D = dict()
-        for i in range(len(self._widget.paramNames)):
-            spaceStripped = self._widget.paramNames[i].replace(' ','')
+        for i in range(len(self._widget.paramNames25DPos)):
+            spaceStripped = self._widget.paramNames25DPos[i].replace(' ','')
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            if self._widget.paramConstraintDict25DPos[self._widget.paramNames[i]][0] == 'double':
-                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
-                    self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                    self._widget.valueDict25D[self._widget.paramNames[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == 'double':
+                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+                    self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                    self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
-            if self._widget.paramConstraintDict25DPos[self._widget.paramNames[i]][0] == 'integer':
-                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]]):
-                    self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                    self._widget.valueDict25D[self._widget.paramNames[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == 'integer':
+                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+                    self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                    self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
         strippedNames = []
         self._widget.valueDictZern25D = dict()
@@ -1477,7 +1477,7 @@ class SLM25DController(ImConWidgetController):
     def getAll25DParams(self): #is there a loop somewhere
 
         valueList = {}
-        for index in self._widget.paramNames:
+        for index in self._widget.paramNames25DPos:
             name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
             if index == 'Beam Diameter': # Want beam diamter in meters, but entry box in millimeters.
@@ -1530,7 +1530,7 @@ class SLM25DController(ImConWidgetController):
             for side in self._widget.ZernikeSides:
                 name = 'AbsPosEdit' + index + side
                 widgetObject = self._widget.pars[name]
-                valueList[index + side] = self.axisValTypes[index + side](widgetObject.value())
+                valueList[index + side] = float(widgetObject.value())
 
         # final = list(zip(self._widget.axes,valueList))
         # print(valueList)
@@ -1874,7 +1874,7 @@ class SLM25DController(ImConWidgetController):
     def getCurrentCenters(self):
         valueList = []
         wantedParams = ["Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y"]
-        for index in self._widget.paramNames:
+        for index in self._widget.paramNames25DPos:
             if index in wantedParams:
                 name = 'AbsPosEdit' + index
                 widgetObject = self._widget.pars[name]

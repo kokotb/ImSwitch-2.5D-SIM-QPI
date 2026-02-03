@@ -14,15 +14,11 @@ class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
     sig25DParamChanged = QtCore.Signal(str, str, str)
     sigZernParamChanged = QtCore.Signal(str, str, str, float)
-    # sigAutoZernParamChanged = QtCore.Signal(str, str, str, str)
-
 
     #Signals for updating and eventually projecting images
     sigZernikeMaskChanged = QtCore.Signal()
     sig25DMaskChanged = QtCore.Signal()
     sigMaskCenterChanged = QtCore.Signal()
-
-
 
 #Reset button signals
     sigResetZern = QtCore.Signal()
@@ -31,14 +27,15 @@ class SLM25DWidget(Widget):
 #Signals to control enabling buttons/SLM/displaying preview window
     sigLockZernike = QtCore.Signal(bool)
 
-
-    
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         #For development only:
         self.maskScaleAvailable = False
+
+        # Parameter bounds that may was to be hand-edited
+        self.paramConstraintDict25DPos = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'),
+            'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Right Center-X': ('integer',(960,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
 
         ### Placeholders for entire image display box (2 labels, 2 images).
         self.slmFrame = pg.GraphicsLayoutWidget()
@@ -74,9 +71,6 @@ class SLM25DWidget(Widget):
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(False)
         self.project25D.setEnabled(False)
-        # self.projectCenter = QCheckBox('Project Center')
-        # self.projectCenter.setChecked(False)
-        # self.projectCenter.setEnabled(False)
 
         #Other buttons at the bottom
         self.beginAZbutton = QPushButton("AutoZernike New")
@@ -86,42 +80,19 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton.setEnabled(False)
         self.centerMaskbutton.setFixedWidth(250)
 
-
-        # self.autoZernCheckbox = QCheckBox("Auto Zernike")
-        # self.autoZernCheckbox.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
-        # self.autoZernCheckbox.setEnabled(False)
-        # self.autoZernCheckbox.setChecked(True)
-
-        # self.autoZernCheckboxNew = QCheckBox("Auto Zernike New")
-        # # self.autoZernCheckboxNew.stateChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Both','AZEnabled',str(value))) #!!! ask Cody???
-        # self.autoZernCheckboxNew.setEnabled(False)
-        # self.autoZernCheckboxNew.setChecked(True)
-
         self.sideSelectComboLabel = QtWidgets.QLabel('Auto Side:')
         self.sideSelectCombo = QComboBox()
         self.sideSelectCombo.addItems(["Left", "Right"])
         self.sideSelectCombo.setCurrentIndex(1)
 
-        # self.autocorectLeftRadioButton = QRadioButton('Left-Autocorrect')
-        # self.autocorectRightRadioButton = QRadioButton('Right-Autocorrect')
-        # self.autocorectRightRadioButton.setChecked(True)
-
         self.channelSelectComboLabel = QtWidgets.QLabel('Auto Channel:')
         self.channelSelectCombo = QComboBox()
         self.channelSelectCombo.addItems(["Red", "Green", "Blue"])
         self.channelSelectCombo.setCurrentIndex(0)
-        # self.channelSelectCombo.currenteditingFinished.connect()
-
-        # self.autocorectRedRadioButton = QRadioButton('Red-Autocorrect')
-        # self.autocorectGreenRadioButton = QRadioButton('Green-Autocorrect')
-        # self.autocorectBlueRadioButton = QRadioButton('Blue-Autocorrect')
-        # self.autocorectRedRadioButton.setChecked(True)
 
         self.loadImgToSLMbutton = QPushButton("Load Image")
         self.loadImgToSLMbutton.setEnabled(False)
         self.loadImgToSLMbutton.setFixedWidth(250)
-
-
 
         #Setup layouts
         self.mainLayout = QtWidgets.QVBoxLayout() #Overall main layout
@@ -144,31 +115,14 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 6)
         self.topLayout.setRowMinimumHeight(1, 110)
 
-        #Group radio buttons together in logical groups.
-        # self.LRbutton_group = QButtonGroup()  
-        # self.LRbutton_group.addButton(self.autocorectLeftRadioButton)
-        # self.LRbutton_group.addButton(self.autocorectRightRadioButton)
-        # self.Colorbutton_group = QButtonGroup()  
-        # self.Colorbutton_group.addButton(self.autocorectRedRadioButton)
-        # self.Colorbutton_group.addButton(self.autocorectGreenRadioButton)
-        # self.Colorbutton_group.addButton(self.autocorectBlueRadioButton)
-
         ###Add David's buttons
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
         self.grid3.addWidget(self.beginAZbutton, 0, 1)
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
-
-        # self.grid3.addWidget(self.autoZernCheckbox, 0, 4)
-        # self.grid3.addWidget(self.autoZernCheckboxNew, 1, 0)
-
         self.grid3.addWidget(self.sideSelectComboLabel, 1, 0)
         self.grid3.addWidget(self.sideSelectCombo, 1, 1)
-        # self.grid3.addWidget(self.autocorectRedRadioButton, 2, 0)
-        # self.grid3.addWidget(self.autocorectGreenRadioButton, 2, 1)
-        # self.grid3.addWidget(self.autocorectBlueRadioButton, 2, 2)
         self.grid3.addWidget(self.channelSelectComboLabel, 2, 0)
         self.grid3.addWidget(self.channelSelectCombo, 2, 1)
-
         ###
         
         # Horizontal lines separating logic sections
@@ -179,7 +133,6 @@ class SLM25DWidget(Widget):
 
         self.mainLayout.addLayout(self.topLayout)
         self.mainLayout.addWidget(self.dividerHoriz)
-
 
         self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
@@ -292,8 +245,6 @@ class SLM25DWidget(Widget):
         self.reset25D.clicked.connect(self.sigReset25D.emit)
         self.grid2.addWidget(self.reset25D, self.row, 2)
 
-        self.paramConstraintDict25DPos = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'), 'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 
-                                    'Right Center-X': ('integer',(960,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
         self.paramNames25DPos = list(self.paramConstraintDict25DPos.keys())
 
         self.elementList25D = [] # Used in controller to load 2.5D and position settings from save file.
@@ -385,16 +336,12 @@ class SLM25DWidget(Widget):
     def zernikeLocked(self, value):
         
         self.beginAZbutton.setEnabled(not value)
-        # self.autoZernCheckbox.setEnabled(not value)
-        # self.autoZernCheckboxNew.setEnabled(not value)
         self.resetZern.setEnabled(not value)
         self.loadImgToSLMbutton.setEnabled(not value)
         for i in range(len(self.ZernikeCoefficientNames)):
             for side in self.ZernikeSides:
                 name = self.ZernikeCoefficientNames[i]
                 self.pars['Label' + name + side].setEnabled(not value)
-                # self.pars['UpButton' + name + side].setEnabled(not value)
-                # self.pars['DownButton' + name + side].setEnabled(not value)
                 self.pars['AbsPosEdit' + name + side].setEnabled(not value)
 
         self.sigLockZernike.emit(bool(value))
@@ -411,14 +358,6 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name + side].setValue(self.valueDictZern25D[name + side])
         # self.sigUpdateZernikeMask.emit()
 
-    # def askYesNoQuestion(self):
-    #     """ Asks the user a yes/no question and returns whether "yes" was clicked. """
-    #     result = QtWidgets.QMessageBox.question(None, 'Need to Select single isolated bead', 'Please select a single isolated bead for aberration analysis.'
-    #                                             ' . Go to image display window -> New shapes layer -> Add rectangles. Draw frame aproximately 20x20 pixels, '
-    #                                              'with isolated bead in the middle and empty dark background. Would you like to countiniue?',
-    #                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    #     return result == QtWidgets.QMessageBox.Yes
-         
     def disableAll(self): #Disable everything once the SLM resource (or mocker) is opened.
         self.slmPreview.setEnabled(False)
         self.beginAZbutton.setEnabled(False)
