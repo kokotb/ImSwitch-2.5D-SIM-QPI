@@ -30,7 +30,7 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit.setValidator(self.validator)
         self.zStepDistance_textedit.setToolTip('Size between steps in microns. 0.1 < Value < 20.0') 
         self.zStepDistance_textedit.setEnabled(False)
-        self.zStepDistance_textedit.setFixedWidth(50)
+        self.zStepDistance_textedit.setFixedWidth(75)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
         self.zStepDistance_textedit.editingFinished.connect(self.floorTotalZ)
         self.zStepDistance_textedit.textChanged.connect(self.sigCheckValidityStep.emit)
@@ -46,25 +46,10 @@ class ZStackWidget(NapariHybridWidget):
         self.totalZ_textedit.setToolTip('Total distance covered in Z. Only whole steps calculated. If "Center" is selected, "Total Z" will force itself to create an odd number of steps.')  
         self.totalZ_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Total Z /um", value))
         self.totalZ_textedit.setText("")
-        self.totalZ_textedit.setFixedWidth(50)
+        self.totalZ_textedit.setFixedWidth(75)
         self.totalZ_textedit.setEnabled(False)
         self.totalZ_textedit.editingFinished.connect(self.floorTotalZ)
         self.totalZ_textedit.textChanged.connect(self.sigCheckValidityTotal.emit)
-
-
-        self.checkbox_zStack = QCheckBox('Run Z Stack')
-        self.checkbox_zStack._name = 'Z-Stack Checkbox'
-        self.checkbox_zStack._type = 'int'
-        self.checkbox_zStack.setToolTip('Check this box to enable z-stack control.')  
-        self.checkbox_zStack.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", str(value)))
-        self.checkbox_zStack.stateChanged.connect(lambda value: self.runZStackToggle.emit(value))
-        
-        self.checkbox_zStackCenter = QCheckBox('Center?')
-        self.checkbox_zStackCenter._name = 'Z-Stack Center?'
-        self.checkbox_zStackCenter._type = 'int'
-        self.checkbox_zStackCenter.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", str(value)))
-        self.checkbox_zStackCenter.stateChanged.connect(self.floorTotalZ)
-        self.checkbox_zStackCenter.setEnabled(False)
 
         self.zOffset_label = QLabel("Start Offset (/um)") 
         self.zOffset_textedit = QLineEdit("")
@@ -72,16 +57,21 @@ class ZStackWidget(NapariHybridWidget):
         self.zOffset_textedit.setValidator(self.validator)
         self.zOffset_textedit.setToolTip('Offset from current position to scan start position.')
         self.zOffset_textedit.setFixedWidth(50)
-        # self.zOffset_textedit.setReadOnly(True)
         self.zOffset_textedit.setEnabled(False)
         self.zOffset_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
 
         self.numSteps_label = QLabel("Steps") 
         self.numSteps_textedit = QLineEdit("2")
         self.numSteps_textedit.setToolTip('Number of steps in the z-stack.')
-        self.numSteps_textedit.setFixedWidth(50)
+        self.numSteps_textedit.setFixedWidth(75)
         self.numSteps_textedit.setEnabled(False)
-        # self.numSteps_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Start Offset', value))
+
+        self.checkbox_zStackCenter = QCheckBox('Center?')
+        self.checkbox_zStackCenter._name = 'Z-Stack Center?'
+        self.checkbox_zStackCenter._type = 'int'
+        self.checkbox_zStackCenter.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", str(value)))
+        self.checkbox_zStackCenter.stateChanged.connect(self.floorTotalZ)
+        self.checkbox_zStackCenter.setEnabled(False)
 
         self.zStackScanDir = QtWidgets.QComboBox()
         self.zStackScanDir._name = 'Scan Direction'
@@ -92,13 +82,19 @@ class ZStackWidget(NapariHybridWidget):
 
         self.zStackScanDir.currentTextChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings','Scan Direction', value))
 
+
+        self.checkbox_zStack = QCheckBox('Run Z Stack')
+        self.checkbox_zStack._name = 'Z-Stack Checkbox'
+        self.checkbox_zStack._type = 'int'
+        self.checkbox_zStack.setToolTip('Check this box to enable z-stack control.')  
+        self.checkbox_zStack.stateChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Checkbox", str(value)))
+        self.checkbox_zStack.stateChanged.connect(lambda value: self.runZStackToggle.emit(value))
+
         self.elementList.append(self.zStepDistance_textedit)
         self.elementList.append(self.totalZ_textedit)
         self.elementList.append(self.checkbox_zStack)
         self.elementList.append(self.checkbox_zStackCenter)
         self.elementList.append(self.zStackScanDir)
-
-
 
         row = 0
         
@@ -113,8 +109,6 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.checkbox_zStackCenter, row+4, 0)
         zStackLayout.addWidget(self.zStackScanDir, row+4, 1)
         zStackLayout.addWidget(self.checkbox_zStack, row+5, 0)
-
-        
 
         self.sigCheckValidityStep.connect(self.checkValidityStep)
         self.sigCheckValidityTotal.connect(self.checkValidityTotal)
@@ -141,6 +135,7 @@ class ZStackWidget(NapariHybridWidget):
         self.sigZStackInfoChanged.emit('Z-Stack Settings',"Z-Stack Center?", '0')
         self.zStackScanDir.addItems(['Up','Down'])
         self.zStackScanDir.setCurrentIndex(0)
+        self.floorTotalZ()
 
     def updateStartOffset(self, totalDist):
         if self.checkbox_zStackCenter.checkState() == 2:
@@ -150,7 +145,7 @@ class ZStackWidget(NapariHybridWidget):
             self.zOffset_textedit.setText(str(0))
     
 
-    def floorTotalZ(self):
+    def floorTotalZ(self): # Calculates the dependent boxes when one value is changed.
         try:
             stepDist = float(self.zStepDistance_textedit.text())
             totalDist = float(self.totalZ_textedit.text())

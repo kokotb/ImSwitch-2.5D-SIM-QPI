@@ -31,12 +31,12 @@ class ZStackController(ImConWidgetController):
             self._widget.checkbox_zStackCenter.setChecked(True)
             self._widget.checkbox_zStack.setChecked(True)
         if not start:
-            self._widget.checkbox_zStackCenter.blockSignals(True)
+            # self._widget.checkbox_zStackCenter.blockSignals(True)
             self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
-            self._widget.checkbox_zStackCenter.blockSignals(False)
-            self._widget.checkbox_zStack.blockSignals(True)
+            # self._widget.checkbox_zStackCenter.blockSignals(False)
+            # self._widget.checkbox_zStack.blockSignals(True)
             self._widget.checkbox_zStack.setChecked(self.initEnabled)
-            self._widget.checkbox_zStack.blockSignals(False)
+            # self._widget.checkbox_zStack.blockSignals(False)
 
 
     def runZStackToggle(self, state): #Toggle enabling/disabling options when the 'Run Z Stack' checkbox is clicked.
@@ -53,53 +53,52 @@ class ZStackController(ImConWidgetController):
             self._widget.zStackScanDir.setEnabled(True)
 
     def calcZStepArray(self): 
-        try: 
-            stepDist = float(self._widget.zStepDistance_textedit.text())
-        except ValueError:
-            return
-        try:
-            totalDist = float(self._widget.totalZ_textedit.text())
-        except ValueError:
-            return
-        
-        zScanDir = self._widget.zStackScanDir.currentText()
-        currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position']) #CTFUTURE The value this pulls from is updated with signal. If a problem, create specific variable in CommChannel.
-        centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
+        if self._widget.checkbox_zStack.isChecked:
+            try: 
+                stepDist = float(self._widget.zStepDistance_textedit.text())
+            except ValueError:
+                return
+            try:
+                totalDist = float(self._widget.totalZ_textedit.text())
+            except ValueError:
+                return
+            
+            zScanDir = self._widget.zStackScanDir.currentText()
+            currentZ = float(self.sharedAttrs['Positioner','Z','Z','Position']) #CTFUTURE The value this pulls from is updated with signal. If a problem, create specific variable in CommChannel.
+            centerCheckbox = self._widget.checkbox_zStackCenter.checkState()
 
-        if zScanDir == 'Up':
-            zScanSign = -1
-        elif zScanDir == 'Down':
-            zScanSign = 1
-        try:
-            floorSteps = math.floor(totalDist / stepDist)
-        except ZeroDivisionError:
-            return
-        zScanList = []
+            if zScanDir == 'Up':
+                zScanSign = -1
+            elif zScanDir == 'Down':
+                zScanSign = 1
+            try:
+                floorSteps = math.floor(totalDist / stepDist)
+            except ZeroDivisionError:
+                return
+            zScanList = []
 
-        if centerCheckbox == 2:
+            if centerCheckbox == 2:
 
-            startZ = currentZ - zScanSign * float(self._widget.zOffset_textedit.text())
-            zScanList.append(round(startZ,1))
+                startZ = currentZ - zScanSign * float(self._widget.zOffset_textedit.text())
+                zScanList.append(round(startZ,1))
 
-            for i in range(floorSteps):
-                zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
-            self._widget.numSteps_textedit.setText(str(len(zScanList)))
+                for i in range(floorSteps):
+                    zScanList.append(round(startZ+zScanSign*((i+1)*stepDist),1))
+                self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
-        else:
-            zScanList.append(round(currentZ,1))
+            else:
+                zScanList.append(round(currentZ,1))
 
-            for i in range(floorSteps):
-                zScanList.append(round(currentZ+zScanSign*((i+1)*stepDist),1))
-            self._widget.numSteps_textedit.setText(str(len(zScanList)))
-
-
+                for i in range(floorSteps):
+                    zScanList.append(round(currentZ+zScanSign*((i+1)*stepDist),1))
+                self._widget.numSteps_textedit.setText(str(len(zScanList)))
 
 
-        self._commChannel.sigZScanList.emit(zScanList, currentZ)
+            self._commChannel.storeZStackList(zScanList, currentZ)
 
-        
 
-        return zScanList
+
+            return zScanList
 
 
     def loadSettings(self, moduleDict):

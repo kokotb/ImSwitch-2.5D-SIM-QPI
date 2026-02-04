@@ -125,7 +125,7 @@ class SIMController(ImConWidgetController):
         # Communication channels signls (signals sent elsewhere in the program)
         # self._commChannel.sigAdjustFrame.connect(self.updateROIsize)
         self._commChannel.sigStopSim.connect(self.stopSIM)
-        self._commChannel.sigZScanList.connect(self.zScanList)
+        # self._commChannel.sigZScanList.connect(self.zScanList)
         self._commChannel.sigTilePreview.connect(self.toggleTilePreview)
         self._commChannel.sigModuleSettings.connect(self.loadSIMSettings)
         self._commChannel.sigModuleSettings.connect(self.loadUserSettings)
@@ -765,9 +765,10 @@ class SIMController(ImConWidgetController):
         self.saveImageInBackground(im,simSavePath, simFilenames)
 
 
-    def zScanList(self, zScanList, zOrigin):
-        self.zList = zScanList
-        self.zOrigin = zOrigin
+    def zScanList(self):
+        zList = self._commChannel.getZStackList()[0]
+        self.zOrigin = self._commChannel.getZStackList()[1]
+        return zList, self.zOrigin
 
 
     def getElapsedTimeString(self, seconds):
@@ -1258,7 +1259,7 @@ class SIMController(ImConWidgetController):
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
-            zList = self.zList
+            zList = self.zScanList()[0]
         #
 
         #### Set attributes to processors and select only active processors (processors with powered lasers).

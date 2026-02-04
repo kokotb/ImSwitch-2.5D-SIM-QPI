@@ -33,7 +33,7 @@ class CommunicationChannel(SignalInterface):
 
     sigRecordPSFStack = Signal()
 
-    sigSendZstackToRecordWindow = Signal(list)
+    # sigSendZstackToRecordWindow = Signal(list)
 
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)
 
@@ -122,13 +122,6 @@ class CommunicationChannel(SignalInterface):
 
 
 
-
-
-
-
-
-
-
     sigStartAutoZern = Signal()
 
     
@@ -192,6 +185,7 @@ class CommunicationChannel(SignalInterface):
     sigSetForPSF = Signal(bool)
 
     sig25DPSFReceived = Signal(np.ndarray, str)
+
 
 
     
@@ -287,7 +281,14 @@ class CommunicationChannel(SignalInterface):
         self.simActive = active
         if self.simActive == False:
             self.sigSIMStopped.emit()
-            print("sleep started")
+
+    def storeZStackList(self, list, origin):
+        self.zStackList = list
+        self.zStackOrigin = origin
+
+    def getZStackList(self):
+        return self.zStackList, self.zStackOrigin
+
 
 
     def storeLoadedSettings(self, dict):
