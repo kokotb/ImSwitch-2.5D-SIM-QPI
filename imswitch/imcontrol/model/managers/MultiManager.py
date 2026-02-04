@@ -58,7 +58,7 @@ class MultiManager(ABC):
             def condition(_): return True
         return {managedDeviceName: func(subManager)
                 for managedDeviceName, subManager in self._subManagers.items()
-                if (condition(subManager) and subManager._DetectorManager__forAcquisition)} #2nd term added to ignore AFCam when updating all detectors.
+                if (condition(subManager))}
 
     def finalize(self):
         """ Close/cleanup sub-managers. """

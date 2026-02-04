@@ -1,9 +1,6 @@
-import json
-import os
+
 import threading
 import numpy as np
-import matplotlib.pyplot as plt
-from qtpy import QtCore, QtWidgets
 import cv2
 
 from imswitch.imcommon.model import dirtools, initLogger
@@ -18,11 +15,10 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QFileDialog
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui
 from PIL import Image
 import time
 import re
-import h5py
+from contextlib import contextmanager
 
 
 
@@ -32,13 +28,7 @@ class SLM25DController(ImConWidgetController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
-        # self.pars = self._widget.pars
-        # self.axes = self._widget.axes
-        #self.autoZernCalibValues = [-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-        #self._commChannel.autoZernCalibValues = self.autoZernCalibValues
         self.slmActive = False
-        self.axisValTypes = self._widget.axisValTypes
-        self.paramNames = self._widget.paramNames
         self.zernikeLocked = False
         if self._setupInfo.SLM25D is None:
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
@@ -51,7 +41,6 @@ class SLM25DController(ImConWidgetController):
         self.centerMaskLeft = np.zeros((1080, 960))
         self.centerMaskRight = np.zeros((1080, 960))
         
-
         self.mask25dbinaryLeft = np.zeros((1080, 960))
         self.mask25dbinaryRight = np.zeros((1080, 960))
         
@@ -76,36 +65,36 @@ class SLM25DController(ImConWidgetController):
              (4, -4): (-3.1570215166935713, 3.1570215166935713), (4, -2): (-3.130426605396449, 3.130426605396449), (4, 0): (-1.1180339823972583, 2.23606797749979),
                (4, 2): (-3.13981519001373, 3.13981519001373), (4, 4): (-3.1353128402711548, 3.1420876039381285)}
         
+        self._widget.activate25DSLM.stateChanged.connect(self.toggleSLMFromButton) #Opens SLM resource and enables relevant fields if activated, closes SLM resource and disables relevant fields if deactivated.
+
+        self._widget.sigMaskCenterChanged.connect(self.updateAll)
+        self._widget.sig25DMaskChanged.connect(self.updatePhaseMask)
+        self._widget.sigZernikeMaskChanged.connect(self.updateZernike)
+
+        
+        
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
-        self._widget.updateDiameterMask.connect(self.updateAll)
-        self._widget.sigStepUpDiameterClicked.connect(self.updateAll)
-        self._widget.sigStepDownDiameterClicked.connect(self.updateAll) #!!! fix this
 
-        self._widget.updateCenterMask.connect(self.combineAndProject)
-        self._widget.sigStepUpCenterClicked.connect(self.combineAndProject)
-        self._widget.sigStepDownCenterClicked.connect(self.combineAndProject)
+        self._widget.pars['AbsPosEditBeam Diameter'].editingFinished.connect(self.updateAll)
 
-        self._widget.update25DMask.connect(self.updatePhaseMask)
-        self._widget.sigStepUp25DMask.connect(self.updatePhaseMask)
-        self._widget.sigStepDown25DMask.connect(self.updatePhaseMask)
-    
-        self._widget.sigUpdateZernikeMask.connect(self.updateZernike)
-        self._widget.sigStepUpZernikeLeft.connect(self.updateZernike)
-        self._widget.sigStepDownZernikeLeft.connect(self.updateZernike)
-        self._widget.sigStepUpZernikeRight.connect(self.updateZernike)
-        self._widget.sigStepDownZernikeRight.connect(self.updateZernike)
-        self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
-        self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
+
+
+        # self._widget.autoZernCheckbox.clicked.connect(self.autoZernChecked)
+        # self._widget.autoZernCheckboxNew.clicked.connect(self.autoZernCheckedNew)
         self._widget.sigLockZernike.connect(self.setLockZernike)
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
-        self._widget.projectFlatnessCorretion.stateChanged.connect(self.combineAndProject)
+        # self._widget.projectCenter.stateChanged.connect(self.combineAndProject)
 
         self.slm25DManager = self._master.slm25DManager
 
-        self._widget.sigToggleSLM.connect(self.toggleSLMFromButton)
-        self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+
+
+        # self._widget.sigOpenPreviewButton.connect(self.openPreviewWindow)
+        self._widget.slmPreview.clicked.connect(self.openPreviewWindow)
+
+
         self._widget.sig25DParamChanged.connect(self.valueChanged25D)
         self._widget.sigZernParamChanged.connect(self.valueChangedZern)
         self._commChannel.sigModuleSettings.connect(self.loadZernSettings)
@@ -115,8 +104,8 @@ class SLM25DController(ImConWidgetController):
         self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
         self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
-        self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
-        self._widget.Colorbutton_group.buttonClicked.connect(self.selectAZColor)
+        # self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
+        # self._widget.Colorbutton_group.buttonClicked.connect(self.selectAZColor) #NOTE
         self._widget.maskScaleNumber.valueChanged.connect(self.MaskScaleChanged)
 
 
@@ -138,8 +127,7 @@ class SLM25DController(ImConWidgetController):
 
         self.init25DWidgetValues()
         self.updateAll() #This line is needed to initialize a 2.5D mask. This helps with later calculation. Leave it here.
-        self.maskSideSelected = "Right"
-        self.maskAZColorSelected = "Red"
+
         self.maskscaleValue = 255
 
         self.fullZernList = self.createFullZernList1stLoop()
@@ -174,39 +162,39 @@ class SLM25DController(ImConWidgetController):
             self.filePath.setText(jsonPath[0])
         else: pass
 
-    def selectMaskSide(self):
-        if self._widget.autocorectLeftRadioButton.isChecked():
-            self.maskSideSelected = "Left"
-        elif self._widget.autocorectRightRadioButton.isChecked():
-            self.maskSideSelected = "Right"
+    # def selectMaskSide(self):
+    #     if self._widget.autocorectLeftRadioButton.isChecked():
+    #         self.maskSideSelected = "Left"
+    #     elif self._widget.autocorectRightRadioButton.isChecked():
+    #         self.maskSideSelected = "Right"
 
-        print(self.maskSideSelected + " side of the mask selected for AZ")
+    #     print(self.maskSideSelected + " side of the mask selected for AZ")
 
 
-    def selectAZColor(self):
-        if self._widget.autocorectRedRadioButton.isChecked():
-            self.maskAZColorSelected = "Red"
-        elif self._widget.autocorectGreenRadioButton.isChecked():
-            self.maskAZColorSelected = "Green"
-        elif self._widget.autocorectBlueRadioButton.isChecked():
-            self.maskAZColorSelected = "Blue"
+    # def selectAZColor(self):
+    #     if self._widget.autocorectRedRadioButton.isChecked():
+    #         self._widget.channelSelectCombo.currentText() = "Red"
+    #     elif self._widget.autocorectGreenRadioButton.isChecked():
+    #         self._widget.channelSelectCombo.currentText() = "Green"
+    #     elif self._widget.autocorectBlueRadioButton.isChecked():
+    #         self._widget.channelSelectCombo.currentText() = "Blue"
 
-        print(self.maskAZColorSelected + " color selected for AZ")
+    #     print(self._widget.channelSelectCombo.currentText() + " color selected for AZ")
 
 
     def MaskScaleChanged(self, value):
-        self.maskscaleValue = int(value)
+        self.maskscaleValue = value
         print("Mask scale:", self.maskscaleValue)
         self.combineAndProject()
 
 
     def set25dParVals(self, gamma, psi):
         self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-        self._widget.pars["AbsPosEditGamma"].setText(str(gamma))
+        self._widget.pars["AbsPosEditGamma"].setValue(gamma)
         self._widget.pars["AbsPosEditGamma"].blockSignals(False)
 
         self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-        self._widget.pars["AbsPosEditPsi"].setText(str(psi))
+        self._widget.pars["AbsPosEditPsi"].setValue(psi)
         self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
         self.updatePhaseMask()
@@ -262,8 +250,6 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectZernike.setEnabled(False)
         self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
-        # self._widget.projectFlatnessCorretion.setChecked(False)
-        # self._widget.projectFlatnessCorretion.setEnabled(False)
 
         self.startAutoZern()
         # for rep in range(self.numAZAlltestPoints):
@@ -285,9 +271,9 @@ class SLM25DController(ImConWidgetController):
 
         #     self._master.arduinoManager.trigger25DWriteOnly()
             
-        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
             
         #     self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
 
@@ -324,28 +310,28 @@ class SLM25DController(ImConWidgetController):
                 #self.sigZernMaskProjected = False
 
                 self._master.arduinoManager.trigger25DWriteOnly()
-                # waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D') # Arguement is unused by method.
+                # waitingBuffers = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D') # Arguement is unused by method.
                 # print(waitingBuffers)
                 # startBufferTime = time.time()
                 # totalBufferTime = 0
                 # while waitingBuffers != 1:
                 #     endBufferTime = time.time()
                 #     totalBufferTime = endBufferTime - startBufferTime
-                #     waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
+                #     waitingBuffers = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D')
                 #     # time.sleep(0.002)
 
                 #     print(waitingBuffers)
 
 
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 
                 self._master.slm25DManager.calcAutoZern(rawImg) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 
-                if self._commChannel.stop25DNow: #allows exit of the loop
-                    self._commChannel.autoZernChecked = False
-                    break
+                # if self._commChannel.stop25DNow: #allows exit of the loop
+                #     self._commChannel.autoZernChecked = False
+                #     break
 
             optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(testvalues)
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
@@ -360,11 +346,11 @@ class SLM25DController(ImConWidgetController):
 
         # self._commChannel.sigToggleAutoZern.emit(False)
         self.toggleAutoZern(False)
-        self._commChannel.autoZernChecked = False
+        # self._commChannel.autoZernChecked = False
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectFlatnessCorretion.setEnabled(True)
+        # self._widget.projectCenter.setEnabled(True)
 
         # self._widget.stop_button.setChecked(False) # probably dont need this here
         # self.stop25D()    
@@ -382,16 +368,16 @@ class SLM25DController(ImConWidgetController):
         print('Aligning mask center process started')
         submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
         self._master.arduinoManager.activate25DWriteOnly()
-        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].startAcquisition25D()
 
         self._widget.pars["AbsPosEditGamma"].blockSignals(True)
         self._widget.pars["AbsPosEditGamma"].setStyleSheet("border: 3px solid green;")
-        self._widget.pars["AbsPosEditGamma"].setText("2.5")
+        self._widget.pars["AbsPosEditGamma"].setValue(2.5)
         self._widget.pars["AbsPosEditGamma"].blockSignals(False)
 
         self._widget.pars["AbsPosEditPsi"].blockSignals(True)
         self._widget.pars["AbsPosEditPsi"].setStyleSheet("border: 3px solid green;")
-        self._widget.pars["AbsPosEditPsi"].setText("0.3")
+        self._widget.pars["AbsPosEditPsi"].setValue(0.3)
         self._widget.pars["AbsPosEditPsi"].blockSignals(False)
 
         self.updatePhaseMask()
@@ -402,13 +388,13 @@ class SLM25DController(ImConWidgetController):
         self._widget.projectZernike.setEnabled(False)
         self._widget.project25D.setChecked(True)
         self._widget.project25D.setEnabled(False)
-        # self._widget.projectFlatnessCorretion.setChecked(False)
-        # self._widget.projectFlatnessCorretion.setEnabled(False)
+        # self._widget.projectCenter.setChecked(False)
+        # self._widget.projectCenter.setEnabled(False)
 
         ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
         zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        self.detectorsDict[self.maskAZColorSelected]._camera.setBufferTimeout(2000)
+        self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.setBufferTimeout(2000)
 
         # self._widget.project25D.setChecked(False)
         # zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)
@@ -417,16 +403,16 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectFlatnessCorretion.setEnabled(True)
+        # self._widget.projectCenter.setEnabled(True)
     
         self._master.arduinoManager.deactivateSLMWriteOnly()
-        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].stopAcquisition()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].stopAcquisition()
 
         print('Aligning mask center process finished')
 
     def alignCenterLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        for key in [self.maskSideSelected + " Center-Y", self.maskSideSelected + " Center-X"]:
-            current = int(self._widget.pars['AbsPosEdit' + key].text())
+        for key in [self._widget.sideSelectCombo.currentText() + " Center-Y", self._widget.sideSelectCombo.currentText() + " Center-X"]:
+            current = self._widget.pars['AbsPosEdit' + key].value()
             testvalues = np.linspace(current - 140, current + 140, 15, dtype=int)
             scores = []
             images = []
@@ -434,7 +420,7 @@ class SLM25DController(ImConWidgetController):
                 
                 self._widget.pars['AbsPosEdit' + key].blockSignals(True)
                 self._widget.pars['AbsPosEdit' + key].setStyleSheet("border: 3px solid green;")
-                self._widget.pars['AbsPosEdit' + key].setText(str(testvalue))
+                self._widget.pars['AbsPosEdit' + key].setValue(testvalue)
                 self._widget.pars['AbsPosEdit' + key].blockSignals(False)
 
                 self.updatePhaseMask()
@@ -454,8 +440,8 @@ class SLM25DController(ImConWidgetController):
                 #     while not success:
                 #         self._master.arduinoManager.trigger25DWriteOnly()
                 #         success = self.waitingForBuffers()
-                #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                #     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 #     images.append(beadImgAnalysis)
                 #     if (key == self.maskSideSelected + " Center-Y"):
@@ -478,14 +464,14 @@ class SLM25DController(ImConWidgetController):
                     while not success:
                         self._master.arduinoManager.trigger25DWriteOnly()
                         success = self.waitingForBuffers()
-                    rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                    self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                    rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                    self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                     images.append(beadImgAnalysis)
-                    if (key == self.maskSideSelected + " Center-Y"):
+                    if (key == self._widget.sideSelectCombo.currentText() + " Center-Y"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[1])
-                    elif (key == self.maskSideSelected + " Center-X"):
+                    elif (key == self._widget.sideSelectCombo.currentText() + " Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
                 avg = sum(Com_frames) / len(Com_frames)
@@ -503,7 +489,7 @@ class SLM25DController(ImConWidgetController):
             posOptimal = testvalues[idx]
 
             self._widget.pars['AbsPosEdit' + key].blockSignals(True)
-            self._widget.pars['AbsPosEdit' + key].setText(str(posOptimal))
+            self._widget.pars['AbsPosEdit' + key].setValue(posOptimal)
             self._widget.pars['AbsPosEdit' + key].blockSignals(False)
             self.updatePhaseMask()
                 
@@ -516,15 +502,15 @@ class SLM25DController(ImConWidgetController):
 
     def waitingForBuffers(self):
         success = False
-        waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
+        waitingBuffers = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D')
         i = 0
         while (waitingBuffers != 1) and i < 10:
             time.sleep(0.01)
             # print(f'try {i}: {waitingBuffers}')
-            waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
+            waitingBuffers = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D')
             
             # self._master.arduinoManager.trigger25DWriteOnly()
-            # waitingBuffers = self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D')
+            # waitingBuffers = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D')
             i+=1
         if waitingBuffers == 1:
             success = True
@@ -536,20 +522,20 @@ class SLM25DController(ImConWidgetController):
         print('autozern started')
         submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
         self._master.arduinoManager.activate25DWriteOnly()
-        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].startAcquisition25D()
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
         self._widget.project25D.setChecked(False)
         self._widget.project25D.setEnabled(False)
-        # self._widget.projectFlatnessCorretion.setChecked(False)
-        # self._widget.projectFlatnessCorretion.setEnabled(False)
+        # self._widget.projectCenter.setChecked(False)
+        # self._widget.projectCenter.setEnabled(False)
 
         ymin, ymax, xmin, xmax = selected_frame[0][1], selected_frame[1][1], selected_frame[0][2], selected_frame[1][2]
         self.startAutoZern()
         zPosFocus = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        self.detectorsDict[self.maskAZColorSelected]._camera.setBufferTimeout(2000)
+        self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.setBufferTimeout(2000)
 
         zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
@@ -601,12 +587,12 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.setEnabled(True)
         self._widget.project25D.setEnabled(True)
-        self._widget.projectFlatnessCorretion.setEnabled(True)
+        # self._widget.projectCenter.setEnabled(True)
 
         # self._widget.stop_button.setChecked(False) # probably dont need this here
         # self.stop25D()    
         self._master.arduinoManager.deactivateSLMWriteOnly()
-        self._master.detectorsManager._subManagers[submanagernameDict[self.maskAZColorSelected]].stopAcquisition()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].stopAcquisition()
 
         self._commChannel.sigAutoZernikeFinished.emit()
 
@@ -622,17 +608,17 @@ class SLM25DController(ImConWidgetController):
             while not success:
                 self._master.arduinoManager.trigger25DWriteOnly()
                 success = self.waitingForBuffers()
-            rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-            self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+            rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+            # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+            self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
             images.append(beadImgAnalysis)
             Zmaxprofile.append(np.max(beadImgAnalysis))
-            if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                self.toggleAutoZernNew(False)
-                self._commChannel.autoZernCheckedNew = False
-                break
+            # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+            #     self.toggleAutoZernNew(False)
+            #     self._commChannel.autoZernCheckedNew = False
+            #     break
         
 
         ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
@@ -647,7 +633,7 @@ class SLM25DController(ImConWidgetController):
 
     
     def sphericalAberrationLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
-        key = '(4,0)' + self.maskSideSelected
+        key = '(4,0)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         testvalues = np.linspace(current - 0.5, current + 0.5, 21)
         scores = []
@@ -671,17 +657,17 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 Zmaxprofile.append(np.max(beadImgAnalysis))
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             ZFWHM, ZHM, ZLeft, ZRight = peak_widths(Zmaxprofile, np.array([np.argmax(Zmaxprofile)]), rel_height=0.5)
@@ -720,17 +706,17 @@ class SLM25DController(ImConWidgetController):
         # set 25d mask and project it stronger aberration effects
         if flag25dOn:
             self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].setValue(2.0)
             self._widget.pars["AbsPosEditGamma"].blockSignals(False)
             self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].setValue(0.0)
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
             time.sleep(0.15)
 
         # Oblique Astigmatism 
-        key = '(2,-2)' + self.maskSideSelected
+        key = '(2,-2)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -756,18 +742,18 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigma1, sigma2 = self.obliqueAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmas12.append([sigma1, sigma2])
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             astigMetric = abs(sigmas12[1][0] - sigmas12[1][1]) + abs(sigmas12[0][0] - sigmas12[0][1])
@@ -795,10 +781,10 @@ class SLM25DController(ImConWidgetController):
         # set 25d mask and project it stronger aberration effects =============================================
         if flag25dOn:
             self._widget.pars["AbsPosEditGamma"].blockSignals(True)
-            self._widget.pars["AbsPosEditGamma"].setText("2.0")
+            self._widget.pars["AbsPosEditGamma"].setValue(2.0)
             self._widget.pars["AbsPosEditGamma"].blockSignals(False)
             self._widget.pars["AbsPosEditPsi"].blockSignals(True)
-            self._widget.pars["AbsPosEditPsi"].setText("0.0")
+            self._widget.pars["AbsPosEditPsi"].setValue(0.0)
             self._widget.pars["AbsPosEditPsi"].blockSignals(False)
             self.updatePhaseMask()
             self._widget.project25D.setChecked(True)
@@ -806,7 +792,7 @@ class SLM25DController(ImConWidgetController):
         # =======================================================================================================
 
         # Vertical Astigmatism 
-        key = '(2,2)' + self.maskSideSelected
+        key = '(2,2)' + self._widget.sideSelectCombo.currentText()
         current = self._widget.pars['AbsPosEdit' + key].value()
         if flag25dOn:
             testvalues = np.linspace(current - 1.2, current + 1.2, 25)
@@ -831,18 +817,18 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.verticalAstigmatism_metric(beadImgAnalysis, threshold=0.2) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
                 sigmasXY.append([sigmaX, sigmaY])
-                if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew):#allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             astigMetric = abs(sigmasXY[1][0] - sigmasXY[1][1]) + abs(sigmasXY[0][0] - sigmasXY[0][1])
@@ -894,7 +880,7 @@ class SLM25DController(ImConWidgetController):
 
     def horizontalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Horizontal Comma
-        key = '(3,1)' + self.maskSideSelected
+        key = '(3,1)' + self._widget.sideSelectCombo.currentText()
         testvalues = list(self.autoZernCalibValuesDict[key])
         horCommaScores = []
         horCommaScores2 = []
@@ -916,9 +902,9 @@ class SLM25DController(ImConWidgetController):
             # while not success:
             #     self._master.arduinoManager.trigger25DWriteOnly()
             #     success = self.waitingForBuffers()
-        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
         #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
         #     sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
         #     scores.append(sigma)
@@ -966,10 +952,10 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -978,10 +964,10 @@ class SLM25DController(ImConWidgetController):
                 score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[0]
                 if (offset == 0.):
                     scores.append(score)
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
 
             try:
@@ -1013,7 +999,7 @@ class SLM25DController(ImConWidgetController):
 
     def verticalComaLoop(self, zPosFocus, ymin, ymax, xmin, xmax, bananaMetric):
         # Vertical Comma 
-        key = '(3,-1)' + self.maskSideSelected
+        key = '(3,-1)' + self._widget.sideSelectCombo.currentText()
         testvalues = list(self.autoZernCalibValuesDict[key])
         vertCommaScores = []
         images = []
@@ -1040,9 +1026,9 @@ class SLM25DController(ImConWidgetController):
             # while not success:
             #     self._master.arduinoManager.trigger25DWriteOnly()
             #     success = self.waitingForBuffers()
-        #     rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+        #     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+        #     # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+        #     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
         #     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
         #     sigma = self.general_area_metric(beadImgAnalysis, threshold=0.25) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
         #     scores.append(sigma)
@@ -1101,10 +1087,10 @@ class SLM25DController(ImConWidgetController):
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
 
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -1113,10 +1099,10 @@ class SLM25DController(ImConWidgetController):
                 score = self.coma_metric2(beadImgAnalysis, threshold=0.1)[1]
                 if (offset == 0.):
                     scores.append(score)
-                if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
-                    self.toggleAutoZernNew(False)
-                    self._commChannel.autoZernCheckedNew = False
-                    break
+                # if not (self._widget.autoZernCheckboxNew): #allows exit of the loop
+                #     self.toggleAutoZernNew(False)
+                #     self._commChannel.autoZernCheckedNew = False
+                #     break
             
             try:
                 commaMetric = abs(abs(sigmasXY[2][1] - sigmasXY[1][1]) + abs(sigmasXY[0][1] - sigmasXY[1][1]))
@@ -1147,8 +1133,8 @@ class SLM25DController(ImConWidgetController):
 
     def trefoilLoop(self, zPosFocus, ymin, ymax, xmin, xmax):
         # Vertical Comma 
-        for key in ['(3,-3)' + self.maskSideSelected, '(3,3)' + self.maskSideSelected]:
-        #for key in ['(3,-3)' + self.maskSideSelected', '(3,3)' + self.maskSideSelected', '(3,-1)' + self.maskSideSelected', '(3,1)' + self.maskSideSelected', '(2,2)' + self.maskSideSelected, '(2,-2)' + self.maskSideSelected]:
+        for key in ['(3,-3)' + self._widget.sideSelectCombo.currentText(), '(3,3)' + self._widget.sideSelectCombo.currentText()]:
+        #for key in ['(3,-3)' + self._widget.sideSelectCombo.currentText()', '(3,3)' + self._widget.sideSelectCombo.currentText()', '(3,-1)' + self._widget.sideSelectCombo.currentText()', '(3,1)' + self._widget.sideSelectCombo.currentText()', '(2,2)' + self._widget.sideSelectCombo.currentText(), '(2,-2)' + self._widget.sideSelectCombo.currentText()]:
             current = round(self._widget.pars['AbsPosEdit' + key].value(),2)
             testvalues = np.round(np.linspace(current - 0.7, current + 0.7, 15), 2)
 
@@ -1170,12 +1156,12 @@ class SLM25DController(ImConWidgetController):
                 while not success:
                     self._master.arduinoManager.trigger25DWriteOnly()
                     success = self.waitingForBuffers()
-                # print(self.detectorsDict[self.maskAZColorSelected]._camera.getBufferValue('25D'))
+                # print(self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D'))
                 
-                rawImg = self.detectorsDict[self.maskAZColorSelected]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self.maskAZColorSelected].handle} Raw")
-                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
-                # self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self.maskAZColorSelected].handle)
+                rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
+                # self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
 
 
@@ -1210,7 +1196,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             zernikeParametersNew = self.getAllZernikeParams()
-            print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self.maskSideSelected]) + ' ' + str(zernikeParametersNew['(3,3)' + self.maskSideSelected]))
+            print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self._widget.sideSelectCombo.currentText()]) + ' ' + str(zernikeParametersNew['(3,3)' + self._widget.sideSelectCombo.currentText()]))
             self.updateZernikeWithSleep()
                 
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
@@ -1328,42 +1314,50 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def toggleAutoZern(self, state):
-        self._widget.autoZernCheckbox.setChecked(state)
+    # def toggleAutoZern(self, state):
+    #     self._widget.autoZernCheckbox.setChecked(state)
 
-    def toggleAutoZernNew(self, state):
-        self._widget.autoZernCheckboxNew.setChecked(state)
+    # def toggleAutoZernNew(self, state):
+    #     self._widget.autoZernCheckboxNew.setChecked(state)
 
-    def autoZernChecked(self, state):
-        self._commChannel.autoZernChecked = state
+    # def autoZernChecked(self, state):
+    #     self._commChannel.autoZernChecked = state
 
-    def autoZernCheckedNew(self, state):
-        # self._commChannel.autoZernCheckedNew = state
-        # self._commChannel.stop25DNow = True
-        if state:
-            pointSelected = self._widget.askYesNoQuestion()
-            if pointSelected == True:
-                self._commChannel.autoZernCheckedNew = state
-                self._commChannel.stop25DNow = True
-                # if not self._commChannel.simActive:
-                #     self._commChannel.sigStart25D.emit()
-            else:
-                self._widget.autoZernCheckboxNew.setChecked(False)
-                self._commChannel.autoZernCheckedNew = False
-                self.toggleAutoZernNew(False)
-                self._logger.warning('Please select single isolated bead before aberration correction.')
+    # def autoZernCheckedNew(self, state):
+    #     # self._commChannel.autoZernCheckedNew = state
+    #     # self._commChannel.stop25DNow = True
+    #     if state:
+    #         pointSelected = self._widget.askYesNoQuestion()
+    #         if pointSelected == True:
+    #             self._commChannel.autoZernCheckedNew = state
+    #             self._commChannel.stop25DNow = True
+    #             # if not self._commChannel.simActive:
+    #             #     self._commChannel.sigStart25D.emit()
+    #         else:
+    #             self._widget.autoZernCheckboxNew.setChecked(False)
+    #             self._commChannel.autoZernCheckedNew = False
+    #             self.toggleAutoZernNew(False)
+    #             self._logger.warning('Please select single isolated bead before aberration correction.')
 
 
-    def init25DWidgetValues(self):
+    def init25DWidgetValues(self): #The spripped values are needed as the config file does not have spaces or special characters.
         strippedNames = []
         self._widget.valueDict25D = dict()
-        for i in range(len(self._widget.paramNames)):
-            spaceStripped = self._widget.paramNames[i].replace(' ','')
+        for i in range(len(self._widget.paramNames25DPos)):
+            spaceStripped = self._widget.paramNames25DPos[i].replace(' ','')
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            self._widget.pars['AbsPosEdit' + self._widget.paramNames[i]].setText(str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-            self._widget.valueDict25D[self._widget.paramNames[i]] = str(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            # if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == float:
+            dataType = self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0]
+            with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+                self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+
+            # if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == int:
+            #     with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+            #         self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+            #         self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
         strippedNames = []
         self._widget.valueDictZern25D = dict()
@@ -1376,20 +1370,23 @@ class SLM25DController(ImConWidgetController):
                 self._widget.pars['AbsPosEdit' + self._widget.ZernikeCoefficientNames[i] + side].setValue(self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i])) #Set value in widget
                 self._widget.valueDictZern25D[self._widget.ZernikeCoefficientNames[i] + side] = self._setupInfo.SLM25D.__getattribute__(side+strippedNames[i]) #Initial value dictionary to reset to when 'Reset' is rpessed.
         
-        self._widget.autoZernCheckbox.setChecked(False)
-        self._widget.autoZernCheckboxNew.setChecked(False)
+        # self._widget.autoZernCheckbox.setChecked(False)
+        # self._widget.autoZernCheckboxNew.setChecked(False)
             
+    def getOriginalMaskPositions(self):
+            xleftcenter = self._widget.valueDict25D["Left Center-X"]
+            yleftcenter = self._widget.valueDict25D["Left Center-Y"]
+            xrightcenter = self._widget.valueDict25D["Right Center-X"]
+            yrightcenter = self._widget.valueDict25D["Right Center-Y"]
+            return xleftcenter, yleftcenter, xrightcenter, yrightcenter
 
     def setLockZernike(self, value):
         self.zernikeLocked = value
 
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -1425,18 +1422,15 @@ class SLM25DController(ImConWidgetController):
             self.combineAndProject()
 
     def updatePhaseMask(self , recalc = True):
-        self.calculatePhaseMask()
-        if self.slmActive:
-            self.combineAndProject()
+        self.calculatePhaseMask() # Calcs new mask and stores it as self.mask25dbinaryLeft and self.mask25dbinaryRight
+        # if self.slmActive:
+        #     self.combineAndProject()
 
-        # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        # Original values
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -1446,7 +1440,7 @@ class SLM25DController(ImConWidgetController):
         yleftShift = yleftcenterC - yleftcenter
         xrightShift = xrightcenterC - xrightcenter
         yrightShift = yrightcenterC - yrightcenter
-
+  
         projectImageLeft = np.zeros((1080, 960))
         projectImageRight = np.zeros((1080, 960))
 
@@ -1465,7 +1459,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.img25d.setImage(self._widget.matrix25d)
         self.mask25D = self._widget.matrix25d
         # self._widget.vb25D.setAspectLocked(True)
-        self.createCenterDotImage()
+        # self.createCenterDotImage()
 
         if recalc:
             self.combineAndProject()
@@ -1475,7 +1469,6 @@ class SLM25DController(ImConWidgetController):
 
     def toggleSLMFromButton(self, state):
         self.toggleSLMResource(state)
-
 
 
     def toggleSLMResource(self, state):
@@ -1496,16 +1489,16 @@ class SLM25DController(ImConWidgetController):
 
         return maskReshaped
 
-    def getAllWidgetParams(self): #is there a loop somewhere
+    def getAll25DParams(self): #is there a loop somewhere
 
         valueList = {}
-        for index in self._widget.paramNames:
+        for index in self._widget.paramNames25DPos:
             name = 'AbsPosEdit' + index
             widgetObject = self._widget.pars[name]
             if index == 'Beam Diameter': # Want beam diamter in meters, but entry box in millimeters.
-                valueList[index] = self.axisValTypes[index](widgetObject.text()) / 1000
+                valueList[index] = widgetObject.value() / 1000
             else:
-                valueList[index] = self.axisValTypes[index](widgetObject.text())
+                valueList[index] = widgetObject.value()
 
         return valueList
     
@@ -1527,7 +1520,7 @@ class SLM25DController(ImConWidgetController):
 
         im = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0))
 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         rho = parameters["Beam Diameter"]
         pszSLM = 0.000008 # (in m, 8 um) pixel size
         rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
@@ -1552,21 +1545,18 @@ class SLM25DController(ImConWidgetController):
             for side in self._widget.ZernikeSides:
                 name = 'AbsPosEdit' + index + side
                 widgetObject = self._widget.pars[name]
-                valueList[index + side] = self.axisValTypes[index + side](widgetObject.value())
+                valueList[index + side] = float(widgetObject.value())
 
         # final = list(zip(self._widget.axes,valueList))
         # print(valueList)
         return valueList
     
     def calculateZernikePhaseMask(self):
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -1647,14 +1637,11 @@ class SLM25DController(ImConWidgetController):
         return self.ZernikeAllMasksSum
 
     def calculateNewZernikePhaseMask(self):
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
         # Beam size and position parameters
         rho = parameters["Beam Diameter"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # SLM screen size parameters
         numberXpix = 1920
@@ -1796,27 +1783,24 @@ class SLM25DController(ImConWidgetController):
 
         self.createCenterDotImage()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
         yrightcenterC = parameters["Right Center-Y"]
 
+        #Shift from original
         xleftShift = xleftcenterC - xleftcenter
         yleftShift = yleftcenterC - yleftcenter
         xrightShift = xrightcenterC - xrightcenter
         yrightShift = yrightcenterC - yrightcenter
 
-
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
-        projCenter = self._widget.projectFlatnessCorretion.checkState()
+        # projCenter = self._widget.projectCenter.checkState()
 
         projectImageLeft = np.zeros((1080, 960))
         projectImageRight = np.zeros((1080, 960))
@@ -1877,14 +1861,14 @@ class SLM25DController(ImConWidgetController):
                 self._widget.imgZernike.setImage(self._widget.matrixZernike)
                 self.maskZernike = self._widget.matrixZernike
 
-        if (projCenter == 2):
-            self.createCenterMask()
-            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-                projectImageLeft += self.shiftMaskZeroPad(self.centerMaskLeft, xleftShift, yleftShift)
-                projectImageRight += self.shiftMaskZeroPad(self.centerMaskRight, xrightShift, yrightShift)
-            else:
-                projectImageLeft += self.centerMaskLeft
-                projectImageRight += self.centerMaskRight
+        # if (projCenter == 2):
+        #     self.createCenterMask()
+        #     if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
+        #         projectImageLeft += self.shiftMaskZeroPad(self.centerMaskLeft, xleftShift, yleftShift)
+        #         projectImageRight += self.shiftMaskZeroPad(self.centerMaskRight, xrightShift, yrightShift)
+        #     else:
+        #         projectImageLeft += self.centerMaskLeft
+        #         projectImageRight += self.centerMaskRight
 
 
 
@@ -1903,38 +1887,34 @@ class SLM25DController(ImConWidgetController):
             self.slm25DManager.projectMask(self.reshapeMask(projImg))
 
         else:
-            pass
+            # pass
             print('No masks projected')
-
-
-        
-        
 
     def getCurrentCenters(self):
         valueList = []
         wantedParams = ["Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y"]
-        for index in self._widget.paramNames:
+        for index in self._widget.paramNames25DPos:
             if index in wantedParams:
                 name = 'AbsPosEdit' + index
                 widgetObject = self._widget.pars[name]
-                valueList.append(self.axisValTypes[index](widgetObject.text()))
+                valueList.append(widgetObject.value())
 
         return valueList[0], valueList[1], valueList[2], valueList[3], 
 
     def createCenterMask(self):
         #xLeft, yLeft, xRight, yRight = self.getCurrentCenters()
 
-        xLeft = int(self._widget.valueDict25D["Left Center-X"])
-        yLeft = int(self._widget.valueDict25D["Left Center-Y"])
-        xRight = int(self._widget.valueDict25D["Right Center-X"])
-        yRight = int(self._widget.valueDict25D["Right Center-Y"])
+        xLeft = self._widget.valueDict25D["Left Center-X"]
+        yLeft = self._widget.valueDict25D["Left Center-Y"]
+        xRight = self._widget.valueDict25D["Right Center-X"]
+        yRight = self._widget.valueDict25D["Right Center-Y"]
 
 
         # SLM screen size parameters
         numberXpix = 1920
         numberYpix = 1080
         pszSLM = 0.000008 # (in m, 8 um) pixel size
-        rhoPupilAperture = self.getAllWidgetParams()['Beam Diameter']  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
+        rhoPupilAperture = self.getAll25DParams()['Beam Diameter']  # Adjust manually for calibration to the beam center (rho = 3 is normal for operational microscope)
         rhoPupilAperturePix = rhoPupilAperture/pszSLM
         
         # ====================================================================================================================================
@@ -1952,9 +1932,6 @@ class SLM25DController(ImConWidgetController):
             thetamatrixright = np.arctan((x_coordsright - xRight) / (y_coordsright - yRight))
             thetamatrixright[np.isnan(thetamatrixright)] = - np.pi / 2 
             thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
-
-        
-        
 
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         thetamatrix = np.concatenate((thetamatrixleft, thetamatrixright),axis=1)
@@ -1976,24 +1953,19 @@ class SLM25DController(ImConWidgetController):
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
 
-    def calculatePhaseMask(self): 
-
-        # Returns Phase mask in shape of 1080x1920 numpy array
-        
+    def calculatePhaseMask(self):         
         # TO DO: connect these input parameters with GUI 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
 
-        rho = parameters["Beam Diameter"]
+        rho = parameters["Beam Diameter"] #Current value
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
+        gamma = parameters["Gamma"] #Current value
+        psi = parameters["Psi"] #Current value
+
         # xleftcenter = parameters["Left Center-X"]
         # yleftcenter = parameters["Left Center-Y"]
         # xrightcenter = parameters["Right Center-X"]
         # yrightcenter = parameters["Right Center-Y"]
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
-        gamma = parameters["Gamma"]
-        psi = parameters["Psi"]
 
 
         # SLM screen size parameters
@@ -2011,7 +1983,7 @@ class SLM25DController(ImConWidgetController):
         rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
         rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
 
-        rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
+        # rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         # ====================================================================================================================================
 
         maskLeft = self.phase_function_fast(gamma, psi, rhomatrixleft) 
@@ -2031,13 +2003,10 @@ class SLM25DController(ImConWidgetController):
 
         self.calculateZernikePhaseMask()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -2070,13 +2039,10 @@ class SLM25DController(ImConWidgetController):
     def recalculateZernikePhaseMask(self):
         self.calculateNewZernikePhaseMask()
         # initial values
-        xleftcenter = int(self._widget.valueDict25D["Left Center-X"])
-        yleftcenter = int(self._widget.valueDict25D["Left Center-Y"])
-        xrightcenter = int(self._widget.valueDict25D["Right Center-X"])
-        yrightcenter = int(self._widget.valueDict25D["Right Center-Y"])
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()   
 
         # current values 
-        parameters = self.getAllWidgetParams()
+        parameters = self.getAll25DParams()
         xleftcenterC = parameters["Left Center-X"]
         yleftcenterC = parameters["Left Center-Y"]
         xrightcenterC = parameters["Right Center-X"]
@@ -2194,47 +2160,6 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
         print("AZ signal called properly")
 
-
-    # def autoZernikeThread(self):
-    #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
-
-    # def calcAutoZern(self, rep):
-
-    #     image = self._commChannel.lastImgDict[640]
-    #     print('scored '+str(rep))
-    #     # self.evaluateImageQuality(image)  # set image quality metric here
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def loadZernSettings(self, moduleDict):
         try:
             loadBool = moduleDict['zernike']
@@ -2246,14 +2171,14 @@ class SLM25DController(ImConWidgetController):
             for i in range(len(self._widget.elementListZern)):
                 if self._widget.elementListZern[i]._side == 'Left':
                     leftParams = params['Left']
-                    self._widget.elementListZern[i].setValue(float(leftParams[self._widget.elementListZern[i]._name]))
+                    self._widget.elementListZern[i].setValue(leftParams[self._widget.elementListZern[i]._name])
                     
                 if self._widget.elementListZern[i]._side == 'Right':
                     rightParams = params['Right']
-                    self._widget.elementListZern[i].setValue(float(rightParams[self._widget.elementListZern[i]._name]))
+                    self._widget.elementListZern[i].setValue(rightParams[self._widget.elementListZern[i]._name])
 
 
-    def load25DSettings(self, moduleDict):
+    def load25DSettings(self, moduleDict): # 2.5D parameters still saved as a string. Needs to type interpreted in the method below.
         try:
             loadBool = moduleDict['parameters25D']
         except KeyError:
@@ -2262,10 +2187,8 @@ class SLM25DController(ImConWidgetController):
             params = self._commChannel.loadedSettings["25D SLM Parameters"]
 
             for i in range(len(self._widget.elementList25D)):
-                if self._widget.elementList25D[i]._type == 'str':
-                    self._widget.elementList25D[i].setText(params[self._widget.elementList25D[i]._name])
-
-
+                self._widget.elementList25D[i].setValue(self._widget.elementList25D[0]._type(params[self._widget.elementList25D[i]._name]))
+        self.updatePhaseMask() # Signals are such that the mask is not fully updated after last value is set. Run this to redraw the mask with new values.
 
 
     def valueChanged25D(self, attrCategory, parameterName, value):
@@ -2303,7 +2226,13 @@ class SLM25DController(ImConWidgetController):
             self.settingAttr = False
 
 
-
+    @contextmanager
+    def blockSignalsFunc(self, widget):
+        widget.blockSignals(True)
+        try:
+            yield
+        finally:
+            widget.blockSignals(False)
 
 
 

@@ -138,7 +138,7 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigGetAZFrameCoords.connect(self.sendAZFrameCoordsTo25DController)
 
-        self._commChannel.sigGetAZFrameCoordsMaskCenter.connect(self.sendAZFrameCoordsTo25DControllerMaskCenter)
+        self._commChannel.sigGetAZFrameCoordsMaskCenter.connect(self.sendFrameCoordsToMaskCenterLoop)
 
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
@@ -1435,45 +1435,21 @@ class SIMController(ImConWidgetController):
                     while z < len(zList):
 
                         # # Auto Zernike loop ==================================================================
-                        if self._commChannel.autoZernChecked:
-                            self._commChannel.sigBeginAutoZern.emit()
-                            time.sleep(1)
-                            while self._commChannel.autoZernChecked:
-                                time.sleep(0.1) # probably just remove
-
-                                rawImg = self._commChannel.lastImgDict['640F']
-
-                                self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
-                                if self._commChannel.stop25DNow: #allows exit of the loop
-                                    self.stop25D()
-
-                            print('autozern ended')
-                        # # ====================================================================================
-
-
-
-                        # Auto Zernike Testing New loop ==================================================================
-                        # if self._commChannel.autoZernCheckedNew:
-                            
-                        #     selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
-                        #     self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
-                        #     # time.sleep(1)
-                        #     while self._commChannel.autoZernCheckedNew:
+                        # if self._commChannel.autoZernChecked:
+                        #     self._commChannel.sigBeginAutoZern.emit()
+                        #     time.sleep(1)
+                        #     while self._commChannel.autoZernChecked:
                         #         time.sleep(0.1) # probably just remove
 
-                        #         # rawImg = self._commChannel.lastImgDict['640F']
+                        #         rawImg = self._commChannel.lastImgDict['640F']
 
-                        #         # self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
+                        #         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
                         #         if self._commChannel.stop25DNow: #allows exit of the loop
                         #             self.stop25D()
 
                         #     print('autozern ended')
-                        # ====================================================================================
-
-
-
-
-
+                        # # ====================================================================================
+  
                         # Sets current value to Zernike coefficient ========================
                         # if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:                    
                         #     self._commChannel.sigSetAutoZern.emit(autoZernRep)
@@ -1789,7 +1765,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
 
 
-    def sendAZFrameCoordsTo25DControllerMaskCenter(self):
+    def sendFrameCoordsToMaskCenterLoop(self):
         self.stop25D()
         selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
