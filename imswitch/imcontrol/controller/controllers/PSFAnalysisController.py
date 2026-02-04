@@ -69,7 +69,6 @@ class PSFAnalysisController(ImConWidgetController):
         if not self._commChannel.simActive:
             self._widget.loadingPopupRecord.recordImages.setEnabled(False)
             self._commChannel.sigSetForPSF.emit(True)
-            # self._commChannel.sigCalcZStepArray.emit()
             self._commChannel.sigStart25D.emit()
             self.recordingPSF = True
         else:

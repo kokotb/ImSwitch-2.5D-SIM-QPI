@@ -150,7 +150,7 @@ class CommunicationChannel(SignalInterface):
 
     sigZScanList = Signal(list, float)
 
-    # sigCalcZStepArray = Signal()
+    sigCalcZStepArray = Signal()
 
     sigLoadSettings = Signal(dict)
 

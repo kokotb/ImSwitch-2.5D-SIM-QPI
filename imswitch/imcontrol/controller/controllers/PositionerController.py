@@ -216,6 +216,7 @@ class PositionerController(ImConWidgetController):
     def focusWheelDelta(self, focusDelta):
         self._master.positionersManager['Z'].move(focusDelta, 'Z')
         self.updatePosition('Z', 'Z')
+        self._commChannel.sigCalcZStepArray.emit()
 
     def getSpeed(self):
         return self._master.positionersManager.execOnAll(lambda p: p.speed)
@@ -260,6 +261,8 @@ class PositionerController(ImConWidgetController):
             self._master.positionersManager[positionerName].setPositionXY(x, y)
         else:
             self._master.positionersManager[positionerName].setPosition(absPos, axis)
+            self.updatePosition('Z', 'Z')
+            self._commChannel.sigCalcZStepArray.emit()
 
     
     def setSpeed(self, positionerName):

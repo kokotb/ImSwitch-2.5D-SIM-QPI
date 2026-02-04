@@ -22,7 +22,7 @@ class ZStackController(ImConWidgetController):
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
         self._commChannel.sigModuleSettings.connect(self.loadSettings)
         self._commChannel.sigSetForPSF.connect(self.editForPSF)
-        # self._commChannel.sigCalcZStepArray.connect(self.calcZStepArray)
+        self._commChannel.sigCalcZStepArray.connect(self.calcZStepArray)
 
     def editForPSF(self, start):
         if start:

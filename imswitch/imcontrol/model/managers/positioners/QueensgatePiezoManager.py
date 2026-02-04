@@ -152,6 +152,7 @@ class QueensgatePiezoManager(PositionerManager):
         self._position[axis] = round(position,1)
         self.__logger.info(self._position)
 
+
         return success
 
 
