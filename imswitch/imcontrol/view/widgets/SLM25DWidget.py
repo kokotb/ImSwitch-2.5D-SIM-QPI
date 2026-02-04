@@ -267,6 +267,7 @@ class SLM25DWidget(Widget):
             if self.paramConstraintDict25DPos[name][0] == 'double':
                 self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
+                self.pars['AbsPosEdit' + name]._type = float
                 self.pars['AbsPosEdit' + name].setFixedWidth(75)
                 self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict25DPos[name][1][0], self.paramConstraintDict25DPos[name][1][1])
                 self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict25DPos[name][3])
@@ -277,6 +278,7 @@ class SLM25DWidget(Widget):
             if self.paramConstraintDict25DPos[name][0] == 'integer': #All the center/position parameters
                 self.pars['AbsPosEdit' + name] = QtWidgets.QSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
+                self.pars['AbsPosEdit' + name]._type = int
                 self.pars['AbsPosEdit' + name].setFixedWidth(75)
                 self.pars['AbsPosEdit' + name].setRange(self.paramConstraintDict25DPos[name][1][0], self.paramConstraintDict25DPos[name][1][1])
                 self.pars['AbsPosEdit' + name].setSingleStep(self.paramConstraintDict25DPos[name][3])

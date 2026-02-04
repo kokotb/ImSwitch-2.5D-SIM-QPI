@@ -2144,47 +2144,6 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.numAZTestValuesPerZernCoeff = numAZTestValuesPerZernCoeff
         print("AZ signal called properly")
 
-
-    # def autoZernikeThread(self):
-    #     threading.Thread(target=self.autoZernike, args=(), daemon=True).start()
-
-    # def calcAutoZern(self, rep):
-
-    #     image = self._commChannel.lastImgDict[640]
-    #     print('scored '+str(rep))
-    #     # self.evaluateImageQuality(image)  # set image quality metric here
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def loadZernSettings(self, moduleDict):
         try:
             loadBool = moduleDict['zernike']
@@ -2196,14 +2155,14 @@ class SLM25DController(ImConWidgetController):
             for i in range(len(self._widget.elementListZern)):
                 if self._widget.elementListZern[i]._side == 'Left':
                     leftParams = params['Left']
-                    self._widget.elementListZern[i].setValue(float(leftParams[self._widget.elementListZern[i]._name]))
+                    self._widget.elementListZern[i].setValue(leftParams[self._widget.elementListZern[i]._name])
                     
                 if self._widget.elementListZern[i]._side == 'Right':
                     rightParams = params['Right']
-                    self._widget.elementListZern[i].setValue(float(rightParams[self._widget.elementListZern[i]._name]))
+                    self._widget.elementListZern[i].setValue(rightParams[self._widget.elementListZern[i]._name])
 
 
-    def load25DSettings(self, moduleDict):
+    def load25DSettings(self, moduleDict): # 2.5D parameters still saved as a string. Needs to type interpreted in the method below.
         try:
             loadBool = moduleDict['parameters25D']
         except KeyError:
@@ -2212,10 +2171,8 @@ class SLM25DController(ImConWidgetController):
             params = self._commChannel.loadedSettings["25D SLM Parameters"]
 
             for i in range(len(self._widget.elementList25D)):
-                if self._widget.elementList25D[i]._type == 'str':
-                    self._widget.elementList25D[i].setText(params[self._widget.elementList25D[i]._name])
-
-
+                self._widget.elementList25D[i].setValue(self._widget.elementList25D[0]._type(params[self._widget.elementList25D[i]._name]))
+        self.updatePhaseMask() # Signals are such that the mask is not fully updated after last value is set. Run this to redraw the mask with new values.
 
 
     def valueChanged25D(self, attrCategory, parameterName, value):
