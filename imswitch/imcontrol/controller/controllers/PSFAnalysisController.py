@@ -3,6 +3,7 @@ from imswitch.imcommon.model import initLogger
 from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 import time
 from imswitch.imcommon.framework import Signal, SignalInterface
+from PyQt5 import QtCore
 
 
 class PSFAnalysisController(ImConWidgetController):
@@ -13,12 +14,11 @@ class PSFAnalysisController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        self._widget.loadingPopupRecord.recordImages.clicked.connect(self.startRecImagesFunc)
+        self._widget.loadingPopupRecord.recordImages.clicked.connect(self.RecImagesFunc)
         self._widget.loadingPopupRecord.recordPSFdataset.clicked.connect(self.startRecordDatasetFunc)
         self.recordingPSF = False
         self.recordingPSFDataset = False
         self.sigPSFstackInDatasetDone.connect(self.savePSFandStartNext)
-        self._commChannel.sigSIMStopped.connect(self.stopRecImagesFunc)
 
     def startRecordDatasetFunc(self):
         self.recordingPSFDataset = True
@@ -32,7 +32,7 @@ class PSFAnalysisController(ImConWidgetController):
     def RecordPSFforDataset(self):
         self._commChannel.sigSet25dParVals.emit(self.gammas[self.gammaIndex], self.psis[self.psiIndex])
         time.sleep(0.3)
-        self.startRecImagesFunc()
+        self.RecImagesFunc()
 
 
     def savePSFandStartNext(self):
@@ -59,48 +59,33 @@ class PSFAnalysisController(ImConWidgetController):
             self.psiIndex += 1
             self.RecordPSFforDataset()
 
+    def RecImagesFunc(self):
+        if self._commChannel.simActive:
+            self._commChannel.stop25DNow = True
+            while self._commChannel.simActive == True:
+                time.sleep(0.01)
 
+        self.startRecImagesFunc()
+        while self._commChannel.simActive == True:
+            time.sleep(0.01)
+        self.stopRecImagesFunc()
 
     def startRecImagesFunc(self):
-        self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
 
-        # self.originZ = self._master.positionersManager._subManagers['Z']._position['Z']
-
-        if not self._commChannel.simActive:
-            self._widget.loadingPopupRecord.recordImages.setEnabled(False)
-            self._commChannel.sigSetForPSF.emit(True)
-            self._commChannel.sigStart25D.emit()
-            self.recordingPSF = True
-        else:
-            reply = self._widget.loadingPopupRecord.askYesNoQuestion()
-            if reply == True:
-                self._commChannel.stop25DNow = True
-                # while self._commChannel.simActive == True:
-                #     time.sleep(0.1)
-
-                # # self.startRecImagesFunc()
-             
-            else:
-                self._logger.warning('Acquisition must be stopped before recording a PSF.')
-            
+        self._widget.loadingPopupRecord.recordImages.setEnabled(False)
+        self._commChannel.sigSetForPSF.emit(True)
+        self._commChannel.sigStart25D.emit()
+        self.recordingPSF = True
         
     def stopRecImagesFunc(self):
         if (self.recordingPSF):
             
             self._commChannel.sigSetForPSF.emit(False)
             self._widget.loadingPopupRecord.recordImages.setEnabled(True)
-            #self._master.positionersManager._subManagers['Z'].setPosition(self.originZ, 'Z')
-            # zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()
-            # while zValueChecked != self.originZ:
-            #     zValueChecked = self._master.positionersManager._subManagers['Z'].get_abs()
-            # self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.recordingPSF = False
-            
-            
 
             try:
                 image_stack = self._commChannel.getPSFStack()
-
 
                 # 2 = red,  1 = green,  0 = blue
                 if self._widget.loadingPopupRecord.checkboxRecordRed.isChecked():

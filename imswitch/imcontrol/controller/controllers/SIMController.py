@@ -977,7 +977,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_reconstruction.setEnabled(True)
         self._widget.checkbox_record_WF.setEnabled(True)
         self.active25D = False
-        self._commChannel.updateSIMActive(self.active25D)
+        
         self._master.slm25DManager.resetList()
         try:
             self.thread25D.join()
@@ -997,6 +997,9 @@ class SIMController(ImConWidgetController):
             self.positioner.setPosition(self.zOrigin, 'Z')
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.zScanActive = False
+
+        self._commChannel.updateSIMActive(self.active25D)
+
 
     def startSIM(self):
 

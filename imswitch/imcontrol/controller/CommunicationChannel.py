@@ -179,7 +179,7 @@ class CommunicationChannel(SignalInterface):
     sigUpdateZPositionConfirmed = Signal(str,str, float)
     sigSetExposure = Signal(float)
     sigSetSpeed = Signal(float)
-    sigSIMStopped = Signal()
+    # sigSIMStopped = Signal()
     sigToggleAutofocus = Signal(bool)
     sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
@@ -279,8 +279,8 @@ class CommunicationChannel(SignalInterface):
 
     def updateSIMActive(self, active):
         self.simActive = active
-        if self.simActive == False:
-            self.sigSIMStopped.emit()
+        # if self.simActive == False:
+        #     self.sigSIMStopped.emit()
 
     def storeZStackList(self, list, origin):
         self.zStackList = list

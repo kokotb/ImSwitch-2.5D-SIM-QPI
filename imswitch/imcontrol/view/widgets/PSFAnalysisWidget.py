@@ -29,7 +29,6 @@ class PSFAnalysisWidget(NapariHybridWidget):
         # super().__init__(*args, **kwargs)
         # self.loadingPopup = PSFWindow(self)
         self.loadingPopupRecord = PSFWindowRecord()
-        # self.loadingPopupTest = PSFWindowTest(self)
 
         # Main widget 
         self.layout = QtWidgets.QGridLayout()
@@ -132,7 +131,7 @@ class PSFWindowRecord(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(self.psfLayout) # self.psfLayout is main layout
         self.setCentralWidget(central_widget)
-        self.setWindowTitle("PSF analysis window - record")
+        self.setWindowTitle("PSF Analysis")
 
 
         # Z Stack Layout - displays whole stack of images at full size (512x512 usually) =====================================
