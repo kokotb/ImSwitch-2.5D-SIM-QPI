@@ -128,7 +128,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'SLM25D' in self.docks:
             self.docks['SLM25D'].setStretch(1, 1)
         if 'Laser' in self.docks:
-            self.docks['Laser'].setStretch(1, 0.6)
+            self.docks['Laser'].setStretch(1, 0.5)
         if len(rightDocks) > 0:
             rightDocks[-1].setStretch(1, 1)
         if 'Image' in self.docks:
