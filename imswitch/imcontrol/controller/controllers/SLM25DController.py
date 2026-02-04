@@ -29,8 +29,6 @@ class SLM25DController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self.__logger = initLogger(self)
         self.slmActive = False
-        # self.axisValTypes = self._widget.axisValTypes
-        # self.paramNames = self._widget.paramNames25DPos
         self.zernikeLocked = False
         if self._setupInfo.SLM25D is None:
             self._widget.replaceWithError('2.5D SLM is not configured in your setup file.')
@@ -1334,15 +1332,16 @@ class SLM25DController(ImConWidgetController):
             dashStripped = spaceStripped.replace('-','')
             strippedNames.append(dashStripped)
         for i in range(len(strippedNames)):
-            if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == 'double':
-                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
-                    self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                    self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = float(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            # if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == float:
+            dataType = self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0]
+            with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+                self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+                self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
-            if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == 'integer':
-                with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
-                    self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
-                    self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+            # if self._widget.paramConstraintDict25DPos[self._widget.paramNames25DPos[i]][0] == int:
+            #     with self.blockSignalsFunc(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
+            #         self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
+            #         self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = int(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
 
         strippedNames = []
         self._widget.valueDictZern25D = dict()
@@ -1867,10 +1866,6 @@ class SLM25DController(ImConWidgetController):
             # pass
             print('No masks projected')
 
-
-        
-        
-
     def getCurrentCenters(self):
         valueList = []
         wantedParams = ["Left Center-X","Left Center-Y", "Right Center-X", "Right Center-Y"]
@@ -1913,9 +1908,6 @@ class SLM25DController(ImConWidgetController):
             thetamatrixright = np.arctan((x_coordsright - xRight) / (y_coordsright - yRight))
             thetamatrixright[np.isnan(thetamatrixright)] = - np.pi / 2 
             thetamatrixright[(y_coordsright - yRight) < 0] += np.pi
-
-        
-        
 
         rhomatrix = np.concatenate((rhomatrixleft, rhomatrixright),axis=1)
         thetamatrix = np.concatenate((thetamatrixleft, thetamatrixright),axis=1)

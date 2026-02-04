@@ -99,6 +99,7 @@ class SLM25DManagerMock(SignalInterface):
             self.imageplot = plt.imshow(mask4, cmap='gray', vmin=0, vmax=255)
             plt.show()
         else:
+            # self.imageplot = plt.imshow(self.mask4, cmap='gray', vmin=0, vmax=255)
             self.imageplot.set_data(mask4)
             plt.draw()
         self.rep += 1
@@ -106,7 +107,7 @@ class SLM25DManagerMock(SignalInterface):
 
     def openPreviewWindow(self):
         self.imageplot = plt.imshow(self.mask4, cmap='gray', vmin=0, vmax=255)
-        # plt.show()
+        plt.show()
     
 
     def toggleSLMResource(self, state):

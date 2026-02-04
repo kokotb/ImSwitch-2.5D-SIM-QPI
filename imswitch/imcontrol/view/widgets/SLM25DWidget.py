@@ -34,8 +34,8 @@ class SLM25DWidget(Widget):
         self.maskScaleAvailable = False
 
         # Parameter bounds that may was to be hand-edited
-        self.paramConstraintDict25DPos = {'Gamma':('double',(-20,20),1, 0.1, ''), 'Psi': ('double',(-10,10),1, 0.1, ''), 'Left Center-X': ('integer',(1,960),0, 10, 'px'),
-            'Left Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Right Center-X': ('integer',(960,1920),0, 10, 'px'), 'Right Center-Y': ('integer',(1,1080),0, 10, 'px'), 'Beam Diameter': ('double',(1,9),1, 0.1, 'mm')}
+        self.paramConstraintDict25DPos = {'Gamma':(float,(-20,20),1, 0.1, ''), 'Psi': (float,(-10,10),1, 0.1, ''), 'Left Center-X': (int,(1,960),0, 10, 'px'),
+            'Left Center-Y': (int,(1,1080),0, 10, 'px'), 'Right Center-X': (int,(960,1920),0, 10, 'px'), 'Right Center-Y': (int,(1,1080),0, 10, 'px'), 'Beam Diameter': (float,(1,9),1, 0.1, 'mm')}
 
         ### Placeholders for entire image display box (2 labels, 2 images).
         self.slmFrame = pg.GraphicsLayoutWidget()
@@ -134,7 +134,7 @@ class SLM25DWidget(Widget):
         self.mainLayout.addLayout(self.topLayout)
         self.mainLayout.addWidget(self.dividerHoriz)
 
-        self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
+        # self.axisValTypes = {"Gamma": float, "Psi": float, "Left Center-X": int, "Left Center-Y": int, "Right Center-X": int, "Right Center-Y": int, "Beam Diameter": float}
         self.pars = {}
         # SETTING PHASE MASK PARAMETERS =========================================================================
         
@@ -164,7 +164,7 @@ class SLM25DWidget(Widget):
                 self.row += 1
                 name = self.ZernikeCoefficientNames[i]
                 labelNames = f'{self.ZernikeCoefficientNames[i]} - {self.ZernikeAberrationNames[i]}'
-                self.axisValTypes[name + side] = float
+                # self.axisValTypes[name + side] = float
 
                 label = f'{labelNames}'
 
@@ -264,7 +264,7 @@ class SLM25DWidget(Widget):
             
             self.pars['AbsPosUnit' + name].setEnabled(False)
 
-            if self.paramConstraintDict25DPos[name][0] == 'double':
+            if self.paramConstraintDict25DPos[name][0] == float:
                 self.pars['AbsPosEdit' + name] = QtWidgets.QDoubleSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
                 self.pars['AbsPosEdit' + name]._type = float
@@ -275,7 +275,7 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name].setValue(0)
                 self.pars['AbsPosEdit' + name].setEnabled(False)
 
-            if self.paramConstraintDict25DPos[name][0] == 'integer': #All the center/position parameters
+            if self.paramConstraintDict25DPos[name][0] == int: #All the center/position parameters
                 self.pars['AbsPosEdit' + name] = QtWidgets.QSpinBox()
                 self.pars['AbsPosEdit' + name]._name = name
                 self.pars['AbsPosEdit' + name]._type = int
@@ -296,9 +296,8 @@ class SLM25DWidget(Widget):
             if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
 
-            elif self.paramConstraintDict25DPos[name][0] == 'integer': #All center/position fields.
+            elif self.paramConstraintDict25DPos[name][0] == int: #All center/position fields.
                 self.pars['AbsPosEdit' + name].editingFinished.connect(self.sigMaskCenterChanged.emit)
-
 
 
         self.maskScaleNumberLabel = QtWidgets.QLabel("Mask Scale")
