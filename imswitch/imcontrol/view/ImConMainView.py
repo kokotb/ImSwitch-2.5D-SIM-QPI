@@ -66,6 +66,16 @@ class ImConMainView(QtWidgets.QMainWindow):
             'InfoGathering': _DockInfo(name = 'Info', yPosition = 6),
             'PSFAnalysis': _DockInfo(name = 'PSF', yPosition = 7)
 
+        # rightDockInfos = {
+        #     'Laser': _DockInfo(name='Laser Control', yPosition=0),
+        #     'Positioner': _DockInfo(name='Positioner', yPosition=1),
+        #     'PSFAnalysis': _DockInfo(name = 'PSF', yPosition = 3),
+        #     'InfoGathering': _DockInfo(name = 'Info', yPosition = 4),
+        #     'ZStack': _DockInfo(name='Z-Stack', yPosition=5),         
+        #     'Tiling': _DockInfo(name='Tiling', yPosition=6),
+        #     'Timing': _DockInfo(name='Timing', yPosition=7),
+        #     'Autofocus': _DockInfo(name='Autofocus', yPosition=8),
+        #     'ROI': _DockInfo(name = 'ROI List', yPosition = 9)
             
 
 
