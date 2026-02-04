@@ -12,7 +12,6 @@ class ZStackWidget(NapariHybridWidget):
     runZStackToggle = QtCore.Signal(int)
     sigCheckValidityStep = QtCore.Signal()
     sigCheckValidityTotal = QtCore.Signal()
-    # sigZStackCalc = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -202,17 +201,19 @@ class ZStackWidget(NapariHybridWidget):
             self.totalZ_label.setEnabled(state)
             self.zOffset_label.setEnabled(state)
             self.numSteps_label.setEnabled(state)
-            self.zStepDistance_textedit.setEnabled(state)
-            self.totalZ_textedit.setEnabled(state)
             self.checkbox_zStack.setEnabled(state)
 
             if self.checkbox_zStack.checkState() == 2:
                 self.zStackScanDir.setEnabled(True)
                 self.checkbox_zStackCenter.setEnabled(True)
+                self.zStepDistance_textedit.setEnabled(True)
+                self.totalZ_textedit.setEnabled(True)
 
             elif self.checkbox_zStack.checkState() == 0:
                 self.zStackScanDir.setEnabled(False)
                 self.checkbox_zStackCenter.setEnabled(False)
+                self.zStepDistance_textedit.setEnabled(False)
+                self.totalZ_textedit.setEnabled(False)
 
                 
                 

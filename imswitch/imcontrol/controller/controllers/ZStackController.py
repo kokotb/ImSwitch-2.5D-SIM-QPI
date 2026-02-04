@@ -24,19 +24,16 @@ class ZStackController(ImConWidgetController):
         self._commChannel.sigSetForPSF.connect(self.editForPSF)
         self._commChannel.sigCalcZStepArray.connect(self.calcZStepArray)
 
-    def editForPSF(self, start):
+    def editForPSF(self, start): # Overwrite settings for PSF acquisition, then put settings back to what they were before the PSF was acquired.
         if start:
             self.initCenter = self._widget.checkbox_zStackCenter.isChecked()
             self.initEnabled = self._widget.checkbox_zStack.isChecked()
             self._widget.checkbox_zStackCenter.setChecked(True)
             self._widget.checkbox_zStack.setChecked(True)
         if not start:
-            # self._widget.checkbox_zStackCenter.blockSignals(True)
             self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
-            # self._widget.checkbox_zStackCenter.blockSignals(False)
-            # self._widget.checkbox_zStack.blockSignals(True)
             self._widget.checkbox_zStack.setChecked(self.initEnabled)
-            # self._widget.checkbox_zStack.blockSignals(False)
+
 
 
     def runZStackToggle(self, state): #Toggle enabling/disabling options when the 'Run Z Stack' checkbox is clicked.
