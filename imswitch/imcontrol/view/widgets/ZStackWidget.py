@@ -101,7 +101,7 @@ class ZStackWidget(NapariHybridWidget):
 
 
         row = 0
-        zStackLayout.addWidget(self.checkbox_zStack, row+4, 0)
+        
         zStackLayout.addWidget(self.zStepDistance_label, row, 0)
         zStackLayout.addWidget(self.zStepDistance_textedit, row, 1)
         zStackLayout.addWidget(self.totalZ_label, row+1, 0)
@@ -110,8 +110,9 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.zOffset_textedit, row+2, 1)
         zStackLayout.addWidget(self.numSteps_label, row+3, 0)
         zStackLayout.addWidget(self.numSteps_textedit, row+3, 1)
-        zStackLayout.addWidget(self.checkbox_zStackCenter, row+4, 1)
-        zStackLayout.addWidget(self.zStackScanDir, row+4, 2)
+        zStackLayout.addWidget(self.checkbox_zStackCenter, row+4, 0)
+        zStackLayout.addWidget(self.zStackScanDir, row+4, 1)
+        zStackLayout.addWidget(self.checkbox_zStack, row+5, 0)
 
         
 

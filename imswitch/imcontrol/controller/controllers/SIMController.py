@@ -1439,44 +1439,8 @@ class SIMController(ImConWidgetController):
                             time.sleep(0.5) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
-                    # ####Autofocus
-                    # if (self._commChannel.sharedAttrs._data[('Autofocus Settings', 'Autofocus Checkbox')] == '2') and (self.completeFrameSets == 0):
-                    #     localOrigin = float(self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')])
-                    #     AFList = self._master.autofocusManager.calcAFArray(localOrigin)
-                    #     self.autofocusLoop(AFList)
-                    #     scoreArray, bestIndex = self._master.autofocusManager.computeLaplacianArray(self._commChannel.AFArray)
-                    #     bestZ = AFList[bestIndex]
-                    #     offsetAF = bestZ - localOrigin
-                    #     print(offsetAF)
-                    #     self.channelAF = int(self.sharedAttrs[("Autofocus Settings","Autofocus Channel")])
-                    #     if bestZ != localOrigin:
-                    #         self.positioner.setPosition(bestZ, 'Z')
-                    #         self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                    # ####
-
                     z = 0
                     while z < len(zList):
-
-                        # # Auto Zernike loop ==================================================================
-                        # if self._commChannel.autoZernChecked:
-                        #     self._commChannel.sigBeginAutoZern.emit()
-                        #     time.sleep(1)
-                        #     while self._commChannel.autoZernChecked:
-                        #         time.sleep(0.1) # probably just remove
-
-                        #         rawImg = self._commChannel.lastImgDict['640F']
-
-                        #         self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw")
-                        #         if self._commChannel.stop25DNow: #allows exit of the loop
-                        #             self.stop25D()
-
-                        #     print('autozern ended')
-                        # # ====================================================================================
-  
-                        # Sets current value to Zernike coefficient ========================
-                        # if autoZern and autoZernRep < self.AutoZernCalibValuesListLength:                    
-                        #     self._commChannel.sigSetAutoZern.emit(autoZernRep)
-                        #     time.sleep(0.1) # !!!can prob be deleted
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
