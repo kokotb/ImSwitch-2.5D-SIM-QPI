@@ -351,7 +351,7 @@ class SLM25DWidget(Widget):
         for name in self.paramNames25DPos:
             absInitValue = self.valueDict25D[name]
             self.pars['AbsPosEdit' + name].setValue(absInitValue)
-        # self.sigMaskCenterChanged.emit()
+        self.sig25DMaskChanged.emit()
 
     def resetZernToDefault(self): # Connected to the Reset Zernike button, resets it to the values in the config file.
         for side in self.ZernikeSides:
