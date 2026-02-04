@@ -388,7 +388,8 @@ class SIMWidget(NapariHybridWidget):
         self.expt_edit = QLineEdit("")
         self.expt_edit._name = 'Experiment Name'
         self.expt_edit._type = 'str'
-        self.openFolderButton = guitools.BetterPushButton('Open')
+        self.openFolderButton = guitools.BetterPushButton('Open in Explorer')
+        self.browseButton = guitools.BetterPushButton('Browse')
         row = 0
 
         self.elementListUser.append(self.path_edit)
@@ -401,7 +402,8 @@ class SIMWidget(NapariHybridWidget):
         parameters2_layout.addWidget(self.expt_edit, row+1, 1)
         parameters2_layout.addWidget(self.path_label, row+2, 0)
         parameters2_layout.addWidget(self.path_edit, row+2, 1)        
-        parameters2_layout.addWidget(self.openFolderButton, row + 3, 0, 1, 2)
+        parameters2_layout.addWidget(self.browseButton, row + 3, 0)
+        parameters2_layout.addWidget(self.openFolderButton, row + 3, 1)
 
 
         tabBottomVertLayout1.addLayout(parameters2_layout)
@@ -441,6 +443,7 @@ class SIMWidget(NapariHybridWidget):
         self.user_edit.setEnabled(not state)
         self.expt_edit.setEnabled(not state)
         self.openFolderButton.setEnabled(not state)
+        self.browseButton.setEnabled(not state)
         self.roSelectList.setEnabled(not state)
 
     def addROName(self, roIndex, roName):

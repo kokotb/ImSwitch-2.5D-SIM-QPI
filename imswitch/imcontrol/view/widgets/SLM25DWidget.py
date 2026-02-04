@@ -112,8 +112,8 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.projectZernike,0,3)
         self.topLayout.addWidget(self.project25D,0,4)
         # self.topLayout.addWidget(self.projectCenter,0,5)
-        self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 6)
-        self.topLayout.setRowMinimumHeight(1, 110)
+        self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 5)
+        self.topLayout.setRowMinimumHeight(1, 200)
 
         ###Add David's buttons
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
@@ -240,11 +240,6 @@ class SLM25DWidget(Widget):
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid2.addWidget(self.valLabel, self.row, 1)
 
-        self.reset25D = QPushButton("Reset 2.5D")
-        self.reset25D.setEnabled(False)
-        self.reset25D.clicked.connect(self.sigReset25D.emit)
-        self.grid2.addWidget(self.reset25D, self.row, 2)
-
         self.paramNames25DPos = list(self.paramConstraintDict25DPos.keys())
 
         self.elementList25D = [] # Used in controller to load 2.5D and position settings from save file.
@@ -307,11 +302,14 @@ class SLM25DWidget(Widget):
         self.maskScaleNumber.setSingleStep(1)
         self.maskScaleNumber.setValue(255)
         self.maskScaleNumber.setEnabled(False)
-
         self.maskScaleNumber.setFixedWidth(75)
-
         self.grid2.addWidget(self.maskScaleNumberLabel, self.row + 1, 0)
         self.grid2.addWidget(self.maskScaleNumber, self.row + 1, 1)
+
+        self.reset25D = QPushButton("Reset 2.5D")
+        self.reset25D.setEnabled(False)
+        self.reset25D.clicked.connect(self.sigReset25D.emit)
+        self.grid2.addWidget(self.reset25D, self.row + 2, 0)
 
         self.grid2.setRowStretch(self.grid2.rowCount(), 1)
         self.grid2.setColumnStretch(self.grid2.columnCount(), 1)

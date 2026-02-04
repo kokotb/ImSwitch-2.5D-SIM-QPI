@@ -14,6 +14,7 @@ from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 from imswitch.imcommon.framework import Signal
 import statistics
 from qtpy import QtWidgets
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -115,6 +116,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
+        self._widget.browseButton.clicked.connect(self.browseFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         self._widget.sigStartSIM.connect(self.startSIM)
@@ -883,9 +885,30 @@ class SIMController(ImConWidgetController):
         """ Opens current folder in File Explorer. """
         folder = self._widget.getRecFolder()
         if not os.path.exists(folder):
-            os.makedirs(folder)
+            if self.confirmCreateDirectory(None, folder):
+                os.makedirs(folder)
+            else:
+                return
         ostools.openFolderInOS(folder)
 
+    def browseFolder(self):
+        """ Opens window to browse for folder.. """
+        rootFolder = self._widget.getRecFolder()
+        selectedFolder = QFileDialog.getExistingDirectory(
+            None,
+            "Select a folder", rootFolder
+        )
+        if selectedFolder:
+            print("Selected:", selectedFolder)
+
+    def confirmCreateDirectory(self, parent, path):
+        reply = QMessageBox.question(
+            parent,
+            "Create folder?",
+            f"The folder does not exist:\n\n{path}\n\nCreate it?",
+            QMessageBox.Yes | QMessageBox.No
+    )
+        return reply == QMessageBox.Yes
 
     def __del__(self):
         pass
