@@ -85,15 +85,19 @@ class CommunicationChannel(SignalInterface):
 
     sigSLMMaskUpdated = Signal(object)  # (mask)
 
-    sigToggleBlockScanWidget = Signal(bool)
 
-    sigSnapImg = Signal()
 
     # sigSnapImgPrev = Signal(str, np.ndarray, str)  # (detector, image, nameSuffix)
 
+    # Next four signal probably are not used.
     sigRequestScanParameters = Signal()
-
     sigSendScanParameters = Signal(dict, dict, object)  # (analogParams, digitalParams, scannerList)
+    sigToggleBlockScanWidget = Signal(bool)
+    sigSnapImg = Signal()
+
+
+
+
 
     # sigSetAxisCenters = Signal(object, object)  # (axisDeviceList, axisCenterList)
 
@@ -118,19 +122,19 @@ class CommunicationChannel(SignalInterface):
 
     sigGetAZFrameCoordsMaskCenter = Signal()
 
-    sigSendAZFrameCooords = Signal(object)
+    # sigSendAZFrameCooords = Signal(object)
 
 
 
-    sigStartAutoZern = Signal()
+    # sigStartAutoZern = Signal()
 
     
 
-    sigSetAutoZern = Signal(int)
+    # sigSetAutoZern = Signal(int)
 
-    sigSetOptimalZern = Signal(int, float)
+    # sigSetOptimalZern = Signal(int, float)
 
-    sigAutoZernCalc = Signal(int)
+    # sigAutoZernCalc = Signal(int)
 
     sigSaveFocus = Signal()
 
@@ -144,11 +148,11 @@ class CommunicationChannel(SignalInterface):
     
     # sigUpdateRotatorPosition = Signal(str)  # (rotatorName)
 
-    sigSetSyncInMovementSettings = Signal(str, float)  # (rotatorName, position)
+    # sigSetSyncInMovementSettings = Signal(str, float)  # (rotatorName, position)
 
     sigNewFrame = Signal()
 
-    sigZScanList = Signal(list, float)
+    # sigZScanList = Signal(list, float)
 
     sigCalcZStepArray = Signal()
 
@@ -160,7 +164,7 @@ class CommunicationChannel(SignalInterface):
  
     # sigRecPSFStack = Signal(np.ndarray, bool, int)
 
-    sigRecAFStack = Signal(np.ndarray, bool, int)
+    # sigRecAFStack = Signal(np.ndarray, bool, int)
 
     # sigGetLastRawImgs = Signal(np.ndarray, str)
 
@@ -177,11 +181,11 @@ class CommunicationChannel(SignalInterface):
     sigUpdateXYPosition = Signal(str,str)
     sigUpdateZPosition = Signal(str,str)
     sigUpdateZPositionConfirmed = Signal(str,str, float)
-    sigSetExposure = Signal(float)
+    sigSetExposure = Signal(float) #Doesnt appear to be emitted anywhere
     sigSetSpeed = Signal(float)
     # sigSIMStopped = Signal()
-    sigToggleAutofocus = Signal(bool)
-    sigGetAndScoreAF = Signal()
+    # sigToggleAutofocus = Signal(bool)
+    # sigGetAndScoreAF = Signal()
     sigSetForPSF = Signal(bool)
 
     sig25DPSFReceived = Signal(np.ndarray, str)
@@ -203,7 +207,7 @@ class CommunicationChannel(SignalInterface):
         self.__main._moduleCommChannel.sigExecutionFinished.connect(self.executionFinished)
         self.sigLoadSettings.connect(self.storeLoadedSettings)
         # self.sigRecPSFStack.connect(self.storeRecPSFStack)
-        self.sigRecAFStack.connect(self.storeRecAFStack)
+        # self.sigRecAFStack.connect(self.storeRecAFStack)
         # self.sigStop25D.connect(self.updateStop25DCommand)
         # self.sigGetLastRawImgs.connect(self.saveLastRawImgs)
         self.roiList = []

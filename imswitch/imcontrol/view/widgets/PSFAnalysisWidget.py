@@ -161,7 +161,7 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.zStackFrame, 1, 0, 2, 16)
 
         self.folderPath = QtWidgets.QLineEdit()
-        self.folderPath.setText("C:/Users/SIM/Desktop/David/testfileRecordPSF")
+        self.folderPath.setText(r"D:\SIM_Data")
         self.openDialog = QPushButton("Select folder")
         self.recordImages = QPushButton("Record stack")
 
@@ -169,15 +169,17 @@ class PSFWindowRecord(QMainWindow):
         self.ZstackLayout.addWidget(self.openDialog, 3, 1)
         self.ZstackLayout.addWidget(self.recordImages, 3, 2)
 
-        self.labelsaveFolderName = QtWidgets.QLabel(f'<strong>Save Folder Name</strong>')
+        self.labelsaveFolderName = QtWidgets.QLabel(f'<strong>Experiment Name</strong>')
         self.ZstackLayout.addWidget(self.labelsaveFolderName, 4, 0)
-        self.saveFolderName = QtWidgets.QLineEdit("experiment")
+        self.saveFolderName = QtWidgets.QLineEdit()
+        self.saveFolderName.setPlaceholderText("experiment")
         self.ZstackLayout.addWidget(self.saveFolderName, 4, 1)
         
 
-        self.labelsaveImagesName = QtWidgets.QLabel(f'<strong>Save Images Name</strong>')
+        self.labelsaveImagesName = QtWidgets.QLabel(f'<strong>Image Prefix</strong>')
         self.ZstackLayout.addWidget(self.labelsaveImagesName, 5, 0)
-        self.saveImagesName = QtWidgets.QLineEdit("image")
+        self.saveImagesName = QtWidgets.QLineEdit("")
+        self.saveImagesName.setPlaceholderText("image prefix")
         self.ZstackLayout.addWidget(self.saveImagesName, 5, 1)
 
         self.saveZstack = QPushButton("Save Zstack")
@@ -199,7 +201,7 @@ class PSFWindowRecord(QMainWindow):
 
         # select folder entry box, load button (show images)
         self.folderPathLoad = QtWidgets.QLineEdit()
-        self.folderPathLoad.setText(r"C:\Users\SIM\Desktop\David\25d_PSF_Scanning_Images\gammapsiscan_250709\250709_113057_dk_gammaPsiScan\Timelapse\RawStacks")
+        self.folderPathLoad.setText(r"D:\SIM_Data")
         self.LoadDialog = QPushButton("Select folder")
         self.LoadImages = QPushButton("Show stack")
 
@@ -582,13 +584,19 @@ class PSFWindowRecord(QMainWindow):
             tif.imwrite(os.path.join(PSFstackSavePath, saveImageName), self.PSFstack[i])
 
     def saveZstackfunc(self):
-        zstackSavePath = os.path.join(self.folderPath.text(), self.saveFolderName.text())
+        if self.saveFolderName.text() == "":
+            folderName = 'experiment'
+        else:
+            folderName = self.saveFolderName.text()
+        zstackSavePath = os.path.join(self.folderPath.text(), folderName)
         if not os.path.exists(zstackSavePath):
             os.makedirs(zstackSavePath)
         #saveImageName = self.saveImagesName.text() + ".tif"
         for i in range (self.image_stack.shape[0]):
             saveImageName = f"f{i:04}_roi{0:03}_pos{0:04}_z{i:03}_640F_000h00m00s000ms.tif"
-            tif.imwrite(os.path.join(zstackSavePath, saveImageName), self.image_stack[i])
+            fullPath = os.path.join(zstackSavePath, saveImageName)
+            tif.imwrite(fullPath, self.image_stack[i])
+        print(f'Z-Stack saved to: {zstackSavePath}')
 
     
     def mouseReleaseEvent(self, event):

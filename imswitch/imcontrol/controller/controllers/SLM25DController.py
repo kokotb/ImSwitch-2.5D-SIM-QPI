@@ -50,9 +50,9 @@ class SLM25DController(ImConWidgetController):
 
         # Connect CommunicationChannel signals
         # self._commChannel.sigSLMMaskUpdated.connect(lambda mask: self.displayMask(mask))
-        self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
-        self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
-        self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
+        # self._commChannel.sigSetAutoZern.connect(self.setAutoZern)
+        # self._commChannel.sigStartAutoZern.connect(self.startAutoZern)
+        # self._commChannel.sigSetOptimalZern.connect(self.setOptimalZern)
         # self._commChannel.sigAutoZernCalc.connect(self.calcAutoZern)
         # self._commChannel.sigToggleAutoZern.connect(self.toggleAutoZern)
 
@@ -2188,7 +2188,7 @@ class SLM25DController(ImConWidgetController):
 
             for i in range(len(self._widget.elementList25D)):
                 self._widget.elementList25D[i].setValue(self._widget.elementList25D[0]._type(params[self._widget.elementList25D[i]._name]))
-        self.updatePhaseMask() # Signals are such that the mask is not fully updated after last value is set. Run this to redraw the mask with new values.
+            self.updatePhaseMask() # Signals are such that the mask is not fully updated after last value is set. Run this to redraw the mask with new values.
 
 
     def valueChanged25D(self, attrCategory, parameterName, value):

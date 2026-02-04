@@ -16,7 +16,7 @@ class ZStackController(ImConWidgetController):
         self._logger = initLogger(self)
         self.sharedAttrs = self._commChannel.sharedAttrs._data
         self._widget.sigZStackInfoChanged.connect(self.valueChanged)
-        self._widget.initZStackInfo()
+        self._widget.initZStackInfo() # Must be after signal to self.valueChanged, and before signal to self.calcZStepArray
         self._widget.sigZStackInfoChanged.connect(self.calcZStepArray)
         self._widget.runZStackToggle.connect(self.runZStackToggle)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleRunZStackEnabled)
@@ -33,8 +33,6 @@ class ZStackController(ImConWidgetController):
         if not start:
             self._widget.checkbox_zStackCenter.setChecked(self.initCenter)
             self._widget.checkbox_zStack.setChecked(self.initEnabled)
-
-
 
     def runZStackToggle(self, state): #Toggle enabling/disabling options when the 'Run Z Stack' checkbox is clicked.
         if state == 0:
