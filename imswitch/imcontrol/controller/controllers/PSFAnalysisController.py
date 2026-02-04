@@ -75,9 +75,13 @@ class PSFAnalysisController(ImConWidgetController):
             reply = self._widget.loadingPopupRecord.askYesNoQuestion()
             if reply == True:
                 self._commChannel.stop25DNow = True
+                # while self._commChannel.simActive == True:
+                #     time.sleep(0.1)
+
+                # # self.startRecImagesFunc()
              
             else:
-                self._logger.warning('Please stop acquisition before recording a PSF.')
+                self._logger.warning('Acquisition must be stopped before recording a PSF.')
             
         
     def stopRecImagesFunc(self):
