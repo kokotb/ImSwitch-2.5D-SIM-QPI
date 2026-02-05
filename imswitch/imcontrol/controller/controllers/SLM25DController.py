@@ -1475,7 +1475,8 @@ class SLM25DController(ImConWidgetController):
         try:
             self.slmActive = self.slm25DManager.toggleSLMResource(state)
         except:
-            self._widget.activate25DSLM.setChecked(False)
+                with self.blockedSignals(self._widget.activate25DSLM):
+                    self._widget.activate25DSLM.setCheckState(False)
 
         if self.slmActive == True:
             self._widget.enableAll()
@@ -2227,7 +2228,7 @@ class SLM25DController(ImConWidgetController):
 
 
     @contextmanager
-    def blockSignalsFunc(self, widget):
+    def blockedSignals(self, widget):
         widget.blockSignals(True)
         try:
             yield
