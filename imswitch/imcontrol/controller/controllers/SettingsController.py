@@ -132,8 +132,8 @@ class SettingsController(ImConWidgetController):
                     self.detectors.append(detector[1])
 
     def open_fov_window(self):
-        
-        self._commChannel.sigStop25D.emit()
+        if self._commChannel.simActive:
+            self._commChannel.sigStop25D.emit()
         
         
         busy = QtWidgets.QProgressDialog("FOV Correction Window is Opening...", None, 0, 0, self._widget)
