@@ -116,9 +116,13 @@ class LUCIDManager(DetectorManager):
         if name == 'TriggerMode':
             self._performSafeCameraAction(trigToggle)
             value = self._camera.getPropertyValue(name)
+            valueNew = value
         else:
-            value = self._camera.setPropertyValue(name, value)
-        return value
+            valueNew = self._camera.setPropertyValue(name, value)
+            if (valueNew != value) and (name == 'ExposureTime'):
+                self._DetectorManager__parameters['ExposureTime'].value = valueNew
+
+        return valueNew
 
     def getParameter(self, name):
         """Gets a parameter value and returns the value.

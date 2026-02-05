@@ -1095,9 +1095,9 @@ class SIMController(ImConWidgetController):
 
         # for detector in detectors:
         for parameter_name in dic_parameters:
-            detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
+            passedValue = detector._camera.setPropertyValue(parameter_name, dic_parameters[parameter_name])
             if parameter_name == 'ExposureTime':
-                self._commChannel.sigWriteParamsFromCam.emit(detector, dic_parameters[parameter_name])
+                self._commChannel.sigWriteParamsFromCam.emit(detector, passedValue)
         detector.startAcquisitionSIM(num_buffers)
 
     def setCamForExperiment25D(self, detector):
