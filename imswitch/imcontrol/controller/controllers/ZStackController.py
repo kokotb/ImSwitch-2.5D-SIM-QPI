@@ -112,7 +112,7 @@ class ZStackController(ImConWidgetController):
                 elif self._widget.elementList[i]._type == 'combostr':
                     self._widget.elementList[i].setCurrentText(params[self._widget.elementList[i]._name])
 
-        self._widget.floorTotalZ() #Recalc 'Start Offset' after entering new values.
+            self._widget.floorTotalZ() #Recalc 'Start Offset' after entering new values.
 
 
 

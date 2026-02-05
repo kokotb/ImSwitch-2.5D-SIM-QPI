@@ -1102,8 +1102,11 @@ class SIMController(ImConWidgetController):
 
     def setCamForExperiment25D(self, detector):
 
-        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)        
-        detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
+        detector._camera.setPropertyValue('AcquisitionFrameRateEnable', True, False)
+        if self.speed25D == 'fast':
+            detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
+        elif self.speed25D == 'slow':
+            detector._camera.setPropertyValue('AcquisitionFrameRate', 10.0)
         trigger_mode = 'On'
         exposure_auto = 'Off'
         # gain = detector._camera.getPropertyValue('Gain')
@@ -1114,7 +1117,7 @@ class SIMController(ImConWidgetController):
         # # Pull the exposure time from settings widget
         exposure_time = self.getParameterValue(detector, 'ExposureTime')
 
-        # # exposure_time = self.exposure # anything < 19 ms
+
         frame_rate_enable = True
         buffer_mode = "NewestOnly"
         triggerSelector = 'FrameStart'
@@ -1227,6 +1230,10 @@ class SIMController(ImConWidgetController):
         return sim_parameters
     
     def perform25DExperimentThread(self):
+
+        #####DEVELOPMENT#####
+        self.speed25D = self._widget.fastSlow25D.currentText()
+        #####DEVELOPMENT#####
 
         self._logger.info("2.5D/Epi started")
         #CTNOTE: Change to dynamic
@@ -1460,8 +1467,10 @@ class SIMController(ImConWidgetController):
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
                         ####
 
-
-                        self._master.arduinoManager.trigger25DWriteOnly() # Send actual trigger to cams.
+                        if self.speed25D == 'fast':
+                            self._master.arduinoManager.trigger25DWriteOnly('F') # Send actual trigger to cams.
+                        elif self.speed25D == 'slow':
+                            self._master.arduinoManager.trigger25DWriteOnly('T')
 
                              
                         procTimeStart = time.time() # For tracking processing time of images. 
@@ -1546,31 +1555,6 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-            # if autoZern:
-            #     if ((autoZernRep + 1) % self.numCalibValues == 0): #!!! put 7 instead of 21 again - later have it un-hadrcoded ####and (autoZernRep != -1)
-            #         # look at the list, fit parabola, get best value, set value, continue
-            #         optimalCoefficientMax = self._master.slm25DManager.optimalCoeffValueMax(list(self._commChannel.autoZernCalibValuesDict.values())[((autoZernRep + 1) // self.numCalibValues) - 1])
-            #         # self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficient)
-            #         self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientMax)
-            #         #self._commChannel.sigSetOptimalZern.emit(autoZernRep, optimalCoefficientFit)
-            #         #self._commChannel.sigSetOptimalZern.emit(autoZernRep, 0)
-
-                    
-            #         self._master.slm25DManager.resetList()
-
-
-            #     if autoZernRep >= (self.AutoZernCalibValuesListLength - 1):  
-            #         autoZernRep = -1
-            #         self._commChannel.sigToggleAutoZern.emit(False)
-            #         autoZern = False
-            #         self._widget.stop_button.setChecked(False)
-            #         self.stop25D()
-            #     else:
-            #         autoZernRep += 1
-            #         time.sleep(.1) # !!! IMPORTANT, without that the loop skips frames, no idea why
-
-
-
     def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
         
         k = processor.processorIndex
@@ -1597,7 +1581,7 @@ class SIMController(ImConWidgetController):
             waitingBuffers = detector._camera.getBufferValue('25D')
             # time.sleep(0.002)
 
-            if (waitingBuffers != 1 and totalBufferTime > 0.2): # Will wait for 0.2 seconds for a buffer to come before resetting.
+            if (waitingBuffers != 1 and totalBufferTime > 0.5): # Will wait for 0.2 seconds for a buffer to come before resetting.
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True

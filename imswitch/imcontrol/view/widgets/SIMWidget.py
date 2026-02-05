@@ -301,6 +301,16 @@ class SIMWidget(NapariHybridWidget):
         parentLayout2.addLayout(layersHideShowTypeBoxed) 
         parentLayout1.addLayout(parentLayout2)
         parentLayout1.addWidget(self.hideShowAllLayers)
+
+        #####FOR DEVELOPMENT ONLY#####
+        self.developmentLabel = QtWidgets.QLabel('Settings below are for development only.')
+        self.fastSlow25D = QtWidgets.QComboBox()
+        self.fastSlow25D.addItems(['fast', 'slow'])
+        parentLayout1.addWidget(self.developmentLabel)
+        parentLayout1.addWidget(self.fastSlow25D)
+        #####FOR DEVELOPMENT ONLY#####
+
+
         parentLayout1.addStretch(1)
 
 

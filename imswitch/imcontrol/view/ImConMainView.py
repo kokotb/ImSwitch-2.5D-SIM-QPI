@@ -158,7 +158,7 @@ class ImConMainView(QtWidgets.QMainWindow):
         if 'PSFAnalysis' in self.docks:
             self.docks['PSFAnalysis'].setStretch(1, 0.1)
         if 'ROI' in self.docks:
-            self.docks['ROI'].setStretch(1, 0.5)
+            self.docks['ROI'].setStretch(1.2, 0.5)
         # if 'View' in self.docks:
         #     self.docks['View'].setStretch(1, 1)
 
