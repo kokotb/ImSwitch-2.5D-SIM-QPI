@@ -33,7 +33,7 @@ class SIMController(ImConWidgetController):
         self._logger = initLogger(self)
 
         #Setup state variables
-        self.isReconstruction = self._widget.getReconCheckState()
+        self.isReconstruction = self._widget.checkbox_reconstruction.isChecked()
         self.isRecordRaw = False
         self.isRecordWF = False
         self.isRecordRecon = False
@@ -116,7 +116,7 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
         self._widget.checkbox_reconstruction.stateChanged.connect(self.toggleReconstruction)
         self._widget.openFolderButton.clicked.connect(self.openFolder)
-        self._widget.browseButton.clicked.connect(self.browseFolder)
+        self._widget.selectRootButton.clicked.connect(self.selectFolder)
         self._widget.calibrateButton.clicked.connect(self.calibrateToggled)
         self._widget.saveOneSetButton.clicked.connect(self.saveOneSet)
         self._widget.sigStartSIM.connect(self.startSIM)
@@ -892,7 +892,7 @@ class SIMController(ImConWidgetController):
                 return
         ostools.openFolderInOS(folder)
 
-    def browseFolder(self):
+    def selectFolder(self):
         """ Opens window to browse for folder.. """
         rootFolder = self._widget.getRecFolder()
         selectedFolder = QFileDialog.getExistingDirectory(
@@ -906,7 +906,7 @@ class SIMController(ImConWidgetController):
         reply = QMessageBox.question(
             parent,
             "Create folder?",
-            f"The folder does not exist:\n\n{path}\n\nCreate it?",
+            f"{path}\ndoes not exist.\n\nWould you like to create it?",
             QMessageBox.Yes | QMessageBox.No
     )
         return reply == QMessageBox.Yes
@@ -974,7 +974,11 @@ class SIMController(ImConWidgetController):
         self._widget.stop_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
         self._widget.checkbox_reconstruction.setEnabled(True)
+
+        self._widget.checkbox_record_reconstruction.setChecked(self.initSaveRecon) # Return to its state when 2.5D was started.
         self._widget.checkbox_record_reconstruction.setEnabled(True)
+
+        self._widget.checkbox_record_WF.setChecked(self.initSaveWF) # Return to its state when 2.5D was started.
         self._widget.checkbox_record_WF.setEnabled(True)
         self.active25D = False
         
@@ -1030,13 +1034,13 @@ class SIMController(ImConWidgetController):
         self._widget.checkbox_record_reconstruction.setEnabled(False)
         self._widget.checkbox_reconstruction.setEnabled(False)
         self._widget.checkbox_record_WF.setEnabled(False)
+        self.initSaveWF = self._widget.checkbox_record_WF.isChecked()
+        self.initSaveRecon = self._widget.checkbox_record_reconstruction.isChecked()
         self._widget.checkbox_record_reconstruction.setCheckState(False)
         self._widget.checkbox_record_WF.setCheckState(False)
+
         self.active25D = True
         self._commChannel.updateSIMActive(self.active25D)
-        
-
-
 
         self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
         self.thread25D.start()

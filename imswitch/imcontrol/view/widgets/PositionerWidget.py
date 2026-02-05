@@ -283,7 +283,7 @@ class PositionerWidget(Widget):
             if modifiers == QtCore.Qt.ShiftModifier:
                 self.focusDelta = event.angleDelta().y() / 120 * float(self.pars['StepEditCoarse'+'Z--Z'].text())
                 self.sigWheelEvent.emit(self.focusDelta)
-            elif modifiers == QtCore.Qt.ControlModifier:
+            elif modifiers in (QtCore.Qt.NoModifier, QtCore.Qt.ControlModifier):
                 self.focusDelta = event.angleDelta().y() / 120 * float(self.pars['StepEdit'+'Z--Z'].text())
                 self.sigWheelEvent.emit(self.focusDelta)
             event.accept()
