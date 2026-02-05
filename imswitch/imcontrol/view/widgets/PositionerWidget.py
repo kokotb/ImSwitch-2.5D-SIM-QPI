@@ -343,7 +343,7 @@ class PositionerWidget(Widget):
 
 
 class PositionerSettings(QMainWindow):
-    sigCheckValidity = QtCore.Signal(str)
+    sigCheckValidity = QtCore.Signal(object)
     def __init__(self, parent: None):
         super().__init__(parent)
         self.setWindowTitle("Tiling Settings")
@@ -498,29 +498,14 @@ class PositionerSettings(QMainWindow):
         self.overallLayout.addStretch()
         
         
-        
-        self.skewEntry.textChanged.connect(lambda *args, name='skewEntry': self.sigCheckValidity.emit(name))
-        self.sigCheckValidity.connect(self.checkValidity)
-        self.maxSpeedEntry.textChanged.connect(lambda *args, name='maxSpeedEntry': self.sigCheckValidity.emit(name))
-        self.sigCheckValidity.connect(self.checkValidity)
-        self.maxAccEntry.textChanged.connect(lambda *args, name='maxAccEntry': self.sigCheckValidity.emit(name))
-        self.sigCheckValidity.connect(self.checkValidity)
-        self.jerkEntry.textChanged.connect(lambda *args, name='jerkEntry': self.sigCheckValidity.emit(name))
-        self.sigCheckValidity.connect(self.checkValidity)
-        self.backlashEntry.textChanged.connect(lambda *args, name='backlashEntry': self.sigCheckValidity.emit(name))
+        self.skewEntry.textChanged.connect(lambda text, obj=self.skewEntry: self.sigCheckValidity.emit(obj))
+        self.maxSpeedEntry.textChanged.connect(lambda text, obj=self.maxSpeedEntry: self.sigCheckValidity.emit(obj))
+        self.maxAccEntry.textChanged.connect(lambda text, obj=self.maxAccEntry: self.sigCheckValidity.emit(obj))
+        self.jerkEntry.textChanged.connect(lambda text, obj=self.jerkEntry: self.sigCheckValidity.emit(obj))
+        self.backlashEntry.textChanged.connect(lambda text, obj=self.backlashEntry: self.sigCheckValidity.emit(obj))
         self.sigCheckValidity.connect(self.checkValidity)
         
-    def checkValidity(self, name):
-        if name == 'skewEntry':
-            signalOrigin = self.skewEntry
-        if name == 'maxSpeedEntry':
-            signalOrigin = self.maxSpeedEntry
-        if name == 'maxAccEntry':
-            signalOrigin = self.maxAccEntry
-        if name == 'jerkEntry':
-            signalOrigin = self.jerkEntry
-        if name == 'backlashEntry':
-            signalOrigin = self.backlashEntry
+    def checkValidity(self, signalOrigin):
         valid = signalOrigin.hasAcceptableInput()
         if valid:
             signalOrigin.setStyleSheet('')

@@ -10,8 +10,8 @@ class ZStackWidget(NapariHybridWidget):
 
     sigZStackInfoChanged = QtCore.Signal(str, str, str)
     runZStackToggle = QtCore.Signal(int)
-    sigCheckValidityStep = QtCore.Signal()
-    sigCheckValidityTotal = QtCore.Signal()
+    sigCheckValidity = QtCore.Signal(object)
+    # sigCheckValidityTotal = QtCore.Signal()
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -32,7 +32,8 @@ class ZStackWidget(NapariHybridWidget):
         self.zStepDistance_textedit.setFixedWidth(75)
         self.zStepDistance_textedit.textChanged.connect(lambda value: self.sigZStackInfoChanged.emit('Z-Stack Settings',"Step Size", value))
         self.zStepDistance_textedit.editingFinished.connect(self.floorTotalZ)
-        self.zStepDistance_textedit.textChanged.connect(self.sigCheckValidityStep.emit)
+        # self.zStepDistance_textedit.textChanged.connect(self.sigCheckValidity.emit)
+        self.zStepDistance_textedit.textChanged.connect(lambda text, obj=self.zStepDistance_textedit: self.sigCheckValidity.emit(obj))
 
 
         self.totalZ_label = QLabel("Total Z (/um)")
@@ -48,7 +49,7 @@ class ZStackWidget(NapariHybridWidget):
         self.totalZ_textedit.setFixedWidth(75)
         self.totalZ_textedit.setEnabled(False)
         self.totalZ_textedit.editingFinished.connect(self.floorTotalZ)
-        self.totalZ_textedit.textChanged.connect(self.sigCheckValidityTotal.emit)
+        self.totalZ_textedit.textChanged.connect(lambda text, obj=self.totalZ_textedit: self.sigCheckValidity.emit(obj))
 
         self.zOffset_label = QLabel("Start Offset (/um)") 
         self.zOffset_textedit = QLineEdit("")
@@ -109,22 +110,22 @@ class ZStackWidget(NapariHybridWidget):
         zStackLayout.addWidget(self.zStackScanDir, row+4, 1)
         zStackLayout.addWidget(self.checkbox_zStack, row+5, 0)
 
-        self.sigCheckValidityStep.connect(self.checkValidityStep)
-        self.sigCheckValidityTotal.connect(self.checkValidityTotal)
+        self.sigCheckValidity.connect(self.checkValidity)
 
-    def checkValidityStep(self):
-        valid = self.zStepDistance_textedit.hasAcceptableInput()
-        if valid:
-            self.zStepDistance_textedit.setStyleSheet('')
-        else:
-            self.zStepDistance_textedit.setStyleSheet("border: 1px solid red;")
 
-    def checkValidityTotal(self):
-        valid = self.totalZ_textedit.hasAcceptableInput()
+    def checkValidity(self, signalObject):
+        valid = signalObject.hasAcceptableInput()
         if valid:
-            self.totalZ_textedit.setStyleSheet('')
+            signalObject.setStyleSheet('')
         else:
-            self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
+            signalObject.setStyleSheet("border: 1px solid red;")
+
+    # def checkValidityTotal(self):
+    #     valid = self.totalZ_textedit.hasAcceptableInput()
+    #     if valid:
+    #         self.totalZ_textedit.setStyleSheet('')
+    #     else:
+    #         self.totalZ_textedit.setStyleSheet("border: 1px solid red;")
 
     def initZStackInfo(self):
         self.zStepDistance_textedit.setText("0.1")

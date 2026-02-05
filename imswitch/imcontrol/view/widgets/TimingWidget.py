@@ -7,7 +7,7 @@ from PyQt5.QtGui import QIntValidator, QDoubleValidator
 class TimingWidget(NapariHybridWidget):
 
     sigTimingInfoChanged = QtCore.Signal(str, str, str)
-    sigCheckValidity = QtCore.Signal(str)
+    sigCheckValidity = QtCore.Signal(object)
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
         timingLayout = QtWidgets.QGridLayout()
@@ -112,20 +112,15 @@ class TimingWidget(NapariHybridWidget):
         self.perCheckState = False
 
 
-        self.timingDuration_textedit.textChanged.connect(lambda *args, name='duration': self.sigCheckValidity.emit(name))
-        self.timingPeriod_textedit.textChanged.connect(lambda *args, name='period': self.sigCheckValidity.emit(name))
-        self.totalReps_textedit.textChanged.connect(lambda *args, name='reps': self.sigCheckValidity.emit(name))
+        self.timingDuration_textedit.textChanged.connect(lambda text, obj=self.timingDuration_textedit: self.sigCheckValidity.emit(obj))
+        self.timingPeriod_textedit.textChanged.connect(lambda text, obj=self.timingPeriod_textedit: self.sigCheckValidity.emit(obj))
+        self.totalReps_textedit.textChanged.connect(lambda text, obj=self.totalReps_textedit: self.sigCheckValidity.emit(obj))
         self.sigCheckValidity.connect(self.checkValidity)
 
 
      
-    def checkValidity(self, name):
-        if name == 'duration':
-            signalOrigin = self.timingDuration_textedit
-        elif name == 'period':
-            signalOrigin = self.timingPeriod_textedit
-        elif name == 'reps':
-            signalOrigin = self.totalReps_textedit
+    def checkValidity(self, signalOrigin):
+
         valid = signalOrigin.hasAcceptableInput()
         if valid:
             signalOrigin.setStyleSheet('')

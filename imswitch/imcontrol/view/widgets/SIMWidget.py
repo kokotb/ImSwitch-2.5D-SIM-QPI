@@ -27,6 +27,7 @@ class SIMWidget(NapariHybridWidget):
     sigSIMParamChanged = QtCore.Signal(str, str, str) # (value)
     sigUserDirInfoChanged = QtCore.Signal(str, str, str)
     sigROInfoChanged = QtCore.Signal(str, str, str)
+    sigCheckValidity = QtCore.Signal(object)
     
     def __post_init__(self):
         #super().__init__(*args, **kwargs)
@@ -60,6 +61,7 @@ class SIMWidget(NapariHybridWidget):
 
         self.connectSIMSharedAttrSigs(self.params)
         self.connectUserDirSharedAttrSigs()
+        self.sigCheckValidity.connect(self.checkValidity)
 
     # def askYesNoQuestion(self): #CTNote: Was this supposed to be in SIMWidget or just 25DWidget
     #     """ Asks the user a yes/no question and returns whether "yes" was clicked. """
@@ -464,14 +466,6 @@ class SIMWidget(NapariHybridWidget):
     def setSelectedRO(self, currentROIndex):
         self.roSelectList.setCurrentIndex(currentROIndex)
 
-    # def getReconCheckState(self):
-    #     reconState = self.checkbox_reconstruction.checkState()
-    #     if reconState == 0:
-    #         reconStateBool = False
-    #     elif reconState == 2:
-    #         reconStateBool = True
-    #     return reconStateBool
-
     def setUserDirInfo(self, saveDir):
         self.path_edit.setText(saveDir)
         self.user_edit.setPlaceholderText('Username')
@@ -480,9 +474,7 @@ class SIMWidget(NapariHybridWidget):
         self.sigUserDirInfoChanged.emit('User Dir Info','Experiment Name',"exptname")
 
     def create_reconstruction_parameters(self):
-        # tab = QWidget() #BKEDIT
         layout = QVBoxLayout()
-        # print(self.setupInfoDict)
         self.elementListSIM = []
         # create widget per label
         self.ReconWL1_label = QLabel("")
@@ -490,8 +482,8 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL1_textedit._name = "ReconWL1"
         self.ReconWL1_textedit._type = "str"
         self.ReconWL1_label.setFixedWidth(150)
-        self.validator = QIntValidator(100,999)
-        self.ReconWL1_textedit.setValidator(self.validator)
+        validator = QIntValidator(100,999)
+        self.ReconWL1_textedit.setValidator(validator)
 
         self.ReconWL2_label = QLabel("")
         self.ReconWL2_textedit = QLineEdit("")
@@ -499,16 +491,16 @@ class SIMWidget(NapariHybridWidget):
         self.ReconWL2_textedit._type = "str"
         # self.ReconWL2_textedit.setFixedWidth(75)
         self.ReconWL2_label.setFixedWidth(150)
-        self.validator = QIntValidator(100,999)
-        self.ReconWL2_textedit.setValidator(self.validator)
+        validator = QIntValidator(100,999)
+        self.ReconWL2_textedit.setValidator(validator)
 
         self.ReconWL3_label = QLabel("")
         self.ReconWL3_textedit = QLineEdit("")
         self.ReconWL3_textedit._name = "ReconWL3"
         self.ReconWL3_textedit._type = "str"
-        self.validator = QIntValidator(100,999)
+        validator = QIntValidator(100,999)
         self.ReconWL3_label.setFixedWidth(150)
-        self.ReconWL3_textedit.setValidator(self.validator)
+        self.ReconWL3_textedit.setValidator(validator)
 
         self.NA_label = QLabel("")
         self.NA_textedit = QLineEdit("")
@@ -524,17 +516,20 @@ class SIMWidget(NapariHybridWidget):
         self.alpha_textedit = QLineEdit("")
         self.alpha_textedit._name = "Alpha"
         self.alpha_textedit._type = "str"
-        self.validator = QDoubleValidator(0.1,1.0,1)
-        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        self.alpha_textedit.setValidator(self.validator)
-        self.alpha_textedit.setInputMask("[0].D;0;_")
+        validator = QDoubleValidator(0.1,1.0,1)
+        validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.alpha_textedit.setValidator(validator)
+        # self.alpha_textedit.setInputMask("[0].D;0;_")
         self.alpha_label.setFixedWidth(150)
 
         self.beta_label = QLabel("")
         self.beta_textedit = QLineEdit("")
         self.beta_textedit._name = "Beta"
         self.beta_textedit._type = "str"
-        self.beta_textedit.setInputMask("0.00;0;_")
+        # self.beta_textedit.setInputMask("0.00;0;_")
+        validator = QDoubleValidator(0.1,1.0,2)
+        validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.beta_textedit.setValidator(validator)
         self.beta_label.setFixedWidth(150)
         
         
@@ -542,14 +537,20 @@ class SIMWidget(NapariHybridWidget):
         self.w_textedit = QLineEdit("")
         self.w_textedit._name = "w"
         self.w_textedit._type = "str"
-        self.w_textedit.setInputMask("0.00;0;_")
+        # self.w_textedit.setInputMask("0.00;0;_")
+        validator = QDoubleValidator(0.1,1.0,2)
+        validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.w_textedit.setValidator(validator)
         self.w_label.setFixedWidth(150)
 
         self.eta_label = QLabel("")
         self.eta_textedit = QLineEdit("")
         self.eta_textedit._name = "eta"
         self.eta_textedit._type = "str"
-        self.eta_textedit.setInputMask("0.0;0;_")
+        validator = QDoubleValidator(0.1,1.0,1)
+        validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
+        self.eta_textedit.setValidator(validator)
+        # self.eta_textedit.setInputMask("0.0;0;_")
         self.eta_label.setFixedWidth(150)
 
         #Currently disabled in widget, but leaving here so information is available to SharedAttributes.
@@ -585,6 +586,10 @@ class SIMWidget(NapariHybridWidget):
         self.elementListSIM.append(self.n_textedit)
         self.elementListSIM.append(self.magnification_textedit)
         self.elementListSIM.append(self.roSelectList)
+
+        for element in self.elementListSIM:
+            if element._type == 'str':
+                element.textChanged.connect(lambda text, obj=element: self.sigCheckValidity.emit(obj))
 
 
         
@@ -707,14 +712,21 @@ class SIMWidget(NapariHybridWidget):
         self.expt_edit.textChanged.connect(lambda value: self.sigUserDirInfoChanged.emit('User Dir Info','User Name',value))
 
 
-    def getZStackParameters(self):
-        return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))
+    # def getZStackParameters(self):
+    #     return (np.float32(self.zmin_textedit.text()), np.float32(self.zmax_textedit.text()), np.float32(self.nsteps_textedit.text()))
     
-    def getTimelapseParameters(self):
-        return (np.float32(self.period_textedit.text()), np.float32(self.frames_textedit.text()))
+    # def getTimelapseParameters(self):
+    #     return (np.float32(self.period_textedit.text()), np.float32(self.frames_textedit.text()))
     
     def getRecFolder(self):
         return self.path_edit.text()
+    
+    def checkValidity(self, signalOrigin):
+        valid = signalOrigin.hasAcceptableInput()
+        if valid:
+            signalOrigin.setStyleSheet('')
+        else:
+            signalOrigin.setStyleSheet("border: 1px solid red;")
     
     @shortcut("Ctrl+S", "Start SIM")
     def startSIMShort(self):

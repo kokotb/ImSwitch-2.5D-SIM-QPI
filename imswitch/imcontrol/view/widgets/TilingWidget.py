@@ -16,7 +16,7 @@ class TilingWidget(NapariHybridWidget):
 
     sigTilingInfoChanged = QtCore.Signal(str, str, str)
     sigRunTilingActive = QtCore.Signal()
-    sigCheckValidity = QtCore.Signal(str)
+    sigCheckValidity = QtCore.Signal(object)
 
     def __post_init__(self):
         # super().__init__(*args, **kwargs)
@@ -105,19 +105,13 @@ class TilingWidget(NapariHybridWidget):
         overallLayout.addWidget(self.checkbox_tilepreview, 3, 1)
 
 
-        self.numGridY_textedit.textChanged.connect(lambda *args, name='numGridY': self.sigCheckValidity.emit(name))
-        self.numGridX_textedit.textChanged.connect(lambda *args, name='numGridX': self.sigCheckValidity.emit(name))
-        self.overlap_textedit.textChanged.connect(lambda *args, name='overlap': self.sigCheckValidity.emit(name))
+        self.numGridY_textedit.textChanged.connect(lambda text, obj=self.numGridY_textedit: self.sigCheckValidity.emit(obj))
+        self.numGridX_textedit.textChanged.connect(lambda text, obj=self.numGridX_textedit: self.sigCheckValidity.emit(obj))
+        self.overlap_textedit.textChanged.connect(lambda text, obj=self.overlap_textedit: self.sigCheckValidity.emit(obj))
         self.sigCheckValidity.connect(self.checkValidity)
         
 
-    def checkValidity(self, name):
-        if name == 'numGridY':
-            signalOrigin = self.numGridY_textedit
-        elif name == 'numGridX':
-            signalOrigin = self.numGridX_textedit
-        elif name == 'overlap':
-            signalOrigin = self.overlap_textedit
+    def checkValidity(self, signalOrigin):
         valid = signalOrigin.hasAcceptableInput()
         if valid:
             signalOrigin.setStyleSheet('')
