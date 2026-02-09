@@ -191,23 +191,23 @@ class SLM25DManager(SignalInterface):
         if self.slmActive == False:
             pass
         if self.slmActive == True:
-            showSLMPreview.showSLMPreview(self.slm, scale=0.0)
-            # showSLMPreview(self.slm, scale=0.0, flags=slmdisplaysdk.SLMPreviewFlags.ShowWavefrontCompensation)
+            # showSLMPreview.showSLMPreview(self.slm, scale=0.0)
+            showSLMPreview.showSLMPreview(self.slm, scale=0.0, flags=slmdisplaysdk.SLMPreviewFlags.ShowWavefrontCompensation)
 
-            # # Configure the blank screen:
-            # grayValue = 128
+            # Configure the blank screen:
+            grayValue = 128
 
-            # # Set the used incident laser wavelength in nanometer:
-            # laser_wavelength_nm = 532.0
+            # Set the used incident laser wavelength in nanometer:
+            laser_wavelength_nm = 532.0
 
-            # # Show gray value on SLM:
-            # error = self.slm.showBlankscreen(grayValue)
-            # assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+            # Show gray value on SLM:
+            error = self.slm.showBlankscreen(grayValue)
+            assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
 
             # thisScriptPath = os.path.dirname(__file__)
-            # wavefrontfile = os.path.join(thisScriptPath, "data", "wfcdemo_holoeye_logo.h5")
-            # error = self.slm.wavefrontcompensationLoad(wavefrontfile, laser_wavelength_nm, slmdisplaysdk.WavefrontcompensationFlags.NoFlag, 0, 0)
-            # assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
+            wavefrontfile = os.path.join('C:\VSCode\ImSwitch-2.5D-SIM-QPI\dlls\holoeye', 'U.14-2144-204707-24-07-06_7020-1 6010-1441.h5')
+            error = self.slm.wavefrontcompensationLoad(wavefrontfile, laser_wavelength_nm, slmdisplaysdk.WavefrontcompensationFlags.NoFlag, 0, 0)
+            assert error == slmdisplaysdk.ErrorCode.NoError, self.slm.errorString(error)
     
 
     def toggleSLMResource(self, state):

@@ -1740,13 +1740,17 @@ class SIMController(ImConWidgetController):
 
     def sendAZFrameCoordsTo25DController(self):
         self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
 
 
     def sendFrameCoordsToMaskCenterLoop(self):
         self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
 
 
