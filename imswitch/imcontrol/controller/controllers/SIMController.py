@@ -422,9 +422,6 @@ class SIMController(ImConWidgetController):
                         else:
                             time.sleep(.05) #can probablz reduct slightly
 
-                    ####Autofocus
-
-                    ####
 
                     z = 0
                     while z < len(zList):
@@ -1375,13 +1372,6 @@ class SIMController(ImConWidgetController):
                 self._logger.info('Autofocus active')
                 self._commChannel.autofocusActive = True
 
-            # if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
-            #     self.autofocusThread()
-            #     self._commChannel.autofocusActive = True
-            #     self._logger.info('Autofocus active')
-            # self.loopsToAvgAF = self._commChannel.numLoopsToAvg
-            ####
-
             self.roiIter = 0
             #### For timing period. Check every 1/10s if period time is exceeded yet.
             if self.completeFrameSets == 0 and isTimed:
@@ -1655,17 +1645,17 @@ class SIMController(ImConWidgetController):
                     
 
     def autofocusThread(self):
-        self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
+        self.AFThread = threading.Thread(target=self.autofocusLoop, args=(), daemon=True)
         self.AFThread.start()
         
-    def autofocusStart(self):
+    def autofocusLoop(self):
         nextTime = time.monotonic()
         period = 0.5
         i = 0
         
         while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
             # self._logger.info(f'Loop number: {i}')
-            self.autofocusLoop()
+            self.autofocusRep()
             nextTime += period
             sleepTime = nextTime - time.monotonic()
             if sleepTime > 0:
@@ -1673,7 +1663,7 @@ class SIMController(ImConWidgetController):
 
             i += 1
 
-    def autofocusLoop(self):
+    def autofocusRep(self):
         # periodInSec = self.getPeriodInSec()
         
         if self.firstLoop:

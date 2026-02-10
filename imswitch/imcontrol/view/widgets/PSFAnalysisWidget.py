@@ -66,7 +66,9 @@ class PSFAnalysisWidget(NapariHybridWidget):
         threading.Thread(target=self.openRecordWindow(), args=(), daemon=True).start()
 
     def openRecordWindow(self):
-        self.loadingPopupRecord.show()
+        self.loadingPopupRecord.showNormal()
+        self.loadingPopupRecord.raise_()
+        self.loadingPopupRecord.activateWindow()
 
 
     # def toggleTestButton(self, state):
