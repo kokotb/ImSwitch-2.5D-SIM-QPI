@@ -900,6 +900,7 @@ class SIMController(ImConWidgetController):
             "Select a folder", rootFolder
         )
         if selectedFolder:
+            self._widget.path_edit.setText(selectedFolder)
             print("Selected:", selectedFolder)
 
     def confirmCreateDirectory(self, parent, path):
