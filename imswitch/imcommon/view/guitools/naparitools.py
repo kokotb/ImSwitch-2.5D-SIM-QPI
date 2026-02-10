@@ -85,10 +85,28 @@ class NapariBaseWidget(QtWidgets.QWidget):
     def __init__(self, napariViewer):
         super().__init__()
         self.viewer = napariViewer
-        # self.viewer = napari.Viewer() #This line creates new window for viewer object, but leaves the original one also.
+        viewer = self.viewer
+
+        @viewer.mouse_drag_callbacks.append
+        def on_mouse_click(viewer, event):
+            # Only react to mouse press (not drag)
+            if event.type == 'mouse_press':
+
+
+                # Get the currently active layer
+                layer = viewer.layers.selection.active
+                if layer is None:
+                    return
+
+                # Convert world coordinates to layer data coordinates
+                data_coords = layer.world_to_data(event.position)
+                roundedCoords = tuple(round(x, 2) for x in data_coords)
+                layer.lastClick = roundedCoords
+
+                # self.viewer = napari.Viewer() #This line creates new window for viewer object, but leaves the original one also.
         self.viewer.grid.shape = (4,3) #CTNOTE Napari
-        # self.viewer.grid.enabled = True
-        # self.viewer.camera.zoom = 4.42
+                # self.viewer.grid.enabled = True
+                # self.viewer.camera.zoom = 4.42
 
     @classmethod
     def addToViewer(cls, napariViewer, position='left'):

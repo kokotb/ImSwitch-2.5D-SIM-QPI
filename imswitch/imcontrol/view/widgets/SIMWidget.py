@@ -97,6 +97,8 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].contrast_limits = (0,4095)
             self.viewer.scale_bar.unit = 'um'
             self.viewer.scale_bar.visible = True
+
+
             
         else:
             # self.sortScatter()

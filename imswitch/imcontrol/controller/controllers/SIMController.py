@@ -1649,7 +1649,7 @@ class SIMController(ImConWidgetController):
         
     def autofocusLoop(self):
         nextTime = time.monotonic()
-        period = 0.5
+        period = 0.5 #How often (in seconds) autofocus fires.
         i = 0
         
         while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
