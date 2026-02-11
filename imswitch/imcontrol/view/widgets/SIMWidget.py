@@ -73,7 +73,51 @@ class SIMWidget(NapariHybridWidget):
     # def getImage(self): #CTNote: Do not see any refs to this anywhere
     #     if self.layer is not None:
     #         return self.img.image
+    def get_clicked_layer(viewer, coords, tolerance=5):
+        """
+        Returns the topmost layer under the given world coordinates.
 
+        Args:
+            viewer: napari Viewer
+            coords: world coordinates (tuple or array)
+            tolerance: for points/shapes, in pixels
+
+        Returns:
+            layer or None
+        """
+        # Iterate in reverse order (topmost first)
+        for layer in reversed(viewer.layers):
+            if not layer.visible:
+                continue
+
+            # IMAGE LAYER
+            if isinstance(layer, napari.layers.Image):
+                data_coords = layer.world_to_data(coords)
+                # round to nearest pixel
+                pix_coords = np.round(data_coords).astype(int)
+                # check bounds
+                if np.all(pix_coords >= 0) and np.all(pix_coords < layer.data.shape):
+                    return layer
+
+            # POINTS LAYER
+            elif isinstance(layer, napari.layers.Points):
+                if len(layer.data) == 0:
+                    continue
+                # compute distance to all points
+                dists = np.linalg.norm(layer.data - coords, axis=1)
+                if np.any(dists <= tolerance):
+                    return layer
+
+            # SHAPES LAYER
+            elif isinstance(layer, napari.layers.Shapes):
+                for shape in layer.data:
+                    # check if click is inside shape bounding box
+                    mins = shape.min(axis=0)
+                    maxs = shape.max(axis=0)
+                    if np.all(coords >= mins) and np.all(coords <= maxs):
+                        return layer
+
+        return None
 
 ###Functions after here are for the layer contrasts section        
     def setSIMImage(self, im, name):
@@ -105,6 +149,10 @@ class SIMWidget(NapariHybridWidget):
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
+            try:
+                print(self.viewer.layers['488F Raw'].data_to_world(self.viewer.layers['488F Raw'].lastClick))
+            except:
+                pass
             
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
