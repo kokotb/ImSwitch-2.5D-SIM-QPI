@@ -325,7 +325,7 @@ class SIMProcessor(object):
         elif self.laserWL == 640:
             self.h.wavelength = sim_parameters.ReconWL3
         
-    def reconstructSIMStackBackgroundLBF(self):
+    def reconstructSIMStack(self):
         '''
         reconstruct the image stack asychronously
         the stack is a list of 9 images (3 angles, 3 phases)

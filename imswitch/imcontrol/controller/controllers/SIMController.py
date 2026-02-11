@@ -38,6 +38,10 @@ class SIMController(ImConWidgetController):
         self.isRecordWF = False
         self.isRecordRecon = False
         self.tilePreview = False
+        # self.initSaveRecon = True
+        # self.initSaveWF = False
+        self.SIMActive = False
+        self.active25D = False
 
      
         # Only napari implemented as of 12/9/24
@@ -588,7 +592,7 @@ class SIMController(ImConWidgetController):
             if (self.isReconstruction):
                 # Pass shared attributes to SIMprocessor
                 processor.setCurrentSharedAttrs(self._commChannel.sharedAttrs)
-                processor.reconstructSIMStackBackgroundLBF()
+                processor.reconstructSIMStack()
 
             if self.tilePreview and self.isTiling:
                 # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
@@ -897,7 +901,8 @@ class SIMController(ImConWidgetController):
             "Select a folder", rootFolder
         )
         if selectedFolder:
-            print("Selected:", selectedFolder)
+            self._widget.path_edit.setText(selectedFolder)
+            print("Active folder set:", selectedFolder)
 
     def confirmCreateDirectory(self, parent, path):
         reply = QMessageBox.question(
@@ -1729,14 +1734,20 @@ class SIMController(ImConWidgetController):
         # signal activates this function. Use it to break AZ loop if neccessary
 
     def sendAZFrameCoordsTo25DController(self):
-        self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        if (self.SIMActive or self.active25D):
+            self.stop25D()
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
 
 
     def sendFrameCoordsToMaskCenterLoop(self):
-        self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        if (self.SIMActive or self.active25D):
+            self.stop25D()
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
 
 
