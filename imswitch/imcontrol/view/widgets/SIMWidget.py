@@ -149,10 +149,10 @@ class SIMWidget(NapariHybridWidget):
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             self.viewer.layers[name].data = labelledIm
-            try:
-                print(self.viewer.layers['488F Raw'].data_to_world(self.viewer.layers['488F Raw'].lastClick))
-            except:
-                pass
+            # try:
+            #     print(self.viewer.layers[name].data_to_world(self.viewer.layers[name].lastClick))
+            # except:
+            #     pass
             
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:

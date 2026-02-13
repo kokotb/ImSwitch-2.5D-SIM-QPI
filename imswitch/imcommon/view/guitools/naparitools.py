@@ -87,21 +87,29 @@ class NapariBaseWidget(QtWidgets.QWidget):
         self.viewer = napariViewer
         viewer = self.viewer
 
-        @viewer.mouse_drag_callbacks.append
+        @viewer.mouse_drag_callbacks.append # This function add the layer coordinates of the last click to the appropriate layer.
         def on_mouse_click(viewer, event):
             # Only react to mouse press (not drag)
             if event.type == 'mouse_press':
 
+                for layer in viewer.layers:
+                    name = layer._name
+                    layer.extent.data[1][1:]
 
-                # Get the currently active layer
-                layer = viewer.layers.selection.active
-                if layer is None:
-                    return
+                    xCoordLayer = layer.world_to_data(event.position)[1]
+                    yCoordLayer = layer.world_to_data(event.position)[2]
+                    xBound = layer.extent.data[1][1]
+                    yBound = layer.extent.data[1][2]
+                    valid = (0 <= xCoordLayer) and (xCoordLayer <= xBound) and (0 <= yCoordLayer) and (yCoordLayer <= yBound)
+                    if valid == True:
+                        data_coords = layer.world_to_data(event.position)
+                        roundedCoords = tuple(round(x, 2) for x in data_coords)
+                        layer.lastClick = roundedCoords
+                        
 
-                # Convert world coordinates to layer data coordinates
-                data_coords = layer.world_to_data(event.position)
-                roundedCoords = tuple(round(x, 2) for x in data_coords)
-                layer.lastClick = roundedCoords
+
+
+      
 
                 # self.viewer = napari.Viewer() #This line creates new window for viewer object, but leaves the original one also.
         self.viewer.grid.shape = (4,3) #CTNOTE Napari
