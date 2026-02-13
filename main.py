@@ -20,8 +20,8 @@ import shutil
 #Jakob  
 # shutil.rmtree(R'C:\Users\JakobC\Documents\ImSwitchConfig')
 
-# #Microscope Computer
-shutil.rmtree(R'C:/Users/SIM_admin/Documents/ImSwitchConfig')
+# #Microscope Computer  
+# shutil.rmtree(R'C:/Users/SIM_admin/Documents/ImSwitchConfig')
 
 
 main()
