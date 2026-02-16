@@ -105,8 +105,38 @@ class NapariBaseWidget(QtWidgets.QWidget):
                         data_coords = layer.world_to_data(event.position)
                         roundedCoords = tuple(round(x, 2) for x in data_coords)
                         layer.lastClick = roundedCoords
-                        
+                        img = layer.data
+                        new_slice = np.zeros((img.shape[1], img.shape[2]), dtype=img.dtype)
+                        if img.shape[0] == 1:
 
+                            new_data = np.concatenate([img, new_slice[np.newaxis, ...]], axis=0)
+                            layer.data = new_data
+                        elif img.shape[0] == 2:
+                            layer.data[1] = new_slice
+
+
+
+                        y, x = data_coords[-2:]
+                        half = 40
+
+                        y = int(round(y))
+                        x = int(round(x))
+
+                        y0 = max(0, y - half)
+                        y1 = min(img.shape[1] - 1, y + half)
+                        x0 = max(0, x - half)
+                        x1 = min(img.shape[2] - 1, x + half)
+
+                        color_value = 3500  # white
+
+                        # Draw border only in that z plane
+                        thickness = 5
+                        layer.data[1, y0:y1, x0:x0+thickness] = color_value
+                        layer.data[1, y0:y1, x1-thickness:x1] = color_value
+                        layer.data[1, y0:y0+thickness, x0:x1] = color_value
+                        layer.data[1, y1-thickness:y1, x0:x1] = color_value
+
+                        layer.refresh()
 
 
       

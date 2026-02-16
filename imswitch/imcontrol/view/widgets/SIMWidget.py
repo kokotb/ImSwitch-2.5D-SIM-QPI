@@ -148,11 +148,15 @@ class SIMWidget(NapariHybridWidget):
             # self.sortScatter()
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
-            self.viewer.layers[name].data = labelledIm
-            # try:
-            #     print(self.viewer.layers[name].data_to_world(self.viewer.layers[name].lastClick))
-            # except:
-            #     pass
+            if (len(self.viewer.layers[name].data.shape) == 2) or (self.viewer.layers[name].data.shape[0]== 1):
+                self.viewer.layers[name].data = labelledIm
+            elif (len(self.viewer.layers[name].data.shape) == 3) or (self.viewer.layers[name].data.shape[0]== 2):
+                self.viewer.layers[name].data[0] = labelledIm + self.viewer.layers[name].data[1]
+                self.viewer.layers[name].refresh()
+            try:
+                print(name, self.viewer.layers[name].data_to_world(self.viewer.layers[name].lastClick))
+            except:
+                pass
             
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
