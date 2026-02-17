@@ -87,13 +87,13 @@ class NapariBaseWidget(QtWidgets.QWidget):
         self.viewer = napariViewer
         viewer = self.viewer
 
-        @viewer.mouse_drag_callbacks.append # This function add the layer coordinates of the last click to the appropriate layer.
+        @viewer.mouse_drag_callbacks.append # This function add the layer coordinates of the last click to the appropriate layer and draws a box around the click.
         def on_mouse_click(viewer, event): #Will need to disable for SIM
             # Only react to ctrl+shift left click mouse press (not drag)
             if event.type == 'mouse_press':
                 if ("Shift" in event.modifiers) and ("Control" in event.modifiers):
 
-                    if event._button == 1:
+                    
                         for layer in viewer.layers:
                             layer.extent.data[1][1:]
 
@@ -103,49 +103,51 @@ class NapariBaseWidget(QtWidgets.QWidget):
                             yBound = layer.extent.data[1][2]
                             valid = (0 <= xCoordLayer) and (xCoordLayer <= xBound) and (0 <= yCoordLayer) and (yCoordLayer <= yBound)
                             if valid == True:
-                                data_coords = layer.world_to_data(event.position)
-                                roundedCoords = tuple(round(x, 2) for x in data_coords)
-                                layer.lastClick = roundedCoords
-                                img = layer.data
-                                new_slice = np.zeros((img.shape[1], img.shape[2]), dtype=img.dtype)
-                                if img.shape[0] == 1:
+                                if event._button == 1:
+                                    data_coords = layer.world_to_data(event.position)
+                                    roundedCoords = tuple(round(x, 2) for x in data_coords)
+                                    layer.lastClick = roundedCoords
+                                    img = layer.data
+                                    new_slice = np.zeros((img.shape[1], img.shape[2]), dtype=img.dtype)
+                                    if img.shape[0] == 1:
 
-                                    new_data = np.concatenate([img, new_slice[np.newaxis, ...]], axis=0)
-                                    layer.data = new_data
-                                elif img.shape[0] == 2:
-                                    layer.data[1] = new_slice
+                                        new_data = np.concatenate([img, new_slice[np.newaxis, ...]], axis=0)
+                                        layer.data = new_data
+                                    elif img.shape[0] == 2:
+                                        layer.data[1] = new_slice
 
 
 
-                                y, x = data_coords[-2:]
-                                half = 40
+                                    y, x = data_coords[-2:]
+                                    half = 40
 
-                                y = int(round(y))
-                                x = int(round(x))
+                                    y = int(round(y))
+                                    x = int(round(x))
 
-                                y0 = max(0, y - half)
-                                y1 = min(img.shape[1] - 1, y + half)
-                                x0 = max(0, x - half)
-                                x1 = min(img.shape[2] - 1, x + half)
+                                    y0 = max(0, y - half)
+                                    y1 = min(img.shape[1] - 1, y + half)
+                                    x0 = max(0, x - half)
+                                    x1 = min(img.shape[2] - 1, x + half)
 
-                                color_value = 3500  # white
+                                    color_value = 3500  # white
 
-                                # Draw border only in that z plane
-                                thickness = 5
-                                layer.data[1, y0:y1, x0:x0+thickness] = color_value
-                                layer.data[1, y0:y1, x1-thickness:x1] = color_value
-                                layer.data[1, y0:y0+thickness, x0:x1] = color_value
-                                layer.data[1, y1-thickness:y1, x0:x1] = color_value
+                                    # Draw border only in that z plane
+                                    thickness = 5
+                                    layer.data[1, y0:y1, x0:x0+thickness] = color_value
+                                    layer.data[1, y0:y1, x1-thickness:x1] = color_value
+                                    layer.data[1, y0:y0+thickness, x0:x1] = color_value
+                                    layer.data[1, y1-thickness:y1, x0:x1] = color_value
 
-                                # layer.refresh()
-                    elif event._button == 2:
-                        for layer in viewer.layers:
-                            if layer.data.shape[0] > 1:
-                                newData = np.delete(layer.data, 1, axis=0)
-                                layer.data = newData
+                                    # layer.refresh()
+                                elif event._button == 2:
+                                    # for layer in viewer.layers:
+                                    if layer.data.shape[0] > 1:
+                                        newData = np.delete(layer.data, 1, axis=0)
+                                        layer.data = newData
+                                        layer.lastClick = None
 
-                    else:
-                        return 
+                                else:
+                                    return 
 
 
 

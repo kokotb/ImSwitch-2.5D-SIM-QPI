@@ -132,11 +132,12 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].data = labelledIm
     
     def setRawImage(self, im, name):
-        if self.layer is None or name not in self.viewer.layers:
+        if self.layer is None or name not in self.viewer.layers: #This section of the if statements runs if the layer does not exist yet.
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
+            self.viewer.layers[name].lastClick = None
             self.viewer.layers[name].contrast_limits_range = [0,4095]
             self.viewer.layers[name].contrast_limits = (0,4095)
             self.viewer.scale_bar.unit = 'um'
@@ -145,21 +146,15 @@ class SIMWidget(NapariHybridWidget):
 
             
         else:
-            # self.sortScatter()
+
             copiedIm = im.copy()
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
             if (len(self.viewer.layers[name].data.shape) == 2) or (self.viewer.layers[name].data.shape[0]== 1):
                 self.viewer.layers[name].data = labelledIm
             elif (len(self.viewer.layers[name].data.shape) == 3) or (self.viewer.layers[name].data.shape[0]== 2):
-                # self.viewer.layers[name].data[0] = labelledIm + self.viewer.layers[name].data[1]
                 combo = np.where(self.viewer.layers[name].data[1] != 0, self.viewer.layers[name].data[1], labelledIm)
                 self.viewer.layers[name].data[0] = combo
-                # combo = np.where(self.viewer.layers[name].data[1] > 0, self.viewer.layers[name].data[1], labelledIm + self.viewer.layers[name].data[1])
                 self.viewer.layers[name].refresh()
-            # try:
-            #     print(name, self.viewer.layers[name].data_to_world(self.viewer.layers[name].lastClick))
-            # except:
-            #     pass
             
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
