@@ -189,6 +189,7 @@ class CommunicationChannel(SignalInterface):
     sigSetForPSF = Signal(bool)
 
     sig25DPSFReceived = Signal(np.ndarray, str)
+    # sigRefreshRawImgs = Signal()
 
 
 

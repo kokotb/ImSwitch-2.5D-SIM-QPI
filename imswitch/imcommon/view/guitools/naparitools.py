@@ -7,6 +7,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from vispy.color import Color
 from vispy.scene.visuals import Compound, Line, Markers
 from vispy.visuals.transforms import STTransform
+from ....imcontrol.controller.CommunicationChannel import CommunicationChannel
 
 from .imagetools import minmaxLevels
 
@@ -86,22 +87,73 @@ class NapariBaseWidget(QtWidgets.QWidget):
         super().__init__()
         self.viewer = napariViewer
         viewer = self.viewer
-
-        @viewer.mouse_drag_callbacks.append
-        def on_mouse_click(viewer, event):
-            # Only react to mouse press (not drag)
+        # self._commChannel = CommunicationChannel(None, None)
+        @viewer.mouse_drag_callbacks.append # This function adds and removes layer coordinates of the last click with appropriate layer.
+        def on_mouse_click(viewer, event): #Will need to disable for SIM, maybe
+            # Only react to ctrl+shift left/right click mouse press (not drag)
             if event.type == 'mouse_press':
+                if ("Shift" in event.modifiers) and ("Control" in event.modifiers):
+                        for layer in viewer.layers:
+                            ###Determine which layers the clicked point belongs to. Valid == True if it belongs. Can belong to multiple if overlapped.
+                            xCoordLayer = layer.world_to_data(event.position)[1]
+                            yCoordLayer = layer.world_to_data(event.position)[2]
+                            xBound = layer.extent.data[1][1]
+                            yBound = layer.extent.data[1][2]
+                            valid = (0 <= xCoordLayer) and (xCoordLayer <= xBound) and (0 <= yCoordLayer) and (yCoordLayer <= yBound)
+                            ###
+                            if valid == True:
+                                if event._button == 1: #If left click
+                                    data_coords = layer.world_to_data(event.position) #Convert click coords to layer coords.
+                                    img = layer.data
+                                    y, x = data_coords[-2:]
+                                    half = 40 # Size of box / 2
+                                    y = int(round(y))
+                                    x = int(round(x))
+                                    yFarLimit = y + half
+                                    xFarLimit = x + half
+                                    xNearLimit = x - half
+                                    yNearLimit = y - half
+
+                                    if (yFarLimit > img.shape[1] - 1) or (xFarLimit > img.shape[2] - 1) or (xNearLimit < 0) or (yNearLimit < 0):
+                                        return
+
+                                    roundedCoords = tuple(round(x, 1) for x in data_coords)
+                                    layer.lastClick = roundedCoords
+                                    new_slice = np.zeros((img.shape[1], img.shape[2]), dtype=img.dtype)
+                                    if img.shape[0] == 1: # If only one layer, create another layer
+                                        new_data = np.concatenate([img, new_slice[np.newaxis, ...]], axis=0)
+                                        layer.data = new_data
+                                    elif img.shape[0] == 2:
+                                        layer.data[1] = new_slice
+
+                                    y0 = max(0, y - half)
+                                    y1 = min(img.shape[1] - 1, yFarLimit)
+                                    x0 = max(0, x - half)
+                                    x1 = min(img.shape[2] - 1, xFarLimit)
+
+                                    color_value = 4000  # white-ish
+
+                                    # Draw border only in that z plane
+                                    thickness = 5
+                                    layer.data[1, y0:y1, x0:x0+thickness] = color_value
+                                    layer.data[1, y0:y1, x1-thickness:x1] = color_value
+                                    layer.data[1, y0:y0+thickness, x0:x1] = color_value
+                                    layer.data[1, y1-thickness:y1, x0:x1] = color_value
+                                    layer.refresh()
+
+                                elif event._button == 2:
+                                    # for layer in viewer.layers:
+                                    if layer.data.shape[0] > 1:
+                                        newData = np.delete(layer.data, 1, axis=0)
+                                        layer.data = newData
+                                        layer.lastClick = None
+
+                                else:
+                                    return 
 
 
-                # Get the currently active layer
-                layer = viewer.layers.selection.active
-                if layer is None:
-                    return
 
-                # Convert world coordinates to layer data coordinates
-                data_coords = layer.world_to_data(event.position)
-                roundedCoords = tuple(round(x, 2) for x in data_coords)
-                layer.lastClick = roundedCoords
+      
 
                 # self.viewer = napari.Viewer() #This line creates new window for viewer object, but leaves the original one also.
         self.viewer.grid.shape = (4,3) #CTNOTE Napari 

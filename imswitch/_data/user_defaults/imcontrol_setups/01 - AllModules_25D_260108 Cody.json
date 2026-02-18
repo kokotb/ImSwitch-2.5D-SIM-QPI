@@ -10,7 +10,7 @@
 },
 
 "SLM25D":{
-  "mock": false,
+  "mock": true,
   "width":1080, 
   "height":1920,
   "Gamma": 0.5, 

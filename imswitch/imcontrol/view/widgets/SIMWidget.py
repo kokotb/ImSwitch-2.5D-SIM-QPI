@@ -119,6 +119,11 @@ class SIMWidget(NapariHybridWidget):
 
         return None
 
+    # def refreshRawImage(self, im, name):
+    #     combo = np.where(self.viewer.layers[name].data[1] != 0, self.viewer.layers[name].data[1], labelledIm)
+    #     self.viewer.layers[name].data[0] = combo
+    #     self.viewer.layers[name].refresh()  
+
 ###Functions after here are for the layer contrasts section        
     def setSIMImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
@@ -132,27 +137,26 @@ class SIMWidget(NapariHybridWidget):
             self.viewer.layers[name].data = labelledIm
     
     def setRawImage(self, im, name):
-        if self.layer is None or name not in self.viewer.layers:
+        if self.layer is None or name not in self.viewer.layers: #This section of the if statements runs if the layer does not exist yet.
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
             self.sortLayersByName()
             self.viewer.layers[name].scale = self.micronsPerPixel
+            self.viewer.layers[name].lastClick = None
             self.viewer.layers[name].contrast_limits_range = [0,4095]
             self.viewer.layers[name].contrast_limits = (0,4095)
             self.viewer.scale_bar.unit = 'um'
             self.viewer.scale_bar.visible = True
-
-
-            
         else:
-            # self.sortScatter()
-            copiedIm = im.copy()
+            copiedIm = im.copy() #This copy operation probably not needed. Have not tested.
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
-            self.viewer.layers[name].data = labelledIm
-            try:
-                print(self.viewer.layers['488F Raw'].data_to_world(self.viewer.layers['488F Raw'].lastClick))
-            except:
-                pass
+            if (len(self.viewer.layers[name].data.shape) == 2) or (self.viewer.layers[name].data.shape[0]== 1): #This if statement determines whether to display regular image or image with selection box on it.
+                self.viewer.layers[name].data = labelledIm
+            elif (len(self.viewer.layers[name].data.shape) == 3) or (self.viewer.layers[name].data.shape[0]== 2):
+                combo = np.where(self.viewer.layers[name].data[1] != 0, self.viewer.layers[name].data[1], labelledIm)
+                # self.viewer.layers[name].dataUnlabelled = self.viewer.layers[name].data[0]
+                self.viewer.layers[name].data[0] = combo
+                self.viewer.layers[name].refresh()
             
     def setWFImage(self, im, name):
         if self.layer is None or name not in self.viewer.layers:
