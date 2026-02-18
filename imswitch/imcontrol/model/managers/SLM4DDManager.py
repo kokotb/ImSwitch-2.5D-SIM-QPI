@@ -104,7 +104,7 @@ class SLM4DDManager(SignalInterface):
 
     def getRunningOrder(self):
 
-        ROgetselected = self.slmDLL.R4_RpcRoGetSelected
+        ROgetselected = self.slmDLL.R11_RpcRoGetSelected
         ptr_getRO = ctypes.pointer(ctypes.c_int16())
         ret = ROgetselected(ptr_getRO)
 
@@ -121,7 +121,7 @@ class SLM4DDManager(SignalInterface):
     def setRunningOrder(self,setROValue):
         getROCountVal = self.getROCount()[0]
         if setROValue >= 0 and setROValue < getROCountVal:
-            ROsetselected = self.slmDLL.R4_RpcRoSetSelected
+            ROsetselected = self.slmDLL.R11_RpcRoSetSelected
             # ptr_setRO = ctypes.pointer(ctypes.c_int16())
             ret = ROsetselected(setROValue)
             
@@ -142,7 +142,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def getROCount(self):
-        getROCountFunc = self.slmDLL.R4_RpcRoGetCount
+        getROCountFunc = self.slmDLL.R11_RpcRoGetCount
         ptr_getROCount = ctypes.pointer(ctypes.c_int16())
         ret = getROCountFunc(ptr_getROCount)
         if ret == 0:
@@ -156,7 +156,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def slmActivate(self):
-        slmActivate = self.slmDLL.R4_RpcRoActivate
+        slmActivate = self.slmDLL.R11_RpcRoActivate
         ret = slmActivate()
         if ret == 0:
             slmActivateBool = True
@@ -168,7 +168,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def slmDeactivate(self):
-        slmDeactivate = self.slmDLL.R4_RpcRoDeactivate
+        slmDeactivate = self.slmDLL.R11_RpcRoDeactivate
         ret = slmDeactivate()
         if ret == 0:
             slmDeactivateBool = True
@@ -180,7 +180,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def slmRestart(self):
-        slmRestart = self.slmDLL.R4_RpcSysReboot
+        slmRestart = self.slmDLL.R11_RpcSysReboot
         ret = slmRestart()
         if ret == 0:
             slmRestartBool = True
@@ -193,7 +193,7 @@ class SLM4DDManager(SignalInterface):
 
     def setDefaultRO(self, defaultRO):
 
-        setDefaultRO = self.slmDLL.R4_RpcRoSetDefault
+        setDefaultRO = self.slmDLL.R11_RpcRoSetDefault
         ret = setDefaultRO(defaultRO)
 
         if ret == 0:
@@ -207,7 +207,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def getROName(self, ROIndex):
-        getROName = self.slmDLL.R4_RpcRoGetName
+        getROName = self.slmDLL.R11_RpcRoGetName
         varArray = (ctypes.c_char*50)()
         ptr_getROName = ctypes.pointer(varArray)
         ret = getROName(ROIndex, ptr_getROName, 50)
@@ -215,12 +215,12 @@ class SLM4DDManager(SignalInterface):
         if ret == 0:
             retStr = "RO name identified successfully"
         else:
-            retStr = "Failed ti identify RO name: "  + self.ERROR_Dictionary[ret]
+            retStr = "Failed to identify RO name: "  + self.ERROR_Dictionary[ret]
         return (ROName, retStr)
 
 
     def getRepertoireUniqueId(self):
-        getRepUnIdFunc = self.slmDLL.R4_RpcSysGetRepertoireUniqueId
+        getRepUnIdFunc = self.slmDLL.R11_RpcSysGetRepertoireUniqueId
         varArray = (ctypes.c_char*50)()
         ptr_getRepUnId = ctypes.pointer(varArray)
         ret = getRepUnIdFunc(ptr_getRepUnId, 50)
@@ -234,7 +234,7 @@ class SLM4DDManager(SignalInterface):
 
 
     # def getProgress(slmDLL):
-    #     getProgressPercentageFunc = slmDLL.R4_DevGetProgress
+    #     getProgressPercentageFunc = slmDLL.R11_DevGetProgress
     #     ptr_getProgress = ctypes.pointer(ctypes.c_uint8())
     #     ret = getProgressPercentageFunc(ptr_getProgress)
     #     progressPct = ptr_getProgress.contents.value
@@ -247,7 +247,7 @@ class SLM4DDManager(SignalInterface):
 
 
     def getActState(self):
-        getActivationStateFunc = self.slmDLL.R4_RpcRoGetActivationState
+        getActivationStateFunc = self.slmDLL.R11_RpcRoGetActivationState
         ptr_ActState = ctypes.pointer(ctypes.c_uint8())
         #ptr_ActState = ctypes.pointer(ctypes.c_char_p())
         ret = getActivationStateFunc(ptr_ActState)
