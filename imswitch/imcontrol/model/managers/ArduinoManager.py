@@ -87,7 +87,7 @@ class ArduinoManager(SignalInterface):
         response = self._rs232manager.query(cmd)
         return response
 
-    def trigger25DWriteOnly(self, speed = 'F'):
+    def trigger25DWriteOnly(self, speed = 'F'): # F for fast T for slow
         cmd = speed
         self._rs232manager.write(cmd)
 
