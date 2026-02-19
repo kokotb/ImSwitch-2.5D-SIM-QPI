@@ -462,7 +462,7 @@ class SLM25DController(ImConWidgetController):
                     self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                     success = False
                     while not success:
-                        self._master.arduinoManager.trigger25DWriteOnly()
+                        self._master.arduinoManager.trigger25DWriteOnly("T") # T = slow mode, F = fast mode (exposure time)
                         success = self.waitingForBuffers()
                     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
@@ -493,7 +493,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars['AbsPosEdit' + key].blockSignals(False)
             self.updatePhaseMask()
                 
-            # self.show_images_grid(images)
+            self.show_images_grid(images)
             self._widget.pars['AbsPosEdit' + key].setStyleSheet('')
 
 
@@ -582,7 +582,7 @@ class SLM25DController(ImConWidgetController):
 
 
         # self._commChannel.sigToggleAutoZern.emit(False)
-        self.toggleAutoZernNew(False)
+        #self.toggleAutoZernNew(False)
         self._commChannel.autoZernCheckedNew = False
 
         self._widget.projectZernike.setEnabled(True)
@@ -606,7 +606,7 @@ class SLM25DController(ImConWidgetController):
             # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
             success = False
             while not success:
-                self._master.arduinoManager.trigger25DWriteOnly()
+                self._master.arduinoManager.trigger25DWriteOnly("T")
                 success = self.waitingForBuffers()
             rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
             self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
@@ -655,7 +655,7 @@ class SLM25DController(ImConWidgetController):
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                 self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
@@ -740,7 +740,7 @@ class SLM25DController(ImConWidgetController):
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                 self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
@@ -815,7 +815,7 @@ class SLM25DController(ImConWidgetController):
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                 self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
@@ -950,7 +950,7 @@ class SLM25DController(ImConWidgetController):
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
@@ -1084,7 +1084,7 @@ class SLM25DController(ImConWidgetController):
                 
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
 
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
@@ -1154,7 +1154,7 @@ class SLM25DController(ImConWidgetController):
 
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly()
+                    self._master.arduinoManager.trigger25DWriteOnly("T")
                     success = self.waitingForBuffers()
                 # print(self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D'))
                 
@@ -1869,6 +1869,8 @@ class SLM25DController(ImConWidgetController):
 
 
         projImg = np.concatenate((projectImageLeft,projectImageRight), axis=1).transpose()
+        projImg = projImg.astype(np.uint8)
+        projImg = projImg.astype(np.float64)
         projImg *= self.maskscaleValue / 255
         projImg = projImg.astype(np.uint8)
 

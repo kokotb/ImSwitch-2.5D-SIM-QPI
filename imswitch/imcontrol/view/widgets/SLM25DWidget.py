@@ -31,7 +31,7 @@ class SLM25DWidget(Widget):
         super().__init__(*args, **kwargs)
         
         #For development only:
-        self.maskScaleAvailable = False
+        self.maskScaleAvailable = True
 
         # Parameter bounds that may was to be hand-edited
         self.paramConstraintDict25DPos = {'Gamma':(float,(-20,20),1, 0.1, ''), 'Psi': (float,(-10,10),1, 0.1, ''), 'Left Center-X': (int,(1,960),0, 10, 'px'),

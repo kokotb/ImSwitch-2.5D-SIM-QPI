@@ -38,6 +38,10 @@ class SIMController(ImConWidgetController):
         self.isRecordWF = False
         self.isRecordRecon = False
         self.tilePreview = False
+        # self.initSaveRecon = True
+        # self.initSaveWF = False
+        self.SIMActive = False
+        self.active25D = False
 
      
         # Only napari implemented as of 12/9/24
@@ -422,9 +426,6 @@ class SIMController(ImConWidgetController):
                         else:
                             time.sleep(.05) #can probablz reduct slightly
 
-                    ####Autofocus
-
-                    ####
 
                     z = 0
                     while z < len(zList):
@@ -591,7 +592,7 @@ class SIMController(ImConWidgetController):
             if (self.isReconstruction):
                 # Pass shared attributes to SIMprocessor
                 processor.setCurrentSharedAttrs(self._commChannel.sharedAttrs)
-                processor.reconstructSIMStackBackgroundLBF()
+                processor.reconstructSIMStack()
 
             if self.tilePreview and self.isTiling:
                 # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
@@ -900,7 +901,8 @@ class SIMController(ImConWidgetController):
             "Select a folder", rootFolder
         )
         if selectedFolder:
-            print("Selected:", selectedFolder)
+            self._widget.path_edit.setText(selectedFolder)
+            print("Active folder set:", selectedFolder)
 
     def confirmCreateDirectory(self, parent, path):
         reply = QMessageBox.question(
@@ -1374,13 +1376,6 @@ class SIMController(ImConWidgetController):
                 self._logger.info('Autofocus active')
                 self._commChannel.autofocusActive = True
 
-            # if (self._commChannel.initRegScore != None) and (self._commChannel.autofocusActive == False):
-            #     self.autofocusThread()
-            #     self._commChannel.autofocusActive = True
-            #     self._logger.info('Autofocus active')
-            # self.loopsToAvgAF = self._commChannel.numLoopsToAvg
-            ####
-
             self.roiIter = 0
             #### For timing period. Check every 1/10s if period time is exceeded yet.
             if self.completeFrameSets == 0 and isTimed:
@@ -1654,17 +1649,17 @@ class SIMController(ImConWidgetController):
                     
 
     def autofocusThread(self):
-        self.AFThread = threading.Thread(target=self.autofocusStart, args=(), daemon=True)
+        self.AFThread = threading.Thread(target=self.autofocusLoop, args=(), daemon=True)
         self.AFThread.start()
         
-    def autofocusStart(self):
+    def autofocusLoop(self):
         nextTime = time.monotonic()
         period = 0.5
         i = 0
         
         while (self._commChannel.initRegScore != None) and (self.active25D): #self.active25D or 
             # self._logger.info(f'Loop number: {i}')
-            self.autofocusLoop()
+            self.autofocusRep()
             nextTime += period
             sleepTime = nextTime - time.monotonic()
             if sleepTime > 0:
@@ -1672,7 +1667,7 @@ class SIMController(ImConWidgetController):
 
             i += 1
 
-    def autofocusLoop(self):
+    def autofocusRep(self):
         # periodInSec = self.getPeriodInSec()
         
         if self.firstLoop:
@@ -1739,14 +1734,20 @@ class SIMController(ImConWidgetController):
         # signal activates this function. Use it to break AZ loop if neccessary
 
     def sendAZFrameCoordsTo25DController(self):
-        self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        if (self.SIMActive or self.active25D):
+            self.stop25D()
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAutoZernNew.emit(selected_frame)
 
 
     def sendFrameCoordsToMaskCenterLoop(self):
-        self.stop25D()
-        selected_frame = self._widget.viewer.layers[1].corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
+        if (self.SIMActive or self.active25D):
+            self.stop25D()
+        for layer in self._widget.viewer.layers:
+            if layer._name == 'Shapes':
+                selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
 
 
