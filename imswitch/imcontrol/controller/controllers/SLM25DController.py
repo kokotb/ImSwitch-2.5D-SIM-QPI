@@ -1945,6 +1945,40 @@ class SLM25DController(ImConWidgetController):
         
         #return np.transpose(finalMask.astype(np.uint8))
     
+    def sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrix):
+        return (2. * np.pi * d / lam) * (n2 * (1. - (NA * rhomatrix / n2) ** 2) ** 0.5 - n1 * (1. - (NA * rhomatrix / n1) ** 2) ** 0.5)
+    
+    def calcsampleDepthCorrectionMask(self):
+        parameters = self.getAll25DParams()
+
+        rho = parameters["Beam Diameter"] #Current value
+        xleftcenter, yleftcenter, xrightcenter, yrightcenter = self.getOriginalMaskPositions()
+
+        # SLM screen size parameters
+        numberXpix = 1920
+        numberYpix = 1080
+        pszSLM = 0.000008 # (in m, 8 um) pixel size
+        rhoPupilAperture = rho/2  #(in m, 2Rbeam = 6 mm, current estimation)
+        rhoPupilAperturePix = rhoPupilAperture/pszSLM
+        
+        # ====================================================================================================================================
+        y_coordsleft, x_coordsleft = np.indices((numberYpix, numberXpix//2))
+        y_coordsright, x_coordsright = np.indices((numberYpix, numberXpix//2))
+        x_coordsright += 960
+
+        rhomatrixleft = np.sqrt((x_coordsleft - xleftcenter)**2 + (y_coordsleft - yleftcenter)**2) / rhoPupilAperturePix
+        rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
+
+        # !!! insert proper data
+        lam = 0.640 # in um wavelength read from widget
+        d = 0. # in um - z pos read from widget or z stack loop
+        n2, n1 = 1.5, 1.01
+        NA = 0.8
+
+        self.depthCorrectionMaskLeft = self.sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrixleft)
+        self.depthCorrectionMaskRight = self.sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrixright)
+
+
     def phase_function_fast(self, gamma, psi, rhomatrix):
         return np.cos(2* np.pi * (gamma * (rhomatrix)**4 + psi * (rhomatrix))**2)
 
