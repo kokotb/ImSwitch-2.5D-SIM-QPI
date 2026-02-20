@@ -43,6 +43,9 @@ class SLM25DController(ImConWidgetController):
         
         self.mask25dbinaryLeft = np.zeros((1080, 960))
         self.mask25dbinaryRight = np.zeros((1080, 960))
+
+        self.depthCorrectionMaskLeft = np.zeros((1080, 960))
+        self.depthCorrectionMaskRight = np.zeros((1080, 960))
         
         # self._widget.start25D.toggled.connect(self._commChannel.sig25DAcqToggled.emit())
         # self._widget.start25D.toggled.connect(lambda value: self._commChannel.sig25DAcqToggled.emit(value))
@@ -113,6 +116,8 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigBeginAutoZernNew.connect(lambda selected_frame: self.beginAutoZernThreadNew(selected_frame))
         self._commChannel.sigSet25dParVals.connect(lambda gamma, psi: self.set25dParVals(gamma, psi))
         self._commChannel.sigBeginAlignMaskCenter.connect(lambda selected_frame: self.beginAlignMaskCenterThreadNew(selected_frame))
+        # self._commChannel.sigSetDepthCorrectMask.connect(lambda processorHandle, zPos: self.updateDepthCorrection(processorHandle, zPos))
+        self._commChannel.sigSetDepthCorrectMask.connect(self.updateDepthCorrection)
         
 
 
@@ -1865,6 +1870,12 @@ class SLM25DController(ImConWidgetController):
         #         projectImageLeft += self.centerMaskLeft
         #         projectImageRight += self.centerMaskRight
 
+        if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
+            projectImageLeft += self.shiftMaskZeroPad(self.depthCorrectionMaskLeft, xleftShift, yleftShift)
+            projectImageRight += self.shiftMaskZeroPad(self.depthCorrectionMaskRight, xrightShift, yrightShift)
+        else:
+            projectImageLeft += self.depthCorrectionMaskLeft
+            projectImageRight += self.depthCorrectionMaskRight
 
 
 
@@ -1947,10 +1958,36 @@ class SLM25DController(ImConWidgetController):
         
         #return np.transpose(finalMask.astype(np.uint8))
     
+    def updateDepthCorrection(self, processorHandle, zPos):
+        
+        print("signal sent")
+        if processorHandle == "640F":
+            lam = 0.670
+        elif processorHandle == "561F":
+            lam = 0.591
+        elif processorHandle == "488F":
+            lam = 0.518
+        else:
+            print("Set scatter depth correction")
+            lam = float(processorHandle.rstrip('F')) / 1000
+
+        # insert refractive indexes here !!!
+        self.calcsampleDepthCorrectionMask(lam, zPos, n2=1.5, n1=1, NA=0.8)
+        self.combineAndProject()
+        time.sleep(0.1)
+        self._commChannel.sigDepthMaskDone.emit()
+        
+
+
+
     def sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrix):
-        return (2. * np.pi * d / lam) * (n2 * (1. - (NA * rhomatrix / n2) ** 2) ** 0.5 - n1 * (1. - (NA * rhomatrix / n1) ** 2) ** 0.5)
+        # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
+        return (2. * np.pi * d / lam) * (
+        n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
+        n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
+    )
     
-    def calcsampleDepthCorrectionMask(self):
+    def calcsampleDepthCorrectionMask(self, lam, d, n2, n1, NA):
         parameters = self.getAll25DParams()
 
         rho = parameters["Beam Diameter"] #Current value
@@ -1972,13 +2009,13 @@ class SLM25DController(ImConWidgetController):
         rhomatrixright = np.sqrt((x_coordsright - xrightcenter)**2 + (y_coordsright - yrightcenter)**2) / rhoPupilAperturePix
 
         # !!! insert proper data
-        lam = 0.640 # in um wavelength read from widget
-        d = 0. # in um - z pos read from widget or z stack loop
-        n2, n1 = 1.5, 1.01
-        NA = 0.8
+        #lam = 0.640 # in um wavelength read from widget
+        #d = 0. # in um - z pos read from widget or z stack loop
+        #n2, n1 = 1.5, 1.01
+        #NA = 0.8
 
-        self.depthCorrectionMaskLeft = self.sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrixleft)
-        self.depthCorrectionMaskRight = self.sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrixright)
+        self.depthCorrectionMaskLeft = self.sampleDepthCorrectionFunction(lam, d, n2, n1, NA, rhomatrixleft)
+        self.depthCorrectionMaskRight = self.sampleDepthCorrectionFunction(lam, d, n2, n1, NA, rhomatrixright)
 
 
     def phase_function_fast(self, gamma, psi, rhomatrix):

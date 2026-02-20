@@ -33,6 +33,10 @@ class CommunicationChannel(SignalInterface):
 
     sigRecordPSFStack = Signal()
 
+    sigSetDepthCorrectMask = Signal(str, float)
+
+    sigDepthMaskDone = Signal()
+
     # sigSendZstackToRecordWindow = Signal(list)
 
     sigTileImage = Signal(np.ndarray, tuple, str, int, int, int)

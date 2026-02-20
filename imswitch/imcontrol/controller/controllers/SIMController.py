@@ -15,6 +15,7 @@ from imswitch.imcommon.framework import Signal
 import statistics
 from qtpy import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtCore import QEventLoop
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -1462,6 +1463,7 @@ class SIMController(ImConWidgetController):
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
                         ####
 
+
                         if self.speed25D == 'fast':
                             self._master.arduinoManager.trigger25DWriteOnly('F') # Send actual trigger to cams.
                         elif self.speed25D == 'slow':
@@ -1490,7 +1492,7 @@ class SIMController(ImConWidgetController):
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, zList[z], saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
 
                         # last images are available
 
@@ -1550,8 +1552,24 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+    def main25DLoop(self, processor, errorLock, z, zPos, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+
+        # chatGPT suggested this method of waiting===============================
+        loop = QEventLoop() ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
+        print("1")
+        def done_slot():
+            loop.quit()
+        print("2")
+        self._commChannel.sigDepthMaskDone.connect(done_slot)
+        print("3")
+        self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
+        print("4")
+
+        loop.exec_()
         
+        print("5")
+        # =======================================================================
+
         k = processor.processorIndex
         if self.scatterCam:
             numFluorProcessors = len(self.activeProcessors) - 1
