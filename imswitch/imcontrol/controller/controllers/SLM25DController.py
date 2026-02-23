@@ -88,6 +88,8 @@ class SLM25DController(ImConWidgetController):
 
         self._widget.projectZernike.stateChanged.connect(self.combineAndProject)
         self._widget.project25D.stateChanged.connect(self.combineAndProject)
+        self._widget.projectDepthCorr.stateChanged.connect(self.combineAndProject)
+        self._widget.projectDepthCorr.stateChanged.connect(lambda value: self.depthCorrChanged(value))
         # self._widget.projectCenter.stateChanged.connect(self.combineAndProject)
 
         self.slm25DManager = self._master.slm25DManager
@@ -186,6 +188,9 @@ class SLM25DController(ImConWidgetController):
 
     #     print(self._widget.channelSelectCombo.currentText() + " color selected for AZ")
 
+    def depthCorrChanged(self, value):
+        print(value, bool(value))
+        self._commChannel.sigDepthCorrectionChanged.emit(bool(value))
 
     def MaskScaleChanged(self, value):
         self.maskscaleValue = value
@@ -1800,6 +1805,7 @@ class SLM25DController(ImConWidgetController):
 
         projZernike = self._widget.projectZernike.checkState()
         proj25D = self._widget.project25D.checkState()
+        projDepthCorr = self._widget.projectDepthCorr.checkState()
         # projCenter = self._widget.projectCenter.checkState()
 
         projectImageLeft = np.zeros((1080, 960))
@@ -1870,12 +1876,13 @@ class SLM25DController(ImConWidgetController):
         #         projectImageLeft += self.centerMaskLeft
         #         projectImageRight += self.centerMaskRight
 
-        if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
-            projectImageLeft += self.shiftMaskZeroPad(self.depthCorrectionMaskLeft, xleftShift, yleftShift)
-            projectImageRight += self.shiftMaskZeroPad(self.depthCorrectionMaskRight, xrightShift, yrightShift)
-        else:
-            projectImageLeft += self.depthCorrectionMaskLeft
-            projectImageRight += self.depthCorrectionMaskRight
+        if (projDepthCorr == 2):
+            if (xleftShift != 0) or (yleftShift != 0) or (xrightShift != 0) or (yrightShift != 0):
+                projectImageLeft += self.shiftMaskZeroPad(self.depthCorrectionMaskLeft, xleftShift, yleftShift)
+                projectImageRight += self.shiftMaskZeroPad(self.depthCorrectionMaskRight, xrightShift, yrightShift)
+            else:
+                projectImageLeft += self.depthCorrectionMaskLeft
+                projectImageRight += self.depthCorrectionMaskRight
 
 
 

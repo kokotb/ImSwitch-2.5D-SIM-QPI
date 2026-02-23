@@ -147,6 +147,8 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigGetAZFrameCoordsMaskCenter.connect(self.sendFrameCoordsToMaskCenterLoop)
 
+        self._commChannel.sigDepthCorrectionChanged.connect(self.setDepthCorrection)
+
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
 
@@ -163,6 +165,7 @@ class SIMController(ImConWidgetController):
         self.AFManager = self._master.autofocusManager
 
         self.recordPSFStackFlag = False
+        self.depthCorrectionChecked = False
 
     def recordPSFStackSetFlag(self):
         self.recordPSFStackFlag = True
@@ -1554,21 +1557,19 @@ class SIMController(ImConWidgetController):
 
     def main25DLoop(self, processor, errorLock, z, zPos, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
-        # chatGPT suggested this method of waiting===============================
-        loop = QEventLoop() ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
-        print("1")
-        def done_slot():
-            loop.quit()
-        print("2")
-        self._commChannel.sigDepthMaskDone.connect(done_slot)
-        print("3")
-        self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
-        print("4")
+        if self.depthCorrectionChecked:
+            # chatGPT suggested this method of waiting===============================
+            loop = QEventLoop() ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
 
-        loop.exec_()
-        
-        print("5")
-        # =======================================================================
+            def done_slot():
+                loop.quit()
+
+            self._commChannel.sigDepthMaskDone.connect(done_slot)
+            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
+            loop.exec_()
+            # =======================================================================
+        else:
+            pass
 
         k = processor.processorIndex
         if self.scatterCam:
@@ -1767,6 +1768,9 @@ class SIMController(ImConWidgetController):
             if layer._name == 'Shapes':
                 selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
+
+    def setDepthCorrection(self, value):
+        self.depthCorrectionChecked = value
 
 
 
