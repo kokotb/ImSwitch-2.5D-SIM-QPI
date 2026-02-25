@@ -1001,9 +1001,11 @@ class SIMController(ImConWidgetController):
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.zScanActive = False
 
-        self.AFStop.set()
-        self.AFTrigger.set()
-        self.AFThread.join()
+
+        self.AFStop.set() # Request the AF thread to stop
+        self.AFTrigger.set() # Release AF if it is still waiting for a trigger
+        self.AcqResume.set() # Release main acquisition if it is waiting for AF
+        self.AFThread.join() # Close the AF thread cleanly.
 
         self._commChannel.updateSIMActive(self.active25D)
         try:
@@ -1416,6 +1418,9 @@ class SIMController(ImConWidgetController):
                 if self.lastROIIndex != self.roiIter:
                     print(f'ROI changed')
                     self.AFTrigger.set()
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    print('Main acq paused for AF)')
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                 self.lastROIIndex = self.roiIter
 
 
@@ -1442,6 +1447,9 @@ class SIMController(ImConWidgetController):
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
                     if AFXDiff > 600 or AFYDiff > 600:
                         self.AFTrigger.set()
+                        self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                        print('Main acq paused for AF)')
+                        self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
 
                     #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
                     if self.numAllFrames == 0:
@@ -1568,6 +1576,10 @@ class SIMController(ImConWidgetController):
             print(f'Time since last AF: {AFElapsed}')
             if AFElapsed > 10:
                 self.AFTrigger.set()
+                self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                print('Main acq paused for AF)')
+                self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                 self.stop25D() # Stops system is duration based imaging is selected.
@@ -1684,7 +1696,7 @@ class SIMController(ImConWidgetController):
             if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
                 break
             self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
-            # self.AcqResume.set()
+            self.AcqResume.set()
             for i in range(self.AFFramesToAvg):
                 self.autofocusRep(i) #Actual autofocus routing.
 
