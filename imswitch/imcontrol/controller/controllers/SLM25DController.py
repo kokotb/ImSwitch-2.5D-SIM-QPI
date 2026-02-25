@@ -1989,7 +1989,7 @@ class SLM25DController(ImConWidgetController):
 
     def sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrix):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
-        return (2. * np.pi * d / lam) * (
+        return - (2. * np.pi * d / lam) * (
         n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
         n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
     )

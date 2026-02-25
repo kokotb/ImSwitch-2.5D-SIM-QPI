@@ -1490,6 +1490,7 @@ class SIMController(ImConWidgetController):
 
                         self.lastImgDict = dict()
 
+                        # time.sleep(2)
 
                         with ThreadPoolExecutor(max_workers=5) as executor:
                             if (self.isTiling or self.isScanROI):
@@ -1559,7 +1560,8 @@ class SIMController(ImConWidgetController):
 
         if self.depthCorrectionChecked:
             # chatGPT suggested this method of waiting===============================
-            loop = QEventLoop() ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
+            loop = QEventLoop()
+            print(loop) ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
 
             def done_slot():
                 loop.quit()
