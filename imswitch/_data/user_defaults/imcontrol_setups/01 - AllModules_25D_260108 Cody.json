@@ -217,7 +217,7 @@
       "valueRangeMax": 100,
       "valueRangeStep": 2,
       "valueInit": 100,
-      "maxdBmValue": 18.4
+      "maxdBmValue": 18.5
       
       },
   "561AOTF": {
@@ -233,7 +233,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.7
+    "maxdBmValue": 21.8
     },
   "640AOTF": {
     "analogChannel": null,
