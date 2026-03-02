@@ -7,7 +7,6 @@ from qtpy import QtCore, QtGui, QtWidgets
 from vispy.color import Color
 from vispy.scene.visuals import Compound, Line, Markers
 from vispy.visuals.transforms import STTransform
-from ....imcontrol.controller.CommunicationChannel import CommunicationChannel
 
 from .imagetools import minmaxLevels
 
