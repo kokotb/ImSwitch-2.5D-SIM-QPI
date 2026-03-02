@@ -379,6 +379,7 @@ class SLM25DController(ImConWidgetController):
         submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
         self._master.arduinoManager.activate25DWriteOnly()
         self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]]._camera.setPropertyValue('AcquisitionFrameRate', 20.0)
 
         self._widget.pars["AbsPosEditGamma"].blockSignals(True)
         self._widget.pars["AbsPosEditGamma"].setStyleSheet("border: 3px solid green;")
@@ -472,7 +473,7 @@ class SLM25DController(ImConWidgetController):
                     self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                     success = False
                     while not success:
-                        self._master.arduinoManager.trigger25DWriteOnly("T") # T = slow mode, F = fast mode (exposure time)
+                        self._master.arduinoManager.trigger25DWriteOnly("F") # T = slow mode, F = fast mode (exposure time)
                         success = self.waitingForBuffers()
                     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
@@ -484,6 +485,7 @@ class SLM25DController(ImConWidgetController):
                     elif (key == self._widget.sideSelectCombo.currentText() + " Center-X"):
                         Com_frames.append(self.center_metric(beadImgAnalysis, threshold=0.7)[0])
 
+                print("Num of frames per parameter = " + str(len(Com_frames)))
                 avg = sum(Com_frames) / len(Com_frames)
                 score = sum((Com_frames - avg)**2)
                 scores.append(score)  
@@ -1979,7 +1981,7 @@ class SLM25DController(ImConWidgetController):
             lam = float(processorHandle.rstrip('F')) / 1000
 
         # insert refractive indexes here !!!
-        self.calcsampleDepthCorrectionMask(lam, zPos, n2=1.5, n1=1, NA=0.8)
+        self.calcsampleDepthCorrectionMask(lam, zPos, n2=1.525, n1=1.47, NA=0.8)
         self.combineAndProject()
         time.sleep(0.1)
         self._commChannel.sigDepthMaskDone.emit()
@@ -1987,9 +1989,11 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def sampleDepthCorrectionFunction(self, lam, d, n2, n1, NA, rhomatrix):
+    def sampleDepthCorrectionFunction(self, lam, zPos, n2, n1, NA, rhomatrix):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
-        return - (2. * np.pi * d / lam) * (
+        d = 205.5 - zPos
+        print(d) # added factor for rescaling mask, no idea if it is correct !!!
+        return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
         n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
         n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
     )
