@@ -44,7 +44,7 @@ class SLM4DDManager(SignalInterface):
         }
 
         path = 'dlls\\SLM4DD\\lib\\R11CommLib-1.9-x64.dll'
-        port = 'COM6'
+        port = 'COM4'
         self.slmDLL = self.getSLMDLL(path)
         self.openSLM(port)
 

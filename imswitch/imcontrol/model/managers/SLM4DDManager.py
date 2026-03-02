@@ -6,7 +6,7 @@ from scipy import signal as sg
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
 
-
+import time
 
 from ctypes import *
 import ctypes
@@ -66,9 +66,22 @@ class SLM4DDManager(SignalInterface):
     # ================================================================================
 
     def currentROOnTime(self):
-        currentROName = self.getROName(self.getRunningOrder())[0].decode()
-        currentROOnTime = currentROName.split("ms")[0]
-        return currentROOnTime
+        success = False
+        i = 0
+        while (not success) and (i < 10):
+            currentROName = self.getROName(self.getRunningOrder())[0].decode()
+            if currentROName != '':
+                success = True
+            else:
+                print('SLM not communicating, retrying....')
+                time.sleep(0.25)
+                i += 1
+        if success == True:
+            currentROOnTime = currentROName.split("ms")[0]
+            # print(currentROOnTime)
+            return currentROOnTime
+        else:       
+            print('Failed to communicate with SLM 10 times.')
 
     def openSLM(self, port):
         #Port input in form of COMX
