@@ -12,6 +12,7 @@ from ctypes import *
 import ctypes
 from pathlib import Path
 import logging
+import re
 
 
 
@@ -44,19 +45,11 @@ class SLM4DDManager(SignalInterface):
         }
 
         path = SIMSLMInfo.path
-        port = SIMSLMInfo.port
-        self.slmDLL = self.getSLMDLL(path)
-        self.openSLM(port)
+        guid = b'54ED7AC9-CC23-4165-BE32-79016BAFB950' #device specific
+        self.slmDLL = ctypes.WinDLL(path)
+        self.openWinUSB(guid)
 
         self.initialROOnTime = self.currentROOnTime()
-
-    # Opens SLMDLL library ===========================================================
-    def getSLMDLL(self, path):
-        slmDLL = WinDLL(path)
-        return slmDLL
-
-    # ==============================================================================
-
 
 
     # ================================================================================
@@ -64,44 +57,55 @@ class SLM4DDManager(SignalInterface):
     #  where return string informs user about success of the operation and identifies
     #  type of error if neccessary.
     # ================================================================================
+    def openWinUSB(self, guid):
+        class Dev(ctypes.Structure):
+            pass
+        DevPtr = ctypes.POINTER(Dev)
 
-    def currentROOnTime(self):
-        success = False
-        i = 0
-        while (not success) and (i < 10):
-            currentROName = self.getROName(self.getRunningOrder())[0].decode()
-            if currentROName != '':
-                success = True
-            else:
-                print('SLM not communicating, retrying....')
-                time.sleep(0.25)
-                i += 1
-        if success == True:
-            currentROOnTime = currentROName.split("ms")[0]
-            # print(currentROOnTime)
-            return currentROOnTime
-        else:       
-            print('Failed to communicate with SLM 10 times.')
+        Dev._fields_ = [
+            ("devicePath", ctypes.c_char_p),
+            ("serialNumber", ctypes.c_char_p),
+            ("next", DevPtr),
+        ]
+        self.slmDLL.FDD_DevEnumerateWinUSB.argtypes = [
+        ctypes.c_char_p,              # guid
+        ctypes.POINTER(DevPtr),       # DevPtr *
+        ctypes.POINTER(ctypes.c_uint16)  # uint16_t *
+            ]
 
-    def openSLM(self, port):
-        #Port input in form of COMX
-        openComPort = self.slmDLL.FDD_DevOpenComPort
-        portb = port.encode('utf-8')
-        ret = openComPort(portb,250,115200,True)
+        self.slmDLL.FDD_DevEnumerateWinUSB.restype = ctypes.c_int  # FDD_RESULT
 
+        # guid = b'54ED7AC9-CC23-4165-BE32-79016BAFB950'
+
+        dev_list = DevPtr()          # will receive pointer
+        dev_count = ctypes.c_uint16()
+
+        result = self.slmDLL.FDD_DevEnumerateWinUSB(
+            guid,
+            ctypes.byref(dev_list),
+            ctypes.byref(dev_count)
+        )
+
+        path = dev_list.contents.devicePath
+        trimmed_path = re.match(r".*?\{.*?\}", path.decode()).group(0).encode() #removes ending of returned byte string
+        ret = self.slmDLL.FDD_DevOpenWinUSB(trimmed_path, 2000)
         if ret == 0:
             retBool = True
             retStr = 'SLM connected? ' + str(retBool)
-            self._logger.info(retStr)
-            
+
         else:
             retBool = False
             retStr = 'SLM connected? ' + str(retBool) + " : " + self.ERROR_Dictionary[ret]
-            self._logger.error(retStr)
+
             return
-        return retBool, retStr
+        print(retStr)
 
+    def currentROOnTime(self):
 
+            currentROName = self.getROName(self.getRunningOrder())[0].decode()
+            currentROOnTime = currentROName.split("ms")[0]
+            return currentROOnTime
+    
     def closeSLM(self):
         closeComPort = self.slmDLL.FDD_DevClose
         ret = closeComPort()
@@ -296,27 +300,6 @@ class SLM4DDManager(SignalInterface):
         return RONameDict
 
 
-
-
-
-
-
-    # openSLMBool, openSLMStr = openSLM(slmDLL,'COM4')
-    # print(openSLMStr)
-    # getROVal,getROStr = getRunningOrder(slmDLL)
-    # setROBool, setROStr = setRunningOrder(slmDLL, 5)
-
-    # activationState = getActState(slmDLL)
-    # print(activationState)
-
-    # closeBool, closeSLMStr = closeSLM(slmDLL)
-
-
-    # print(getROStr)
-    # print(setROBool)
-    # print(setROStr)
-
-    # print(closeSLMStr)
 
 
     
