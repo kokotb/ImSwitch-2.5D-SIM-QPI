@@ -1,25 +1,24 @@
 { "SLMSIM":{
-  "path": "dlls\\SLM4DD\\lib\\R4CommLib-1.7-x64.dll",
-  "port": "COM4",
-  "width":1080,
-  "height":1920,
-  "pixelSize":13.62,
+  "path": "dlls\\SLM4DD\\lib\\R11CommLib-1.9-x64.dll",
+  "width":2048,
+  "height":2048,
+  "pixelSize":8.2,
   "managerName": "SLM4DDManager",
   "mock": false
 
 },
 
 "SLM25D":{
+  "mock": true,
   "width":1080,
   "height":1920,
-  "mock": true,
   "Gamma": 0.5, 
   "Psi": 0.5,
   "LeftCenterX": 440,
   "LeftCenterY": 480, 
   "RightCenterX":1440,
   "RightCenterY": 520,
-  "BeamDiameter": 6.5,
+  "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
@@ -54,8 +53,8 @@
   }
 },
   "sim": {
-    "width": 1920,
-    "height": 1080,
+    "width": 2048,
+    "height": 2048,
     "ReconWL1": 490,
     "ReconWL2": 573,
     "ReconWL3": 678,
@@ -88,8 +87,8 @@
         "ExposureTime": 15000.0
       },
       "ROI":{  
-        "OffsetX": 2512,
-        "OffsetY": 2090,
+        "OffsetX": 2600,
+        "OffsetY": 1570,
         "Width": 512,
         "Height": 512
 
@@ -114,8 +113,8 @@
       },
       "ROI":{
  
-        "OffsetX": 1890,
-        "OffsetY": 2550,
+        "OffsetX": 2570,
+        "OffsetY": 2020,
         "Width": 512,
         "Height": 512
       }
@@ -141,8 +140,8 @@
           "ExposureTime": 15000.0
         },
         "ROI":{
-          "OffsetX": 2168,
-          "OffsetY": 2504,
+          "OffsetX": 2100,
+          "OffsetY": 2030,
           "Width": 512,
           "Height": 512
         }
@@ -221,8 +220,8 @@
       "valueRangeMin": 0,
       "valueRangeMax": 100,
       "valueRangeStep": 2,
-      "valueInit": 19,
-      "maxdBmValue": 17.6
+      "valueInit": 100,
+      "maxdBmValue": 18.5
       
       },
   "561AOTF": {
@@ -238,7 +237,7 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-    "maxdBmValue": 20.1
+    "maxdBmValue": 21.8
     },
   "640AOTF": {
     "analogChannel": null,
@@ -252,10 +251,8 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-
-    "valueInit": 15,
-
-    "maxdBmValue": 21.8
+    "valueInit": 100,
+    "maxdBmValue": 22.1
     }
     
 },

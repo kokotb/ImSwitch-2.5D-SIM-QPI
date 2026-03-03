@@ -1098,8 +1098,8 @@ class SIMController(ImConWidgetController):
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure time to {exposure_limit/1000:.2f} ms on {detector.name}")
         
         #Calc Acq. Frame Rate
-        # frame_rate = 1000000/exposure_limit
-        frame_rate = 49.0
+        frame_rate = 1000000/exposure_limit
+        # frame_rate = 49.0
 
         # Set cam parameters
         dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}

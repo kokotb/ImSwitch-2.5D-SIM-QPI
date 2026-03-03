@@ -1,8 +1,8 @@
 { "SLMSIM":{
   "path": "dlls\\SLM4DD\\lib\\R11CommLib-1.9-x64.dll",
-  "width":1080,
-  "height":1920,
-  "pixelSize":13.62,
+  "width":2048,
+  "height":2048,
+  "pixelSize":8.2,
   "managerName": "SLM4DDManager",
   "mock": false
 
@@ -53,8 +53,8 @@
   }
 },
   "sim": {
-    "width": 1920,
-    "height": 1080,
+    "width": 2048,
+    "height": 2048,
     "ReconWL1": 523,
     "ReconWL2": 573,
     "ReconWL3": 678,
@@ -247,7 +247,6 @@
     "valueRangeMax": 100,
     "valueRangeStep": 2,
     "valueInit": 100,
-
     "maxdBmValue": 22.1
     }
     
