@@ -377,8 +377,6 @@ class SIMslmInfo:
 
     mock: bool
 
-    port: str
-
     width: int
     """ Width of SLM, in pixels. """
 
