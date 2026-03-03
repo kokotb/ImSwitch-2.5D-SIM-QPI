@@ -19,8 +19,8 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
 
-    sigRawStackReceived = Signal(np.ndarray, str)
-    sigRawImgReceived = Signal(np.ndarray, str)
+    sigRawStackReceived = Signal(np.ndarray, str, str)
+    sigRawImgReceived = Signal(np.ndarray, str, str)
     sigSIMProcessorImageComputed = Signal(np.ndarray, str)
     sigWFImageComputed = Signal(np.ndarray, str)
     sigValueChanged = Signal()
@@ -250,7 +250,7 @@ class SIMController(ImConWidgetController):
             zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
-            zList = self.zList
+            zList = self.zScanList()[0]
         # Set running order on SLM
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
@@ -579,7 +579,7 @@ class SIMController(ImConWidgetController):
 
                 
             rawStack = detector._camera.grabFrameSet(self.framesPerDetector) # receive raw image stack
-            self.sigRawStackReceived.emit(rawStack,f"{processor.handle} Raw") # display raw image stack
+            self.sigRawStackReceived.emit(rawStack, f"{processor.handle} Raw", 'SIM') # display raw image stack
             
             # Set sim stack for reconstruction
             processor.setSIMStack(rawStack)
@@ -922,9 +922,9 @@ class SIMController(ImConWidgetController):
         """ Displays the image in the view. """
         self._widget.setSIMImage(im, name=name)
 
-    def displayRawImage(self, im, name):
+    def displayRawImage(self, im, name, source):
         """ Displays the image in the view. """
-        self._widget.setRawImage(im, name)
+        self._widget.setRawImage(im, name, source)
 
     # def saveLastRawImage(self, im , name):
         
@@ -1098,7 +1098,8 @@ class SIMController(ImConWidgetController):
             self._logger.warning(f"Exposure time set > {exposure_limit/1000:.2f} ms (SLM running order limited). Setting exposure time to {exposure_limit/1000:.2f} ms on {detector.name}")
         
         #Calc Acq. Frame Rate
-        frame_rate = 1000000/exposure_limit
+        # frame_rate = 1000000/exposure_limit
+        frame_rate = 49.0
 
         # Set cam parameters
         dic_parameters = {'TriggerOverlap': trigger_overlap, 'TriggerSource':trigger_source, 'TriggerMode':trigger_mode, 'ExposureAuto':exposure_auto, 'ExposureTime':exposure_time, 'AcquisitionFrameRate':frame_rate,'StreamBufferHandlingMode':buffer_mode}
@@ -1639,7 +1640,7 @@ class SIMController(ImConWidgetController):
             with lastImgLock:
                 self.lastImgDict[processor.handle] = rawImg
            
-            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw") # Send image to be displayed in Imswitch window.
+            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw", '25D') # Send image to be displayed in Imswitch window.
 
             processor.stack = rawImg
 

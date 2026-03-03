@@ -136,7 +136,7 @@ class SIMWidget(NapariHybridWidget):
             labelledIm = self.putNameLabel(im, name, 1)
             self.viewer.layers[name].data = labelledIm
     
-    def setRawImage(self, im, name):
+    def setRawImage(self, im, name, source):
         if self.layer is None or name not in self.viewer.layers: #This section of the if statements runs if the layer does not exist yet.
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
@@ -150,7 +150,7 @@ class SIMWidget(NapariHybridWidget):
         else:
             copiedIm = im.copy() #This copy operation probably not needed. Have not tested.
             labelledIm = self.putNameLabel(copiedIm, name, 0.5)
-            if (len(self.viewer.layers[name].data.shape) == 2) or (self.viewer.layers[name].data.shape[0]== 1): #This if statement determines whether to display regular image or image with selection box on it.
+            if (len(self.viewer.layers[name].data.shape) == 2) or (self.viewer.layers[name].data.shape[0]== 1) or source == 'SIM': #This if statement determines whether to display regular image or image with selection box on it.
                 self.viewer.layers[name].data = labelledIm
             elif (len(self.viewer.layers[name].data.shape) == 3) or (self.viewer.layers[name].data.shape[0]== 2):
                 combo = np.where(self.viewer.layers[name].data[1] != 0, self.viewer.layers[name].data[1], labelledIm)
