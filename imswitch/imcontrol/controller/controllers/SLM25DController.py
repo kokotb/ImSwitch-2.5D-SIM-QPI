@@ -1991,7 +1991,8 @@ class SLM25DController(ImConWidgetController):
 
     def sampleDepthCorrectionFunction(self, lam, zPos, n2, n1, NA, rhomatrix):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
-        d = 205.5 - zPos
+        edgeOfTheSample = self._widget.edgeOfTheSample.value()
+        d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
         return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
         n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -

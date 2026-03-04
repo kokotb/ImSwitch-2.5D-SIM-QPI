@@ -235,6 +235,12 @@ class SLM25DWidget(Widget):
         # SETTING PHASE MASK PARAMETERS =========================================================================
         self.row = 0
 
+        self.edgeOfTheSample = QtWidgets.QDoubleSpinBox()
+        self.edgeOfTheSample.setRange(-100., 400.)
+        self.edgeOfTheSample.setSingleStep(0.1)
+        self.edgeOfTheSample.setDecimals(1)
+        self.topLayout.addWidget(self.edgeOfTheSample, 1, 5)
+
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
         self.label25D.setTextFormat(QtCore.Qt.RichText)
