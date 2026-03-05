@@ -7,6 +7,7 @@ from .basewidgets import Widget
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QLocale
 from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
+from PyQt5.QtCore import QTimer
 
 
 
@@ -293,7 +294,7 @@ class SLM25DWidget(Widget):
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
 
             elif self.paramConstraintDict25DPos[name][0] == int: #All center/position fields.
-                self.pars['AbsPosEdit' + name].editingFinished.connect(self.sigMaskCenterChanged.emit)
+                self.pars['AbsPosEdit' + name].valueChanged.connect(self.delayedUpdate)
 
 
         self.maskScaleNumberLabel = QtWidgets.QLabel("Mask Scale")
@@ -332,6 +333,16 @@ class SLM25DWidget(Widget):
         self.sigReset25D.connect(self.reset25DToDefault)
 
         self.connect25DSharedAttrSigs()
+
+        self.delayTimer = QTimer()
+        self.delayTimer.setInterval(1000)  # 1 second
+        self.delayTimer.setSingleShot(True)
+        self.delayTimer.timeout.connect(self.sigMaskCenterChanged.emit)
+
+
+    def delayedUpdate(self):
+        self.delayTimer.start()
+        
 
     def zernikeLocked(self, value):
         
