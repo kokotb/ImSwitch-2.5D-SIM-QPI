@@ -76,7 +76,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.start25D.clicked.connect(self._commChannel.sig25DAcqToggled.emit)
         self._widget.start25D.clicked.connect(self._widget.toggle25D)
 
-        self._widget.pars['AbsPosEditBeam Diameter'].editingFinished.connect(self.updateAll)
+        # self._widget.pars['AbsPosEditBeam Diameter'].valueChanged.connect(self.updateAll)
 
 
 

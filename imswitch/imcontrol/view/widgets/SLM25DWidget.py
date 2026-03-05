@@ -292,9 +292,11 @@ class SLM25DWidget(Widget):
             # Connect spinboxes to signals (Beam Diameter connected in Controller)
             if (name == 'Gamma') or (name == 'Psi'):
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.sig25DMaskChanged.emit)
+                # self.pars['AbsPosEdit' + name].valueChanged.connect(lambda: self.pars['AbsPosEdit' + name].lineEdit().deselect())
 
-            elif self.paramConstraintDict25DPos[name][0] == int: #All center/position fields.
+            else: #All center/position fields.
                 self.pars['AbsPosEdit' + name].valueChanged.connect(self.delayedUpdate)
+                # self.pars['AbsPosEdit' + name].valueChanged.connect(lambda: self.pars['AbsPosEdit' + name].lineEdit().deselect())
 
 
         self.maskScaleNumberLabel = QtWidgets.QLabel("Mask Scale")
