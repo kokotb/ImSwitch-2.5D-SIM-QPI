@@ -1994,7 +1994,7 @@ class SLM25DController(ImConWidgetController):
         edgeOfTheSample = self._widget.edgeOfTheSample.value()
         d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
-        return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
+        return  (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
         n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
         n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
     )
