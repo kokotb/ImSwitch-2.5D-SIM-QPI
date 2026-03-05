@@ -12,7 +12,8 @@ from PyQt5.QtGui import QWheelEvent , QDoubleValidator, QIntValidator
 
 class SLM25DWidget(Widget):
     """ Widget containing 2.5D SLM interface. """
-    sig25DParamChanged = QtCore.Signal(str, str, str)
+    #Signals for sending updated parameters to sharedAttrs
+    sig25DParamChanged = QtCore.Signal(str, str, object)
     sigZernParamChanged = QtCore.Signal(str, str, str, float)
 
     #Signals for updating and eventually projecting images
@@ -33,7 +34,7 @@ class SLM25DWidget(Widget):
         #For development only:
         self.maskScaleAvailable = True
 
-        # Parameter bounds that may was to be hand-edited
+        # Parameter bounds that may was to be hand-edited [key: type, bounds, initial value, step accuracy, unit label]
         self.paramConstraintDict25DPos = {'Gamma':(float,(-20,20),1, 0.1, ''), 'Psi': (float,(-10,10),1, 0.1, ''), 'Left Center-X': (int,(1,960),0, 10, 'px'),
             'Left Center-Y': (int,(1,1080),0, 10, 'px'), 'Right Center-X': (int,(960,1920),0, 10, 'px'), 'Right Center-Y': (int,(1,1080),0, 10, 'px'), 'Beam Diameter': (float,(1,9),1, 0.1, 'mm')}
 
@@ -158,10 +159,10 @@ class SLM25DWidget(Widget):
         self.rightZernLabel.setTextFormat(QtCore.Qt.RichText)
         self.grid1.addWidget(self.rightZernLabel, 0, 2)
 
-        for side in self.ZernikeSides:
-            self.row = 0
+        for side in self.ZernikeSides: #Zernike assembly loop
+            row = 0
             for i in range(len(self.ZernikeCoefficientNames)):
-                self.row += 1
+                row += 1
                 name = self.ZernikeCoefficientNames[i]
                 labelNames = f'{self.ZernikeCoefficientNames[i]} - {self.ZernikeAberrationNames[i]}'
                 # self.axisValTypes[name + side] = float
@@ -202,8 +203,8 @@ class SLM25DWidget(Widget):
                 else:
                     print("ERROR: Zernike buttons left - right failed")
                 if side == "Left":
-                    self.grid1.addWidget(self.pars['Label' + name + side], self.row, 0 + index)
-                self.grid1.addWidget(self.pars['AbsPosEdit' + name + side], self.row, 1 + index)
+                    self.grid1.addWidget(self.pars['Label' + name + side], row, 0 + index)
+                self.grid1.addWidget(self.pars['AbsPosEdit' + name + side], row, 1 + index)
 
                 self.pars['AbsPosEdit' + name + side].valueChanged.connect(self.sigZernikeMaskChanged.emit) #Anytime a Zernike value is changed, it sends this signal received by controller
 
@@ -228,23 +229,23 @@ class SLM25DWidget(Widget):
 
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
-        self.row = 0
+        row = 0
 
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
         self.label25D.setTextFormat(QtCore.Qt.RichText)
-        self.grid2.addWidget(self.label25D, self.row, 0)
+        self.grid2.addWidget(self.label25D, row, 0)
 
         self.valLabel = QtWidgets.QLabel(f'<strong>Value</strong>')
         self.valLabel.setEnabled(False)
         self.valLabel.setTextFormat(QtCore.Qt.RichText)
-        self.grid2.addWidget(self.valLabel, self.row, 1)
+        self.grid2.addWidget(self.valLabel, row, 1)
 
         self.paramNames25DPos = list(self.paramConstraintDict25DPos.keys())
 
         self.elementList25D = [] # Used in controller to load 2.5D and position settings from save file.
         for i in range(len(self.paramConstraintDict25DPos)):
-            self.row += 1
+            row += 1
             name = self.paramNames25DPos[i]
             self.unit = self.paramConstraintDict25DPos[name][4]
 
@@ -283,9 +284,9 @@ class SLM25DWidget(Widget):
             self.elementList25D.append(self.pars['AbsPosEdit' + name])
 
             # Add to widget object
-            self.grid2.addWidget(self.pars['Label' + name], self.row, 0)
-            self.grid2.addWidget(self.pars['AbsPosEdit' + name], self.row, 1)
-            self.grid2.addWidget(self.pars['AbsPosUnit' + name], self.row, 2)
+            self.grid2.addWidget(self.pars['Label' + name], row, 0)
+            self.grid2.addWidget(self.pars['AbsPosEdit' + name], row, 1)
+            self.grid2.addWidget(self.pars['AbsPosUnit' + name], row, 2)
 
             # Connect spinboxes to signals (Beam Diameter connected in Controller)
             if (name == 'Gamma') or (name == 'Psi'):
@@ -303,13 +304,13 @@ class SLM25DWidget(Widget):
         self.maskScaleNumber.setValue(255)
         self.maskScaleNumber.setEnabled(False)
         self.maskScaleNumber.setFixedWidth(75)
-        self.grid2.addWidget(self.maskScaleNumberLabel, self.row + 1, 0)
-        self.grid2.addWidget(self.maskScaleNumber, self.row + 1, 1)
+        self.grid2.addWidget(self.maskScaleNumberLabel, row + 1, 0)
+        self.grid2.addWidget(self.maskScaleNumber, row + 1, 1)
 
         self.reset25D = QPushButton("Reset 2.5D")
         self.reset25D.setEnabled(False)
         self.reset25D.clicked.connect(self.sigReset25D.emit)
-        self.grid2.addWidget(self.reset25D, self.row + 2, 0)
+        self.grid2.addWidget(self.reset25D, row + 2, 0)
 
         self.grid2.setRowStretch(self.grid2.rowCount(), 1)
         self.grid2.setColumnStretch(self.grid2.columnCount(), 1)
@@ -434,13 +435,13 @@ class SLM25DWidget(Widget):
             self.stop25D.setEnabled(not bool25D)
 
     def connect25DSharedAttrSigs(self): #Connect changing values with a signal that then sends value and name of changed info to InfoGatheringController for saving and loading settings.
-        self.pars['AbsPosEditGamma'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',str(value)))
-        self.pars['AbsPosEditPsi'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',str(value)))
-        self.pars['AbsPosEditLeft Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',str(value)))
-        self.pars['AbsPosEditLeft Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',str(value)))
-        self.pars['AbsPosEditRight Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',str(value)))
-        self.pars['AbsPosEditRight Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',str(value)))
-        self.pars['AbsPosEditBeam Diameter'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',str(value)))
+        self.pars['AbsPosEditGamma'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',self.pars['AbsPosEditGamma']._type(value)))
+        self.pars['AbsPosEditPsi'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Psi',self.pars['AbsPosEditPsi']._type(value)))
+        self.pars['AbsPosEditLeft Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-X',self.pars['AbsPosEditLeft Center-X']._type(value)))
+        self.pars['AbsPosEditLeft Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Left Center-Y',self.pars['AbsPosEditLeft Center-Y']._type(value)))
+        self.pars['AbsPosEditRight Center-X'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-X',self.pars['AbsPosEditRight Center-X']._type(value)))
+        self.pars['AbsPosEditRight Center-Y'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Right Center-Y',self.pars['AbsPosEditRight Center-Y']._type(value)))
+        self.pars['AbsPosEditBeam Diameter'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Beam Diameter',self.pars['AbsPosEditBeam Diameter']._type(value)))
         #######################
         self.pars['AbsPosEdit(0,0)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Piston',value))
         self.pars['AbsPosEdit(1,-1)' + 'Left'].valueChanged.connect(lambda value: self.sigZernParamChanged.emit('Zernike SLM Parameters','Left','Y-tilt',value))

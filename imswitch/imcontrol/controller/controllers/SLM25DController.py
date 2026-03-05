@@ -1353,6 +1353,7 @@ class SLM25DController(ImConWidgetController):
             with self.blockedSignals(self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]]):
                 self._widget.pars['AbsPosEdit' + self._widget.paramNames25DPos[i]].setValue(dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
                 self._widget.valueDict25D[self._widget.paramNames25DPos[i]] = dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i]))
+                self.valueChanged25D('25D SLM Parameters', self._widget.paramNames25DPos[i], dataType(self._setupInfo.SLM25D.__getattribute__(strippedNames[i])))
 
         strippedNames = []
         self._widget.valueDictZern25D = dict()
