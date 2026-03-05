@@ -948,6 +948,47 @@ class SIMController(ImConWidgetController):
     def loadParams(self):
         pass
 
+    def startSIM(self):
+
+        # start the background thread
+        # for detector in self.detectors:
+        #     detector.stopAcquisition()
+        self._commChannel.sigSIMAcqToggled.emit(True) #enables/disables start / stop 25D button in its controller
+        self._widget.stopSIM_button.setEnabled(True)
+        self._widget.startSIM_button.setEnabled(False)
+        self.SIMActive = True
+        self._commChannel.updateSIMActive(self.SIMActive)
+
+        simParametersFromGUI = self.getSIMParametersFromGUI()
+        #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
+        #sim_parameters["useGPU"] = self.getIsUseGPU()
+        
+
+
+        self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
+        self.simThread.start()
+
+    def start25D(self):
+
+        self._commChannel.stop25DNow = False
+        # self._commChannel.sigSIMAcqToggled.emit(True)
+        # self._commChannel.sig25DAcqToggled.emit(True)
+        self._widget.stopSIM_button.setEnabled(False)
+        self._widget.startSIM_button.setEnabled(False)
+        self._widget.checkbox_record_reconstruction.setEnabled(False)
+        self._widget.checkbox_reconstruction.setEnabled(False)
+        self._widget.checkbox_record_WF.setEnabled(False)
+        self.initSaveWF = self._widget.checkbox_record_WF.isChecked()
+        self.initSaveRecon = self._widget.checkbox_record_reconstruction.isChecked()
+        self._widget.checkbox_record_reconstruction.setCheckState(False)
+        self._widget.checkbox_record_WF.setCheckState(False)
+
+        self.active25D = True
+        self._commChannel.updateSIMActive(self.active25D)
+
+        self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
+        self.thread25D.start()
+
     def stopSIM(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
         self._widget.stopSIM_button.setEnabled(False)
@@ -1012,49 +1053,6 @@ class SIMController(ImConWidgetController):
             self.thread25D.join()
         except:
             pass
-        
-
-
-    def startSIM(self):
-
-        # start the background thread
-        # for detector in self.detectors:
-        #     detector.stopAcquisition()
-        self._commChannel.sigSIMAcqToggled.emit(True) #enables/disables start / stop 25D button in its controller
-        self._widget.stopSIM_button.setEnabled(True)
-        self._widget.startSIM_button.setEnabled(False)
-        self.SIMActive = True
-        self._commChannel.updateSIMActive(self.SIMActive)
-
-        simParametersFromGUI = self.getSIMParametersFromGUI()
-        #sim_parameters["reconstructionMethod"] = self.getReconstructionMethod()
-        #sim_parameters["useGPU"] = self.getIsUseGPU()
-        
-
-
-        self.simThread = threading.Thread(target=self.performSIMExperimentThread, args=(simParametersFromGUI,), daemon=True)
-        self.simThread.start()
-
-    def start25D(self):
-
-        self._commChannel.stop25DNow = False
-        # self._commChannel.sigSIMAcqToggled.emit(True)
-        self._commChannel.sig25DAcqToggled.emit(True)
-        self._widget.stopSIM_button.setEnabled(False)
-        self._widget.startSIM_button.setEnabled(False)
-        self._widget.checkbox_record_reconstruction.setEnabled(False)
-        self._widget.checkbox_reconstruction.setEnabled(False)
-        self._widget.checkbox_record_WF.setEnabled(False)
-        self.initSaveWF = self._widget.checkbox_record_WF.isChecked()
-        self.initSaveRecon = self._widget.checkbox_record_reconstruction.isChecked()
-        self._widget.checkbox_record_reconstruction.setCheckState(False)
-        self._widget.checkbox_record_WF.setCheckState(False)
-
-        self.active25D = True
-        self._commChannel.updateSIMActive(self.active25D)
-
-        self.thread25D = threading.Thread(target=self.perform25DExperimentThread, args=(), daemon=True)
-        self.thread25D.start()
 
 
     def getTilingSettings(self):
