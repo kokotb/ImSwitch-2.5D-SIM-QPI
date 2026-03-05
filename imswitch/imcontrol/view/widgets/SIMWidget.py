@@ -396,15 +396,15 @@ class SIMWidget(NapariHybridWidget):
         # Start/Stop/Calibrate buttons
         self.startSIM_button = QPushButton("Start SIM")
 
-        self.stop_button = QPushButton("Stop")
-        self.stop_button.setCheckable(True)
-        self.stop_button.setEnabled(False)
+        self.stopSIM_button = QPushButton("Stop")
+        self.stopSIM_button.setCheckable(True)
+        self.stopSIM_button.setEnabled(False)
         self.calibrateButton = QPushButton("Calibrate")
         self.saveOneSetButton = QPushButton("Snapshot")
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addWidget(self.startSIM_button)
 
-        button_layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.stopSIM_button)
         button_layout.addWidget(self.calibrateButton)
         # button_layout.addWidget(self.saveOneSetButton)
         # wholeTabVertLayout.addLayout(button_layout)

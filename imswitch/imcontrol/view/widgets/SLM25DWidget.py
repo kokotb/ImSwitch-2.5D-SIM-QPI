@@ -418,8 +418,20 @@ class SLM25DWidget(Widget):
 
 
     def SIMToggled(self, boolSIM): #Only purpose is to disable/enable 2.5D Start button as SIM is turned on/off.
-        self.start25D.setEnabled(not boolSIM)
-        self.stop25D.setEnabled(boolSIM)
+        if boolSIM:
+            self.start25D.setEnabled(not boolSIM)
+            self.stop25D.setEnabled(not boolSIM)
+        else:
+            self.start25D.setEnabled(not boolSIM)
+            self.stop25D.setEnabled(boolSIM)
+
+    def toggled25D(self, bool25D): #Only purpose is to disable/enable 2.5D Start button as SIM is turned on/off.
+        if bool25D:
+            self.start25D.setEnabled(not bool25D)
+            self.stop25D.setEnabled(not bool25D)
+        else:
+            self.start25D.setEnabled(not bool25D)
+            self.stop25D.setEnabled(bool25D)
 
     def connect25DSharedAttrSigs(self): #Connect changing values with a signal that then sends value and name of changed info to InfoGatheringController for saving and loading settings.
         self.pars['AbsPosEditGamma'].valueChanged.connect(lambda value: self.sig25DParamChanged.emit('25D SLM Parameters','Gamma',str(value)))

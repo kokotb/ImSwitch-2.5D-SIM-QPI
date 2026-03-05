@@ -114,7 +114,7 @@ class SIMController(ImConWidgetController):
 
         # Signals connecting SIMWidget actions with functions in SIMController
         self._widget.startSIM_button.clicked.connect(self.startSIM)
-        self._widget.stop_button.clicked.connect(self.stopSIM)
+        self._widget.stopSIM_button.clicked.connect(self.stopSIM)
         self._widget.checkbox_record_raw.stateChanged.connect(self.toggleRecording)
         self._widget.checkbox_record_WF.stateChanged.connect(self.toggleRecordWF)
         self._widget.checkbox_record_reconstruction.stateChanged.connect(self.toggleRecordReconstruction)
@@ -373,8 +373,8 @@ class SIMController(ImConWidgetController):
                     time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
 
-                    if self._widget.stop_button.isChecked(): #allows exit of the loop
-                        self._widget.stop_button.setChecked(False)
+                    if self._widget.stopSIM_button.isChecked(): #allows exit of the loop
+                        self._widget.stopSIM_button.setChecked(False)
                         self.stopSIM()
                         return
                     
@@ -462,9 +462,9 @@ class SIMController(ImConWidgetController):
                             for processor in self.activeProcessors:
                                     executor.submit(self.mainSIMLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock) 
 
-                        if self._widget.stop_button.isChecked(): #allows exit of SIM loops once per cycle
+                        if self._widget.stopSIM_button.isChecked(): #allows exit of SIM loops once per cycle
                             # self.stopSIM()
-                            self._widget.stop_button.setChecked(False)
+                            self._widget.stopSIM_button.setChecked(False)
                             return
 
                         self.numAllFrames += 1
@@ -950,7 +950,7 @@ class SIMController(ImConWidgetController):
 
     def stopSIM(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
-        self._widget.stop_button.setEnabled(False)
+        self._widget.stopSIM_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
         self.SIMActive = False
         self._commChannel.updateSIMActive(self.SIMActive)
@@ -973,7 +973,7 @@ class SIMController(ImConWidgetController):
 
     def stop25D(self):
         self._commChannel.sigSIMAcqToggled.emit(False)
-        self._widget.stop_button.setEnabled(False)
+        self._widget.stopSIM_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(True)
         self._widget.checkbox_reconstruction.setEnabled(True)
 
@@ -1020,8 +1020,8 @@ class SIMController(ImConWidgetController):
         # start the background thread
         # for detector in self.detectors:
         #     detector.stopAcquisition()
-        self._commChannel.sigSIMAcqToggled.emit(True)
-        self._widget.stop_button.setEnabled(True)
+        self._commChannel.sigSIMAcqToggled.emit(True) #enables/disables start / stop 25D button in its controller
+        self._widget.stopSIM_button.setEnabled(True)
         self._widget.startSIM_button.setEnabled(False)
         self.SIMActive = True
         self._commChannel.updateSIMActive(self.SIMActive)
@@ -1038,8 +1038,9 @@ class SIMController(ImConWidgetController):
     def start25D(self):
 
         self._commChannel.stop25DNow = False
-        self._commChannel.sigSIMAcqToggled.emit(True)
-        self._widget.stop_button.setEnabled(False)
+        # self._commChannel.sigSIMAcqToggled.emit(True)
+        self._commChannel.sig25DAcqToggled.emit(True)
+        self._widget.stopSIM_button.setEnabled(False)
         self._widget.startSIM_button.setEnabled(False)
         self._widget.checkbox_record_reconstruction.setEnabled(False)
         self._widget.checkbox_reconstruction.setEnabled(False)
@@ -1529,7 +1530,7 @@ class SIMController(ImConWidgetController):
                         
 
                         if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
-                            self._widget.stop_button.setChecked(False)
+                            self._widget.stopSIM_button.setChecked(False)
                             self.stop25D()
                             return
 
