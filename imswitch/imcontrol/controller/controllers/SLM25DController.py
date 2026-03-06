@@ -2001,6 +2001,10 @@ class SLM25DController(ImConWidgetController):
             n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
         )
         else:
+        #     return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
+        #     n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
+        #     n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
+        # )
             return rhomatrix * 0.
         
     def calcsampleDepthCorrectionMask(self, lam, d, n1, NA):
