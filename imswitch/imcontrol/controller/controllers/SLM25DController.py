@@ -1995,7 +1995,6 @@ class SLM25DController(ImConWidgetController):
         n2 = self._widget.refIndexOfTheSample.value()
         d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
-<<<<<<< HEAD
         if d > 0:
             return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
             n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
@@ -2005,14 +2004,6 @@ class SLM25DController(ImConWidgetController):
             return rhomatrix * 0.
         
     def calcsampleDepthCorrectionMask(self, lam, d, n1, NA):
-=======
-        return  (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
-        n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
-        n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
-    )
-    
-    def calcsampleDepthCorrectionMask(self, lam, d, n2, n1, NA):
->>>>>>> f8849a188bf9e9fa5504526910fcac849d9e0fce
         parameters = self.getAll25DParams()
 
         rho = parameters["Beam Diameter"] #Current value
