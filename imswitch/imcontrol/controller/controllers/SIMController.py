@@ -1418,8 +1418,8 @@ class SIMController(ImConWidgetController):
                 if self.lastROIIndex != self.roiIter:
                     print(f'ROI changed')
                     self.AFTrigger.set()
+                    print('Main acq paused for AF\n')
                     self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                    print('Main acq paused for AF)')
                     self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                 self.lastROIIndex = self.roiIter
 
@@ -1447,8 +1447,9 @@ class SIMController(ImConWidgetController):
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
                     if AFXDiff > 600 or AFYDiff > 600:
                         self.AFTrigger.set()
+                        print('Main acq paused for AF\n')
                         self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                        print('Main acq paused for AF)')
+
                         self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
 
                     #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
@@ -1576,8 +1577,8 @@ class SIMController(ImConWidgetController):
             print(f'Time since last AF: {AFElapsed}')
             if AFElapsed > 10:
                 self.AFTrigger.set()
+                print('Main acq paused for AF\n')
                 self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                print('Main acq paused for AF)')
                 self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
 
 
@@ -1696,33 +1697,34 @@ class SIMController(ImConWidgetController):
             if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
                 break
             self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
-            self.AcqResume.set()
             for i in range(self.AFFramesToAvg):
-                self.autofocusRep(i) #Actual autofocus routing.
+                self.autofocusRep(i) #Actual autofocus routine.
+            self.AcqResume.set()
+
 
     def autofocusRep(self, repNumber):
 
-        print('AF Working...')
+        print(f'AF firing rep {repNumber}')
         if repNumber == 0:
             AFScores = []
 
-        initRegScore = self._commChannel.initRegScore
-        img = self.AFCam.grabFrameOnly()
-        currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
-        AFScores.append(currentRegScore)
-        if len(AFScores) == self.AFFramesToAvg:
-            avgScore = sum(AFScores)/len(AFScores)      
-            scoreDiff = avgScore - initRegScore
-            zDiff = self.AFManager.x_slp * scoreDiff
-            if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
-                self.cumZDiff = self.cumZDiff + zDiff
-                currentZ = self.positioner._position['Z']
-                wantedZ = currentZ - zDiff
-                self.positioner.setPosition(wantedZ, 'Z')
-                self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                # self._commChannel.offsetFromInitZ = self.cumZDiff
-                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+        # initRegScore = self._commChannel.initRegScore
+        # img = self.AFCam.grabFrameOnly()
+        # currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
+        # AFScores.append(currentRegScore)
+        # if len(AFScores) == self.AFFramesToAvg:
+        #     avgScore = sum(AFScores)/len(AFScores)      
+        #     scoreDiff = avgScore - initRegScore
+        #     zDiff = self.AFManager.x_slp * scoreDiff
+        #     if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
+        #         self.cumZDiff = self.cumZDiff + zDiff
+        #         currentZ = self.positioner._position['Z']
+        #         wantedZ = currentZ - zDiff
+        #         self.positioner.setPosition(wantedZ, 'Z')
+        #         self._commChannel.sigUpdateZPosition.emit('Z','Z')
+        #         # self._commChannel.offsetFromInitZ = self.cumZDiff
+        #         self._commChannel.sigSendZDrift.emit(self.cumZDiff)
+        #         self._logger.warning(f'Total Z drift: {self.cumZDiff}')
 
 
         self.lastAFFire = time.time() # Records last time AF was fired to help with time based firing.
