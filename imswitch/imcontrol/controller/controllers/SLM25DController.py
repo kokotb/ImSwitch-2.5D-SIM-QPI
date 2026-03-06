@@ -1981,7 +1981,7 @@ class SLM25DController(ImConWidgetController):
             lam = float(processorHandle.rstrip('F')) / 1000
 
         # insert refractive indexes here !!!
-        self.calcsampleDepthCorrectionMask(lam, zPos, n2=1.525, n1=1.47, NA=0.8)
+        self.calcsampleDepthCorrectionMask(lam, zPos, n1=1.525, NA=0.8)
         self.combineAndProject()
         time.sleep(0.1)
         self._commChannel.sigDepthMaskDone.emit()
@@ -1989,17 +1989,21 @@ class SLM25DController(ImConWidgetController):
 
 
 
-    def sampleDepthCorrectionFunction(self, lam, zPos, n2, n1, NA, rhomatrix):
+    def sampleDepthCorrectionFunction(self, lam, zPos, n1, NA, rhomatrix):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
         edgeOfTheSample = self._widget.edgeOfTheSample.value()
+        n2 = self._widget.refIndexOfTheSample.value()
         d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
-        return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
-        n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
-        n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
-    )
-    
-    def calcsampleDepthCorrectionMask(self, lam, d, n2, n1, NA):
+        if d > 0:
+            return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
+            n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
+            n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
+        )
+        else:
+            return rhomatrix * 0.
+        
+    def calcsampleDepthCorrectionMask(self, lam, d, n1, NA):
         parameters = self.getAll25DParams()
 
         rho = parameters["Beam Diameter"] #Current value
@@ -2026,8 +2030,8 @@ class SLM25DController(ImConWidgetController):
         #n2, n1 = 1.5, 1.01
         #NA = 0.8
 
-        self.depthCorrectionMaskLeft = self.sampleDepthCorrectionFunction(lam, d, n2, n1, NA, rhomatrixleft)
-        self.depthCorrectionMaskRight = self.sampleDepthCorrectionFunction(lam, d, n2, n1, NA, rhomatrixright)
+        self.depthCorrectionMaskLeft = self.sampleDepthCorrectionFunction(lam, d, n1, NA, rhomatrixleft)
+        self.depthCorrectionMaskRight = self.sampleDepthCorrectionFunction(lam, d, n1, NA, rhomatrixright)
 
 
     def phase_function_fast(self, gamma, psi, rhomatrix):

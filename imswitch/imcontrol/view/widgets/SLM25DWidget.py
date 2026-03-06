@@ -241,6 +241,12 @@ class SLM25DWidget(Widget):
         self.edgeOfTheSample.setDecimals(1)
         self.topLayout.addWidget(self.edgeOfTheSample, 1, 5)
 
+        self.refIndexOfTheSample = QtWidgets.QDoubleSpinBox()
+        self.refIndexOfTheSample.setRange(1., 2.)
+        self.refIndexOfTheSample.setSingleStep(0.01)
+        self.refIndexOfTheSample.setDecimals(2)
+        self.topLayout.addWidget(self.refIndexOfTheSample, 2, 5)
+
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
         self.label25D.setTextFormat(QtCore.Qt.RichText)
