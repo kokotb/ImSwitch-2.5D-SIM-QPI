@@ -199,13 +199,16 @@ class SIMController(ImConWidgetController):
     def getOrigins(self):
         roiList = self._commChannel.sharedAttrs[('ROI List','List')]
         originList = []
+        roiZList = []
         for i in range(len(roiList)):
             Xstring, Ystring, Zstring = roiList[i][1].split(' | ')
             X = Xstring.split(':')[1]
             Y = Ystring.split(':')[1]
+            Z = Zstring.split(':')[1]
             posTuple = (X, Y)
             originList.append(posTuple)
-        return originList
+            roiZList.append(Z)
+        return originList, roiZList
 
         
     def performSIMExperimentThread(self, sim_parameters):
@@ -239,7 +242,7 @@ class SIMController(ImConWidgetController):
         if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
             self.isScanROI = True
             try:
-                roiOriginList = self.getOrigins()
+                roiOriginList, roiZList = self.getOrigins()
             except KeyError:
                 self._logger.warning('ROI list is empty.')
         else:
@@ -1042,11 +1045,13 @@ class SIMController(ImConWidgetController):
             self._commChannel.sigUpdateZPosition.emit('Z','Z')
             self.zScanActive = False
 
+        if self._commChannel.autofocusActive:
+            self.AFStop.set() # Request the AF thread to stop
+            self.AFTrigger.set() # Release AF if it is still waiting for a trigger
+            self.AcqResume.set() # Release main acquisition if it is waiting for AF
 
-        self.AFStop.set() # Request the AF thread to stop
-        self.AFTrigger.set() # Release AF if it is still waiting for a trigger
-        self.AcqResume.set() # Release main acquisition if it is waiting for AF
-        self.AFThread.join() # Close the AF thread cleanly.
+            self.AFThread.join() # Close the AF thread cleanly.
+
 
         self._commChannel.updateSIMActive(self.active25D)
         try:
@@ -1272,7 +1277,7 @@ class SIMController(ImConWidgetController):
         if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
             self.isScanROI = True
             try:
-                roiOriginList = self.getOrigins()
+                roiOriginList, roiZList = self.getOrigins()
             except KeyError:
                 self._logger.warning('ROI list is empty.')
         else:
@@ -1379,16 +1384,20 @@ class SIMController(ImConWidgetController):
         self.AFStop = threading.Event()
         self.AcqResume = threading.Event()
         self._commChannel.autofocusActive = False
+        
+        ####Autofocus
+        if (self._commChannel.initRegScore != None) :
+            self.AFMaskLeft = self._commChannel.AFMaskLeft
+            self.AFMaskRight = self._commChannel.AFMaskRight
+            self.autofocusThread()
+            self._logger.info('Autofocus active')
+            self._commChannel.autofocusActive = True    
+        ####
+
         ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
         self.lastROIIndex = 0
         
-        while self.active25D:
-            ####Autofocus
-            # self.loopsToAvgAF = self._commChannel.numLoopsToAvg
-            if (self._commChannel.autofocusActive == False):
-                self.autofocusThread()
-                self._logger.info('Autofocus active')
-                self._commChannel.autofocusActive = True
+        while self.active25D:            
 
             self.roiIter = 0
             
@@ -1415,7 +1424,7 @@ class SIMController(ImConWidgetController):
             ####
 
             while self.roiIter < len(positions):
-                if self.lastROIIndex != self.roiIter:
+                if (self.lastROIIndex != self.roiIter) and self._commChannel.autofocusActive:
                     print(f'ROI changed')
                     self.AFTrigger.set()
                     print('Main acq paused for AF\n')
@@ -1445,7 +1454,7 @@ class SIMController(ImConWidgetController):
 
                     AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
-                    if AFXDiff > 600 or AFYDiff > 600:
+                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
                         self.AFTrigger.set()
                         print('Main acq paused for AF\n')
                         self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
@@ -1574,12 +1583,13 @@ class SIMController(ImConWidgetController):
 
 
             AFElapsed = time.time() - self.lastAFFire
-            print(f'Time since last AF: {AFElapsed}')
-            if AFElapsed > 10:
-                self.AFTrigger.set()
-                print('Main acq paused for AF\n')
-                self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+            if self._commChannel.autofocusActive:
+                print(f'Time since last AF: {AFElapsed}')
+                if (AFElapsed > 10):
+                    self.AFTrigger.set()
+                    print('Main acq paused for AF\n')
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
 
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
@@ -1690,41 +1700,48 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusLoop(self):
-        self.AFFramesToAvg = 5
+        # self.AFFramesToAvg = 5
         while not self.AFStop.is_set():
             print('AF Waiting...')
             self.AFTrigger.wait()  # patiently wait for signal to do an autofocus repetition.
+            self.loopsToAvgAF = self._commChannel.numLoopsToAvg #Get fresh value for number of times to fire per AF correction.
             if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
                 break
             self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
-            for i in range(self.AFFramesToAvg):
+            for i in range(self.loopsToAvgAF):
                 self.autofocusRep(i) #Actual autofocus routine.
             self.AcqResume.set()
 
 
     def autofocusRep(self, repNumber):
-
-        print(f'AF firing rep {repNumber}')
+        AFAdjusted = False
+        print(f'AF firing rep {repNumber + 1}')
         if repNumber == 0:
-            AFScores = []
+            self.AFScores = []
 
-        # initRegScore = self._commChannel.initRegScore
-        # img = self.AFCam.grabFrameOnly()
-        # currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
-        # AFScores.append(currentRegScore)
-        # if len(AFScores) == self.AFFramesToAvg:
-        #     avgScore = sum(AFScores)/len(AFScores)      
-        #     scoreDiff = avgScore - initRegScore
-        #     zDiff = self.AFManager.x_slp * scoreDiff
-        #     if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
-        #         self.cumZDiff = self.cumZDiff + zDiff
-        #         currentZ = self.positioner._position['Z']
-        #         wantedZ = currentZ - zDiff
-        #         self.positioner.setPosition(wantedZ, 'Z')
-        #         self._commChannel.sigUpdateZPosition.emit('Z','Z')
-        #         # self._commChannel.offsetFromInitZ = self.cumZDiff
-        #         self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-        #         self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+        initRegScore = self._commChannel.initRegScore
+        img = self.AFCam.grabFrameOnly()
+        currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
+        self.AFScores.append(currentRegScore)
+        if len(self.AFScores) == self.loopsToAvgAF:
+            avgScore = sum(self.AFScores)/len(self.AFScores)      
+            scoreDiff = avgScore - initRegScore
+            zDiff = self.AFManager.x_slp * scoreDiff
+            if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
+                AFAdjusted = True
+                self.cumZDiff = self.cumZDiff + zDiff
+                currentZ = self.positioner._position['Z']
+                wantedZ = currentZ - zDiff
+                self.positioner.setPosition(wantedZ, 'Z')
+                self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                # self._commChannel.offsetFromInitZ = self.cumZDiff
+                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
+                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
+            # if AFAdjusted:
+            #     img = self.AFCam.grabFrameOnly()
+            #     currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
+            #     print(currentRegScore - initRegScore)
+                
 
 
         self.lastAFFire = time.time() # Records last time AF was fired to help with time based firing.

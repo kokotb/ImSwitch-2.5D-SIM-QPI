@@ -200,16 +200,16 @@ class SetAFWindow(QMainWindow):
         settings_box = QGroupBox("Autofocus Settings")
         settings_layout = QtWidgets.QGridLayout()
         self.numAvgLabel = QLabel("Avg. Bin")
-        self.numAvgTextEdit = QtWidgets.QLineEdit('1')
+        self.numAvgTextEdit = QtWidgets.QLineEdit('5')
         self.validator = QIntValidator(0,100)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.numAvgTextEdit.setValidator(self.validator)
 
         self.thresholdLabel = QLabel("Threshold (/um)")
-        self.thresholdTextEdit = QtWidgets.QLineEdit('0.0')
+        self.thresholdTextEdit = QtWidgets.QLineEdit('0.1')
         self.validator = QDoubleValidator(0.0, 1.0, 1)
         self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        self.numAvgTextEdit.setValidator(self.validator)
+        self.thresholdTextEdit.setValidator(self.validator)
 
 
         row = 0

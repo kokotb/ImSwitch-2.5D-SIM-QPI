@@ -224,11 +224,11 @@ class CommunicationChannel(SignalInterface):
         # self.currentPredZ = None
         # self.initZ = None
         # self.autofocusEnabled = False
-        self.thresholdForAutofocusAction = 0
+        self.thresholdForAutofocusAction = 0.1
         self.autofocusActive = False
         self.AFMaskLeft = None
         self.AFMaskRight = None
-        self.numLoopsToAvg = 1
+        self.numLoopsToAvg = 5
 
 
         #Scatter Cam 
