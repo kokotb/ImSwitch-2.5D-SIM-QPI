@@ -1543,7 +1543,7 @@ class SIMController(ImConWidgetController):
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, zList[z], saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
 
                         # last images are available
 
@@ -1611,7 +1611,7 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-    def main25DLoop(self, processor, errorLock, z, zPos, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
         if self.depthCorrectionChecked:
             # chatGPT suggested this method of waiting===============================
@@ -1622,7 +1622,7 @@ class SIMController(ImConWidgetController):
                 loop.quit()
 
             self._commChannel.sigDepthMaskDone.connect(done_slot)
-            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
+            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, self.positioner._position['Z'])
             loop.exec_()
             # =======================================================================
         else:
