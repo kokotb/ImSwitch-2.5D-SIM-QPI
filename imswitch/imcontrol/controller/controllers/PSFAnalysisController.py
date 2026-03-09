@@ -4,7 +4,7 @@ from imswitch.imcontrol.controller.basecontrollers import ImConWidgetController
 import time
 from imswitch.imcommon.framework import Signal, SignalInterface
 from PyQt5 import QtCore
-
+import threading
 
 class PSFAnalysisController(ImConWidgetController):
     """Linked to InfoGatheringWidget. Needs to be connected to widget to get initialized and connected to signals."""
@@ -14,7 +14,7 @@ class PSFAnalysisController(ImConWidgetController):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
-        self._widget.loadingPopupRecord.recordImages.clicked.connect(self.RecImagesFunc)
+        self._widget.loadingPopupRecord.recordImages.clicked.connect(self.recImagesThread)
         self._widget.loadingPopupRecord.recordPSFdataset.clicked.connect(self.startRecordDatasetFunc)
         self.recordingPSF = False
         self.recordingPSFDataset = False
@@ -59,6 +59,10 @@ class PSFAnalysisController(ImConWidgetController):
             self.psiIndex += 1
             self.RecordPSFforDataset()
 
+    def recImagesThread(self):
+        self.threadRecImages = threading.Thread(target=self.RecImagesFunc, args=(), daemon=True)
+        self.threadRecImages.start()
+
     def RecImagesFunc(self):
         if self._commChannel.simActive:
             self._commChannel.stop25DNow = True
@@ -66,6 +70,7 @@ class PSFAnalysisController(ImConWidgetController):
                 time.sleep(0.01)
 
         self.startRecImagesFunc()
+        self._commChannel.updateSIMActive(True)
         while self._commChannel.simActive == True:
             time.sleep(0.01)
         self.stopRecImagesFunc()

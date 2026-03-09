@@ -706,9 +706,10 @@ class PSFWindowRecord(QMainWindow):
         It measures PSF dimensions AND PLOTS CROSS-SECTION PROFILES"""
         xProfile = self.PSFstack[self.current_indexZ, self.current_indexY, :]
         yProfile = self.PSFstack[self.current_indexZ, :, self.current_indexX]
-        zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+        #zProfile = self.PSFstack[:, self.current_indexY, self.current_indexX]
+        zProfile = self.PSFstack[:, self.current_indexY-1:self.current_indexY+2, self.current_indexX-1:self.current_indexX+2]
 
-        zProfile = self.smoothenPSFProfile(zProfile)
+        zProfile = self.smoothenPSFProfile(zProfile.mean(axis=(1, 2)))
 
         XYpixelSize = float(self.entryXYPixelSize.text())
         ZpixelSize = float(self.entryZPixelSize.text())

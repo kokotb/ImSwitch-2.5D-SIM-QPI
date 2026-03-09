@@ -73,6 +73,10 @@ class SLM25DWidget(Widget):
         self.project25D = QCheckBox('Project 2.5D Mask')
         self.project25D.setChecked(False)
         self.project25D.setEnabled(False)
+        self.projectDepthCorr = QCheckBox('Project Depth Corr')
+        self.projectDepthCorr.setChecked(True)
+        self.projectDepthCorr.setEnabled(False)
+        
 
         #Other buttons at the bottom
         self.beginAZbutton = QPushButton("AutoZernike New")
@@ -113,6 +117,7 @@ class SLM25DWidget(Widget):
         self.topLayout.addWidget(self.activate25DSLM,0,2)
         self.topLayout.addWidget(self.projectZernike,0,3)
         self.topLayout.addWidget(self.project25D,0,4)
+        self.topLayout.addWidget(self.projectDepthCorr,0,5)
         # self.topLayout.addWidget(self.projectCenter,0,5)
         self.topLayout.addWidget(self.slmFrame, 1, 0, 1, 5)
         self.topLayout.setRowMinimumHeight(1, 200)
@@ -231,6 +236,18 @@ class SLM25DWidget(Widget):
 
         # SETTING PHASE MASK PARAMETERS =========================================================================
         row = 0
+
+        self.edgeOfTheSample = QtWidgets.QDoubleSpinBox()
+        self.edgeOfTheSample.setRange(-100., 400.)
+        self.edgeOfTheSample.setSingleStep(0.1)
+        self.edgeOfTheSample.setDecimals(1)
+        self.topLayout.addWidget(self.edgeOfTheSample, 1, 5)
+
+        self.refIndexOfTheSample = QtWidgets.QDoubleSpinBox()
+        self.refIndexOfTheSample.setRange(1., 2.)
+        self.refIndexOfTheSample.setSingleStep(0.01)
+        self.refIndexOfTheSample.setDecimals(2)
+        self.topLayout.addWidget(self.refIndexOfTheSample, 2, 5)
 
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
@@ -386,6 +403,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(False)
         self.projectZernike.setEnabled(False)
         self.project25D.setEnabled(False)
+        self.projectDepthCorr.setEnabled(False)
         self.resetZern.setEnabled(False)
         self.reset25D.setEnabled(False)
         self.loadImgToSLMbutton.setEnabled(False)
@@ -413,6 +431,7 @@ class SLM25DWidget(Widget):
         self.label25D.setEnabled(True)
         self.projectZernike.setEnabled(True)
         self.project25D.setEnabled(True)
+        self.projectDepthCorr.setEnabled(True)
         self.resetZern.setEnabled(True)
         self.reset25D.setEnabled(True)
         self.loadImgToSLMbutton.setEnabled(True)

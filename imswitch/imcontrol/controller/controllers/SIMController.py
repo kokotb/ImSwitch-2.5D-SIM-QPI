@@ -15,6 +15,7 @@ from imswitch.imcommon.framework import Signal
 import statistics
 from qtpy import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtCore import QEventLoop
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -146,6 +147,8 @@ class SIMController(ImConWidgetController):
 
         self._commChannel.sigGetAZFrameCoordsMaskCenter.connect(self.sendFrameCoordsToMaskCenterLoop)
 
+        self._commChannel.sigDepthCorrectionChanged.connect(self.setDepthCorrection)
+
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
 
 
@@ -162,6 +165,7 @@ class SIMController(ImConWidgetController):
         self.AFManager = self._master.autofocusManager
 
         self.recordPSFStackFlag = False
+        self.depthCorrectionChecked = False
 
     def recordPSFStackSetFlag(self):
         self.recordPSFStackFlag = True
@@ -1509,6 +1513,7 @@ class SIMController(ImConWidgetController):
                             else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
                         ####
 
+
                         if self.speed25D == 'fast':
                             self._master.arduinoManager.trigger25DWriteOnly('F') # Send actual trigger to cams.
                         elif self.speed25D == 'slow':
@@ -1532,12 +1537,13 @@ class SIMController(ImConWidgetController):
 
                         self.lastImgDict = dict()
 
+                        # time.sleep(2)
 
                         with ThreadPoolExecutor(max_workers=5) as executor:
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, zList[z], saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
 
                         # last images are available
 
@@ -1605,8 +1611,23 @@ class SIMController(ImConWidgetController):
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
-        
+    def main25DLoop(self, processor, errorLock, z, zPos, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+
+        if self.depthCorrectionChecked:
+            # chatGPT suggested this method of waiting===============================
+            loop = QEventLoop()
+            print(loop) ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
+
+            def done_slot():
+                loop.quit()
+
+            self._commChannel.sigDepthMaskDone.connect(done_slot)
+            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
+            loop.exec_()
+            # =======================================================================
+        else:
+            pass
+
         k = processor.processorIndex
         if self.scatterCam:
             numFluorProcessors = len(self.activeProcessors) - 1
@@ -1797,6 +1818,9 @@ class SIMController(ImConWidgetController):
             if layer._name == 'Shapes':
                 selected_frame = layer.corner_pixels # np.array((z,y,x) top left, (z,y,x) bottom right)
         self._commChannel.sigBeginAlignMaskCenter.emit(selected_frame)
+
+    def setDepthCorrection(self, value):
+        self.depthCorrectionChecked = value
 
 
 
