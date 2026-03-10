@@ -234,7 +234,8 @@ class CommunicationChannel(SignalInterface):
         self.autofocusActive = False
         self.AFMaskLeft = None
         self.AFMaskRight = None
-        self.numLoopsToAvg = 5
+        self.numLoopsToAvg = 10
+        self.AFPeriodInSec = 60
 
 
         #Scatter Cam 

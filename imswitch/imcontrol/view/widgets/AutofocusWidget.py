@@ -126,7 +126,7 @@ class SetAFWindow(QMainWindow):
         self.maskWidth = QtWidgets.QSpinBox()
         self.maskWidth.setMinimum(10)
         self.maskWidth.setMaximum(400)
-        self.maskWidth.setValue(150)
+        self.maskWidth.setValue(300)
 
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(1)
@@ -199,37 +199,40 @@ class SetAFWindow(QMainWindow):
         
         settings_box = QGroupBox("Autofocus Settings")
         settings_layout = QtWidgets.QGridLayout()
+
         self.numAvgLabel = QLabel("Avg. Bin")
-        self.numAvgTextEdit = QtWidgets.QLineEdit('5')
-        self.validator = QIntValidator(0,100)
-        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        self.numAvgTextEdit.setValidator(self.validator)
+        self.numAvg = QtWidgets.QSpinBox()
+        self.numAvg.setMinimum(1)
+        self.numAvg.setMaximum(100)
+        self.numAvg.setValue(10)
 
-        self.thresholdLabel = QLabel("Threshold (/um)")
-        self.thresholdTextEdit = QtWidgets.QLineEdit('0.1')
-        self.validator = QDoubleValidator(0.0, 1.0, 1)
-        self.validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
-        self.thresholdTextEdit.setValidator(self.validator)
+        self.thresholdLabel = QLabel("Action Threshold (/um)")
+        self.AFthreshold = QtWidgets.QDoubleSpinBox()
+        self.AFthreshold.setRange(0.0,1.0)
+        self.AFthreshold.setValue(0.1)
+        self.AFthreshold.setDecimals(2)
+        self.AFthreshold.setSingleStep(0.05)
 
+        self.AFPeriodLabel = QLabel("AF Firing Period (/s)")
+        self.AFPeriod = QtWidgets.QSpinBox()
+        self.AFPeriod.setMinimum(1)
+        self.AFPeriod.setMaximum(21600) #6 hours
+        self.AFPeriod.setValue(60)
 
         row = 0
           
         settings_layout.addWidget(self.numAvgLabel, row , 0)
-        settings_layout.addWidget(self.numAvgTextEdit, row , 1)
+        settings_layout.addWidget(self.numAvg, row , 1)
         settings_layout.addWidget(self.thresholdLabel, row + 1 , 0)
-        settings_layout.addWidget(self.thresholdTextEdit, row + 1 , 1)
+        settings_layout.addWidget(self.AFthreshold, row + 1 , 1)
+        settings_layout.addWidget(self.AFPeriodLabel, row + 2 , 0)
+        settings_layout.addWidget(self.AFPeriod, row + 2 , 1)
 
         settings_box.setLayout(settings_layout)
 
         instructionsAndSettingsLayout.addWidget(settings_box)
 
         textHorizLayout.addLayout(instructionsAndSettingsLayout)
-
-        
-
-
-
-
 
         self.embeddedImage = ClickableImage(blankImage, self)
         buttonAndTextLayout.addLayout(buttonLayout)

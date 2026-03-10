@@ -321,7 +321,7 @@ class SIMController(ImConWidgetController):
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
         self.framesPerDetector = 9
         self.frameCounter = 0
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
+        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
         timeGlobalStart = time.time()
         self.tilingRep = 0
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
@@ -343,7 +343,7 @@ class SIMController(ImConWidgetController):
             detector = processor.detObj
             buffer_size = 20 # Slightly more than double expected. If only set at 9, may miss information when it doesn't work well.
             self.setCamForExperimentSIM(detector, buffer_size, self.expTimeMax)
-        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick)
+        self.exptFolderPath = self.makeExptFolderStr(self.dateTimeStartClick)
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
         self._commChannel.updateActiveDirectory(self.exptFolderPath)
 
@@ -1348,12 +1348,12 @@ class SIMController(ImConWidgetController):
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
         if isTimed: timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
-        totalEndTime = 0
+        self.totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
         self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
-        dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
+        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         timeGlobalStart = time.time()
         # self.AFCounter = 0
         startLoopTime = time.time()
@@ -1381,7 +1381,7 @@ class SIMController(ImConWidgetController):
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
             self.setCamForExperiment25D(processor.detObj)
-        self.exptFolderPath = self.makeExptFolderStr(dateTimeStartClick) # Path of current experiment folder
+        self.exptFolderPath = self.makeExptFolderStr(self.dateTimeStartClick) # Path of current experiment folder
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
         self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
         self.AFTrigger = threading.Event()
@@ -1424,9 +1424,9 @@ class SIMController(ImConWidgetController):
             AFElapsed = time.time() - self.lastAFFire
             if self._commChannel.autofocusActive:
                 print(f'Time since last AF: {AFElapsed}')
-                if (AFElapsed > 300):
+                if (AFElapsed > self._commChannel.AFPeriodInSec):
                     self.AFTrigger.set()
-                    print('Main acq paused for AF\n')
+
                     self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
                     self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                     
@@ -1440,7 +1440,6 @@ class SIMController(ImConWidgetController):
                 if (self.lastROIIndex != self.roiIter) and self._commChannel.autofocusActive:
                     print(f'ROI changed')
                     self.AFTrigger.set()
-                    print('Main acq paused for AF\n')
                     self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
                     self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                 self.lastROIIndex = self.roiIter
@@ -1469,7 +1468,7 @@ class SIMController(ImConWidgetController):
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
                     if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
                         self.AFTrigger.set()
-                        print('Main acq paused for AF\n')
+
                         self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
 
                         self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
@@ -1587,20 +1586,20 @@ class SIMController(ImConWidgetController):
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
 
-                    totalEndTime = time.time()-timeGlobalStart
+                    self.totalEndTime = time.time()-timeGlobalStart
 
                 #### Increment counters.
                 self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
                 self.tilingRep += 1 # Used in filenames of saved files.
                 self.roiIter += 1 # Increment roi index
                 ####
-                self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
+                self._logger.debug(f'Elapsed time (s): {self.totalEndTime:.1f}\n')
 
 
 
 
 
-            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < self.totalEndTime:
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
@@ -1723,22 +1722,23 @@ class SIMController(ImConWidgetController):
         self.AFThread.start()
         
     def autofocusLoop(self):
-        # self.AFFramesToAvg = 5
         while not self.AFStop.is_set():
+            testAgain = True
             print('AF Waiting...')
             self.AFTrigger.wait()  # patiently wait for signal to do an autofocus repetition.
             self.loopsToAvgAF = self._commChannel.numLoopsToAvg #Get fresh value for number of times to fire per AF correction.
             if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
                 break
             self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
-            for i in range(self.loopsToAvgAF):
-                self.autofocusRep(i) #Actual autofocus routine.
+            while testAgain:
+                for i in range(self.loopsToAvgAF):
+                    testAgain = self.autofocusRep(i) #Actual autofocus routine.
             self.AcqResume.set()
 
 
     def autofocusRep(self, repNumber):
-        AFAdjusted = False
-        print(f'AF firing rep {repNumber + 1}')
+        testAgain = False
+        print(f'AF firing...')
         if repNumber == 0:
             self.AFScores = []
 
@@ -1750,8 +1750,7 @@ class SIMController(ImConWidgetController):
             avgScore = sum(self.AFScores)/len(self.AFScores)      
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
-            if abs(zDiff) >= float(self._commChannel.thresholdForAutofocusAction):
-                AFAdjusted = True
+            if abs(zDiff) >= self._commChannel.thresholdForAutofocusAction:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
                 wantedZ = currentZ - zDiff
@@ -1759,19 +1758,20 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigUpdateZPosition.emit('Z','Z')
                 # self._commChannel.offsetFromInitZ = self.cumZDiff
                 self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-                self._logger.warning(f'Total Z drift: {self.cumZDiff}')
-            # if AFAdjusted:
-            #     img = self.AFCam.grabFrameOnly()
-            #     currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
-            #     print(currentRegScore - initRegScore)
-                
-
+                self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
+                testAgain = True
+                with open(f"Autofocus Debug/{self.dateTimeStartClick}_ AFOutput.txt", "a") as f:
+                    f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
+                    
+            else:
+                self._logger.info(f'Autofocus adjustment below threshold: {round(zDiff, 3)} < {self._commChannel.thresholdForAutofocusAction} um')
 
         self.lastAFFire = time.time() # Records last time AF was fired to help with time based firing.
         self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y']) # Records last position AF was fired to help with position based firing.
 
+        return testAgain
+            
   
-   
     def setSharedAttr(self, attrCategory, parameterName, value):
         """Sending attribute to shared attributes
 

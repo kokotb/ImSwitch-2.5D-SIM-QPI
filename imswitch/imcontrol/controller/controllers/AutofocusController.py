@@ -31,8 +31,9 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.acqImgButton.clicked.connect(self.getOneFrameToSet)
         self._widget.AFWindow.resetEstimates.clicked.connect(self.resetEstimates)
         self._widget.AFWindow.resetMask.clicked.connect(self.resetMask)
-        self._widget.AFWindow.numAvgTextEdit.textEdited.connect(self.updateCommChannelValueAvgs)
-        self._widget.AFWindow.thresholdTextEdit.textEdited.connect(self.updateCommChannelValueThresh)
+        self._widget.AFWindow.numAvg.valueChanged.connect(self.updateCommChannelValueAvgs)
+        self._widget.AFWindow.AFthreshold.valueChanged.connect(self.updateCommChannelValueThresh)
+        self._widget.AFWindow.AFPeriod.valueChanged.connect(self.updateCommChannelValuePeriod)
         self._manager = self._master.autofocusManager
         self.zPositioner = self._master.positionersManager._subManagers['Z']
         self.AFCam = self._master.detectorsManager._subManagers['AF Cam']
@@ -47,10 +48,18 @@ class AutofocusController(ImConWidgetController):
         self._widget.AFWindow.embeddedImage.sigUpdateWithMask.connect(self.updateImageWithMask)
 
     def updateCommChannelValueAvgs(self, loops):
+
         self._commChannel.numLoopsToAvg = loops
 
+    def updateCommChannelValuePeriod(self, period):
+
+        self._commChannel.AFPeriodInSec = period
+
+        
     def updateCommChannelValueThresh(self, threshold):
         self._commChannel.thresholdForAutofocusAction = threshold
+
+        
 
 
     def initWidget(self):

@@ -84,7 +84,7 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 19000.0
+        "ExposureTime": 60000.0
       },
       "ROI":{  
         "OffsetX": 2400,
@@ -231,7 +231,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 100,
+    "valueInit": 0,
     "maxdBmValue": 21.8
     },
   "640AOTF": {
@@ -246,7 +246,7 @@
     "valueRangeMin": 0,
     "valueRangeMax": 100,
     "valueRangeStep": 2,
-    "valueInit": 100,
+    "valueInit": 0,
     "maxdBmValue": 22.1
     }
     
