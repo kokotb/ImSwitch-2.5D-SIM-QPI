@@ -1543,7 +1543,7 @@ class SIMController(ImConWidgetController):
                             if (self.isTiling or self.isScanROI):
                                 executor.submit(self.tilingMoveThread)
                             for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, zList[z], saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
 
                         # last images are available
 
@@ -1597,21 +1597,14 @@ class SIMController(ImConWidgetController):
                 self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
 
 
-            # AFElapsed = time.time() - self.lastAFFire
-            # if self._commChannel.autofocusActive:
-            #     print(f'Time since last AF: {AFElapsed}')
-            #     if (AFElapsed > 10):
-            #         self.AFTrigger.set()
-            #         print('Main acq paused for AF\n')
-            #         self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-            #         self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+
 
 
             if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
                 self.stop25D() # Stops system is duration based imaging is selected.
 
 
-    def main25DLoop(self, processor, errorLock, z, zPos, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
 
         if self.depthCorrectionChecked:
             # chatGPT suggested this method of waiting===============================
@@ -1622,7 +1615,7 @@ class SIMController(ImConWidgetController):
                 loop.quit()
 
             self._commChannel.sigDepthMaskDone.connect(done_slot)
-            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, zPos)
+            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, self.positioner._position['Z'])
             loop.exec_()
             # =======================================================================
         else:
