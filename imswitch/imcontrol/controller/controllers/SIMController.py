@@ -33,6 +33,9 @@ class SIMController(ImConWidgetController):
         super().__init__(*args, **kwargs)
         self._logger = initLogger(self)
 
+        #DEBUG
+        self.AFDebug = True
+
         #Setup state variables
         self.isReconstruction = self._widget.checkbox_reconstruction.isChecked()
         self.isRecordRaw = False
@@ -1741,13 +1744,15 @@ class SIMController(ImConWidgetController):
         print(f'AF firing...')
         if repNumber == 0:
             self.AFScores = []
-
+            if self.AFDebug:
+                self.AFImages = []
         initRegScore = self._commChannel.initRegScore
         img = self.AFCam.grabFrameOnly()
+        self.AFImages.append(img)
         currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
         self.AFScores.append(currentRegScore)
         if len(self.AFScores) == self.loopsToAvgAF:
-            avgScore = sum(self.AFScores)/len(self.AFScores)      
+            avgScore = sum(self.AFScores)/len(self.AFScores)
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
             if abs(zDiff) >= self._commChannel.thresholdForAutofocusAction:
@@ -1760,8 +1765,15 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigSendZDrift.emit(self.cumZDiff)
                 self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
                 testAgain = True
-                with open(f"Autofocus Debug/{self.dateTimeStartClick}_ AFOutput.txt", "a") as f:
-                    f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
+                if self.AFDebug:
+                    targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
+                    os.makedirs(targetDir, exist_ok=True) 
+                    with open(f"{targetDir}/AFOutput.txt", "a") as f:
+                        f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
+                    tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
+
+                    
+
                     
             else:
                 self._logger.info(f'Autofocus adjustment below threshold: {round(zDiff, 3)} < {self._commChannel.thresholdForAutofocusAction} um')
