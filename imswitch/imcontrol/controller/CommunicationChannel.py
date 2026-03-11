@@ -194,7 +194,7 @@ class CommunicationChannel(SignalInterface):
 
     sigDepthCorrectionChanged = Signal(bool)
 
-    sig25DPSFReceived = Signal(np.ndarray, str)
+    sig25DPSFReceived = Signal(np.ndarray, str, str)
     # sigRefreshRawImgs = Signal()
 
 

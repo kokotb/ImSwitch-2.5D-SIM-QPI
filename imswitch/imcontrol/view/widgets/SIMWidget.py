@@ -136,7 +136,7 @@ class SIMWidget(NapariHybridWidget):
             labelledIm = self.putNameLabel(im, name, 1)
             self.viewer.layers[name].data = labelledIm
     
-    def setRawImage(self, im, name, source):
+    def setRawImage(self, im, name, source = '25D'):
         if self.layer is None or name not in self.viewer.layers: #This section of the if statements runs if the layer does not exist yet.
             colormap = 'grayclip'
             self.layer = self.viewer.add_image(im, rgb=False, name=name, colormap=colormap, blending='additive')
