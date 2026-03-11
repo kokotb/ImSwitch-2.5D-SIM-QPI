@@ -55,7 +55,7 @@
   "sim": {
     "width": 2048,
     "height": 2048,
-    "ReconWL1": 523,
+    "ReconWL1": 515,
     "ReconWL2": 573,
     "ReconWL3": 678,
     "NA": 0.8,
@@ -63,7 +63,7 @@
     "Alpha": 0.4,
     "Beta": 0.99,
     "w": 0.15,
-    "eta": 0.5,
+    "eta": 0.6,
     "n": 1.0,
     "Magnification": 22.2222222,
     "saveDir": "D:\\SIM_Data\\",
@@ -87,8 +87,8 @@
         "ExposureTime": 60000.0
       },
       "ROI":{  
-        "OffsetX": 2400,
-        "OffsetY": 1262,
+        "OffsetX": 2472,
+        "OffsetY": 1228,
         "Width": 1024,
         "Height": 1024
       } 
@@ -111,8 +111,8 @@
         "ExposureTime": 19000.0
       },
       "ROI":{
-        "OffsetX": 1640,
-        "OffsetY": 2108,
+        "OffsetX": 2056,
+        "OffsetY": 1770,
         "Width": 1024,
         "Height": 1024
       }
@@ -137,8 +137,8 @@
           "ExposureTime": 19000.0
         },
         "ROI":{
-          "OffsetX": 2168,
-          "OffsetY": 1814, 
+          "OffsetX": 1864,
+          "OffsetY": 1672, 
           "Width": 1024,
           "Height": 1024
         }

@@ -48,8 +48,8 @@ class SIMController(ImConWidgetController):
         self.active25D = False
 
      
-        # Only napari implemented as of 12/9/24
-        self.reconstructionMethod = "napari" # or "mcSIM"
+        # # Only napari implemented as of 12/9/24
+        # self.reconstructionMethod = "napari" # or "mcSIM"
 
         #This signal connect needs to run earlier than self.makeSetupInfoDict, so when SIM parameters are filled, it sends it to shared attributes.
         self._widget.sigSIMParamChanged.connect(self.valueChanged)
@@ -1434,7 +1434,7 @@ class SIMController(ImConWidgetController):
                     self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                     
             if not isTimed: # these lines are a hacky way to slow down 2.5D
-                time.sleep(0.04)
+                time.sleep(0.02)
 
             repTimerStart = time.time()
             ####
