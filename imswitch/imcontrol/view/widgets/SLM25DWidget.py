@@ -321,7 +321,7 @@ class SLM25DWidget(Widget):
         self.maskScaleNumber = QtWidgets.QSpinBox()
         self.maskScaleNumber.setRange(0,255)
         self.maskScaleNumber.setSingleStep(1)
-        self.maskScaleNumber.setValue(255)
+        self.maskScaleNumber.setValue(240)
         self.maskScaleNumber.setEnabled(False)
         self.maskScaleNumber.setFixedWidth(75)
         self.grid2.addWidget(self.maskScaleNumberLabel, row + 1, 0)
