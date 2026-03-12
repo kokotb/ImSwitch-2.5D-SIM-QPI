@@ -1426,7 +1426,7 @@ class SIMController(ImConWidgetController):
                     
             AFElapsed = time.time() - self.lastAFFire
             if self._commChannel.autofocusActive:
-                print(f'Time since last AF: {AFElapsed}')
+                # self._logger.info(f'Time since last AF: {AFElapsed}')
                 if (AFElapsed > self._commChannel.AFPeriodInSec):
                     self.AFTrigger.set()
 
@@ -1727,8 +1727,9 @@ class SIMController(ImConWidgetController):
     def autofocusLoop(self):
         while not self.AFStop.is_set():
             testAgain = True
-            print('AF Waiting...')
+            self._logger.info('AF Waiting...')
             self.AFTrigger.wait()  # patiently wait for signal to do an autofocus repetition.
+            self._logger.info('AF firing...')
             self.loopsToAvgAF = self._commChannel.numLoopsToAvg #Get fresh value for number of times to fire per AF correction.
             if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
                 break
@@ -1741,7 +1742,6 @@ class SIMController(ImConWidgetController):
 
     def autofocusRep(self, repNumber):
         testAgain = False
-        print(f'AF firing...')
         if repNumber == 0:
             self.AFScores = []
             if self.AFDebug:
@@ -1761,7 +1761,6 @@ class SIMController(ImConWidgetController):
                 wantedZ = currentZ - zDiff
                 self.positioner.setPosition(wantedZ, 'Z')
                 self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                # self._commChannel.offsetFromInitZ = self.cumZDiff
                 self._commChannel.sigSendZDrift.emit(self.cumZDiff)
                 self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
                 testAgain = True
@@ -1772,7 +1771,7 @@ class SIMController(ImConWidgetController):
                         f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
                     tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
 
-                    
+
 
                     
             else:
@@ -1782,7 +1781,7 @@ class SIMController(ImConWidgetController):
         self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y']) # Records last position AF was fired to help with position based firing.
 
         return testAgain
-            
+
   
     def setSharedAttr(self, attrCategory, parameterName, value):
         """Sending attribute to shared attributes
