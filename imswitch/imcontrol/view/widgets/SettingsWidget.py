@@ -277,8 +277,8 @@ class fovCorrectionImage(QtWidgets.QLabel):
         self._drawCross = True
         self.parentLabel = None
         self.fullPoint = None
-        self.displayW = 900
-        self.displayH = 900
+        self.displayW = 800
+        self.displayH = 800
         self.setFixedSize(self.displayW, self.displayH)
         self.setScaledContents(True)
         self.setMouseTracking(True)
@@ -559,10 +559,10 @@ class FOVCorrectionWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("FOV Correction")
-        self.setFixedSize(2800, 1200)
+        self.setMinimumSize(2600, 1100)
         font = QFont()
-        font.setPointSize(14)
-        self.setFont(font)
+        font.setPointSize(18)
+
 
         self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
         self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
@@ -582,7 +582,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.col1.addWidget(self.blueLabel)
         self.blueImage = fovCorrectionImage(blueImg, parent=self)
         self.col1.addWidget(self.blueImage)
-        # self.col1.addStretch()
+        self.col1.addStretch()
 
         self.col2 = QtWidgets.QVBoxLayout()
         self.greenLabel = QtWidgets.QLabel(f"<strong>561<strong>")
@@ -590,7 +590,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.col2.addWidget(self.greenLabel)
         self.greenImage = fovCorrectionImage(greenImg, parent=self)
         self.col2.addWidget(self.greenImage)
-        # self.col2.addStretch()
+        self.col2.addStretch()
 
         self.col3 = QtWidgets.QVBoxLayout()
         self.redLabel = QtWidgets.QLabel(f"<strong>640<strong>")
@@ -598,7 +598,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.col3.addWidget(self.redLabel)
         self.redImage = fovCorrectionImage(redImg, parent=self)
         self.col3.addWidget(self.redImage)
-        # self.col3.addStretch()
+        self.col3.addStretch()
 
         if showScatter and scatterImg is not None:
             self.col4 = QtWidgets.QVBoxLayout()
@@ -607,10 +607,11 @@ class FOVCorrectionWindow(QMainWindow):
             self.col4.addWidget(self.scatterLabel)
             self.scatterImage = fovCorrectionImage(scatterImg, parent=self)
             self.col4.addWidget(self.scatterImage)
-            # self.col4.addStretch()
+            self.col4.addStretch()
 
 
-
+        font = QFont()
+        font.setPointSize(14)
 
         self.columnsLayout.addLayout(self.col1)
         self.columnsLayout.addLayout(self.col2)
@@ -625,10 +626,10 @@ class FOVCorrectionWindow(QMainWindow):
         self.pointsBox = QtWidgets.QWidget()
         self.pointsBox.setFixedSize(400, 200)
         self.pointsLay = QtWidgets.QVBoxLayout(self.pointsBox)
-        self.pointsLay.setContentsMargins(0, 0, 0, 0)
+        self.pointsLay.setContentsMargins(0, 0, 20, 0)
         self.pointsLay.setSpacing(2)
 
-        self.pointsLabel = QtWidgets.QLabel(f"<strong>Clicked point coordinates</<strong>")
+        self.pointsLabel = QtWidgets.QLabel(f"<strong>Clicked coordinates</<strong>")
         self.pointsLabel.setFont(font)
         self.pointsLay.addWidget(self.pointsLabel)
 
@@ -644,14 +645,14 @@ class FOVCorrectionWindow(QMainWindow):
 
         # roi size box
         self.modeBox = QtWidgets.QWidget()
-        self.modeBox.setFixedSize(200, 90)
+        # self.modeBox.setFixedSize(200, 90)
         self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
         self.modeLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.modeLayout.setContentsMargins(0, 0, 0, 0)
+        self.modeLayout.setContentsMargins(0, 0, 20, 0)
         self.modeLayout.setSpacing(4)
 
 
-        self.roiSizeLabel = QtWidgets.QLabel(f"<strong>ROI (px):<strong>")
+        self.roiSizeLabel = QtWidgets.QLabel(f"<strong>ROI (px)<strong>")
         self.roiSizeLabel.setFont(font)
         # self.roiSizeLabel.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.modeLayout.addWidget(self.roiSizeLabel)
@@ -718,17 +719,18 @@ class FOVCorrectionWindow(QMainWindow):
 
         # crop detectors box
         self.cropBox = QtWidgets.QWidget()
-        self.cropBox.setFixedSize(200, 90)
+        self.cropBox.setMaximumWidth(200)
         self.cropLay = QtWidgets.QVBoxLayout(self.cropBox)
-        self.cropLay.setContentsMargins(0, 0, 0, 0)
-        self.cropLay.setSpacing(4)
+        # self.cropLay.setContentsMargins(0, 0, 0, 0)
+        # self.cropLay.setSpacing(4)
 
         # self.cropLabel = QtWidgets.QLabel(" ")
         # self.cropLay.addWidget(self.cropLabel)
 
-        self.cropButton = QtWidgets.QPushButton("Crop detectors")
+        self.cropButton = QtWidgets.QPushButton("Crop")
+        # self.cropButton.setFixedSize(200, 90)
         self.cropButton.setFont(font)
-        # self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.cropButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.cropLay.addWidget(self.cropButton, 1)
         self.cropLay.addStretch()
 
@@ -738,6 +740,7 @@ class FOVCorrectionWindow(QMainWindow):
 
         self.bottomLayout.addStretch()
         self.mainLayout.addLayout(self.bottomLayout)
+        self.mainLayout.addStretch()
 
 
         self.central_widget = QWidget()

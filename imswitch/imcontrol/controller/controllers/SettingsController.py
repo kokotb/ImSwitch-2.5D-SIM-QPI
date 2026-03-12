@@ -137,7 +137,9 @@ class SettingsController(ImConWidgetController):
         
         
         busy = QtWidgets.QProgressDialog("FOV Correction Window is Opening...", None, 0, 0, self._widget)
-        busy.setCancelButton(None)
+        busy.setWindowTitle('Please wait...')
+        # busy.setCancelButton(None)
+        busy.resize(300, 100)
         busy.show()
         QtWidgets.QApplication.processEvents()
 
