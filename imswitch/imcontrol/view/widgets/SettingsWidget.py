@@ -644,40 +644,70 @@ class FOVCorrectionWindow(QMainWindow):
         self.bottomLayout.addWidget(self.pointsBox)
 
         # roi size box
-        self.modeBox = QtWidgets.QWidget()
-        # self.modeBox.setFixedSize(200, 90)
-        self.modeLayout = QtWidgets.QVBoxLayout(self.modeBox)
-        self.modeLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.modeLayout.setContentsMargins(0, 0, 20, 0)
-        self.modeLayout.setSpacing(4)
+        self.roiSizeWidget = QtWidgets.QWidget()
+        self.roiSizeLayout = QtWidgets.QVBoxLayout(self.roiSizeWidget)
+        self.roiSizeLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.roiSizeLayout.setContentsMargins(0, 0, 20, 0)
+        self.roiSizeLayout.setSpacing(4)
 
-
-        self.roiSizeLabel = QtWidgets.QLabel(f"<strong>ROI (px)<strong>")
+        self.roiSizeLabel = QtWidgets.QLabel("<strong>ROI (px)</strong>")
         self.roiSizeLabel.setFont(font)
-        # self.roiSizeLabel.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.modeLayout.addWidget(self.roiSizeLabel)
+        self.roiSizeLayout.addWidget(self.roiSizeLabel)
 
-        
         self.roiSizeBox = QtWidgets.QComboBox()
         self.roiSizeBox.setFont(font)
-        # self.roiSizeBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         sizes = [128, 256, 512, 768, 1024, 2048, 3072, 4096, 4600]
         for s in sizes:
             self.roiSizeBox.addItem(str(s), s)
-            
+
         self.roiSizeBox.setEditable(True)
         le = self.roiSizeBox.lineEdit()
         le.setFont(font)
         le.setReadOnly(True)
         le.setAlignment(QtCore.Qt.AlignCenter)
         le.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
-        currentDetectorShape = parent.trees[parent.detectorList.currentText().split('(')[1].split(')')[0]].p.param('Image frame').param('Width').value()
+
+        currentDetectorShape = parent.trees[
+            parent.detectorList.currentText().split('(')[1].split(')')[0]
+        ].p.param('Image frame').param('Width').value()
+
         self.roiSizeBox.setCurrentIndex(self.roiSizeBox.findData(currentDetectorShape))
         self.roiSizeBox.currentIndexChanged.connect(self.applyRoiSize)
-        self.modeLayout.addWidget(self.roiSizeBox, 1)
+
+        self.roiSizeLayout.addWidget(self.roiSizeBox, 1)
+        self.roiSizeLayout.addStretch()
+        self.bottomLayout.addWidget(self.roiSizeWidget)
+
+
+        # mode box
+        self.modeWidget = QtWidgets.QWidget()
+        self.modeLayout = QtWidgets.QVBoxLayout(self.modeWidget)
+        self.modeLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.modeLayout.setContentsMargins(0, 0, 20, 0)
+        self.modeLayout.setSpacing(4)
+
+        self.modeLabel = QtWidgets.QLabel("<strong>Mode</strong>")
+        self.modeLabel.setFont(font)
+        self.modeLayout.addWidget(self.modeLabel)
+
+        self.modeBox = QtWidgets.QComboBox()
+        self.modeBox.setFont(font)
+
+        modes = ["SIM", "2.5D"]
+        for m in modes:
+            self.modeBox.addItem(m, m)
+
+        self.modeBox.setEditable(True)
+        le = self.modeBox.lineEdit()
+        le.setFont(font)
+        le.setReadOnly(True)
+        le.setAlignment(QtCore.Qt.AlignCenter)
+        le.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
+
+        self.modeLayout.addWidget(self.modeBox, 1)
         self.modeLayout.addStretch()
-        self.bottomLayout.addWidget(self.modeBox)
+        self.bottomLayout.addWidget(self.modeWidget)
         
         
         # # align box
