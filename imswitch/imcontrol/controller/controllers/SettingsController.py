@@ -318,11 +318,11 @@ class SettingsController(ImConWidgetController):
             if k is None:
                 continue
             detector.crop(x0[k], y0[k], roiSize, roiSize)
-            print(detector.handle, x0[k], y0[k], roiSize, roiSize)
+            # print(detector.handle, x0[k], y0[k], roiSize, roiSize)
 
         if scatterEnabled:
             w.scatterDet.crop(x0["Scatter"], y0["Scatter"], roiSize, roiSize)
-            print("Scatter", x0["Scatter"], y0["Scatter"], roiSize, roiSize)
+            # print("Scatter", x0["Scatter"], y0["Scatter"], roiSize, roiSize)
 
         for detector in self.detectors:
             self.updateParamsFromDetector(detector=detector)
