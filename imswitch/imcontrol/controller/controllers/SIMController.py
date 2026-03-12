@@ -170,53 +170,6 @@ class SIMController(ImConWidgetController):
         self.recordPSFStackFlag = False
         self.depthCorrectionChecked = False
 
-    def recordPSFStackSetFlag(self):
-        self.recordPSFStackFlag = True
-
-    def loadSIMSettings(self, moduleDict):
-        try:
-            loadBool = moduleDict['SIM Parameters']
-        except KeyError:
-            loadBool = 0
-        if loadBool:
-            params = self._commChannel.loadedSettings['SIM Parameters']
-
-            for i in range(len(self._widget.elementListSIM)):
-                if self._widget.elementListSIM[i]._type == 'str':
-                    self._widget.elementListSIM[i].setText(params[self._widget.elementListSIM[i]._name])
-                elif self._widget.elementListSIM[i]._type == 'combostr':
-                    if self._widget.elementListSIM[i]._name == 'SLM Running Order':
-                        try:
-                            self._widget.elementListSIM[i].setCurrentText(params[self._widget.elementListSIM[i]._name])
-                        except:
-                            self._logger.warning('SLM running order could not be set.')
-                            pass #should have a notice that the running order is not available at the moment.
-
-    def loadUserSettings(self, moduleDict):
-        try:
-            loadBool = moduleDict['userDir']
-        except KeyError:
-            loadBool = 0
-        if loadBool:
-            params = self._commChannel.loadedSettings['User Dir Info']
-
-            for i in range(len(self._widget.elementListUser)):
-                self._widget.elementListUser[i].setText(params[self._widget.elementListUser[i]._name])
-
-    def getOrigins(self):
-        roiList = self._commChannel.sharedAttrs[('ROI List','List')]
-        originList = []
-        roiZList = []
-        for i in range(len(roiList)):
-            Xstring, Ystring, Zstring = roiList[i][1].split(' | ')
-            X = Xstring.split(':')[1]
-            Y = Ystring.split(':')[1]
-            Z = Zstring.split(':')[1]
-            posTuple = (X, Y)
-            originList.append(posTuple)
-            roiZList.append(Z)
-        return originList, roiZList
-
         
     def performSIMExperimentThread(self, sim_parameters):
 
@@ -236,7 +189,7 @@ class SIMController(ImConWidgetController):
             if laser.percentPower > 0:
                 poweredLasers.append(str(laser.wavelength)+'F')
         if '488F' in poweredLasers and self.scatterCam:
-            poweredLasers.append(str('Scatter'))
+            poweredLasers.append('Scatter')
         #
         self.getTilingSettings()   #Get the parameters that go into the createXYGridPositionArray function
         ####Set flags for using in logic later.
@@ -638,6 +591,584 @@ class SIMController(ImConWidgetController):
                         self.snapshotSettingsSaved = True
 
             processor.clearStack() #I dont think this needed as processor.stack is overwritten next loop
+
+    def perform25DExperimentThread(self):
+
+        #####DEVELOPMENT#####
+        self.speed25D = self._widget.fastSlow25D.currentText()
+        #####DEVELOPMENT#####
+
+        self._logger.info("2.5D/Epi started")
+        #CTNOTE: Change to dynamic
+        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
+        #Check is scatter cam should be active
+        if self._commChannel.scatterCamActive == 2:
+            self.scatterCam = True
+        else: 
+            self.scatterCam = False
+        # Create list of powered (active) lasers.
+        poweredLasers = []
+        for laser in self.lasers:
+            if laser.percentPower > 0:
+                poweredLasers.append(str(laser.wavelength)+'F')
+        if '488F' in poweredLasers and self.scatterCam:
+            poweredLasers.append('Scatter')
+        #
+        self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
+        ####Set flags for using in logic later.
+        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
+            self.isTiling = True
+        else:
+            self.isTiling = False
+
+        roiOriginList = []
+        if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
+            self.isScanROI = True
+            try:
+                roiOriginList, roiZList = self.getOrigins()
+            except KeyError:
+                self._logger.warning('ROI list is empty.')
+        else:
+            self.isScanROI = False
+
+        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
+            self.zScanActive = False
+            zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
+        elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
+            self.zScanActive = True
+            zList = self.zScanList()[0]
+        #
+
+        #### Set attributes to processors and select only active processors (processors with powered lasers).
+        self.activeProcessors = []
+        for processor in self.processors:
+            for detector in self.detectors: # Associate detector object with processor object.
+                if processor.handle == detector.handle:
+                    processor.detObj = detector
+                    processor.shape = detector._shape
+            if processor.handle in poweredLasers:
+                self.activeProcessors.append(processor)
+
+        if len(self.activeProcessors) == 0:
+            self._logger.error("No active laser/detector combinations. Check if lasers are > 0% power.")
+            self.stop25D()
+            return
+        
+        shapeList = []
+        for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
+            processor.processorIndex = k
+            shapeList.append(processor.shape)
+        if ('Scatter' in poweredLasers):
+            self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
+        ####
+            
+        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
+        
+        setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
+        if len(setShapeList) != 1:
+            self._logger.error("Detector image shapes must be the same.")
+            self.stop25D()
+            return
+        shapeList = list(setShapeList)[0] #Put back into list form to be used to calculate tiling positions.
+        ####
+
+        #### Create XY position array given ROI and tiling settings.
+        self.tileOrigins = []
+        positions = self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
+        for i in range(len(positions)):
+            self.tileOrigins.append(positions[i][0])
+        self.tileOrigin = positions[0][0]
+        if not self.isTiling:
+            positions = self.tileOrigins
+        ####
+        
+
+        #### Flags for state control, constant varables, this that need one time initialization.
+        self.zLength = len(zList)
+        self.numAllFrames = 0 # Number of frames, including dropped frames
+        self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
+        self.frameCounter = 0
+        self.tilingRep = 0
+        isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
+        if isTimed: timingPeriodInSec = self.getPeriodInSec()
+        durationInSec = self.getDurationInSec()
+        self.totalEndTime = 0
+        self.startSettingsSaved = False
+        completeZ = 0
+        self.firstLoop = True
+        self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
+        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
+        timeGlobalStart = time.time()
+        # self.AFCounter = 0
+        startLoopTime = time.time()
+        self.lastAFFire = time.time()
+        self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y'])
+        self.cumZDiff = 0
+        ####
+
+
+        
+
+        # Set autoZern flag to True, if AZ checkbox is checked, create param list ========================================
+        # if self.sharedAttrs[('Zernike SLM Parameters','Both', 'AZEnabled')]=='2':
+        #     autoZern = True
+        #     autoZernRep = 0
+        #     self._commChannel.sigStartAutoZern.emit()
+        #     time.sleep(1.) #CTNOTE: Test floor
+        #     self.listLengthAZTestParams()
+        # else:
+        #     autoZern = False
+        #     autoZernRep = -1
+
+
+
+        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
+        for processor in self.activeProcessors: # Set only active cams
+            self.setCamForExperiment25D(processor.detObj)
+        self.exptFolderPath = self.makeExptFolderStr(self.dateTimeStartClick) # Path of current experiment folder
+        self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
+        self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
+        self.AFTrigger = threading.Event()
+        self.AFStop = threading.Event()
+        self.AcqResume = threading.Event()
+        self._commChannel.autofocusActive = False
+        
+        ####Autofocus
+        if (self._commChannel.initRegScore != None) :
+            self.AFMaskLeft = self._commChannel.AFMaskLeft
+            self.AFMaskRight = self._commChannel.AFMaskRight
+            self.autofocusThread()
+            self._logger.info('Autofocus active')
+            self._commChannel.autofocusActive = True    
+        ####
+
+        ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
+        self.lastROIIndex = 0
+        
+        while self.active25D:            
+
+            self.roiIter = 0
+            
+            #### For timing period. Check every 1/10s if period time is exceeded yet.
+            if self.completeFrameSets == 0 and isTimed:
+                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
+            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
+                repTimer = time.time() - repTimerStart
+                if timingPeriodInSec < 100:
+                    waitTime = timingPeriodInSec / 100
+                else:
+                    waitTime = 1
+                while repTimer < timingPeriodInSec:
+                    time.sleep(waitTime)
+                    repTimer = time.time() - repTimerStart
+                    if self._commChannel.stop25DNow: #allows exit of the loop
+                        self.stop25D()
+                        return
+                    
+            AFElapsed = time.time() - self.lastAFFire
+            if self._commChannel.autofocusActive:
+                # self._logger.info(f'Time since last AF: {AFElapsed}')
+                if (AFElapsed > self._commChannel.AFPeriodInSec):
+                    self.AFTrigger.set()
+
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+                    
+            if not isTimed: # these lines are a hacky way to slow down 2.5D
+                time.sleep(0.02)
+
+            repTimerStart = time.time()
+            ####
+
+            while self.roiIter < len(positions):
+                if (self.lastROIIndex != self.roiIter) and self._commChannel.autofocusActive:
+                    print(f'ROI changed')
+                    self.AFTrigger.set()
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+                self.lastROIIndex = self.roiIter
+
+
+                
+                #### Set variables for current and next positions. These will be used to move stage XY.
+                currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
+                try:
+                    nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
+                except IndexError:
+                    nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
+                if (not self.isTiling): # If only one position, put into list so len(currentROI) = 1.
+                    currentROI = [currentROI]
+                    nextROI = [nextROI]
+                ####
+
+                j = 0 # Position (tile) iterator
+
+
+                while j < len(currentROI): 
+                    self.j = j # Self it for use elsewhere. Kind of sloppy.
+
+
+                    AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
+                    AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
+                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
+                        self.AFTrigger.set()
+
+                        self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+
+                        self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+
+                    #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
+                    if self.numAllFrames == 0:
+                        exptTimeElapsed = 0.0
+                    else:
+                        exptTimeElapsed = time.time() - timeGlobalStart
+                    self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
+                    self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
+                    ####
+                    self.currentPos = currentROI[self.j]
+                    try:
+                        self.nextPos = currentROI[self.j+1] # Next position to move to.
+                    except IndexError:
+                        self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
+
+                    if self.firstLoop and (self.isTiling or self.isScanROI):
+                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
+
+                    #### Stage wait times for jiggle.
+                    if (self.isTiling or self.isScanROI):
+                        self.positionerXY.checkBusyLoop() # Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
+                        if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
+                            time.sleep(1) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
+                        else:
+                            time.sleep(0.25) #Wait time for jiggle if only moving to adjacent ROI.
+                    ####
+
+                    z = 0
+                    while z < len(zList):
+
+                        #### Moves piezo for Z stack.
+                        if self.zScanActive: 
+                            success = self.positioner.setPosition(zList[z], 'Z')
+                            time.sleep(0.05) #Demo day sleep, was dropping frames when z-stacking on 2.5D without this
+                            if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
+                                time.sleep(0.05)
+                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
+                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
+                        ####
+
+
+                        if self.speed25D == 'fast':
+                            self._master.arduinoManager.trigger25DWriteOnly('F') # Send actual trigger to cams.
+                        elif self.speed25D == 'slow':
+                            self._master.arduinoManager.trigger25DWriteOnly('T')
+
+                             
+                        procTimeStart = time.time() # For tracking processing time of images. 
+
+                        #### Locks for variables to be thread safe
+                        errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
+                        saveSettingsLock = threading.Lock()
+                        saveStackLock = threading.Lock()
+                        snapshotLock = threading.Lock()
+                        self.snapshotSettingsSaved = False
+                        lastImgLock = threading.Lock()
+                        
+                        ####
+
+                        self.errorQ = [] #List to be populated with error results from within processor threads
+                        self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
+
+                        self.lastImgDict = dict()
+
+                        # time.sleep(2)
+
+                        with ThreadPoolExecutor(max_workers=5) as executor:
+                            if (self.isTiling or self.isScanROI):
+                                executor.submit(self.tilingMoveThread)
+                            for processor in self.activeProcessors:
+                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
+
+                        # last images are available
+
+                        # score in the manager, put score in a list.
+                        # if autoZern:
+                        #     self._master.slm25DManager.calcAutoZern(self.lastImgDict) 
+                        
+
+                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
+                            self._widget.stopSIM_button.setChecked(False)
+                            self.stop25D()
+                            return
+
+                        self.numAllFrames += 1
+                        if True not in self.errorQ:
+                            self.completeFrameSets += 1 # increment only if no errors reported from processor threads
+                            z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
+                        self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
+
+                        procTimeDur = time.time()-procTimeStart # Actual elapsed time for processing images.
+                        endLoopTime = time.time()-startLoopTime
+                        startLoopTime = time.time()
+
+                        #### Print timing and frame information.
+                        # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
+                        self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
+                        # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
+                        self._logger.debug(f'Acquisition time (s): {procTimeDur:.3f}')
+                        self._logger.debug(f'Loop time (s): {endLoopTime:.3f}')
+                        ####
+
+                    # if self.recordPSFStackFlag:
+                    #     recordedPSFStack = self._commChannel.getPSFStack()[0]
+                    #     self._commChannel.sigSendZstackToRecordWindow.emit(recordedPSFStack)
+                    #     self.recordPSFStackFlag = True
+                        
+                    
+                    j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
+                    completeZ += 1 # Count from 0 to infinity complete Z stack only. Similar to j, but is never reset.
+
+                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
+                        self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
+
+                    self.totalEndTime = time.time()-timeGlobalStart
+
+                #### Increment counters.
+                self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
+                self.tilingRep += 1 # Used in filenames of saved files.
+                self.roiIter += 1 # Increment roi index
+                ####
+                self._logger.debug(f'Elapsed time (s): {self.totalEndTime:.1f}\n')
+
+
+
+
+
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < self.totalEndTime:
+                self.stop25D() # Stops system is duration based imaging is selected.
+
+
+    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
+
+        if self.depthCorrectionChecked:
+            # chatGPT suggested this method of waiting===============================
+            loop = QEventLoop()
+            print(loop) ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
+
+            def done_slot():
+                loop.quit()
+
+            self._commChannel.sigDepthMaskDone.connect(done_slot)
+            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, self.positioner._position['Z'])
+            loop.exec_()
+            # =======================================================================
+        else:
+            pass
+
+        k = processor.processorIndex
+        if self.scatterCam:
+            numFluorProcessors = len(self.activeProcessors) - 1
+        else:
+            numFluorProcessors = len(self.activeProcessors)
+        if k+1 == numFluorProcessors: # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
+            lastChan = True 
+        else: 
+            lastChan = False
+        if processor.handle == 'Scatter': lastChan = False
+
+        broken = False # Initialize flag
+        detector = processor.detObj # Set current detector object associated with proecssor.
+        
+        #### Everything needed to confirm correct amount of images in buffer. If not correct, clear cam buffers and restart Z position.
+        waitingBuffers = detector._camera.getBufferValue('25D') # Arguement is unused by method.
+        startBufferTime = time.time()
+        totalBufferTime = 0
+        while waitingBuffers != 1:
+            endBufferTime = time.time()
+            totalBufferTime = endBufferTime - startBufferTime
+            waitingBuffers = detector._camera.getBufferValue('25D')
+            # time.sleep(0.002)
+
+            if (waitingBuffers != 1 and totalBufferTime > 0.5): # Will wait for 0.2 seconds for a buffer to come before resetting.
+
+                self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
+                broken = True
+                with errorLock:
+                    self.errorQ.append(True)
+                for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
+                    detector._camera.clearBuffers()
+                break
+        ####
+        #### If buffers are correct, and thread is for last channel, last Z, move stage.
+        if not broken: 
+            with errorLock:
+                self.errorQ.append(False)
+            if lastChan:
+                self.lastZ = (z == self.zLength - 1)
+                if self.lastZ and (self.isTiling or self.isScanROI):
+                    self.waitToMoveEvent.set()
+                else:
+                    self.waitToMoveEvent.set()
+        ####
+
+
+            rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
+
+            with lastImgLock:
+                self.lastImgDict[processor.handle] = rawImg
+           
+            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw", '25D') # Send image to be displayed in Imswitch window.
+
+            processor.stack = rawImg
+
+        
+            self._commChannel.saveLastRawImgs(rawImg, processor.handle)
+
+            #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
+
+            if self.zScanActive: 
+                if z == 0:
+                    resetStack = True
+                else:
+                    resetStack = False
+                self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
+            ####
+                    
+            # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
+            
+            #### Emits every 2.5D image to tiling preview window.
+            if self.tilePreview and self.isTiling:
+                # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
+                #     self.updateWFContLimits()
+                self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
+            ####
+
+            with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
+                if ((self.isRecordRaw)) and not (self.startSettingsSaved):
+                    self._commChannel.sigSaveSettingsFirst.emit()
+                    self.startSettingsSaved = True
+
+            if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
+                with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
+                    self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter, '25D')
+
+            if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
+                self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
+                processor.saveOneTime = False
+                with snapshotLock: #Needed to only save one settings file per snapshot.
+                    if self.snapshotSettingsSaved == False:
+                        self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
+                        self.snapshotSettingsSaved = True
+
+    def autofocusThread(self):
+        
+        self.AFThread = threading.Thread(target=self.autofocusLoop, args=(), daemon=True)
+        self.AFThread.start()
+        
+    def autofocusLoop(self):
+        while not self.AFStop.is_set():
+            testAgain = True
+            self._logger.info('AF Waiting...')
+            self.AFTrigger.wait()  # patiently wait for signal to do an autofocus repetition.
+            self._logger.info('AF firing...')
+            self.loopsToAvgAF = self._commChannel.numLoopsToAvg #Get fresh value for number of times to fire per AF correction.
+            if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
+                break
+            self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
+            while testAgain:
+                for i in range(self.loopsToAvgAF):
+                    testAgain = self.autofocusRep(i) #Actual autofocus routine.
+            self.AcqResume.set()
+
+
+    def autofocusRep(self, repNumber):
+        testAgain = False
+        if repNumber == 0:
+            self.AFScores = []
+            if self.AFDebug:
+                self.AFImages = []
+        initRegScore = self._commChannel.initRegScore
+        img = self.AFCam.grabFrameOnly()
+        self.AFImages.append(img)
+        currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
+        self.AFScores.append(currentRegScore)
+        if len(self.AFScores) == self.loopsToAvgAF:
+            avgScore = sum(self.AFScores)/len(self.AFScores)
+            scoreDiff = avgScore - initRegScore
+            zDiff = self.AFManager.x_slp * scoreDiff
+            if abs(zDiff) >= self._commChannel.thresholdForAutofocusAction:
+                self.cumZDiff = self.cumZDiff + zDiff
+                currentZ = self.positioner._position['Z']
+                wantedZ = currentZ - zDiff
+                self.positioner.setPosition(wantedZ, 'Z')
+                self._commChannel.sigUpdateZPosition.emit('Z','Z')
+                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
+                self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
+                testAgain = True
+                if self.AFDebug:
+                    targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
+                    os.makedirs(targetDir, exist_ok=True) 
+                    with open(f"{targetDir}/AFOutput.txt", "a") as f:
+                        f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
+                    tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
+
+
+
+                    
+            else:
+                self._logger.info(f'Autofocus adjustment below threshold: {round(zDiff, 3)} < {self._commChannel.thresholdForAutofocusAction} um')
+
+        self.lastAFFire = time.time() # Records last time AF was fired to help with time based firing.
+        self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y']) # Records last position AF was fired to help with position based firing.
+
+        return testAgain
+
+
+    def recordPSFStackSetFlag(self):
+        self.recordPSFStackFlag = True
+
+    def loadSIMSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['SIM Parameters']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['SIM Parameters']
+
+            for i in range(len(self._widget.elementListSIM)):
+                if self._widget.elementListSIM[i]._type == 'str':
+                    self._widget.elementListSIM[i].setText(params[self._widget.elementListSIM[i]._name])
+                elif self._widget.elementListSIM[i]._type == 'combostr':
+                    if self._widget.elementListSIM[i]._name == 'SLM Running Order':
+                        try:
+                            self._widget.elementListSIM[i].setCurrentText(params[self._widget.elementListSIM[i]._name])
+                        except:
+                            self._logger.warning('SLM running order could not be set.')
+                            pass #should have a notice that the running order is not available at the moment.
+
+    def loadUserSettings(self, moduleDict):
+        try:
+            loadBool = moduleDict['userDir']
+        except KeyError:
+            loadBool = 0
+        if loadBool:
+            params = self._commChannel.loadedSettings['User Dir Info']
+
+            for i in range(len(self._widget.elementListUser)):
+                self._widget.elementListUser[i].setText(params[self._widget.elementListUser[i]._name])
+
+    def getOrigins(self):
+        roiList = self._commChannel.sharedAttrs[('ROI List','List')]
+        originList = []
+        roiZList = []
+        for i in range(len(roiList)):
+            Xstring, Ystring, Zstring = roiList[i][1].split(' | ')
+            X = Xstring.split(':')[1]
+            Y = Ystring.split(':')[1]
+            Z = Zstring.split(':')[1]
+            posTuple = (X, Y)
+            originList.append(posTuple)
+            roiZList.append(Z)
+        return originList, roiZList
 
     def updateWFContLimits(self):
         # contLimitsList = []
@@ -1250,537 +1781,6 @@ class SIMController(ImConWidgetController):
         sim_parameters.Magnification = np.float32(self._widget.magnification_textedit.text())
         sim_parameters.saveDir = self._widget.path_edit.text()
         return sim_parameters
-    
-    def perform25DExperimentThread(self):
-
-        #####DEVELOPMENT#####
-        self.speed25D = self._widget.fastSlow25D.currentText()
-        #####DEVELOPMENT#####
-
-        self._logger.info("2.5D/Epi started")
-        #CTNOTE: Change to dynamic
-        projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
-        #Check is scatter cam should be active
-        if self._commChannel.scatterCamActive == 2:
-            self.scatterCam = True
-        else: 
-            self.scatterCam = False
-        # Create list of powered (active) lasers.
-        poweredLasers = []
-        for laser in self.lasers:
-            if laser.percentPower > 0:
-                poweredLasers.append(str(laser.wavelength)+'F')
-        if '488F' in poweredLasers and self.scatterCam:
-            poweredLasers.append(str('Scatter'))
-        #
-        self.getTilingSettings() #Get the parameters that go into the 'createSnakeArrays' method. Variables stores selfed as needed elsewhere too.
-        ####Set flags for using in logic later.
-        if int(self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]) == 2:
-            self.isTiling = True
-        else:
-            self.isTiling = False
-
-        roiOriginList = []
-        if int(self.sharedAttrs[('ROI List', 'Checkbox')]) == 2:
-            self.isScanROI = True
-            try:
-                roiOriginList, roiZList = self.getOrigins()
-            except KeyError:
-                self._logger.warning('ROI list is empty.')
-        else:
-            self.isScanROI = False
-
-        if self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '0':
-            self.zScanActive = False
-            zList = [self._commChannel.sharedAttrs._data[('Positioner', 'Z', 'Z', 'Position')]]
-        elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
-            self.zScanActive = True
-            zList = self.zScanList()[0]
-        #
-
-        #### Set attributes to processors and select only active processors (processors with powered lasers).
-        self.activeProcessors = []
-        for processor in self.processors:
-            for detector in self.detectors: # Associate detector object with processor object.
-                if processor.handle == detector.handle:
-                    processor.detObj = detector
-                    processor.shape = detector._shape
-            if processor.handle in poweredLasers:
-                self.activeProcessors.append(processor)
-
-        if len(self.activeProcessors) == 0:
-            self._logger.error("No active laser/detector combinations. Check if lasers are > 0% power.")
-            self.stop25D()
-            return
-        
-        shapeList = []
-        for k, processor in enumerate(self.activeProcessors): #Give indices to active processors
-            processor.processorIndex = k
-            shapeList.append(processor.shape)
-        if ('Scatter' in poweredLasers):
-            self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
-        ####
-            
-        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
-        
-        setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
-        if len(setShapeList) != 1:
-            self._logger.error("Detector image shapes must be the same.")
-            self.stop25D()
-            return
-        shapeList = list(setShapeList)[0] #Put back into list form to be used to calculate tiling positions.
-        ####
-
-        #### Create XY position array given ROI and tiling settings.
-        self.tileOrigins = []
-        positions = self._master.tilingManager.createSnakeArrays(self.num_grid_x, self.num_grid_y, self.overlap, self.startxpos, self.startypos, projCamPixelSize, roiOriginList, shapeList)
-        for i in range(len(positions)):
-            self.tileOrigins.append(positions[i][0])
-        self.tileOrigin = positions[0][0]
-        if not self.isTiling:
-            positions = self.tileOrigins
-        ####
-        
-
-        #### Flags for state control, constant varables, this that need one time initialization.
-        self.zLength = len(zList)
-        self.numAllFrames = 0 # Number of frames, including dropped frames
-        self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
-        self.frameCounter = 0
-        self.tilingRep = 0
-        isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
-        if isTimed: timingPeriodInSec = self.getPeriodInSec()
-        durationInSec = self.getDurationInSec()
-        self.totalEndTime = 0
-        self.startSettingsSaved = False
-        completeZ = 0
-        self.firstLoop = True
-        self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
-        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
-        timeGlobalStart = time.time()
-        # self.AFCounter = 0
-        startLoopTime = time.time()
-        self.lastAFFire = time.time()
-        self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y'])
-        self.cumZDiff = 0
-        ####
-
-
-        
-
-        # Set autoZern flag to True, if AZ checkbox is checked, create param list ========================================
-        # if self.sharedAttrs[('Zernike SLM Parameters','Both', 'AZEnabled')]=='2':
-        #     autoZern = True
-        #     autoZernRep = 0
-        #     self._commChannel.sigStartAutoZern.emit()
-        #     time.sleep(1.) #CTNOTE: Test floor
-        #     self.listLengthAZTestParams()
-        # else:
-        #     autoZern = False
-        #     autoZernRep = -1
-
-
-
-        self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
-        for processor in self.activeProcessors: # Set only active cams
-            self.setCamForExperiment25D(processor.detObj)
-        self.exptFolderPath = self.makeExptFolderStr(self.dateTimeStartClick) # Path of current experiment folder
-        self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath) # Register this path with CommChannel in save settings file.
-        self._commChannel.updateActiveDirectory(self.exptFolderPath) # Register this path as a CommChannel variable to be easily accessed by other controllers.
-        self.AFTrigger = threading.Event()
-        self.AFStop = threading.Event()
-        self.AcqResume = threading.Event()
-        self._commChannel.autofocusActive = False
-        
-        ####Autofocus
-        if (self._commChannel.initRegScore != None) :
-            self.AFMaskLeft = self._commChannel.AFMaskLeft
-            self.AFMaskRight = self._commChannel.AFMaskRight
-            self.autofocusThread()
-            self._logger.info('Autofocus active')
-            self._commChannel.autofocusActive = True    
-        ####
-
-        ## Start of acquisition loop. Order goes ROI->tile->Z. All Z's go, increment tile. All tiles go, increment ROI.
-        self.lastROIIndex = 0
-        
-        while self.active25D:            
-
-            self.roiIter = 0
-            
-            #### For timing period. Check every 1/10s if period time is exceeded yet.
-            if self.completeFrameSets == 0 and isTimed:
-                    self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-            if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
-                repTimer = time.time() - repTimerStart
-                if timingPeriodInSec < 100:
-                    waitTime = timingPeriodInSec / 100
-                else:
-                    waitTime = 1
-                while repTimer < timingPeriodInSec:
-                    time.sleep(waitTime)
-                    repTimer = time.time() - repTimerStart
-                    if self._commChannel.stop25DNow: #allows exit of the loop
-                        self.stop25D()
-                        return
-                    
-            AFElapsed = time.time() - self.lastAFFire
-            if self._commChannel.autofocusActive:
-                # self._logger.info(f'Time since last AF: {AFElapsed}')
-                if (AFElapsed > self._commChannel.AFPeriodInSec):
-                    self.AFTrigger.set()
-
-                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
-                    
-            if not isTimed: # these lines are a hacky way to slow down 2.5D
-                time.sleep(0.02)
-
-            repTimerStart = time.time()
-            ####
-
-            while self.roiIter < len(positions):
-                if (self.lastROIIndex != self.roiIter) and self._commChannel.autofocusActive:
-                    print(f'ROI changed')
-                    self.AFTrigger.set()
-                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
-                self.lastROIIndex = self.roiIter
-
-
-                
-                #### Set variables for current and next positions. These will be used to move stage XY.
-                currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
-                try:
-                    nextROI = positions[self.roiIter + 1] # Store position list of the next ROI. Useful in looping from one ROI to another.
-                except IndexError:
-                    nextROI = positions[0] # This will loop around at end of ROI list. nextROI will be the first when currentROI is the last.
-                if (not self.isTiling): # If only one position, put into list so len(currentROI) = 1.
-                    currentROI = [currentROI]
-                    nextROI = [nextROI]
-                ####
-
-                j = 0 # Position (tile) iterator
-
-
-                while j < len(currentROI): 
-                    self.j = j # Self it for use elsewhere. Kind of sloppy.
-
-
-                    AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
-                    AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
-                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
-                        self.AFTrigger.set()
-
-                        self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
-
-                        self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
-
-                    #### Create time string for each 'tiling set' for saving filenames. All Z's are considered at the same time.
-                    if self.numAllFrames == 0:
-                        exptTimeElapsed = 0.0
-                    else:
-                        exptTimeElapsed = time.time() - timeGlobalStart
-                    self.exptTimeElapsedStr = self.getElapsedTimeString(exptTimeElapsed)
-                    self._commChannel.storeCurrentTimeString(self.exptTimeElapsedStr)
-                    ####
-                    self.currentPos = currentROI[self.j]
-                    try:
-                        self.nextPos = currentROI[self.j+1] # Next position to move to.
-                    except IndexError:
-                        self.nextPos = nextROI[0] # If at end of list, loops back around to beginning.
-
-                    if self.firstLoop and (self.isTiling or self.isScanROI):
-                        self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1]) # Set XY to main origin.
-
-                    #### Stage wait times for jiggle.
-                    if (self.isTiling or self.isScanROI):
-                        self.positionerXY.checkBusyLoop() # ♣Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
-                        if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                            time.sleep(2) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
-                        else:
-                            time.sleep(0.5) #Wait time for jiggle if only moving to adjacent ROI.
-                    ####
-
-                    z = 0
-                    while z < len(zList):
-
-                        #### Moves piezo for Z stack.
-                        if self.zScanActive: 
-                            success = self.positioner.setPosition(zList[z], 'Z')
-                            time.sleep(0.05) #Demo day sleep, was dropping frames when z-stacking on 2.5D without this
-                            if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
-                                time.sleep(0.05)
-                            if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
-                            else: self._commChannel.sigUpdateZPosition.emit('Z','Z') #If unsuccessful, query stage and apply its value to the widget.
-                        ####
-
-
-                        if self.speed25D == 'fast':
-                            self._master.arduinoManager.trigger25DWriteOnly('F') # Send actual trigger to cams.
-                        elif self.speed25D == 'slow':
-                            self._master.arduinoManager.trigger25DWriteOnly('T')
-
-                             
-                        procTimeStart = time.time() # For tracking processing time of images. 
-
-                        #### Locks for variables to be thread safe
-                        errorLock = threading.Lock() #Lock for passing whether channel received all 9 images
-                        saveSettingsLock = threading.Lock()
-                        saveStackLock = threading.Lock()
-                        snapshotLock = threading.Lock()
-                        self.snapshotSettingsSaved = False
-                        lastImgLock = threading.Lock()
-                        
-                        ####
-
-                        self.errorQ = [] #List to be populated with error results from within processor threads
-                        self.waitToMoveEvent = threading.Event() #When the last camera receives its images, this signal will fire to the positioner, moving the stage.
-
-                        self.lastImgDict = dict()
-
-                        # time.sleep(2)
-
-                        with ThreadPoolExecutor(max_workers=5) as executor:
-                            if (self.isTiling or self.isScanROI):
-                                executor.submit(self.tilingMoveThread)
-                            for processor in self.activeProcessors:
-                                executor.submit(self.main25DLoop, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock)
-
-                        # last images are available
-
-                        # score in the manager, put score in a list.
-                        # if autoZern:
-                        #     self._master.slm25DManager.calcAutoZern(self.lastImgDict) 
-                        
-
-                        if self._commChannel.stop25DNow: #allows exit of SIM loops once per cycle
-                            self._widget.stopSIM_button.setChecked(False)
-                            self.stop25D()
-                            return
-
-                        self.numAllFrames += 1
-                        if True not in self.errorQ:
-                            self.completeFrameSets += 1 # increment only if no errors reported from processor threads
-                            z += 1 # this controls positions. Increment only if successful. Repeat same location if any one camera fails.
-                        self.firstLoop = False # #CTNOTE: Maybe put in if statement above. Set to false. Will start false until system is stopped and started again.
-
-                        procTimeDur = time.time()-procTimeStart # Actual elapsed time for processing images.
-                        endLoopTime = time.time()-startLoopTime
-                        startLoopTime = time.time()
-
-                        #### Print timing and frame information.
-                        # self._logger.debug('Dropped frames: {}'.format(self.numAllFrames-self.completeFrameSets))
-                        self._logger.debug(f'Dropped frames: {self.numAllFrames-self.completeFrameSets} of {self.numAllFrames}')
-                        # self._logger.debug('Total frames: {}'.format(self.numAllFrames))
-                        self._logger.debug(f'Acquisition time (s): {procTimeDur:.3f}')
-                        self._logger.debug(f'Loop time (s): {endLoopTime:.3f}')
-                        ####
-
-                    # if self.recordPSFStackFlag:
-                    #     recordedPSFStack = self._commChannel.getPSFStack()[0]
-                    #     self._commChannel.sigSendZstackToRecordWindow.emit(recordedPSFStack)
-                    #     self.recordPSFStackFlag = True
-                        
-                    
-                    j += 1 # Controls XY position. Should only increment is images were successful. Re-doing of failed position handled on the Z level.
-                    completeZ += 1 # Count from 0 to infinity complete Z stack only. Similar to j, but is never reset.
-
-                    if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
-                        self.stop25D() # Stops tiling reps after all ROIs*tiles*repetitions is done.
-
-                    self.totalEndTime = time.time()-timeGlobalStart
-
-                #### Increment counters.
-                self.frameCounter += 1 # Used in filenames of saved files. Keep an eye to see if there are problems/timing issues here.
-                self.tilingRep += 1 # Used in filenames of saved files.
-                self.roiIter += 1 # Increment roi index
-                ####
-                self._logger.debug(f'Elapsed time (s): {self.totalEndTime:.1f}\n')
-
-
-
-
-
-            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < self.totalEndTime:
-                self.stop25D() # Stops system is duration based imaging is selected.
-
-
-    def main25DLoop(self, processor, errorLock, z, saveSettingsLock, saveStackLock, snapshotLock, lastImgLock):
-
-        if self.depthCorrectionChecked:
-            # chatGPT suggested this method of waiting===============================
-            loop = QEventLoop()
-            print(loop) ###STILL NEED TO MAKE WORK WHEN 25D NOT RUNNING
-
-            def done_slot():
-                loop.quit()
-
-            self._commChannel.sigDepthMaskDone.connect(done_slot)
-            self._commChannel.sigSetDepthCorrectMask.emit(processor.handle, self.positioner._position['Z'])
-            loop.exec_()
-            # =======================================================================
-        else:
-            pass
-
-        k = processor.processorIndex
-        if self.scatterCam:
-            numFluorProcessors = len(self.activeProcessors) - 1
-        else:
-            numFluorProcessors = len(self.activeProcessors)
-        if k+1 == numFluorProcessors: # Set flag per processor on whether it is the last channel/processor. Usaed to determine when to move stage.
-            lastChan = True 
-        else: 
-            lastChan = False
-        if processor.handle == 'Scatter': lastChan = False
-
-        broken = False # Initialize flag
-        detector = processor.detObj # Set current detector object associated with proecssor.
-        
-        #### Everything needed to confirm correct amount of images in buffer. If not correct, clear cam buffers and restart Z position.
-        waitingBuffers = detector._camera.getBufferValue('25D') # Arguement is unused by method.
-        startBufferTime = time.time()
-        totalBufferTime = 0
-        while waitingBuffers != 1:
-            endBufferTime = time.time()
-            totalBufferTime = endBufferTime - startBufferTime
-            waitingBuffers = detector._camera.getBufferValue('25D')
-            # time.sleep(0.002)
-
-            if (waitingBuffers != 1 and totalBufferTime > 0.5): # Will wait for 0.2 seconds for a buffer to come before resetting.
-
-                self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
-                broken = True
-                with errorLock:
-                    self.errorQ.append(True)
-                for detector in self.detectors: # probably move this outside of thread structure, seems like it could be unsafe.
-                    detector._camera.clearBuffers()
-                break
-        ####
-        #### If buffers are correct, and thread is for last channel, last Z, move stage.
-        if not broken: 
-            with errorLock:
-                self.errorQ.append(False)
-            if lastChan:
-                self.lastZ = (z == self.zLength - 1)
-                if self.lastZ and (self.isTiling or self.isScanROI): #Same thing?
-                    self.waitToMoveEvent.set()
-                else:
-                    self.waitToMoveEvent.set()
-        ####
-
-
-            rawImg = detector._camera.grabFrame25D(1) # Get the image from the buffer.
-
-            with lastImgLock:
-                self.lastImgDict[processor.handle] = rawImg
-           
-            self.sigRawImgReceived.emit(rawImg,f"{processor.handle} Raw", '25D') # Send image to be displayed in Imswitch window.
-
-            processor.stack = rawImg
-
-        
-            self._commChannel.saveLastRawImgs(rawImg, processor.handle)
-
-            #### Sends latest Z stack to CommChannel to be used by PSF analysis or anything else.
-
-            if self.zScanActive: 
-                if z == 0:
-                    resetStack = True
-                else:
-                    resetStack = False
-                self._commChannel.storeRecPSFStack(rawImg, resetStack, processor.handle)
-            ####
-                    
-            # processor.setSIMStack(rawImg) #CTNOTE: Why am I sending it to processor? Probably only needed for SIM, not 2.5D
-            
-            #### Emits every 2.5D image to tiling preview window.
-            if self.tilePreview and self.isTiling:
-                # if self.j == 0 and k == 0: #PROBLEM: Tiling contrast changes all channels as channels are stacked in one layer per position.
-                #     self.updateWFContLimits()
-                self._commChannel.sigTileImage.emit(rawImg, self.currentPos, f"{processor.handle}WF-{self.j}",len(self.activeProcessors),k, self.completeFrameSets)
-            ####
-
-            with saveSettingsLock: # This lock restrict only one channel to savings the settings file once when also saving raw images.
-                if ((self.isRecordRaw)) and not (self.startSettingsSaved):
-                    self._commChannel.sigSaveSettingsFirst.emit()
-                    self.startSettingsSaved = True
-
-            if (self.isRecordRaw): # and (self.frameCounter % 60 == 0): # Saves raw images.
-                with saveStackLock: # Lock needed to avoid hiccups at start of saving process. Would miss some images from first channel sometimes without.
-                    self.recordRawFunc(self.j, processor, self.isTiling, self.tilingRep, z, self.roiIter, '25D')
-
-            if processor.saveOneTime: #Can possibly save channels at different frame numbers. Executes as soon as possible. Not an issue for Snapshot.
-                self.recordOneSetRaw(self.j, processor) #Save one image from each active channel.
-                processor.saveOneTime = False
-                with snapshotLock: #Needed to only save one settings file per snapshot.
-                    if self.snapshotSettingsSaved == False:
-                        self._commChannel.sigSaveSettingsFirst.emit() # Sometimes causes small hang
-                        self.snapshotSettingsSaved = True
-                    
-
-    def autofocusThread(self):
-        
-        self.AFThread = threading.Thread(target=self.autofocusLoop, args=(), daemon=True)
-        self.AFThread.start()
-        
-    def autofocusLoop(self):
-        while not self.AFStop.is_set():
-            testAgain = True
-            self._logger.info('AF Waiting...')
-            self.AFTrigger.wait()  # patiently wait for signal to do an autofocus repetition.
-            self._logger.info('AF firing...')
-            self.loopsToAvgAF = self._commChannel.numLoopsToAvg #Get fresh value for number of times to fire per AF correction.
-            if self.AFStop.is_set(): #If the stop signal has been sent, break the while loop (allows clean exit of the thread)
-                break
-            self.AFTrigger.clear()  # Reset event so it can receive the next (set()) command.
-            while testAgain:
-                for i in range(self.loopsToAvgAF):
-                    testAgain = self.autofocusRep(i) #Actual autofocus routine.
-            self.AcqResume.set()
-
-
-    def autofocusRep(self, repNumber):
-        testAgain = False
-        if repNumber == 0:
-            self.AFScores = []
-            if self.AFDebug:
-                self.AFImages = []
-        initRegScore = self._commChannel.initRegScore
-        img = self.AFCam.grabFrameOnly()
-        self.AFImages.append(img)
-        currentRegScore = self.AFManager.scoreOneLive(img, self.AFMaskLeft, self.AFMaskRight)
-        self.AFScores.append(currentRegScore)
-        if len(self.AFScores) == self.loopsToAvgAF:
-            avgScore = sum(self.AFScores)/len(self.AFScores)
-            scoreDiff = avgScore - initRegScore
-            zDiff = self.AFManager.x_slp * scoreDiff
-            if abs(zDiff) >= self._commChannel.thresholdForAutofocusAction:
-                self.cumZDiff = self.cumZDiff + zDiff
-                currentZ = self.positioner._position['Z']
-                wantedZ = currentZ - zDiff
-                self.positioner.setPosition(wantedZ, 'Z')
-                self._commChannel.sigUpdateZPosition.emit('Z','Z')
-                self._commChannel.sigSendZDrift.emit(self.cumZDiff)
-                self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
-                testAgain = True
-                if self.AFDebug:
-                    targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
-                    os.makedirs(targetDir, exist_ok=True) 
-                    with open(f"{targetDir}/AFOutput.txt", "a") as f:
-                        f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
-                    tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
-
-
-
-                    
-            else:
-                self._logger.info(f'Autofocus adjustment below threshold: {round(zDiff, 3)} < {self._commChannel.thresholdForAutofocusAction} um')
-
-        self.lastAFFire = time.time() # Records last time AF was fired to help with time based firing.
-        self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y']) # Records last position AF was fired to help with position based firing.
-
-        return testAgain
 
   
     def setSharedAttr(self, attrCategory, parameterName, value):

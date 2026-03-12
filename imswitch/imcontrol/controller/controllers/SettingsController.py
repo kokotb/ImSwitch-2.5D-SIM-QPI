@@ -177,7 +177,7 @@ class SettingsController(ImConWidgetController):
             roiCenters["Scatter"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
             dets.append(scatterDet)
 
-        lastImgs = self.getOneSetImgs(dets)
+        lastImgs = self.getOneSetImgs25D(dets)
 
         self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
         self.fullImages["561"] = (lastImgs[1] / 16).astype(np.uint8)
@@ -354,7 +354,7 @@ class SettingsController(ImConWidgetController):
         return value
         
         
-    def getOneSetImgs(self, dets=None):
+    def getOneSetImgs25D(self, dets=None):
         if dets is None:
             dets = self.detectors
 

@@ -680,36 +680,36 @@ class FOVCorrectionWindow(QMainWindow):
         self.bottomLayout.addWidget(self.modeBox)
         
         
-        # align box
-        self.alignBox = QtWidgets.QWidget()
-        self.alignBox.setFixedSize(100, 90)
-        self.alignLayout = QtWidgets.QVBoxLayout(self.alignBox)
-        self.alignLayout.setContentsMargins(0, 0, 0, 0)
-        self.alignLayout.setSpacing(4)
+        # # align box
+        # self.alignBox = QtWidgets.QWidget()
+        # self.alignBox.setFixedSize(100, 90)
+        # self.alignLayout = QtWidgets.QVBoxLayout(self.alignBox)
+        # self.alignLayout.setContentsMargins(0, 0, 0, 0)
+        # self.alignLayout.setSpacing(4)
 
-        self.alignLabel = QtWidgets.QLabel(f"<strong>Align to:</strong>")
-        self.alignLabel.setFont(font)
-        self.alignLayout.addWidget(self.alignLabel)
+        # self.alignLabel = QtWidgets.QLabel(f"<strong>Align to:</strong>")
+        # self.alignLabel.setFont(font)
+        # self.alignLayout.addWidget(self.alignLabel)
 
-        self.alignRefBox = QtWidgets.QComboBox()
-        self.alignRefBox.setFont(font)
-        # self.alignRefBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        # self.alignRefBox = QtWidgets.QComboBox()
+        # self.alignRefBox.setFont(font)
+        # # self.alignRefBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        for k in ["488", "561", "640"]:
-            self.alignRefBox.addItem(k, k)
+        # for k in ["488", "561", "640"]:
+        #     self.alignRefBox.addItem(k, k)
 
-        if self.scatterImage is not None:
-            self.alignRefBox.addItem("Scatter", "Scatter")
+        # if self.scatterImage is not None:
+        #     self.alignRefBox.addItem("Scatter", "Scatter")
             
-        self.alignRefBox.setEditable(True)
-        le = self.alignRefBox.lineEdit()
-        le.setReadOnly(True)
-        # le.setAlignment(QtCore.Qt.AlignCenter)
-        le.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
+        # self.alignRefBox.setEditable(True)
+        # le = self.alignRefBox.lineEdit()
+        # le.setReadOnly(True)
+        # # le.setAlignment(QtCore.Qt.AlignCenter)
+        # le.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
 
-        self.alignRefBox.setCurrentIndex(self.alignRefBox.findData("561"))
-        self.alignLayout.addWidget(self.alignRefBox, 1)
-        self.alignLayout.addStretch()
+        # self.alignRefBox.setCurrentIndex(self.alignRefBox.findData("561"))
+        # self.alignLayout.addWidget(self.alignRefBox, 1)
+        # self.alignLayout.addStretch()
 
 
         # self.bottomLayout.addWidget(self.alignBox)
