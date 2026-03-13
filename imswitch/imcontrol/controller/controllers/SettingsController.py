@@ -177,7 +177,11 @@ class SettingsController(ImConWidgetController):
             roiCenters["Scatter"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
             dets.append(scatterDet)
 
-        lastImgs = self.getOneSetImgs25D(dets)
+        mode = '25D'
+        if mode == 'SIM':
+            lastImgs = self.getOneSetImgsSIM(dets)
+        else:
+            lastImgs = self.getOneSetImgs25D(dets) # Actual acquisition of images.
 
         self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
         self.fullImages["561"] = (lastImgs[1] / 16).astype(np.uint8)
@@ -362,7 +366,7 @@ class SettingsController(ImConWidgetController):
         for detector in dets:
             detector._prevShape = detector._shape
             detector._prevOffset = detector._frameStart
-            self.setCamForFOVWindow(detector)
+            self.setCamForFOVWindow25D(detector)
 
         self._master.arduinoManager.trigger25DWriteOnly()
         time.sleep(0.1)
@@ -379,13 +383,43 @@ class SettingsController(ImConWidgetController):
                 detector.crop(detector._prevOffset[0],detector._prevOffset[1],detector._prevShape[0],detector._prevShape[1], toPrint = False)
 
         return lastImgs
+    
+    def getOneSetImgsSIM(self, dets=None):
+        if dets is None:
+            dets = self.detectors
+
+        self._master.arduinoManager.activateSLMWriteOnly()
+        for detector in dets:
+            detector._prevShape = detector._shape
+            detector._prevOffset = detector._frameStart
+            self.setCamForFOVWindowSIM(detector)
+
+        self._master.arduinoManager.trigOneSequenceWriteOnly()
+        time.sleep(0.1)
+
+        lastImgs = []
+        for detector in dets:
+            lastImgs.append(detector._camera.grabFrameSet(9))
+
+        self._master.arduinoManager.deactivateSLMWriteOnly()
+
+        for detector in dets:
+            if detector.forAcquisition:
+                detector.stopAcquisitionSIM(toPrint = False)
+                detector.crop(detector._prevOffset[0],detector._prevOffset[1],detector._prevShape[0],detector._prevShape[1], toPrint = False)
+
+        return lastImgs
 
 
-    def setCamForFOVWindow(self, detector):
+    def setCamForFOVWindow25D(self, detector):
 
         detector.crop(0,0,5320,4600, toPrint=False)
         detector.startAcquisition25D()
 
+    def setCamForFOVWindowSIM(self, detector):
+
+        detector.crop(0,0,5320,4600, toPrint=False)
+        detector.startAcquisitionSIM(9)
 
     def toggleScatterCam(self, state):
         self._commChannel.scatterCamActive = state
