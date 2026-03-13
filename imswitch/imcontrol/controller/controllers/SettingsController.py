@@ -163,12 +163,12 @@ class SettingsController(ImConWidgetController):
         for detector in self.detectors:
             fs = detector.frameStart
             sh = detector.shape
-            if detector.handle == "488F":
-                roiCenters["488"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
-            if detector.handle == "561F":
-                roiCenters["561"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
-            if detector.handle == "640F":
-                roiCenters["640"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
+            handle = detector.handle
+            roiCenters[handle[:-1]] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
+            # if detector.handle == "561F":
+            #     roiCenters["561"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
+            # if detector.handle == "640F":
+            #     roiCenters["640"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
 
         dets = list(self.detectors)
         if showScatter and scatterDet is not None:
@@ -224,10 +224,10 @@ class SettingsController(ImConWidgetController):
         w.updatePointsDisplay()
         w.applyRoiSize()
 
-        try:
-            w.cropButton.clicked.disconnect()
-        except Exception:
-            pass
+        # try:
+        #     w.cropButton.clicked.disconnect()
+        # except Exception:
+        #     pass
         w.cropButton.clicked.connect(self.cropDetectors)
         
         busy.close()

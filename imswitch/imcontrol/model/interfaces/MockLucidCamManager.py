@@ -177,7 +177,7 @@ class LucidCamMock:
         img = np.random.rand(1024,1024)*3500
         img2 = np.array(img, dtype=np.uint16)
         return img2
-    
+      
     def grabFrameSet(self, buffer_size):
         #if False:
         image_size_cam = [self.properties[el] for el in ['Width','Height']]
