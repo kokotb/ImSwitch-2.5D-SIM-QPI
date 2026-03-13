@@ -4,12 +4,12 @@
   "height":2048,
   "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
 "SLM25D":{
-  "mock": true,
+  "mock": false,
   "width":1080, 
   "height":1920,
   "Gamma": 0.5, 
