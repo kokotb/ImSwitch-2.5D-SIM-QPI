@@ -22,8 +22,10 @@ class PSFAnalysisController(ImConWidgetController):
 
     def startRecordDatasetFunc(self):
         self.recordingPSFDataset = True
-        self.gammas = [0., 1., 2., 3., 4., 4.5, 5., 5.5, 6.5, 7., 7.5, 8., 9., 10., 11., 12.]
-        self.psis = [0., 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 1.]
+        # self.gammas = [0., 1., 2., 3., 4., 4.5, 5., 5.5, 6.5, 7., 7.5, 8., 9., 10., 11., 12.]
+        # self.psis = [0., 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 1.]
+        self.gammas = [2., 3., 4., 5., 6., 7.]
+        self.psis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
         self.gammaIndex = 0
         self.psiIndex = 0
         self.RecordPSFforDataset()

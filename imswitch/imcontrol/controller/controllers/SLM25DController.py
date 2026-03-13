@@ -1985,7 +1985,8 @@ class SLM25DController(ImConWidgetController):
         # insert refractive indexes here !!!
         self.calcsampleDepthCorrectionMask(lam, zPos, n1=1.525, NA=0.8)
         self.combineAndProject()
-        time.sleep(0.1)
+        # time.sleep(0.1)
+        time.sleep(.3)
         self._commChannel.sigDepthMaskDone.emit()
         
 
