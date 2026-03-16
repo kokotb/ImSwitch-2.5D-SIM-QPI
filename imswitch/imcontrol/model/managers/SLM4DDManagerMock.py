@@ -44,7 +44,7 @@ class SLM4DDManagerMock(SignalInterface):
         }
 
         path = SIMSLMInfo.path
-        port = SIMSLMInfo.port
+        port = 'COM99'
         self.slmDLL = self.getSLMDLL(path)
         self.openSLM(port)
 

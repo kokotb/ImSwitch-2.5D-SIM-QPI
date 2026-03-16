@@ -4,7 +4,7 @@
   "height":2048,
   "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -16,7 +16,7 @@
   "Psi": 0.5,
   "LeftCenterX": 360,
   "LeftCenterY": 480,
-  "RightCenterX":1440,
+  "RightCenterX":1350,
   "RightCenterY": 540,
   "BeamDiameter": 7.0,
 

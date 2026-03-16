@@ -4,7 +4,7 @@
   "height":2048,
   "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -12,8 +12,8 @@
   "mock": true,
   "width":1080, 
   "height":1920,
-  "Gamma": 0.5, 
-  "Psi": 0.5,
+  "Gamma": 2.2, 
+  "Psi": 0.3,
   "LeftCenterX": 480,
   "LeftCenterY": 540, 
   "RightCenterX":1440,

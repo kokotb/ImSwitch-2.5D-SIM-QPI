@@ -1996,6 +1996,7 @@ class SLM25DController(ImConWidgetController):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
         edgeOfTheSample = self._widget.edgeOfTheSample.value()
         n2 = self._widget.refIndexOfTheSample.value()
+        n1 = self._widget.refIndexOfTheCoverGlass.value()
         d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
         if d > 0:
