@@ -1109,10 +1109,10 @@ class SIMController(ImConWidgetController):
                     os.makedirs(targetDir, exist_ok=True) 
                     with open(f"{targetDir}/AFOutput.txt", "a") as f:
                         f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
-                    try:
-                        tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
-                    except OSError:
-                        self._logger.warning('Device probably full, cannot save image.')
+                    # try:
+                    #     tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
+                    # except OSError:
+                    #     self._logger.warning('Device probably full, cannot save image.')
 
 
 
