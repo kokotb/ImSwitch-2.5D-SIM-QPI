@@ -111,8 +111,6 @@ class SIMController(ImConWidgetController):
         # Signals originating from SIMController.py        
         self.sigRawStackReceived.connect(self.displayRawImage)
         self.sigRawImgReceived.connect(self.displayRawImage)
-        self._commChannel.sig25DPSFReceived.connect(self.displayRawImage)
-
         self.sigSIMProcessorImageComputed.connect(self.displaySIMImage)
         self.sigWFImageComputed.connect(self.displayWFImage)
 
@@ -141,6 +139,7 @@ class SIMController(ImConWidgetController):
         self._commChannel.sigStop25D.connect(self.stop25D) #CTNOTE, was stopping everything twice. Unknown is causing problems.
         self._commChannel.sigStart25D.connect(self.start25D)
         self._commChannel.sigRecordPSFStack.connect(self.recordPSFStackSetFlag)
+        self._commChannel.sig25DPSFReceived.connect(self.displayRawImage)
 
         self._commChannel.sigSIMAcqToggled.connect(self._widget.toggleBoxes)
 
@@ -176,7 +175,7 @@ class SIMController(ImConWidgetController):
         self._logger.info("SIM started")
         #CTNOTE: Change to dynamic
         projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is the true obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
-        #Check is scatter cam should be active
+        #Check if scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
         else: 
@@ -214,6 +213,7 @@ class SIMController(ImConWidgetController):
         elif self._commChannel.sharedAttrs._data[('Z-Stack Settings', 'Z-Stack Checkbox')] == '2':
             self.zScanActive = True
             zList = self.zScanList()[0]
+
         # Set running order on SLM
         roID = self._widget.getSelectedRO()
         self._master.SLM4DDManager.setRunningOrder(roID)
@@ -247,7 +247,6 @@ class SIMController(ImConWidgetController):
         ####
 
         #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
-        
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
@@ -277,20 +276,24 @@ class SIMController(ImConWidgetController):
         self.completeFrameSets = 0 # Number of frames, exncluding dropped frames
         self.framesPerDetector = 9
         self.frameCounter = 0
-        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
-        timeGlobalStart = time.time()
         self.tilingRep = 0
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
         if isTimed: timingPeriodInSec = self.getPeriodInSec()
-        timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
         totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
-        # self.AFCounter = 0
-
+        self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S")
+        timeGlobalStart = time.time()
         startLoopTime = time.time()
+        self.lastAFFire = time.time()
+        self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y'])
+        self.cumZDiff = 0
+        ###
+        
+        # timingPeriodInSec = self.getPeriodInSec()
+
         
         self._master.arduinoManager.activateSLMWriteOnly() #This command activates the arduino to be ready to receive triggers.
         # FIXME: Automate buffer size calculation based on image size, it did not work before
@@ -302,45 +305,49 @@ class SIMController(ImConWidgetController):
         self.exptFolderPath = self.makeExptFolderStr(self.dateTimeStartClick)
         self.setSharedAttr('User Dir Info', 'Current Path', self.exptFolderPath)
         self._commChannel.updateActiveDirectory(self.exptFolderPath)
+        self.AFTrigger = threading.Event()
+        self.AFStop = threading.Event()
+        self.AcqResume = threading.Event()
+        self._commChannel.autofocusActive = False
 
         ####Autofocus
         if (self._commChannel.initRegScore != None) :
-            self.autofocusThread()
             self.AFMaskLeft = self._commChannel.AFMaskLeft
             self.AFMaskRight = self._commChannel.AFMaskRight
-            self._logger.info('Autofocus active')    
+            self.autofocusThread()
+            self._logger.info('Autofocus active')
+            self._commChannel.autofocusActive = True  
         ####
+        self.lastROIIndex = 0
 
         while self.SIMActive:
 
             self.roiIter = 0
 
-            #### For timing period. Check every 1/10s if period time is exceeded yet.
-            # if self.completeFrameSets != 0:
-            #     repTimer = time.time() - repTimerStart
-            #     while repTimer < expectedLoopTime:
-            #         time.sleep(expectedLoopTime / 1000)
-            #         repTimer = time.time() - repTimerStart
-
             if self.completeFrameSets == 0 and isTimed:
                 self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
-
-
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
                 repTimer = time.time() - repTimerStart
                 if timingPeriodInSec < 100:
                     waitTime = timingPeriodInSec / 100
                 else:
                     waitTime = 1
-                while (repTimer < timingPeriodInSec):
+                while repTimer < timingPeriodInSec:
                     time.sleep(waitTime)
                     repTimer = time.time() - repTimerStart
-
                     if self._widget.stopSIM_button.isChecked(): #allows exit of the loop
                         self._widget.stopSIM_button.setChecked(False)
                         self.stopSIM()
                         return
-                    
+
+            AFElapsed = time.time() - self.lastAFFire
+            if self._commChannel.autofocusActive:
+                # self._logger.info(f'Time since last AF: {AFElapsed}')
+                if (AFElapsed > self._commChannel.AFPeriodInSec):
+                    self.AFTrigger.set()
+
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.      
 
     
             repTimerStart = time.time()
@@ -348,6 +355,12 @@ class SIMController(ImConWidgetController):
 
             while self.roiIter < len(positions):
 
+                if (self.lastROIIndex != self.roiIter) and self._commChannel.autofocusActive:
+                    print(f'ROI changed')
+                    self.AFTrigger.set()
+                    self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+                self.lastROIIndex = self.roiIter
                 #### Set variables for current and next positions. These will be used to move stage XY.
                 currentROI = positions[self.roiIter] # Store position list of one ROI. (All tiles in one ROI)
                 try:
@@ -364,6 +377,15 @@ class SIMController(ImConWidgetController):
 
                 while j < len(currentROI):
                     self.j = j
+
+                    AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
+                    AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
+                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
+                        self.AFTrigger.set()
+
+                        self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+
+                        self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
                     ####
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
@@ -392,8 +414,6 @@ class SIMController(ImConWidgetController):
 
                     z = 0
                     while z < len(zList):
-
-
 
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
@@ -601,7 +621,7 @@ class SIMController(ImConWidgetController):
         self._logger.info("2.5D/Epi started")
         #CTNOTE: Change to dynamic
         projCamPixelSize = 2.74 / (200 / 9) # 2.74 is cam pixel size. 200 is obj tube lens length, 9 is effective focal length of 20x Olympus UPlanApoX objective.
-        #Check is scatter cam should be active
+        #Check if scatter cam should be active
         if self._commChannel.scatterCamActive == 2:
             self.scatterCam = True
         else: 
@@ -662,8 +682,7 @@ class SIMController(ImConWidgetController):
             self.SimProcessorLaser4.processorIndex = 0 #Assumed 488 is index 0
         ####
             
-        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.
-        
+        #### Confirm the used area of all active cam sensors are the same. Stop the process if not.      
         setShapeList = set(shapeList) # Send to set which removes duplicate values. The length should be one is values are the same.
         if len(setShapeList) != 1:
             self._logger.error("Detector image shapes must be the same.")
@@ -699,28 +718,11 @@ class SIMController(ImConWidgetController):
         self.tilePreview = bool(int(self._commChannel.sharedAttrs._data[('Tiling Settings', 'Tiling Preview')]))
         self.dateTimeStartClick = datetime.now().strftime("%y%m%d_%H%M%S") # Datetime string registered when start button is pressed only.
         timeGlobalStart = time.time()
-        # self.AFCounter = 0
         startLoopTime = time.time()
         self.lastAFFire = time.time()
         self.lastAFXYPos = (self.positionerXY._position['X'], self.positionerXY._position['Y'])
         self.cumZDiff = 0
         ####
-
-
-        
-
-        # Set autoZern flag to True, if AZ checkbox is checked, create param list ========================================
-        # if self.sharedAttrs[('Zernike SLM Parameters','Both', 'AZEnabled')]=='2':
-        #     autoZern = True
-        #     autoZernRep = 0
-        #     self._commChannel.sigStartAutoZern.emit()
-        #     time.sleep(1.) #CTNOTE: Test floor
-        #     self.listLengthAZTestParams()
-        # else:
-        #     autoZern = False
-        #     autoZernRep = -1
-
-
 
         self._master.arduinoManager.activate25DWriteOnly() #This command activates the arduino to be ready to receive triggers. 0.01s time delay.
         for processor in self.activeProcessors: # Set only active cams
@@ -749,7 +751,6 @@ class SIMController(ImConWidgetController):
 
             self.roiIter = 0
             
-            #### For timing period. Check every 1/10s if period time is exceeded yet.
             if self.completeFrameSets == 0 and isTimed:
                     self._logger.info(f'Timing based acquisition. Timing period is {timingPeriodInSec} seconds.')
             if self.completeFrameSets != 0 and isTimed: #Does not exceute on first loop
@@ -838,9 +839,9 @@ class SIMController(ImConWidgetController):
                     if (self.isTiling or self.isScanROI):
                         self.positionerXY.checkBusyLoop() # Stop program if XY stage is moving. CTNOTE: Makes image hang when moving by hand too.
                         if j == 0 and self.completeFrameSets != 0: #TODO NOT GOOD LOGIC. CAN BE FASTER IF SMARTER
-                            time.sleep(1) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
+                            time.sleep(0.5) #Wait time for jiggle if the stage is moving from end to origin to start another tile.
                         else:
-                            time.sleep(0.25) #Wait time for jiggle if only moving to adjacent ROI.
+                            time.sleep(0.05) #Wait time for jiggle if only moving to adjacent ROI.
                     ####
 
                     z = 0
@@ -849,7 +850,7 @@ class SIMController(ImConWidgetController):
                         #### Moves piezo for Z stack.
                         if self.zScanActive: 
                             success = self.positioner.setPosition(zList[z], 'Z')
-                            time.sleep(0.05) #Demo day sleep, was dropping frames when z-stacking on 2.5D without this
+                            time.sleep(0.05) #25 Diff
                             if (z == 0): #CTNOTE: Not smart. Small delay for large Z move. Should get speed of piezo and calculate this number.
                                 time.sleep(0.05)
                             if success: self._commChannel.sigUpdateZPositionConfirmed.emit('Z','Z',zList[z]) #If reply is successful, just update position without a new query to stage.
