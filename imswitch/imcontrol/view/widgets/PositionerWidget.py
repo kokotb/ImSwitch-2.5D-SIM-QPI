@@ -346,8 +346,8 @@ class PositionerSettings(QMainWindow):
     sigCheckValidity = QtCore.Signal(object)
     def __init__(self, parent: None):
         super().__init__(parent)
-        self.setWindowTitle("Tiling Settings")
-        self.setMinimumSize(200, 400)
+        self.setWindowTitle("XY Stage Settings")
+        self.setMinimumSize(300, 400)
         self.overallLayout = QtWidgets.QVBoxLayout()
         central_widget = QWidget()
         central_widget.setLayout(self.overallLayout)

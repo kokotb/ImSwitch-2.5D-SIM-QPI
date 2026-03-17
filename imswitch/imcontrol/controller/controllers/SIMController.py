@@ -811,7 +811,7 @@ class SIMController(ImConWidgetController):
 
                     AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
-                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
+                    if (AFXDiff > 2000 or AFYDiff > 2000) and self._commChannel.autofocusActive:
                         self.AFTrigger.set()
 
                         self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.

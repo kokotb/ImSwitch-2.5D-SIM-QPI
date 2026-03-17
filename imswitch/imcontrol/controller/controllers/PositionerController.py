@@ -126,7 +126,7 @@ class PositionerController(ImConWidgetController):
             r, _ = self.stageManager.query(f"controller.stage.skew.enabled.set {value}")
             if r == 0:
                 self._widget.settingsWindow.skewLabel.setText(f"<strong>{value}</strong>")
-                self._widget.settingsWindow.skewEntry.setText(value)
+                self._widget.settingsWindow.skewEntry.setText(str(value))
             else:
                 self.__logger.warning("Skew not set.")
         else:
