@@ -280,7 +280,7 @@ class SIMController(ImConWidgetController):
         isTimed = bool(int(self._commChannel.sharedAttrs._data[('Timing Settings', 'Period Checkbox')]))
         if isTimed: timingPeriodInSec = self.getPeriodInSec()
         durationInSec = self.getDurationInSec()
-        totalEndTime = 0
+        self.totalEndTime = 0
         self.startSettingsSaved = False
         completeZ = 0
         self.firstLoop = True
@@ -475,7 +475,7 @@ class SIMController(ImConWidgetController):
                     if self.sharedAttrs[('Timing Settings','Rep Checkbox')]=='2' and not (completeZ < len(positions)*len(currentROI)*int(self.sharedAttrs[('Timing Settings','Repetitions')])): 
                         self.stopSIM() # Stops tiling reps after all tiles*repetitions is done.
 
-                    totalEndTime = time.time()-timeGlobalStart
+                    self.totalEndTime = time.time()-timeGlobalStart
 
                     remainder = self.completeFrameSets % len(currentROI)
 
@@ -484,9 +484,9 @@ class SIMController(ImConWidgetController):
                 self.tilingRep += 1
                 self.roiIter += 1
                 
-                self._logger.debug(f'Elapsed time (s): {totalEndTime:.1f}\n')
+                self._logger.debug(f'Elapsed time (s): {self.totalEndTime:.1f}\n')
 
-            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < totalEndTime:
+            if self.sharedAttrs[('Timing Settings','Duration Checkbox')]=='2' and durationInSec != 0 and durationInSec < self.totalEndTime:
                 if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='0':
                     self.stopSIM()
                 if self.sharedAttrs[('Tiling Settings','Tiling Checkbox')]=='2' and remainder == 0:
