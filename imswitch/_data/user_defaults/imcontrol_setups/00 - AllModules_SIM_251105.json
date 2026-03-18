@@ -55,7 +55,7 @@
   "sim": {
     "width": 2048,
     "height": 2048,
-    "ReconWL1": 515,
+    "ReconWL1": 500,
     "ReconWL2": 573,
     "ReconWL3": 678,
     "NA": 0.8,
@@ -84,13 +84,13 @@
         "TriggerMode": "Off",
         "Gain": 0.0,
         "Gamma": 1.0,
-        "ExposureTime": 15000.0
+        "ExposureTime": 39000.0
       },
       "ROI":{  
-        "OffsetX": 2784,
-        "OffsetY": 1638,
-        "Width": 512,
-        "Height": 512
+        "OffsetX": 2441,
+        "OffsetY": 1309,
+        "Width": 1024,
+        "Height": 1024
 
       } 
     },
@@ -109,14 +109,14 @@
         "TriggerMode": "Off",
         "Gain": 0.0,     
         "Gamma": 1.0,
-        "ExposureTime": 15000.0
+        "ExposureTime": 39000.0
       },
       "ROI":{
  
-        "OffsetX": 2392,
-        "OffsetY": 2178,
-        "Width": 512,
-        "Height": 512
+        "OffsetX": 2160,
+        "OffsetY": 1812,
+        "Width": 1024,
+        "Height": 1024
       }
     },
     "forAcquisition": true
@@ -137,13 +137,13 @@
           "Gamma": 1.0,
 
 
-          "ExposureTime": 15000.0
+          "ExposureTime": 39000.0
         },
         "ROI":{
-          "OffsetX": 2232,
-          "OffsetY": 2002,
-          "Width": 512,
-          "Height": 512
+          "OffsetX": 2060,
+          "OffsetY": 1729,
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
@@ -170,8 +170,8 @@
           "OffsetX": 2125,
           "OffsetY": 2210,
 
-          "Width": 512,
-          "Height": 512
+          "Width": 1024,
+          "Height": 1024
         }
       },
       "forAcquisition": true
