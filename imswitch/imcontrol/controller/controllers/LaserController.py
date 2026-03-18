@@ -19,7 +19,7 @@ class LaserController(ImConWidgetController):
         self._widget.userControlCheckbox.stateChanged.connect(self.toggleUserControl)
 
         # Set up lasers
-        self.setSharedAttr('All', 'Ext. Control', bool(self._widget.userControlCheckbox.checkState())) #Set initial external control values
+        self.setSharedAttr('All', 'Ext. Control', not bool(self._widget.userControlCheckbox.checkState())) #Set initial external control values
         for lName, lManager in self._master.lasersManager:
             self._widget.addLaser(
                 lName, lManager.valueUnits, lManager.valueDecimals, lManager.wavelength,
@@ -36,6 +36,7 @@ class LaserController(ImConWidgetController):
             else: laserEnableStatus = False
             self.setSharedAttr(lName, _enabledAttr, laserEnableStatus) #Set initial 'Enabled' values in sharedAttrs
             self.setSharedAttr(lName, _valueAttr, self._widget.getValue(lName)) #Set initial power values in sharedAttrs
+
         
 
 
@@ -82,22 +83,22 @@ class LaserController(ImConWidgetController):
     #     print(test, state)
 
 
-    def toggleUserControl(self, state):
-        if state == 2:
-            num = 0
-            text = 'On'
+    # def toggleUserControl(self, state):
+    #     if state == 2:
+    #         num = 0
+    #         text = 'On'
 
-        else: 
-            num = 1
-            text = 'Ext'
+    #     else: 
+    #         num = 1
+    #         text = 'Ext'
 
-        list(self._master.lasersManager._subManagers.values())[0].externalControl(num) #Execute on onlz one fo the lasers, as this commands controls all channels.
+    #     list(self._master.lasersManager._subManagers.values())[0].externalControl(num) #Execute on only one of the lasers, as this commands controls all channels.
 
-        for lName, lManager in self._master.lasersManager:
-            ans = lManager.getStatus()
-            self._widget.laserModules[lName].enableButton.setChecked(ans)
-            self._widget.laserModules[lName].enableButton.setEnabled(state)
-            self._widget.laserModules[lName].enableButton.setText(text)
+    #     for lName, lManager in self._master.lasersManager:
+    #         ans = lManager.getStatus()
+    #         self._widget.laserModules[lName].enableButton.setChecked(ans)
+    #         self._widget.laserModules[lName].enableButton.setEnabled(state)
+    #         self._widget.laserModules[lName].enableButton.setText(text)
 
 
     def loadSettings(self, moduleDict):
