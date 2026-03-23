@@ -107,7 +107,8 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
         self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
-        self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
+        self._widget.beginAZbutton.clicked.connect(self.beginAutoZernThread)
+        self._widget.beginAZTenegradbutton.clicked.connect(self.AutoZernLoop)
         self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
         # self._widget.LRbutton_group.buttonClicked.connect(self.selectMaskSide)
@@ -253,9 +254,14 @@ class SLM25DController(ImConWidgetController):
     def beginAlignMaskCenterThreadNew(self, selected_frame):
         threading.Thread(target=self.alignMaskCenter, args=(selected_frame, ), daemon=True).start()
 
+
     def AutoZernLoop(self):
 
         print('autozern started')
+        submanagernameDict = {"Red": "640 Fluor", "Green": "561 Fluor", "Blue": "488 Fluor"}
+        self._master.arduinoManager.activate25DWriteOnly()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].startAcquisition25D()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]]._camera.setPropertyValue('AcquisitionFrameRate', 20.0)
 
         self._widget.projectZernike.setChecked(True)
         self._widget.projectZernike.setEnabled(False)
@@ -367,6 +373,9 @@ class SLM25DController(ImConWidgetController):
         # self.stop25D()    
 
         #self._commChannel.sigAutoZernikeFinished.emit()
+
+        self._master.arduinoManager.deactivateSLMWriteOnly()
+        self._master.detectorsManager._subManagers[submanagernameDict[self._widget.channelSelectCombo.currentText()]].stopAcquisition()
 
 
 

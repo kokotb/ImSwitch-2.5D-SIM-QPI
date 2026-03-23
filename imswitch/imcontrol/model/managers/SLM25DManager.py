@@ -94,6 +94,7 @@ class SLM25DManager(SignalInterface):
     def optimalCoeffValueMax(self, calibValues): # finds optimal value for zern coeff, according to image score
  
         ind = self.arrayImgScoresAZ.index(max(self.arrayImgScoresAZ))
+        print(self.arrayImgScoresAZ)
         optimalCoeff = calibValues[ind]
 
         

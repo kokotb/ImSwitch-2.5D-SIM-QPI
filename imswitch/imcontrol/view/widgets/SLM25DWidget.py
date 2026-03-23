@@ -85,6 +85,9 @@ class SLM25DWidget(Widget):
         self.centerMaskbutton = QPushButton("Center Mask")
         self.centerMaskbutton.setEnabled(False)
         self.centerMaskbutton.setFixedWidth(250)
+        self.beginAZTenegradbutton = QPushButton("AZ Tenegrad")
+        self.beginAZTenegradbutton.setEnabled(False)
+        self.beginAZTenegradbutton.setFixedWidth(250)
 
         self.sideSelectComboLabel = QtWidgets.QLabel('Auto Side:')
         self.sideSelectCombo = QComboBox()
@@ -126,6 +129,7 @@ class SLM25DWidget(Widget):
         self.grid3.addWidget(self.loadImgToSLMbutton, 0, 0)
         self.grid3.addWidget(self.beginAZbutton, 0, 1)
         self.grid3.addWidget(self.centerMaskbutton, 0, 2)
+        self.grid3.addWidget(self.beginAZTenegradbutton, 1, 2)
         self.grid3.addWidget(self.sideSelectComboLabel, 1, 0)
         self.grid3.addWidget(self.sideSelectCombo, 1, 1)
         self.grid3.addWidget(self.channelSelectComboLabel, 2, 0)
@@ -366,6 +370,7 @@ class SLM25DWidget(Widget):
     def zernikeLocked(self, value):
         
         self.beginAZbutton.setEnabled(not value)
+        self.beginAZTenegradbutton.setEnabled(not value)
         self.resetZern.setEnabled(not value)
         self.loadImgToSLMbutton.setEnabled(not value)
         for i in range(len(self.ZernikeCoefficientNames)):
@@ -391,6 +396,7 @@ class SLM25DWidget(Widget):
     def disableAll(self): #Disable everything once the SLM resource (or mocker) is opened.
         self.slmPreview.setEnabled(False)
         self.beginAZbutton.setEnabled(False)
+        self.beginAZTenegradbutton.setEnabled(False)
         self.centerMaskbutton.setEnabled(False)
         self.leftZernLabel.setEnabled(False)
         self.rightZernLabel.setEnabled(False)
@@ -421,6 +427,7 @@ class SLM25DWidget(Widget):
     def enableAll(self): #Enable everything once the SLM resource (or mocker) is opened.
         self.slmPreview.setEnabled(True)
         self.beginAZbutton.setEnabled(True)
+        self.beginAZTenegradbutton.setEnabled(True)
         self.centerMaskbutton.setEnabled(True)
         self.leftZernLabel.setEnabled(True)
         self.rightZernLabel.setEnabled(True)
