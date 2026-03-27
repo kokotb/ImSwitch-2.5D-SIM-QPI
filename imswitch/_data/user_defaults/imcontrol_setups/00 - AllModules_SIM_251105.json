@@ -4,7 +4,7 @@
   "height":2048,
   "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -14,10 +14,10 @@
   "height":1920,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 440,
-  "LeftCenterY": 480, 
-  "RightCenterX":1440,
-  "RightCenterY": 520,
+  "LeftCenterX": 480,
+  "LeftCenterY": 520, 
+  "RightCenterX":1420,
+  "RightCenterY": 540,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,

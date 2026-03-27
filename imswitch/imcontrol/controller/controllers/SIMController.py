@@ -989,7 +989,7 @@ class SIMController(ImConWidgetController):
             waitingBuffers = detector._camera.getBufferValue('25D')
             # time.sleep(0.002)
 
-            if (waitingBuffers != 1 and totalBufferTime > 0.5): # Will wait for 0.2 seconds for a buffer to come before resetting.
+            if (waitingBuffers != 1 and totalBufferTime > 1): # Will wait for 1 seconds for a buffer to come before resetting. CTNOTE: Needs to be based off of current cam Hz
 
                 self._logger.error(f'Frameset thrown in trash. Buffer available is {waitingBuffers} on detector {detector.name}')
                 broken = True
@@ -1578,7 +1578,7 @@ class SIMController(ImConWidgetController):
         for detector in self.detectors:
             if detector.forAcquisition: 
                 detector.stopAcquisitionSIM()
-                detector._camera.setPropertyValue('AcquisitionFrameRate', float(5), toPrint=False)
+                detector._camera.setPropertyValue('AcquisitionFrameRate', float(1.5), toPrint=False)
         if self.isTiling:
             self.positionerXY.setPositionXY(self.tileOrigin[0], self.tileOrigin[1])
             self.isTiling = False
@@ -1663,7 +1663,7 @@ class SIMController(ImConWidgetController):
         if self.speed25D == 'fast':
             detector._camera.setPropertyValue('AcquisitionFrameRate', 49.0)
         elif self.speed25D == 'slow':
-            detector._camera.setPropertyValue('AcquisitionFrameRate', 10.0)
+            detector._camera.setPropertyValue('AcquisitionFrameRate', 2.0) #This line needs to be changed if arduino timings changed (slow mode) 2.5D timing
         trigger_mode = 'On'
         exposure_auto = 'Off'
         # gain = detector._camera.getPropertyValue('Gain')
