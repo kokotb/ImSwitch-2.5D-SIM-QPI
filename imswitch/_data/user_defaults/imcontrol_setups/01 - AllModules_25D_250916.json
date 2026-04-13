@@ -1,11 +1,10 @@
 { "SLMSIM":{
   "path": "dlls\\SLM4DD\\lib\\R11CommLib-1.9-x64.dll",
-  "port": "COM4",
-  "width":1080,
-  "height":1920,
-  "pixelSize":13.62,
+  "width":2048,
+  "height":2048,
+  "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": false
+  "mock": true
 
 },
 
@@ -15,35 +14,35 @@
   "mock": false,
   "Gamma": 0.5, 
   "Psi": 0.5,
-  "LeftCenterX": 360,
-  "LeftCenterY": 480,
-  "RightCenterX":1440,
+  "LeftCenterX": 480,
+  "LeftCenterY": 510,
+  "RightCenterX":1420,
   "RightCenterY": 540,
   "BeamDiameter": 7.0,
 
   "LeftPiston": 0.0,
   "LeftYtilt": 0.0,
   "LeftXtilt": 0.0,
-  "LeftObliqueAstigmatism": 0.0,
+  "LeftObliqueAstigmatism": -0.4,
   "LeftDefocus": 0.0,
-  "LeftVerticalAstigmatism": 0.0,
-  "LeftVerticalTrefoil": 0.0,
-  "LeftVerticalComa": 0.0,
-  "LeftHorizontalComa": 0.0,
-  "LeftHorizontalTrefoil": 0.0,
-  "LeftSpherical": 0.0,
+  "LeftVerticalAstigmatism": 0.6,
+  "LeftVerticalTrefoil": 0.1,
+  "LeftVerticalComa": 0.2,
+  "LeftHorizontalComa": 0.4,
+  "LeftHorizontalTrefoil": -0.3,
+  "LeftSpherical": 0.3,
 
   "RightPiston": 0.0,
   "RightYtilt": 0.0,
   "RightXtilt": 0.0,
-  "RightObliqueAstigmatism": 0.0,
+  "RightObliqueAstigmatism": -0.3,
   "RightDefocus": 0.0,
-  "RightVerticalAstigmatism": 0.0,
-  "RightVerticalTrefoil": 0.0,
+  "RightVerticalAstigmatism": 0.5,
+  "RightVerticalTrefoil": -0.1,
   "RightVerticalComa": 0.0,
-  "RightHorizontalComa": 0.0,
-  "RightHorizontalTrefoil": 0.0,
-  "RightSpherical": 0.0
+  "RightHorizontalComa": 0.4,
+  "RightHorizontalTrefoil": 0.3,
+  "RightSpherical": 0.3
 
 
 },
@@ -54,8 +53,8 @@
   }
 },
   "sim": {
-    "width": 1920,
-    "height": 1080,
+    "width": 2048,
+    "height": 2048,
     "ReconWL1": 523,
     "ReconWL2": 573,
     "ReconWL3": 678,

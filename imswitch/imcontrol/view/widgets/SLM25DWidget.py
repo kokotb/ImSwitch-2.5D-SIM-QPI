@@ -253,6 +253,12 @@ class SLM25DWidget(Widget):
         self.refIndexOfTheSample.setDecimals(2)
         self.topLayout.addWidget(self.refIndexOfTheSample, 2, 5)
 
+        self.refIndexOfTheCoverGlass = QtWidgets.QDoubleSpinBox()
+        self.refIndexOfTheCoverGlass.setRange(1., 2.)
+        self.refIndexOfTheCoverGlass.setSingleStep(0.01)
+        self.refIndexOfTheCoverGlass.setDecimals(2)
+        self.topLayout.addWidget(self.refIndexOfTheCoverGlass, 3, 5)
+
         self.label25D = QtWidgets.QLabel(f'<strong>2.5D Mask</strong>')
         self.label25D.setEnabled(False)
         self.label25D.setTextFormat(QtCore.Qt.RichText)
@@ -325,7 +331,7 @@ class SLM25DWidget(Widget):
         self.maskScaleNumber = QtWidgets.QSpinBox()
         self.maskScaleNumber.setRange(0,255)
         self.maskScaleNumber.setSingleStep(1)
-        self.maskScaleNumber.setValue(255)
+        self.maskScaleNumber.setValue(240)
         self.maskScaleNumber.setEnabled(False)
         self.maskScaleNumber.setFixedWidth(75)
         self.grid2.addWidget(self.maskScaleNumberLabel, row + 1, 0)

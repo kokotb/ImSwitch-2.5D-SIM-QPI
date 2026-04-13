@@ -487,7 +487,7 @@ class SLM25DController(ImConWidgetController):
                         success = self.waitingForBuffers()
                     rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
                     self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
-                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                    self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                     beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                     images.append(beadImgAnalysis)
                     if (key == self._widget.sideSelectCombo.currentText() + " Center-Y"):
@@ -562,8 +562,8 @@ class SLM25DController(ImConWidgetController):
         zPosFocus = self.sphericalAberrationLoop(zPosFocus, ymin, ymax, xmin, xmax)  # find optimal SA and corrects focus
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("Astigmatism 1 ====================================================")
-        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
-        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=True)
+        self.verticalAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
+        self.obliqueAstigmatismLoop(zPosFocus, ymin, ymax, xmin, xmax, flag25dOn=False)
         print("refocus ====================================================")
         zPosFocus = self.correct_focus(zPosFocus, ymin, ymax, xmin, xmax)
         print("Coma 1 ====================================================")
@@ -628,10 +628,10 @@ class SLM25DController(ImConWidgetController):
             # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
             success = False
             while not success:
-                self._master.arduinoManager.trigger25DWriteOnly("T")
+                self._master.arduinoManager.trigger25DWriteOnly("F")
                 success = self.waitingForBuffers()
             rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
-            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+            self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
             # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
             self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
             beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -677,10 +677,10 @@ class SLM25DController(ImConWidgetController):
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -708,7 +708,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -760,12 +760,14 @@ class SLM25DController(ImConWidgetController):
             for offset in [-2., 2.]:
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
+                time.sleep(0.05)
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                rawImg = np.clip(rawImg - np.mean(np.partition(rawImg.flatten(), int(rawImg.size*0.2))[:int(rawImg.size*0.2)]), 0, None) # subtracts bckg !!!chat
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -793,7 +795,7 @@ class SLM25DController(ImConWidgetController):
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
 
@@ -837,10 +839,11 @@ class SLM25DController(ImConWidgetController):
                 # !!! POSSIBLE THAT SLEEP WILL BE NEEDED HERE
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                rawImg = np.clip(rawImg - np.mean(np.partition(rawImg.flatten(), int(rawImg.size*0.2))[:int(rawImg.size*0.2)]), 0, None) # subtracts bckg !!!chat
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -866,7 +869,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         self._widget.project25D.setChecked(False)
@@ -972,11 +975,12 @@ class SLM25DController(ImConWidgetController):
                 self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus + offset , 'Z')
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                rawImg = np.clip(rawImg - np.mean(np.partition(rawImg.flatten(), int(rawImg.size*0.2))[:int(rawImg.size*0.2)]), 0, None) # subtracts bckg !!!chat
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
@@ -1012,7 +1016,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
             
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
@@ -1106,13 +1110,14 @@ class SLM25DController(ImConWidgetController):
                 
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
 
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
+                rawImg = np.clip(rawImg - np.mean(np.partition(rawImg.flatten(), int(rawImg.size*0.2))[:int(rawImg.size*0.2)]), 0, None) # subtracts bckg !!!chat
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
                 images.append(beadImgAnalysis)
                 sigmaX, sigmaY = self.comma_metric(beadImgAnalysis, threshold=0.9) # !!! rawImg is 1024x1024 1 color only !!!  affects later code (slm25DManager.optimalCoeffValueMax)
@@ -1147,7 +1152,7 @@ class SLM25DController(ImConWidgetController):
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
-        # self.show_images_grid(images)
+        self.show_images_grid(images)
         self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
         #self._widget.stop25D.setEnabled(False)
         #self._widget.start25D.setEnabled(True)
@@ -1176,12 +1181,13 @@ class SLM25DController(ImConWidgetController):
 
                 success = False
                 while not success:
-                    self._master.arduinoManager.trigger25DWriteOnly("T")
+                    self._master.arduinoManager.trigger25DWriteOnly("F")
                     success = self.waitingForBuffers()
                 # print(self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.getBufferValue('25D'))
                 
                 rawImg = self.detectorsDict[self._widget.channelSelectCombo.currentText()]._camera.grabFrame25D(1)
-                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw")
+                rawImg = np.clip(rawImg - np.mean(np.partition(rawImg.flatten(), int(rawImg.size*0.2))[:int(rawImg.size*0.2)]), 0, None) # subtracts bckg !!!chat
+                self._commChannel.sig25DPSFReceived.emit(rawImg,f"{self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle} Raw", '25D')
                 # self._commChannel.sigGetLastRawImgs.emit(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 # self._commChannel.saveLastRawImgs(rawImg, self.detectorsDict[self._widget.channelSelectCombo.currentText()].handle)
                 beadImgAnalysis = rawImg[ymin:ymax, xmin:xmax]
@@ -1224,7 +1230,7 @@ class SLM25DController(ImConWidgetController):
             self._widget.pars["AbsPosEdit" + key].setStyleSheet('')
             #self._widget.stop25D.setEnabled(False)
             #self._widget.start25D.setEnabled(True)
-            # self.show_images_grid(images)
+            self.show_images_grid(images)
             
             self._master.positionersManager._subManagers['Z'].setPosition(zPosFocus, 'Z')
 
@@ -1994,7 +2000,8 @@ class SLM25DController(ImConWidgetController):
         # insert refractive indexes here !!!
         self.calcsampleDepthCorrectionMask(lam, zPos, n1=1.525, NA=0.8)
         self.combineAndProject()
-        time.sleep(0.1)
+        # time.sleep(0.1)
+        time.sleep(.3)
         self._commChannel.sigDepthMaskDone.emit()
         
 
@@ -2004,10 +2011,11 @@ class SLM25DController(ImConWidgetController):
         # handeled negative values under sqrt - not in beam area, does not matter anyway, just prevents errors
         edgeOfTheSample = self._widget.edgeOfTheSample.value()
         n2 = self._widget.refIndexOfTheSample.value()
+        n1 = self._widget.refIndexOfTheCoverGlass.value()
         d = edgeOfTheSample - zPos
         print(d) # added factor for rescaling mask, no idea if it is correct !!!
         if d > 0:
-            return + (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
+            return (255./(2.*np.pi)) * (2. * np.pi * d / lam) * (
             n2 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n2) ** 2, 0)) -
             n1 * np.sqrt(np.maximum(1. - (NA * rhomatrix / n1) ** 2, 0))
         )
