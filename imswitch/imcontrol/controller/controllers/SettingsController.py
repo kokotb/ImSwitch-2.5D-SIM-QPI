@@ -42,7 +42,7 @@ class SettingsController(ImConWidgetController):
         self.detectors = []
 
         self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
-        self.fullImages = {"488": None, "561": None, "640": None}
+        self.fullImages = {"488F": None, "561F": None, "640F": None, "Scatter": None}
 
         if not self._master.detectorsManager.hasDevices():
             return
@@ -122,14 +122,35 @@ class SettingsController(ImConWidgetController):
         self._widget.correctionButton.clicked.connect(self.open_fov_window)
 
     def retrieveDetectors(self):
+        if self._commChannel.scatterCamActive == 2:
+            self.scatterCam = True
+        else: 
+            self.scatterCam = False
+        self.lasers = list(self._master.lasersManager._subManagers.values()) #List of just the laser object handles
+        poweredLasers = []
+        for laser in self.lasers:
+            if laser.percentPower > 0:
+                poweredLasers.append(str(laser.wavelength)+'F')
+        if '488F' in poweredLasers and self.scatterCam:
+            poweredLasers.append('Scatter')
+
+
+            
         self.detectors = []
         for detector in self._master.detectorsManager:
             if detector[1]._DetectorManager__forAcquisition:
                 fullName = detector[0]
                 if fullName[-5:] == 'Fluor':
-                    shortName = fullName[:5].replace(" ", "")
-                    detector[1].handle = shortName
+                    # shortName = fullName[:5].replace(" ", "")
+                    # detector[1].handle = shortName
                     self.detectors.append(detector[1])
+                if ('Scatter' in fullName) and ('Scatter' in poweredLasers):
+                    self.detectors.append(detector[1])
+        activeDetectors = []
+        for detector in self.detectors:
+            if detector.handle in poweredLasers:
+                activeDetectors.append(detector)
+        return activeDetectors
 
     def open_fov_window(self):
         if self._commChannel.simActive:
@@ -138,44 +159,39 @@ class SettingsController(ImConWidgetController):
         
         busy = QtWidgets.QProgressDialog("FOV Correction Window is Opening...", None, 0, 0, self._widget)
         busy.setWindowTitle('Please wait...')
-        # busy.setCancelButton(None)
         busy.resize(300, 100)
         busy.show()
         QtWidgets.QApplication.processEvents()
 
         self._logger.info('FOV correction window is opening...')
-        self.retrieveDetectors()
-        for detector in self.detectors:
+        activeDetectors = self.retrieveDetectors() # Get list of detectors for fluor channels.
+        for detector in self.detectors: #Stop if running.
             if detector.forAcquisition:
                 detector.stopAcquisitionSIM()
 
-        scatterDet = None
-        showScatter = self._widget.scatterCamActive.isChecked()
-        if showScatter:
-            for dName, dManager in self._master.detectorsManager:
-                if "Scatter" in dName:
-                    scatterDet = dManager
-                    break
-            if scatterDet is None:
-                showScatter = False
+        # scatterDet = None
+        # showScatter = self._widget.scatterCamActive.isChecked()
+        # if showScatter:
+        #     for dName, dManager in self._master.detectorsManager:
+        #         if "Scatter" in dName:
+        #             scatterDet = dManager
+        #             break
+        #     if scatterDet is None:
+        #         showScatter = False
 
-        roiCenters = {"488": None, "561": None, "640": None, "Scatter": None}
-        for detector in self.detectors:
+        roiCenters = {"488F": None, "561F": None, "640F": None, "Scatter": None}
+        for detector in activeDetectors: #get current FOV data for all active detectors
             fs = detector.frameStart
             sh = detector.shape
             handle = detector.handle
-            roiCenters[handle[:-1]] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
-            # if detector.handle == "561F":
-            #     roiCenters["561"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
-            # if detector.handle == "640F":
-            #     roiCenters["640"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
+            roiCenters[handle] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
 
-        dets = list(self.detectors)
-        if showScatter and scatterDet is not None:
-            fs = scatterDet.frameStart
-            sh = scatterDet.shape
-            roiCenters["Scatter"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
-            dets.append(scatterDet)
+        dets = list(activeDetectors)
+        # if showScatter and scatterDet is not None:
+        #     fs = scatterDet.frameStart
+        #     sh = scatterDet.shape
+        #     roiCenters["Scatter"] = (fs[0] + sh[0] / 2.0, fs[1] + sh[1] / 2.0)
+        #     dets.append(scatterDet)
 
         mode = '25D'
         if mode == 'SIM':
@@ -183,43 +199,33 @@ class SettingsController(ImConWidgetController):
         else:
             lastImgs = self.getOneSetImgs25D(dets) # Actual acquisition of images.
 
-        self.fullImages["488"] = (lastImgs[0] / 16).astype(np.uint8)
-        self.fullImages["561"] = (lastImgs[1] / 16).astype(np.uint8)
-        self.fullImages["640"] = (lastImgs[2] / 16).astype(np.uint8)
+        for lastImg in lastImgs:
+            self.fullImages[lastImg[0].handle] = (lastImg[1] / 16).astype(np.uint8)
 
-        scatterImg = None
-        if showScatter and scatterDet is not None:
-            scatterImg = (lastImgs[3] / 16).astype(np.uint8)
 
-        self.fovOffsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
-        if showScatter:
-            self.fovOffsets["Scatter"] = (0, 0)
+        self.fovOffsets = {"488F": (0, 0), "561F": (0, 0), "640F": (0, 0), "Scatter": (0, 0)}
+        # if showScatter:
+        #     self.fovOffsets["Scatter"] = (0, 0)
 
         self._widget.openFOVWindow(
-            self.fullImages["488"],
-            self.fullImages["561"],
-            self.fullImages["640"],
-            scatter=scatterImg,
-            showScatter=showScatter
+            self.fullImages, activeDetectors
         )
 
         w = self._widget.openCorrectionWindow
-        w.scatterDet = scatterDet if (showScatter and scatterDet is not None) else None
+
         w.offsets = self.fovOffsets
 
-        w.blueImage.parentLabel = "488"
-        w.greenImage.parentLabel = "561"
-        w.redImage.parentLabel = "640"
-        if showScatter and getattr(w, "scatterImage", None) is not None:
-            w.scatterImage.parentLabel = "Scatter"
+        w.blueImage.parentLabel = "488F"
+        w.greenImage.parentLabel = "561F"
+        w.redImage.parentLabel = "640F"
+        w.scatterImage.parentLabel = "Scatter"
 
         w.roiCenters = roiCenters
 
-        w.blueImage.fullPoint  = roiCenters["488"]
-        w.greenImage.fullPoint = roiCenters["561"]
-        w.redImage.fullPoint   = roiCenters["640"]
-        if showScatter and getattr(w, "scatterImage", None) is not None:
-            w.scatterImage.fullPoint = roiCenters["Scatter"]
+        w.blueImage.fullPoint  = roiCenters["488F"]
+        w.greenImage.fullPoint = roiCenters["561F"]
+        w.redImage.fullPoint   = roiCenters["640F"]
+        w.scatterImage.fullPoint = roiCenters["Scatter"]
 
         w.updatePointsDisplay()
         w.applyRoiSize()
@@ -241,21 +247,21 @@ class SettingsController(ImConWidgetController):
 
         scatterEnabled = (getattr(w, "scatterImage", None) is not None and getattr(w, "scatterDet", None) is not None)
 
-        if (w.blueImage.fullPoint is None or w.greenImage.fullPoint is None or w.redImage.fullPoint is None):
-            QtWidgets.QMessageBox.warning(
-                w,
-                "Missing points",
-                "Click on all the images (488, 561, 640) before cropping"
-            )
-            return
+        # if (w.blueImage.fullPoint is None or w.greenImage.fullPoint is None or w.redImage.fullPoint is None):
+        #     QtWidgets.QMessageBox.warning(
+        #         w,
+        #         "Missing points",
+        #         "Click on all the images (488, 561, 640) before cropping"
+        #     )
+        #     return
 
-        if scatterEnabled and w.scatterImage.fullPoint is None:
-            QtWidgets.QMessageBox.warning(
-                w,
-                "Missing point",
-                "Click on the Scatter image before cropping"
-            )
-            return
+        # if scatterEnabled and w.scatterImage.fullPoint is None:
+        #     QtWidgets.QMessageBox.warning(
+        #         w,
+        #         "Missing point",
+        #         "Click on the Scatter image before cropping"
+        #     )
+        #     return
 
         roiSize = w.getRoiSize()
         half = roiSize // 2
@@ -268,9 +274,9 @@ class SettingsController(ImConWidgetController):
 
         ref = w.getRefKey()
         pts = {
-            "488": w.blueImage.fullPoint,
-            "561": w.greenImage.fullPoint,
-            "640": w.redImage.fullPoint,
+            "488F": w.blueImage.fullPoint,
+            "561F": w.greenImage.fullPoint,
+            "640F": w.redImage.fullPoint,
         }
         if scatterEnabled:
             pts["Scatter"] = w.scatterImage.fullPoint
@@ -285,7 +291,7 @@ class SettingsController(ImConWidgetController):
 
         refOx, refOy = map(lambda v: int(round(v)), pts[ref])
 
-        imgs = w.fullImages
+        imgs = w.allImgs
 
         maxX0 = {}
         maxY0 = {}
@@ -358,9 +364,10 @@ class SettingsController(ImConWidgetController):
         return value
         
         
-    def getOneSetImgs25D(self, dets=None):
+    def getOneSetImgs25D(self, dets=[]):
         if dets is None:
-            dets = self.detectors
+            print('No active detectors')
+            return
 
         self._master.arduinoManager.activate25DWriteOnly()
         for detector in dets:
@@ -373,7 +380,7 @@ class SettingsController(ImConWidgetController):
 
         lastImgs = []
         for detector in dets:
-            lastImgs.append(detector._camera.grabFrame25D(1))
+            lastImgs.append((detector, detector._camera.grabFrame25D(1)))
 
         self._master.arduinoManager.deactivateSLMWriteOnly()
 

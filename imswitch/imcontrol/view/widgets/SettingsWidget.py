@@ -199,13 +199,8 @@ class SettingsWidget(Widget):
         # FOVCorrectionWindow = FOVCorrectionWindow(QMainWindow)
         
         
-    def openFOVWindow(self, blue, green, red, scatter=None, showScatter=False):
-        self.openCorrectionWindow = FOVCorrectionWindow(
-            blue, green, red,
-            scatterImg=scatter,
-            showScatter=showScatter,
-            parent=self
-        )
+    def openFOVWindow(self, allImgs, activeDetectors):
+        self.openCorrectionWindow = FOVCorrectionWindow(allImgs, activeDetectors,  parent=self)
         self.openCorrectionWindow.show()
 
 
@@ -555,22 +550,35 @@ class fovCorrectionImage(QtWidgets.QLabel):
 
 
 class FOVCorrectionWindow(QMainWindow):
-    def __init__(self, blueImg, greenImg, redImg, scatterImg=None, showScatter=False, parent=SettingsWidget):
+    def __init__(self, allImgs, activeDetectors, parent=SettingsWidget):
+
+
+# blueImg, greenImg, redImg, scatterImg=None, showScatter=Fals
         super().__init__(parent)
+        self.allImgs = allImgs
+        activeDetectorHandles = []
+        for detector in activeDetectors:
+            activeDetectorHandles.append(detector.handle)
+
 
         self.setWindowTitle("FOV Correction")
         self.setMinimumSize(2600, 1100)
         font = QFont()
         font.setPointSize(18)
 
+        # for img in allImgs:
+        #     self.fullImages = {img[0]: img[1]}
+        self.offsets = {"488F": (0, 0), "561F": (0, 0), "640F": (0, 0), "Scatter": (0, 0)}
+        # self.scatterImage = None
 
-        self.fullImages = {"488": blueImg, "561": greenImg, "640": redImg}
-        self.offsets = {"488": (0, 0), "561": (0, 0), "640": (0, 0)}
-        self.scatterImage = None
+        # if showScatter and scatterImg is not None:
+        #     self.fullImages["Scatter"] = scatterImg
+        #     self.offsets["Scatter"] = (0, 0)
 
-        if showScatter and scatterImg is not None:
-            self.fullImages["Scatter"] = scatterImg
-            self.offsets["Scatter"] = (0, 0)
+        for key in list(allImgs.keys()):
+            if not isinstance(allImgs[key], np.ndarray):
+                allImgs[key] = np.ones((4600, 5320)) * 127 
+
 
 
         self.mainLayout = QtWidgets.QVBoxLayout()
@@ -580,34 +588,37 @@ class FOVCorrectionWindow(QMainWindow):
         self.blueLabel = QtWidgets.QLabel(f"<strong>488<strong>")
         self.blueLabel.setFont(font)
         self.col1.addWidget(self.blueLabel)
-        self.blueImage = fovCorrectionImage(blueImg, parent=self)
-        self.col1.addWidget(self.blueImage)
+        self.blueImage = fovCorrectionImage(allImgs['488F'], parent=self)
+        if '488F' in activeDetectorHandles:
+            self.col1.addWidget(self.blueImage)
         self.col1.addStretch()
 
         self.col2 = QtWidgets.QVBoxLayout()
         self.greenLabel = QtWidgets.QLabel(f"<strong>561<strong>")
         self.greenLabel.setFont(font)
         self.col2.addWidget(self.greenLabel)
-        self.greenImage = fovCorrectionImage(greenImg, parent=self)
-        self.col2.addWidget(self.greenImage)
+        self.greenImage = fovCorrectionImage(allImgs['561F'], parent=self)
+        if '561F' in activeDetectorHandles:
+            self.col2.addWidget(self.greenImage)
         self.col2.addStretch()
 
         self.col3 = QtWidgets.QVBoxLayout()
         self.redLabel = QtWidgets.QLabel(f"<strong>640<strong>")
         self.redLabel.setFont(font)
         self.col3.addWidget(self.redLabel)
-        self.redImage = fovCorrectionImage(redImg, parent=self)
-        self.col3.addWidget(self.redImage)
+        self.redImage = fovCorrectionImage(allImgs['640F'], parent=self)
+        if '640F' in activeDetectorHandles:
+            self.col3.addWidget(self.redImage)
         self.col3.addStretch()
 
-        if showScatter and scatterImg is not None:
-            self.col4 = QtWidgets.QVBoxLayout()
-            self.scatterLabel = QtWidgets.QLabel(f"<strong>Scatter<strong>")
-            self.scatterLabel.setFont(font)
-            self.col4.addWidget(self.scatterLabel)
-            self.scatterImage = fovCorrectionImage(scatterImg, parent=self)
+        self.col4 = QtWidgets.QVBoxLayout()
+        self.scatterLabel = QtWidgets.QLabel(f"<strong>Scatter<strong>")
+        self.scatterLabel.setFont(font)
+        self.col4.addWidget(self.scatterLabel)
+        self.scatterImage = fovCorrectionImage(allImgs['Scatter'], parent=self)
+        if 'Scatter' in activeDetectorHandles:
             self.col4.addWidget(self.scatterImage)
-            self.col4.addStretch()
+        self.col4.addStretch()
 
 
         font = QFont()
@@ -695,7 +706,7 @@ class FOVCorrectionWindow(QMainWindow):
         self.alignRefBox.setFont(font)
         # self.alignRefBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        for k in ["488", "561", "640"]:
+        for k in ["488F", "561F", "640F"]:
             self.alignRefBox.addItem(k, k)
 
         if self.scatterImage is not None:
@@ -791,7 +802,7 @@ class FOVCorrectionWindow(QMainWindow):
 
 
     def _fallbackCenter(self, key):
-        img = self.fullImages[key]
+        img = self.allImgs[key]
         H, W = img.shape[:2]
         return (W / 2.0, H / 2.0)
 
@@ -809,9 +820,9 @@ class FOVCorrectionWindow(QMainWindow):
             c640 = self.roiCenters.get("640")
             cSca = self.roiCenters.get("Scatter")
 
-        if c488 is None: c488 = self._fallbackCenter("488")
-        if c561 is None: c561 = self._fallbackCenter("561")
-        if c640 is None: c640 = self._fallbackCenter("640")
+        if c488 is None: c488 = self._fallbackCenter("488F")
+        if c561 is None: c561 = self._fallbackCenter("561F")
+        if c640 is None: c640 = self._fallbackCenter("640F")
         if self.scatterImage is not None and cSca is None: cSca = self._fallbackCenter("Scatter")
 
         p = self.blueImage.fullPoint if self.blueImage.fullPoint is not None else c488
