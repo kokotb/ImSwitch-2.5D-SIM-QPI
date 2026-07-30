@@ -6,7 +6,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {
-        "port": "ASRLCOM15",
+        "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
       "axes": ["Z"],

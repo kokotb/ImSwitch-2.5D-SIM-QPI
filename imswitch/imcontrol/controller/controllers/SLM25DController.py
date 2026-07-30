@@ -107,7 +107,7 @@ class SLM25DController(ImConWidgetController):
         self._commChannel.sigModuleSettings.connect(self.load25DSettings)
         self._commChannel.sigSIMAcqToggled.connect(self._widget.SIMToggled)
         self._widget.stop25D.clicked.connect(self._commChannel.updateStop25DCommand)
-        self._widget.beginAZbutton.clicked.connect(self.beginAutoZernThread)
+        self._widget.beginAZbutton.clicked.connect(self.initiateAZWithButton)
         self._widget.beginAZTenegradbutton.clicked.connect(self.AutoZernLoop)
         self._widget.centerMaskbutton.clicked.connect(self.initiateAlignMaskCenter)
         self._widget.loadImgToSLMbutton.clicked.connect(self.openFileDialog)
@@ -703,8 +703,14 @@ class SLM25DController(ImConWidgetController):
         # SAOptimal = testvalues[scores.index(min(scores))]
         SAOptimal = testvalues[scores.index(max(scores))]
 
+        # !!!!!!!!!!!!!!!!!!
+        with open(r"D:\SIM_Data\zernScan260603\SA.txt", "w", encoding="utf-8") as f:
+            f.write(f"{list(testvalues)}\n")
+            f.write(f"{scores}\n")
+
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
+        self._widget.pars["AbsPosEdit" + key].setValue(current)
+        #self._widget.pars["AbsPosEdit" + key].setValue(SAOptimal)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
@@ -788,8 +794,15 @@ class SLM25DController(ImConWidgetController):
         print(oblAstigScores)
         oblAstigOptimal = testvalues[oblAstigScores.index(min(oblAstigScores))]
 
+        # !!!!!!!!!!!!!!!!!!
+        with open(r"D:\SIM_Data\zernScan260603\OA.txt", "w", encoding="utf-8") as f:
+            f.write(f"{list(testvalues)}\n")
+            f.write(f"{oblAstigScores}\n")
+
+
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
+        # self._widget.pars["AbsPosEdit" + key].setValue(oblAstigOptimal)
+        self._widget.pars["AbsPosEdit" + key].setValue(current)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
@@ -865,8 +878,15 @@ class SLM25DController(ImConWidgetController):
         print(vertAstigScores)
         vertAstigOptimal = testvalues[vertAstigScores.index(min(vertAstigScores))]
 
+        # !!!!!!!!!!!!!!!!!!
+        with open(r"D:\SIM_Data\zernScan260603\VA.txt", "w", encoding="utf-8") as f:
+            f.write(f"{list(testvalues)}\n")
+            f.write(f"{vertAstigScores}\n")
+
+
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
+        # self._widget.pars["AbsPosEdit" + key].setValue(vertAstigOptimal)
+        self._widget.pars["AbsPosEdit" + key].setValue(current)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
         self.show_images_grid(images)
@@ -1012,8 +1032,15 @@ class SLM25DController(ImConWidgetController):
             print(scores)
             horCommaOptimal = testvalues[scores.index(min(scores))]
 
+        # !!!!!!!!!!!!!!!!!!
+        with open(r"D:\SIM_Data\zernScan260603\HC.txt", "w", encoding="utf-8") as f:
+            f.write(f"{list(testvalues)}\n")
+            f.write(f"{scores}\n")
+
+
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
+        # self._widget.pars["AbsPosEdit" + key].setValue(horCommaOptimal)
+        self._widget.pars["AbsPosEdit" + key].setValue(current)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
         self.show_images_grid(images)
@@ -1147,8 +1174,15 @@ class SLM25DController(ImConWidgetController):
             print(scores)
             vertCommaOptimal = testvalues[scores.index(min(scores))]
 
+        # !!!!!!!!!!!!!!!!!!
+        with open(r"D:\SIM_Data\zernScan260603\VC.txt", "w", encoding="utf-8") as f:
+            f.write(f"{list(testvalues)}\n")
+            f.write(f"{scores}\n")
+
+
         self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-        self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
+        # self._widget.pars["AbsPosEdit" + key].setValue(vertCommaOptimal)
+        self._widget.pars["AbsPosEdit" + key].setValue(current)
         self._widget.pars["AbsPosEdit" + key].blockSignals(False)
         self.updateZernikeWithSleep()
             
@@ -1220,8 +1254,20 @@ class SLM25DController(ImConWidgetController):
 
             zernikeParametersNew = self.getAllZernikeParams()
 
+            # !!!!!!!!!!!!!!!!!!
+            if (key == '(3,-3)' + self._widget.sideSelectCombo.currentText()):
+                with open(r"D:\SIM_Data\zernScan260603\HT.txt", "w", encoding="utf-8") as f:
+                    f.write(f"{list(testvalues)}\n")
+                    f.write(f"{scores}\n")
+
+            else:
+                with open(r"D:\SIM_Data\zernScan260603\VT.txt", "w", encoding="utf-8") as f:
+                    f.write(f"{list(testvalues)}\n")
+                    f.write(f"{scores}\n")
+
             self._widget.pars["AbsPosEdit" + key].blockSignals(True)
-            self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
+            # self._widget.pars["AbsPosEdit" + key].setValue(trefoilOptimal)
+            self._widget.pars["AbsPosEdit" + key].setValue(current)
             self._widget.pars["AbsPosEdit" + key].blockSignals(False)
             zernikeParametersNew = self.getAllZernikeParams()
             print("Opt Best: " + str(zernikeParametersNew['(3,-3)' + self._widget.sideSelectCombo.currentText()]) + ' ' + str(zernikeParametersNew['(3,3)' + self._widget.sideSelectCombo.currentText()]))
