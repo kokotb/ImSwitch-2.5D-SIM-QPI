@@ -14,8 +14,8 @@ class AutofocusManager(SignalInterface):
     def __init__(self):
         super().__init__()
         self._logger = initLogger(self)
-        self.init_guess_x = [5,1020,500,30]	# Guesses for fits Background, Centre, Width, Amplitude
-        self.init_guess_y = [5,550,500,30]
+        self.init_guess_x = [5,995,1500,30]	# Guesses for fits Background, Centre, Width, Amplitude
+        self.init_guess_y = [5,690,500,30]
         self.threshold = 5
          #pixel value threshold for AF image
         self.guess_x = self.init_guess_x[:]	# Guesses for fits Background, Centre, Width, Amplitude
@@ -74,6 +74,15 @@ class AutofocusManager(SignalInterface):
         y = np.arange(h1)
         xMasked = np.delete(x, range(left, right))
         imgMaskDel = self.removeColumns(im, left, right)
+
+        
+
+
+
+
+
+
+
         # print(self.guess_x,self.guess_y)
         # Do x fit
         popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)

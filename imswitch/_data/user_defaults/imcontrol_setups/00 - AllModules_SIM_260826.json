@@ -4,7 +4,7 @@
   "height":2048,
   "pixelSize":8.2,
   "managerName": "SLM4DDManager",
-  "mock": true
+  "mock": false
 
 },
 
@@ -82,13 +82,13 @@
       "y0_global": 0,
       "camProperties": {
         "TriggerMode": "Off",
-        "Gain": 15.0,
+        "Gain": 0.0,
         "Gamma": 1.0,
         "ExposureTime": 39000.0
       },
       "ROI":{  
-        "OffsetX": 1936,
-        "OffsetY": 2374,
+        "OffsetX": 1576,
+        "OffsetY": 1776,
         "Width": 1024,
         "Height": 1024
 
@@ -113,8 +113,8 @@
       },
       "ROI":{
  
-        "OffsetX": 2152,
-        "OffsetY": 1810,
+        "OffsetX": 2160,
+        "OffsetY": 1634,
         "Width": 1024,
         "Height": 1024
       }
@@ -133,15 +133,15 @@
         "y0_global": 0,
         "camProperties": {
           "TriggerMode": "Off",
-          "Gain": 15.0,
+          "Gain": 0.0,
           "Gamma": 1.0,
 
 
           "ExposureTime": 39000.0
         },
         "ROI":{
-          "OffsetX": 1560,
-          "OffsetY": 2852,
+          "OffsetX": 2140,
+          "OffsetY": 2260,
           "Width": 1024,
           "Height": 1024
         }
@@ -263,7 +263,7 @@
       "managerName": "QueensgatePiezoManager",
       "mock": false,
       "managerProperties": {  
-        "port": "ASRLCOM15",
+        "port": "ASRLCOM5",
         "zeroOnStartup": false
       },
       "axes": ["Z"],

@@ -1540,8 +1540,17 @@ class SIMController(ImConWidgetController):
         self._widget.startSIM_button.setEnabled(True)
         self.SIMActive = False
         self._commChannel.updateSIMActive(self.SIMActive)
+
+        if self._commChannel.autofocusActive:
+            self.AFStop.set() # Request the AF thread to stop
+            self.AFTrigger.set() # Release AF if it is still waiting for a trigger
+            self.AcqResume.set() # Release main acquisition if it is waiting for AF
+
+            self.AFThread.join() # Close the AF thread cleanly.
         try:
+            
             self.simThread.join()
+            
         except:
             pass
         for laser in self.lasers:
