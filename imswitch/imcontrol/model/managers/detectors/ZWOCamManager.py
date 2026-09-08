@@ -347,8 +347,8 @@ class ZWOCamManager(DetectorManager):
             self._camera.ASIGetExpStatus(self.cam_id, ctypes.byref(status))
             if status.value == 2:  # ASI_EXP_SUCCESS
                 break
-            if status.value == 3:
-                print("AF hanging, 3")
+            else:
+                print(f"AF hanging, {status.value}")
             # time.sleep(0.001)
         buffer_size = self.cam_info.MaxWidth * self.cam_info.MaxHeight
         img_buffer = (ctypes.c_ubyte * buffer_size)()
@@ -356,20 +356,6 @@ class ZWOCamManager(DetectorManager):
         image = np.frombuffer(img_buffer, dtype=np.uint8)
         image = image.reshape((self.cam_info.MaxHeight, self.cam_info.MaxWidth))
 
-        # rawFrame = create_string_buffer(1024 * 1280 * 2)
-        # ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.START)
-        # ret = PxLApi.getNextFrame(self.hCamera, rawFrame)
-        # frameDesc = ret[1]
-        # ret = PxLApi.formatImage(rawFrame, frameDesc, PxLApi.ImageFormat.RAW_MONO8)
-        # formatedImage = ret[1]
-        # npFormatedImage = numpy.full_like(formatedImage, formatedImage, order="C")
-        # npFormatedImage.dtype = numpy.uint8
-        # imageHeight = int(frameDesc.Roi.fHeight)
-        # imageWidth = int(frameDesc.Roi.fWidth)
-        # newShape = (imageHeight, imageWidth)
-        # npFormatedImage = numpy.reshape(npFormatedImage, newShape)
-        # ret = PxLApi.setStreamState(self.hCamera, PxLApi.StreamState.STOP)
-        # assert PxLApi.apiSuccess(ret[0])
         return image
 
 
