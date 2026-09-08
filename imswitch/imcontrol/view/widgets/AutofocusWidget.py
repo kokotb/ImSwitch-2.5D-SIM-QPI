@@ -125,8 +125,8 @@ class SetAFWindow(QMainWindow):
 
         self.maskWidth = QtWidgets.QSpinBox()
         self.maskWidth.setMinimum(10)
-        self.maskWidth.setMaximum(400)
-        self.maskWidth.setValue(300)
+        self.maskWidth.setMaximum(300)
+        self.maskWidth.setValue(150)
 
         self.calCurveRange = QtWidgets.QSpinBox()
         self.calCurveRange.setMinimum(1)

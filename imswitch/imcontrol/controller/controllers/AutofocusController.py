@@ -125,8 +125,11 @@ class AutofocusController(ImConWidgetController):
 
     def registerCurrentPlane(self):
         self._commChannel.sigSendZDrift.emit(0.0)
-        score = self.getAndScoreOne()
-        self._commChannel.initRegScore = score
+        initScores = []
+        for _ in range(5):
+            initScores.append(self.getAndScoreOne())
+        avgScore = np.mean(initScores)
+        self._commChannel.initRegScore = avgScore
         self._logger.info(f"Plane registered with score of {self._commChannel.initRegScore:.2f}")
         self.onLED()
 
@@ -249,13 +252,14 @@ class AutofocusController(ImConWidgetController):
 
         # To read the acquired images and apply the Gaussian fitting
         for i in range(len(self.calCurveImgs)):
+
             # i_values.append(i)
             #Reading the frames
             im = self.calCurveImgs[i]
             # img = cv2.imread(stacks,-1)
             # im = np.asarray(img).astype(float)
             im = im-np.mean(im)/2	# Remove background
-            im[im<self.threshold] = 0			# Threshold
+            im[im<self.threshold] = 5			# Threshold
 
             # plt.imshow(im)
 

@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from scipy import signal as sg
+from scipy.ndimage import gaussian_filter
 # from imswitch.imcontrol.view.guitools.ViewSetupInfo import ViewSetupInfo as SetupInfo
 from imswitch.imcommon.framework import Signal, SignalInterface
 from imswitch.imcommon.model import initLogger
@@ -54,36 +55,21 @@ class AutofocusManager(SignalInterface):
         except ImportError:
             print("Unable to import curve_fit from scipy.optimize.")
 
-
-
         x_sigma = []
         y_sigma = []
 
-
-        # To read the acquired images and apply the Gaussian fitting
-
-        #Reading the frames
-        # img = cv2.imread(stacks,-1)
-        # im = np.asarray(img).astype(float)
-        im = im-np.mean(im)/2	# Remove background
+        im = im-np.mean(self.removeColumns(im, left, right))/2	# Remove background
         im[im<self.threshold] = 0			# Threshold
+
+        imGaussBlur = gaussian_filter(im.astype(float), sigma=0.75)
     
         # 1D Gaussian
         h1, w1 = im.shape
         x = np.arange(w1)
         y = np.arange(h1)
         xMasked = np.delete(x, range(left, right))
-        imgMaskDel = self.removeColumns(im, left, right)
+        imgMaskDel = self.removeColumns(imGaussBlur, left, right)
 
-        
-
-
-
-
-
-
-
-        # print(self.guess_x,self.guess_y)
         # Do x fit
         popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
         x0 = popt[1]

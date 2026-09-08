@@ -16,6 +16,7 @@ import statistics
 from qtpy import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtCore import QEventLoop
+import cv2
 
 class SIMController(ImConWidgetController):
     """Linked to SIMWidget."""
@@ -1096,6 +1097,29 @@ class SIMController(ImConWidgetController):
             avgScore = sum(self.AFScores)/len(self.AFScores)
             scoreDiff = avgScore - initRegScore
             zDiff = self.AFManager.x_slp * scoreDiff
+            if self.AFDebug:
+
+                zDiffList = (self.AFScores - initRegScore) * self.AFManager.x_slp
+                frames = list(zip(self.AFImages,zDiffList))
+                targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
+                os.makedirs(targetDir, exist_ok=True)
+                # targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
+                # os.makedirs(targetDir, exist_ok=True) 
+                # with open(f"{targetDir}/AFOutput.txt", "a") as f:
+                #     f.write(f"{zDiff}\n")
+                
+                with open(f"{targetDir}/AFValues.txt", "w") as f:
+                    for zDiff in zDiffList:
+                        f.write(f"{zDiff}\n")
+
+                for i, (image, score) in enumerate(frames):
+                    filename = targetDir +'/'+ f"{i:03d}_score_{score:.2f}.png"
+                    cv2.imwrite(str(filename), image)
+
+
+
+
+                    
             if abs(zDiff) >= self._commChannel.thresholdForAutofocusAction:
                 self.cumZDiff = self.cumZDiff + zDiff
                 currentZ = self.positioner._position['Z']
@@ -1104,12 +1128,12 @@ class SIMController(ImConWidgetController):
                 self._commChannel.sigUpdateZPosition.emit('Z','Z')
                 self._commChannel.sigSendZDrift.emit(self.cumZDiff)
                 self._logger.warning(f'AF adjusted. Current: {zDiff} um. Cumulative: {round(self.cumZDiff, 3)} um')
-                testAgain = True
-                if self.AFDebug:
-                    targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
-                    os.makedirs(targetDir, exist_ok=True) 
-                    with open(f"{targetDir}/AFOutput.txt", "a") as f:
-                        f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
+                testAgain = True 
+                # if self.AFDebug:
+                #     targetDir = f"Autofocus Debug/{self.dateTimeStartClick}"
+                #     os.makedirs(targetDir, exist_ok=True) 
+                #     with open(f"{targetDir}/AFOutput.txt", "a") as f:
+                #         f.write(f"{self.totalEndTime},{zDiff},{self.cumZDiff}\n")
                     # try:
                     #     tif.imwrite(f"{targetDir}/{datetime.now().strftime('%y%m%d_%H%M%S')}.tif", self.AFImages)
                     # except OSError:
@@ -1553,6 +1577,8 @@ class SIMController(ImConWidgetController):
             
         except:
             pass
+
+
         for laser in self.lasers:
             laser.setEnabled(False)
         self._master.arduinoManager.deactivateSLMWriteOnly()
