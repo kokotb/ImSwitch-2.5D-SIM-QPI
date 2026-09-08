@@ -234,21 +234,17 @@ class AutofocusController(ImConWidgetController):
         return y
     
     def scoreOneImg(self, im):
-        score = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
+        score, _, _ = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
         return score
     
     def scoreCalCurveImgs(self, zList):
         # Define the model function. In our case, a 1D Gaussian.
-        def Gaussian1D(xdata, i0, x0, sX, amp):
-            x = xdata
-            x0 = float(x0)
-            eq = i0+amp*np.exp(-((x-x0)**2/2/sX**2))
-            return eq
-
+        self._commChannel.AFMaskLeft = self._widget.AFWindow.embeddedImage.left
+        self._commChannel.AFMaskRight = self._widget.AFWindow.embeddedImage.right
         # x_c = []
-        x_sigma = []
-        y_sigma = []
-        # i_values = []
+        x_sigmas = []
+        y_sigmas = []
+        # scores = []
 
         # To read the acquired images and apply the Gaussian fitting
         for i in range(len(self.calCurveImgs)):
@@ -256,54 +252,21 @@ class AutofocusController(ImConWidgetController):
             # i_values.append(i)
             #Reading the frames
             im = self.calCurveImgs[i]
-            # img = cv2.imread(stacks,-1)
-            # im = np.asarray(img).astype(float)
-            im = im-np.mean(im)/2	# Remove background
-            im[im<self.threshold] = 5			# Threshold
+            score, x_sigma, y_sigma = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
+            x_sigmas.append(x_sigma)
+            # scores.append(score)
+            y_sigmas.append(y_sigma)
 
-            # plt.imshow(im)
-
-        
-            # 1D Gaussian
-            h1, w1 = im.shape
-            x = np.arange(w1)
-            y = np.arange(h1)
-            xMasked = np.delete(x, range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right))
-            imgMaskDel = self._manager.removeColumns(im, self._widget.AFWindow.embeddedImage.left, self._widget.AFWindow.embeddedImage.right)
-            
-            # Do x fit
-            popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
-            x0 = popt[1]
-            sx = popt[2]  
-            self.guess_x.clear()
-            self.guess_x.append(popt)
-            # Do y fit
-            popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000) 
-            y0 = popt[1]
-            sy = popt[2]
-            
-            # Replaces initial guess with final guessW
-            self.guess_y.clear()
-            self.guess_y.append(popt)
-        
-            x_sigma.append(abs(sx))
-            # print(x_sigma)
-            y_sigma.append(abs(sy))
-            # x_c.append(popt[1])
-            # plt.plot((x0,x0+sx),(y0,y0))
-            # plt.plot((x0,x0),(y0,y0+sy))
-            # plt.imshow(im)
-            # plt.show()
             
         # This is just to set the x-axis of the graph to the axial values
         # StepSize = zval
         # i_values = np.array(i_values)
         z_values = zList
-        comboData = np.subtract(x_sigma,y_sigma)
+        comboData = np.subtract(x_sigmas,y_sigmas)
+
         comboDataReshape = comboData.reshape(-1, 1)
         comboDataReshape1D = [j[0] for j in comboDataReshape]
-        self._commChannel.AFMaskLeft = self._widget.AFWindow.embeddedImage.left
-        self._commChannel.AFMaskRight = self._widget.AFWindow.embeddedImage.right
+
 
         model = LinearRegression()
         model.fit(comboDataReshape, zList)
@@ -313,7 +276,7 @@ class AutofocusController(ImConWidgetController):
         self.y_int = model.intercept_
         self._manager.y_int = self.y_int
         self.r2 = r2_score(zList, y_pred)
-        self._widget.AFWindow.sigUpdateCalibChart.emit(z_values, x_sigma, y_sigma, comboDataReshape1D)
+        self._widget.AFWindow.sigUpdateCalibChart.emit(z_values, x_sigmas, y_sigmas, comboDataReshape1D)
         if self.r2 >= 0.99:
             self._logger.info(f'Calibration curve successfully set.\nSlope = {self.x_slp}\nIntercept = {self.y_int}\nR^2 = {self.r2}')
             self._commChannel.calCurveFit = True

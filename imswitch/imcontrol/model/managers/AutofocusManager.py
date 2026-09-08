@@ -33,7 +33,7 @@ class AutofocusManager(SignalInterface):
         return y
 
     def scoreOneLive(self, img, left, right):
-        score = self.scoreOneImg(img, left, right)
+        score, _, _ = self.scoreOneImg(img, left, right)
         return score
     
     def removeColumns(self, img, left, right):
@@ -55,13 +55,13 @@ class AutofocusManager(SignalInterface):
         except ImportError:
             print("Unable to import curve_fit from scipy.optimize.")
 
-        x_sigma = []
-        y_sigma = []
+        # x_sigma = []
+        # y_sigma = []
 
         im = im-np.mean(self.removeColumns(im, left, right))/2	# Remove background
         im[im<self.threshold] = 0			# Threshold
 
-        imGaussBlur = gaussian_filter(im.astype(float), sigma=0.75)
+        imGaussBlur = gaussian_filter(im.astype(float), sigma=0.75 )
     
         # 1D Gaussian
         h1, w1 = im.shape
@@ -71,11 +71,13 @@ class AutofocusManager(SignalInterface):
         imgMaskDel = self.removeColumns(imGaussBlur, left, right)
 
         # Do x fit
+        
         popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
+
         x0 = popt[1]
         sx = popt[2]
         # self.guess_x.clear()
-        # self.guess_x.append(popt)
+        # self.guess_x = popt
         # Do y fit
         popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000)
         y0 = popt[1]
@@ -83,14 +85,14 @@ class AutofocusManager(SignalInterface):
         
         # Replaces initial guess with final guess
         # self.guess_y.clear()
-        # self.guess_y.append(popt)
+        # self.guess_y = popt
     
         x_sigma = abs(sx)
         y_sigma = abs(sy)
         score = x_sigma - y_sigma
 
         # x_c.append(popt[1])
-        return score
+        return score, x_sigma, y_sigma
             
 
 # Copyright (C) 2020-2024 ImSwitch developers
