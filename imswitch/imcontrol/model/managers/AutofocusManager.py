@@ -33,7 +33,7 @@ class AutofocusManager(SignalInterface):
         return y
 
     def scoreOneLive(self, img, left, right):
-        score = self.scoreOneImg(img, left, right)
+        score, x_sigma, y_sigma = self.scoreOneImg(img, left, right)
         return score
     
     def removeColumns(self, img, left, right):
@@ -54,9 +54,6 @@ class AutofocusManager(SignalInterface):
             from scipy.optimize import curve_fit
         except ImportError:
             print("Unable to import curve_fit from scipy.optimize.")
-
-        x_sigma = []
-        y_sigma = []
 
         im = im-np.mean(self.removeColumns(im, left, right))/2	# Remove background
         im[im<self.threshold] = 0			# Threshold
@@ -90,7 +87,7 @@ class AutofocusManager(SignalInterface):
         score = x_sigma - y_sigma
 
         # x_c.append(popt[1])
-        return score
+        return score, x_sigma, y_sigma
             
 
 # Copyright (C) 2020-2024 ImSwitch developers

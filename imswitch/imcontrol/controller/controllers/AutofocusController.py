@@ -234,7 +234,7 @@ class AutofocusController(ImConWidgetController):
         return y
     
     def scoreOneImg(self, im):
-        score = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
+        score, x_sigma, y_sigma = self._manager.scoreOneImg(im, self._commChannel.AFMaskLeft, self._commChannel.AFMaskRight)
         return score
     
     def scoreCalCurveImgs(self, zList):
@@ -248,7 +248,7 @@ class AutofocusController(ImConWidgetController):
         # x_c = []
         x_sigma = []
         y_sigma = []
-        # i_values = []
+        scores = []
 
         # To read the acquired images and apply the Gaussian fitting
         for i in range(len(self.calCurveImgs)):
