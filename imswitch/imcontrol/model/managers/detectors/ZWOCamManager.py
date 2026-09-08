@@ -324,39 +324,36 @@ class ZWOCamManager(DetectorManager):
     # #     return self.left,self.top,self.xsize,self.ysize
     
     def grabFrameOnly(self):
-        # def drawRect(event, x,y,flag,params):
-        #     top = y - 50
-        #     left = x - 50
-        #     right = x + 50
-        #     bottom = y + 50
-        #     self.xsize = 100
-        #     self.ysize = 100
-        #     self.top = top
-        #     self.left = left
-            
-
-        #     if (event == cv2.EVENT_LBUTTONDOWN) and self.oneRect == False:
-        #         cv2.rectangle(npFormatedImage, (left, top), (right, bottom), (255, 0, 0), 2)
-        #         self.oneRect = True
+        success = False
+        while not success:
+            img, success = self.grabFrameUntilSuccess()
+        return img
         
-        # self.oneRect = False
-   
+
+    def grabFrameUntilSuccess(self):
+
         self._camera.ASIStartExposure(self.cam_id, self.ASI_FALSE)
         status = ctypes.c_int()
+        success = False
         while True: #CTNOTE maybe not needed
             self._camera.ASIGetExpStatus(self.cam_id, ctypes.byref(status))
             if status.value == 2:  # ASI_EXP_SUCCESS
+                success = True
                 break
-            else:
-                print(f"AF hanging, {status.value}")
+            elif status.value == 3:
+                print(f"AF hanging")
+                success = False
+                image = None
+                break
             # time.sleep(0.001)
-        buffer_size = self.cam_info.MaxWidth * self.cam_info.MaxHeight
-        img_buffer = (ctypes.c_ubyte * buffer_size)()
-        self._camera.ASIGetDataAfterExp(self.cam_id, ctypes.byref(img_buffer), buffer_size)
-        image = np.frombuffer(img_buffer, dtype=np.uint8)
-        image = image.reshape((self.cam_info.MaxHeight, self.cam_info.MaxWidth))
+        if success:
+            buffer_size = self.cam_info.MaxWidth * self.cam_info.MaxHeight
+            img_buffer = (ctypes.c_ubyte * buffer_size)()
+            self._camera.ASIGetDataAfterExp(self.cam_id, ctypes.byref(img_buffer), buffer_size)
+            image = np.frombuffer(img_buffer, dtype=np.uint8)
+            image = image.reshape((self.cam_info.MaxHeight, self.cam_info.MaxWidth))
 
-        return image
+        return image, success
 
 
     # def openPropertiesDialog(self):
