@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import time
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
+from scipy.ndimage import gaussian_filter
 
 try:
     from scipy.optimize import curve_fit
@@ -126,7 +127,7 @@ class AutofocusController(ImConWidgetController):
     def registerCurrentPlane(self):
         self._commChannel.sigSendZDrift.emit(0.0)
         initScores = []
-        for _ in range(5):
+        for _ in range(5): #take average of 5 images
             initScores.append(self.getAndScoreOne())
         avgScore = np.mean(initScores)
         self._commChannel.initRegScore = avgScore
@@ -190,7 +191,7 @@ class AutofocusController(ImConWidgetController):
             for count, _ in enumerate(zList):
                 # filename = f"{count:03}.tif"
                 self.zPositioner.setPosition(zList[count], 'Z')
-                time.sleep(0.01)
+                time.sleep(0.001)
                 img = self.getOneFrame()
                 imgMaskZero = self.colToZero(img)
                 self.setOneFrame(imgMaskZero)
@@ -260,7 +261,7 @@ class AutofocusController(ImConWidgetController):
             # im = np.asarray(img).astype(float)
             im = im-np.mean(im)/2	# Remove background
             im[im<self.threshold] = 0			# Threshold
-
+            imGaussBlur = gaussian_filter(im.astype(float), sigma=15)
             # plt.imshow(im)
 
         
@@ -269,14 +270,18 @@ class AutofocusController(ImConWidgetController):
             x = np.arange(w1)
             y = np.arange(h1)
             xMasked = np.delete(x, range(self._widget.AFWindow.embeddedImage.left,self._widget.AFWindow.embeddedImage.right))
-            imgMaskDel = self._manager.removeColumns(im, self._widget.AFWindow.embeddedImage.left, self._widget.AFWindow.embeddedImage.right)
+            imgMaskDel = self._manager.removeColumns(imGaussBlur, self._widget.AFWindow.embeddedImage.left, self._widget.AFWindow.embeddedImage.right)
             
             # Do x fit
             popt, pcov = curve_fit(Gaussian1D, xMasked, np.mean(imgMaskDel,axis=0), p0=self.guess_x, maxfev = 50000)
             x0 = popt[1]
-            sx = popt[2]  
+            sx = popt[2]
+
+              
             self.guess_x.clear()
             self.guess_x.append(popt)
+
+
             # Do y fit
             popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000) 
             y0 = popt[1]

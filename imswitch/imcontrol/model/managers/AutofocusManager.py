@@ -58,7 +58,7 @@ class AutofocusManager(SignalInterface):
         im = im-np.mean(self.removeColumns(im, left, right))/2	# Remove background
         im[im<self.threshold] = 0			# Threshold
 
-        imGaussBlur = gaussian_filter(im.astype(float), sigma=0.75)
+        imGaussBlur = gaussian_filter(im.astype(float), sigma=15)
     
         # 1D Gaussian
         h1, w1 = im.shape
