@@ -340,16 +340,15 @@ class ZWOCamManager(DetectorManager):
         #         self.oneRect = True
         
         # self.oneRect = False
-        repeat = False
-        while not repeat: #CTNOTE maybe not needed
-            self._camera.ASIStartExposure(self.cam_id, self.ASI_FALSE)
-            status = ctypes.c_int()            
+   
+        self._camera.ASIStartExposure(self.cam_id, self.ASI_FALSE)
+        status = ctypes.c_int()
+        while True: #CTNOTE maybe not needed
             self._camera.ASIGetExpStatus(self.cam_id, ctypes.byref(status))
             if status.value == 2:  # ASI_EXP_SUCCESS
                 break
-            elif status.value == 3:
-                print("AF hanging")
-                repeat = True
+            if status.value == 3:
+                print("AF hanging, 3")
             # time.sleep(0.001)
         buffer_size = self.cam_info.MaxWidth * self.cam_info.MaxHeight
         img_buffer = (ctypes.c_ubyte * buffer_size)()
