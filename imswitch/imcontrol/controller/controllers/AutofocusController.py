@@ -70,7 +70,7 @@ class AutofocusController(ImConWidgetController):
             self._widget.clearRegPlane.setEnabled(True)
 
     def storeInitEstimate(self):
-        self.guess_x = self._manager.guess_x    # Guesses for fits Background, Centre, Width, Amplitude
+        self.guess_x = self._manager.guess_x   # Guesses for fits Background, Centre, Width, Amplitude
         self.guess_y = self._manager.guess_y
 
 
@@ -278,18 +278,22 @@ class AutofocusController(ImConWidgetController):
             sx = popt[2]
 
               
-            self.guess_x.clear()
-            self.guess_x.append(popt)
+            if i == int((len(self.calCurveImgs)/2)):
+                self.guess_x = popt
+                self._manager.guess_x = popt
+
+            
 
 
             # Do y fit
             popt, pcov = curve_fit(Gaussian1D, y, np.mean(imgMaskDel,axis=1), p0=self.guess_y, maxfev = 50000) 
             y0 = popt[1]
             sy = popt[2]
-            
-            # Replaces initial guess with final guessW
-            self.guess_y.clear()
-            self.guess_y.append(popt)
+
+            if i == int((len(self.calCurveImgs)/2)):
+                self.guess_y = popt
+                self._manager.guess_y = popt
+
         
             x_sigma.append(abs(sx))
             # print(x_sigma)
