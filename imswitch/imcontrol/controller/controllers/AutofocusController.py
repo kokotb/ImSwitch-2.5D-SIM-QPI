@@ -259,7 +259,7 @@ class AutofocusController(ImConWidgetController):
             # img = cv2.imread(stacks,-1)
             # im = np.asarray(img).astype(float)
             im = im-np.mean(im)/2	# Remove background
-            im[im<self.threshold] = 5			# Threshold
+            im[im<self.threshold] = 0			# Threshold
 
             # plt.imshow(im)
 
