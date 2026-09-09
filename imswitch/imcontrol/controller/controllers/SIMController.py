@@ -344,7 +344,7 @@ class SIMController(ImConWidgetController):
             AFElapsed = time.time() - self.lastAFFire
             if self._commChannel.autofocusActive:
                 # self._logger.info(f'Time since last AF: {AFElapsed}')
-                if (AFElapsed > self._commChannel.AFPeriodInSec):
+                if (AFElapsed > self._commChannel.AFPeriodInSec) and (len(positions) < 2):
                     self.AFTrigger.set()
 
                     self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
@@ -381,13 +381,13 @@ class SIMController(ImConWidgetController):
 
                     AFXDiff = abs(self.lastAFXYPos[0] - self.positionerXY._position['X'])
                     AFYDiff = abs(self.lastAFXYPos[1] - self.positionerXY._position['Y'])
-                    if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
-                        self.AFTrigger.set()
+                    # if (AFXDiff > 600 or AFYDiff > 600) and self._commChannel.autofocusActive:
+                    #     self.AFTrigger.set()
 
-                        self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
+                    #     self.AcqResume.wait()  # patiently wait for signal to do an autofocus repetition.
 
-                        self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
-                    ####
+                    #     self.AcqResume.clear()  # Reset event so it can receive the next (set()) command.
+                    # ####
                     if self.numAllFrames == 0:
                         exptTimeElapsed = 0.0
                     else:
@@ -1108,7 +1108,7 @@ class SIMController(ImConWidgetController):
                 # with open(f"{targetDir}/AFOutput.txt", "a") as f:
                 #     f.write(f"{zDiff}\n")
                 
-                with open(f"{targetDir}/AFValues.txt", "w") as f:
+                with open(f"{targetDir}/AFValues.txt", "a") as f:
                     for zDiff in zDiffList:
                         f.write(f"{zDiff}\n")
 
